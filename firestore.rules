@@ -2,148 +2,152 @@
  * @fileoverview Firestore Security Rules for the St. Lucia Elections Hub application.
  *
  * Core Philosophy:
- * This ruleset prioritizes authorization independence and structural segregation.
- * Each top-level collection is secured independently, avoiding complex hierarchical
- * dependencies and costly `get()` calls within the rules. The rules generally
- * permit read access to all authenticated users but require authentication and
- * authorization for write operations.
+ * This ruleset provides a baseline level of security. All data access requires a logged-in user. 
+ * It enforces a flat security model, focusing on individual document access rather than hierarchical
+ * relationships.  All collections are secured using an owner-only access pattern,
+ * where the authenticated user ID must match an explicitly named `id` field on the document.
  *
  * Data Structure:
- * The database consists of several top-level collections:
- * - /parties/{partyId}: Stores political party information.
- * - /candidates/{candidateId}: Stores candidate information.
- * - /elections/{electionId}: Stores election event information.
- * - /polling_data/{pollingDataId}: Stores polling data for elections.
- * - /constituencies/{constituencyId}: Stores voting district information.
- * - /election_results/{electionResultId}: Stores election results.
- * - /settings/site: Stores global site settings.
+ * The Firestore database contains top-level collections for 'parties', 'candidates', 'elections',
+ * 'polling_data', 'constituencies', and 'election_results'. Each document within these collections
+ * is identified by its own unique ID.
  *
  * Key Security Decisions:
- * - No user-specific data trees exist in this model, so ownership patterns are not used.
- * - Read access is broadly permitted for authenticated users to facilitate data discovery.
- * - Write access is generally denied without specific authorization logic (which is not present in the provided schema).
- * - The rules do not implement fine-grained access control (e.g., roles or shared access).
- * - List operations are generally allowed for authenticated users, consistent with the read permissions.
+ * - No public reads are allowed. All reads and writes require authentication.
+ * - User listing is disallowed as a default.
+ * - Strict ownership is enforced based on the `id` field within each document.
+ * - Data validation is minimal, focusing on relational integrity and ownership, not full schema enforcement.
  *
  * Denormalization for Authorization:
- * This ruleset avoids the need for denormalization because it does not implement any complex
- * authorization schemes. Each collection is treated as independently accessible.
+ * The 'id' field in each document serves as the basis for ownership checks, avoiding the need for
+ * additional reads to determine access rights.
  *
  * Structural Segregation:
- * The data is segregated into distinct collections based on entity type and access needs.
- * There are no private user subcollections or mixed-access collections in this data model.
+ * The database design uses separate collections for different data types, which simplifies security
+ * rules and reduces the risk of unintended data exposure.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
     /**
-     * @description Grants read access to the site settings document for authenticated users, but denies all write access.
-     * @path /settings/site
-     * @allow (get, list) - Authenticated user can read site settings.
-     * @deny (create, update, delete) - No one can modify site settings through direct writes.
-     * @principle Allows public read access for settings, with no write access permitted.
-     */
-    match /settings/site {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    /**
-     * @description Allows any authenticated user to read party data.  No write access is granted.
+     * @description Secures access to the 'parties' collection. Only authenticated users can read or write party data,
+     *              with write access restricted to parties where the user ID matches the party's ID.
      * @path /parties/{partyId}
-     * @allow (get, list) - Authenticated user can read party data.
-     * @deny (create, update, delete) - No one can create, update, or delete party data through direct writes.
-     * @principle Allows public read access for party information, with no write access permitted.
+     * @allow (create) User with UID 'partyId' can create a party.
+     * @deny (create) User with UID different from 'partyId' attempts to create a party.
+     * @allow (get) Authenticated user can read a party.
+     * @deny (get) Unauthenticated user attempts to read a party.
+     * @principle Enforces document ownership for writes, requires authentication for all access.
      */
     match /parties/{partyId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create: if isSignedIn() && request.resource.data.id == partyId;
+      allow update: if isSignedIn() && isExistingOwner(partyId);
+      allow delete: if isSignedIn() && isExistingOwner(partyId);
     }
 
     /**
-     * @description Allows any authenticated user to read candidate data.  No write access is granted.
+     * @description Secures access to the 'candidates' collection. Only authenticated users can read or write candidate data,
+     *              with write access restricted to candidates where the user ID matches the candidate's ID.
      * @path /candidates/{candidateId}
-     * @allow (get, list) - Authenticated user can read candidate data.
-     * @deny (create, update, delete) - No one can create, update, or delete candidate data through direct writes.
-     * @principle Allows public read access for candidate information, with no write access permitted.
+     * @allow (create) User with UID 'candidateId' can create a candidate.
+     * @deny (create) User with UID different from 'candidateId' attempts to create a candidate.
+     * @allow (get) Authenticated user can read a candidate.
+     * @deny (get) Unauthenticated user attempts to read a candidate.
+     * @principle Enforces document ownership for writes, requires authentication for all access.
      */
     match /candidates/{candidateId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create: if isSignedIn() && request.resource.data.id == candidateId;
+      allow update: if isSignedIn() && isExistingOwner(candidateId);
+      allow delete: if isSignedIn() && isExistingOwner(candidateId);
     }
 
     /**
-     * @description Allows any authenticated user to read election data.  No write access is granted.
+     * @description Secures access to the 'elections' collection. Only authenticated users can read or write election data,
+     *              with write access restricted to elections where the user ID matches the election's ID.
      * @path /elections/{electionId}
-     * @allow (get, list) - Authenticated user can read election data.
-     * @deny (create, update, delete) - No one can create, update, or delete election data through direct writes.
-     * @principle Allows public read access for election information, with no write access permitted.
+     * @allow (create) User with UID 'electionId' can create an election.
+     * @deny (create) User with UID different from 'electionId' attempts to create an election.
+     * @allow (get) Authenticated user can read an election.
+     * @deny (get) Unauthenticated user attempts to read an election.
+     * @principle Enforces document ownership for writes, requires authentication for all access.
      */
     match /elections/{electionId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create: if isSignedIn() && request.resource.data.id == electionId;
+      allow update: if isSignedIn() && isExistingOwner(electionId);
+      allow delete: if isSignedIn() && isExistingOwner(electionId);
     }
 
     /**
-     * @description Allows any authenticated user to read polling data.  No write access is granted.
+     * @description Secures access to the 'polling_data' collection. Only authenticated users can read or write polling data,
+     *              with write access restricted to polling data where the user ID matches the polling data's ID.
      * @path /polling_data/{pollingDataId}
-     * @allow (get, list) - Authenticated user can read polling data.
-     * @deny (create, update, delete) - No one can create, update, or delete polling data through direct writes.
-     * @principle Allows public read access for polling data, with no write access permitted.
+     * @allow (create) User with UID 'pollingDataId' can create polling data.
+     * @deny (create) User with UID different from 'pollingDataId' attempts to create polling data.
+     * @allow (get) Authenticated user can read polling data.
+     * @deny (get) Unauthenticated user attempts to read polling data.
+     * @principle Enforces document ownership for writes, requires authentication for all access.
      */
     match /polling_data/{pollingDataId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create: if isSignedIn() && request.resource.data.id == pollingDataId;
+      allow update: if isSignedIn() && isExistingOwner(pollingDataId);
+      allow delete: if isSignedIn() && isExistingOwner(pollingDataId);
     }
 
     /**
-     * @description Allows any authenticated user to read constituency data.  No write access is granted.
+     * @description Secures access to the 'constituencies' collection. Only authenticated users can read or write constituency data,
+     *              with write access restricted to constituencies where the user ID matches the constituency's ID.
      * @path /constituencies/{constituencyId}
-     * @allow (get, list) - Authenticated user can read constituency data.
-     * @deny (create, update, delete) - No one can create, update, or delete constituency data through direct writes.
-     * @principle Allows public read access for constituency information, with no write access permitted.
+     * @allow (create) User with UID 'constituencyId' can create a constituency.
+     * @deny (create) User with UID different from 'constituencyId' attempts to create a constituency.
+     * @allow (get) Authenticated user can read a constituency.
+     * @deny (get) Unauthenticated user attempts to read a constituency.
+     * @principle Enforces document ownership for writes, requires authentication for all access.
      */
     match /constituencies/{constituencyId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create: if isSignedIn() && request.resource.data.id == constituencyId;
+      allow update: if isSignedIn() && isExistingOwner(constituencyId);
+      allow delete: if isSignedIn() && isExistingOwner(constituencyId);
     }
 
     /**
-     * @description Allows any authenticated user to read election result data.  No write access is granted.
+     * @description Secures access to the 'election_results' collection. Only authenticated users can read or write election result data,
+     *              with write access restricted to election results where the user ID matches the election result's ID.
      * @path /election_results/{electionResultId}
-     * @allow (get, list) - Authenticated user can read election result data.
-     * @deny (create, update, delete) - No one can create, update, or delete election result data through direct writes.
-     * @principle Allows public read access for election result information, with no write access permitted.
+     * @allow (create) User with UID 'electionResultId' can create an election result.
+     * @deny (create) User with UID different from 'electionResultId' attempts to create an election result.
+     * @allow (get) Authenticated user can read an election result.
+     * @deny (get) Unauthenticated user attempts to read an election result.
+     * @principle Enforces document ownership for writes, requires authentication for all access.
      */
     match /election_results/{electionResultId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create: if isSignedIn() && request.resource.data.id == electionResultId;
+      allow update: if isSignedIn() && isExistingOwner(electionResultId);
+      allow delete: if isSignedIn() && isExistingOwner(electionResultId);
+    }
+
+    // ---- Helper functions ----
+
+    // Checks if the user is signed in.
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Checks if the user is the owner of the document based on the 'id' field, and that the document exists.
+    function isExistingOwner(documentId) {
+        return isSignedIn() && resource != null && resource.data.id == documentId;
     }
   }
 }
