@@ -12,7 +12,7 @@ import { InteractiveMap } from '@/components/interactive-map';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, ReferenceLine, Label as RechartsLabel } from 'recharts';
+import { Pie, PieChart, ResponsiveContainer, Cell } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
 
@@ -64,13 +64,11 @@ export default function ConstituenciesPage() {
             return acc;
         }, {} as Record<string, number>);
 
-        const data = { name: 'Seats' };
-        politicalLeaningOptions.forEach(opt => {
-            // @ts-ignore
-            data[opt.label] = counts[opt.value] || 0;
-        });
-        
-        return [data];
+        return politicalLeaningOptions.map(opt => ({
+            name: opt.label,
+            value: counts[opt.value] || 0,
+            fill: opt.color,
+        })).filter(item => item.value > 0);
     }, [constituencies]);
 
     const chartConfig = politicalLeaningOptions.reduce((acc, option) => {
@@ -106,50 +104,46 @@ export default function ConstituenciesPage() {
                     <CardTitle className="font-headline">Seat Count</CardTitle>
                     <CardDescription>Current political leaning of the 17 constituencies.</CardDescription>
                   </CardHeader>
-                  <CardContent>
-                     <ChartContainer config={chartConfig} className="h-24 w-full">
-                        <ResponsiveContainer width="100%" height={50}>
-                            <BarChart
-                                layout="vertical"
-                                data={chartData}
-                                stackOffset="none"
-                                margin={{ top: 0, right: 10, left: 10, bottom: 0 }}
-                                >
-                                <XAxis type="number" hide domain={[0, 17]} />
-                                <YAxis type="category" dataKey="name" hide />
+                  <CardContent className="flex flex-col items-center">
+                     <ChartContainer config={chartConfig} className="h-48 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
                                 <ChartTooltip 
                                     cursor={false}
                                     content={<ChartTooltipContent hideLabel />}
                                 />
-                                {politicalLeaningOptions.map((option) => (
-                                    <Bar 
-                                        key={option.value} 
-                                        dataKey={option.label} 
-                                        fill={option.color} 
-                                        stackId="a" 
-                                        radius={[4, 4, 4, 4]} 
-                                    />
-                                ))}
-                                 <ReferenceLine x={9} stroke="hsl(var(--foreground))" strokeDasharray="3 3">
-                                  <RechartsLabel
-                                    position="insideBottom"
-                                    value="9 for a Majority"
-                                    fill="hsl(var(--foreground))"
-                                    fontSize={10}
-                                    dy={15}
-                                  />
-                                </ReferenceLine>
-                            </BarChart>
+                                <Pie 
+                                    data={chartData} 
+                                    dataKey="value"
+                                    nameKey="name"
+                                    cx="50%" 
+                                    cy="100%" 
+                                    startAngle={180} 
+                                    endAngle={0} 
+                                    innerRadius="60%"
+                                    outerRadius="100%"
+                                    paddingAngle={2}
+                                >
+                                     {chartData.map((entry) => (
+                                        <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                                    ))}
+                                </Pie>
+                            </PieChart>
                         </ResponsiveContainer>
                     </ChartContainer>
+                     <p className="text-sm font-medium text-muted-foreground -mt-12">9 for a Majority</p>
                      <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-xs">
-                        {politicalLeaningOptions.map((option) => (
-                            <div key={option.value} className="flex items-center gap-1.5">
-                                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: option.color }}></span>
-                                <span>{option.label}</span>
-                                <span className="font-bold">({chartData[0]?.[option.label] || 0})</span>
-                            </div>
-                        ))}
+                        {politicalLeaningOptions.map((option) => {
+                            const count = chartData.find(d => d.name === option.label)?.value || 0;
+                            if (count === 0) return null;
+                            return (
+                                <div key={option.value} className="flex items-center gap-1.5">
+                                    <span className="w-3 h-3 rounded-full" style={{ backgroundColor: option.color }}></span>
+                                    <span>{option.label}</span>
+                                    <span className="font-bold">({count})</span>
+                                </div>
+                            )
+                        })}
                     </div>
                   </CardContent>
                 </Card>
