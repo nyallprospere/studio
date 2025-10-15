@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -11,7 +12,7 @@ import { InteractiveMap } from '@/components/interactive-map';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, ReferenceLine, Label as RechartsLabel } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
 
@@ -111,10 +112,10 @@ export default function ConstituenciesPage() {
                             <BarChart
                                 layout="vertical"
                                 data={chartData}
-                                stackOffset="expand"
-                                margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
+                                stackOffset="none"
+                                margin={{ top: 0, right: 10, left: 10, bottom: 0 }}
                                 >
-                                <XAxis type="number" hide />
+                                <XAxis type="number" hide domain={[0, 17]} />
                                 <YAxis type="category" dataKey="name" hide />
                                 <ChartTooltip 
                                     cursor={false}
@@ -129,6 +130,15 @@ export default function ConstituenciesPage() {
                                         radius={[4, 4, 4, 4]} 
                                     />
                                 ))}
+                                 <ReferenceLine x={9} stroke="hsl(var(--foreground))" strokeDasharray="3 3">
+                                  <RechartsLabel
+                                    position="insideBottom"
+                                    value="9 for a Majority"
+                                    fill="hsl(var(--foreground))"
+                                    fontSize={10}
+                                    dy={15}
+                                  />
+                                </ReferenceLine>
                             </BarChart>
                         </ResponsiveContainer>
                     </ChartContainer>
