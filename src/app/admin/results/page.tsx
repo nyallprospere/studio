@@ -11,7 +11,8 @@ import { Upload, Download, Loader2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, writeBatch } from 'firebase/firestore';
+import { collection, writeBatch, doc } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes } from 'firebase/storage';
 
 const electionYears = [
   "2021", "2016", "2011", "2006", "2001", "1997", "1992", 
@@ -33,40 +34,87 @@ export default function AdminResultsPage() {
   const { data: parties, isLoading: loadingParties } = useCollection(partiesQuery);
   const { data: electionResults, isLoading: loadingResults } = useCollection(resultsQuery);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file || !firestore) {
+        toast({ variant: 'destructive', title: 'Import Failed', description: 'No file selected or Firestore not available.'});
+        return;
+    };
     
     setIsImporting(true);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(worksheet);
-        
-        // Here you would typically validate and process the `json` data.
-        // For now, we'll just log it and show a success toast.
-        console.log('Imported Data:', json);
-        toast({
-          title: 'Import Successful',
-          description: `Successfully parsed ${json.length} records from the file.`,
-        });
 
-      } catch (error) {
-        console.error('Import Error:', error);
+    try {
+        // 1. Upload file to Firebase Storage
+        const storage = getStorage();
+        const storageRef = ref(storage, `election-results-imports/${Date.now()}-${file.name}`);
+        await uploadBytes(storageRef, file);
+
+        // 2. Read the file for processing
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const data = new Uint8Array(e.target?.result as ArrayBuffer);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+                
+                // 3. Batch write to Firestore
+                const batch = writeBatch(firestore);
+                let recordsProcessed = 0;
+
+                jsonData.forEach(row => {
+                    // Basic validation
+                    if (row['Election Year'] && row['Constituency'] && row['Candidate'] && row['Votes']) {
+                       const resultRef = doc(collection(firestore, 'election_results'));
+                       batch.set(resultRef, {
+                            year: row['Election Year'],
+                            constituencyName: row['Constituency'],
+                            candidateName: row['Candidate'],
+                            partyAcronym: row['Party'],
+                            votes: row['Votes'],
+                       });
+                       recordsProcessed++;
+                    }
+                });
+
+                if (recordsProcessed > 0) {
+                    await batch.commit();
+                    toast({
+                        title: 'Import Successful',
+                        description: `Successfully imported and saved ${recordsProcessed} records.`,
+                    });
+                } else {
+                     toast({
+                        variant: 'destructive',
+                        title: 'Import Failed',
+                        description: 'No valid records found in the file. Check column names.',
+                    });
+                }
+
+            } catch (error: any) {
+                console.error('Processing Error:', error);
+                toast({
+                variant: 'destructive',
+                title: 'Import Failed',
+                description: 'Could not parse or save the data. Error: ' + error.message,
+                });
+            } finally {
+                setIsImporting(false);
+                 if (fileInputRef.current) fileInputRef.current.value = '';
+            }
+        };
+        reader.readAsArrayBuffer(file);
+
+    } catch (uploadError: any) {
+        console.error('Upload Error:', uploadError);
         toast({
-          variant: 'destructive',
-          title: 'Import Failed',
-          description: 'Could not read or parse the file. Please ensure it is a valid CSV or Excel file.',
+            variant: 'destructive',
+            title: 'Upload Failed',
+            description: 'Could not upload the file to storage. Error: ' + uploadError.message
         });
-      } finally {
         setIsImporting(false);
-      }
-    };
-    reader.readAsArrayBuffer(file);
+    }
   };
 
   const handleExport = () => {
@@ -77,11 +125,11 @@ export default function AdminResultsPage() {
     setIsExporting(true);
     try {
         // Map data to a more friendly format for export
-        const dataToExport = electionResults.map(result => ({
+        const dataToExport = electionResults.map((result: any) => ({
             'Election Year': result.year,
-            'Constituency': constituencies?.find(c => c.id === result.constituencyId)?.name || result.constituencyId,
+            'Constituency': constituencies?.find(c => c.id === result.constituencyId)?.name || result.constituencyName,
             'Candidate': result.candidateName,
-            'Party': parties?.find(p => p.id === result.partyId)?.name || result.partyId,
+            'Party': parties?.find(p => p.id === result.partyId)?.acronym || result.partyAcronym,
             'Votes': result.votes,
         }));
 
@@ -202,3 +250,5 @@ export default function AdminResultsPage() {
     </div>
   );
 }
+
+    
