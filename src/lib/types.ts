@@ -33,6 +33,7 @@ export interface Constituency {
     top: string;
     left: string;
   };
+  politicalLeaning?: 'solid-slp' | 'lean-slp' | 'tossup' | 'lean-uwp' | 'solid-uwp';
 }
 
 export interface Poll {

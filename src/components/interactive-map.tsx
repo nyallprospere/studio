@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Constituency } from '@/lib/types';
@@ -10,9 +9,22 @@ import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 interface InteractiveMapProps {
   constituencies: Constituency[];
+}
+
+const politicalLeaningOptions = [
+  { value: 'solid-slp', label: 'Solid SLP', color: 'bg-red-700' },
+  { value: 'lean-slp', label: 'Lean SLP', color: 'bg-red-400' },
+  { value: 'tossup', label: 'Tossup', color: 'bg-purple-500' },
+  { value: 'lean-uwp', label: 'Lean UWP', color: 'bg-yellow-300' },
+  { value: 'solid-uwp', label: 'Solid UWP', color: 'bg-yellow-500' },
+];
+
+const getLeaningColor = (leaning: string | undefined) => {
+    return politicalLeaningOptions.find(o => o.value === leaning)?.color || 'bg-gray-500';
 }
 
 export function InteractiveMap({ constituencies }: InteractiveMapProps) {
@@ -53,7 +65,7 @@ export function InteractiveMap({ constituencies }: InteractiveMapProps) {
                 <Popover key={c.id}>
                     <PopoverTrigger asChild>
                         <button 
-                            className="absolute p-1 rounded-md text-xs font-bold text-white bg-red-600 hover:bg-red-700/90 transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-colors duration-200"
+                            className={cn("absolute p-1 rounded-md text-xs font-bold text-white hover:scale-110 transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-200", getLeaningColor(c.politicalLeaning))}
                             style={{ top: `${coords.top}%`, left: `${coords.left}%` }}
                             aria-label={`Info for ${c.name}`}
                         >

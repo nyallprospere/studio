@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -14,6 +13,21 @@ import { Loader2, Save } from 'lucide-react';
 import { uploadFile } from '@/firebase/storage';
 import type { Constituency } from '@/lib/types';
 import Image from 'next/image';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { cn } from '@/lib/utils';
+
+const politicalLeaningOptions = [
+  { value: 'solid-slp', label: 'Solid SLP', color: 'bg-red-700' },
+  { value: 'lean-slp', label: 'Lean SLP', color: 'bg-red-400' },
+  { value: 'tossup', label: 'Tossup', color: 'bg-purple-500' },
+  { value: 'lean-uwp', label: 'Lean UWP', color: 'bg-yellow-300' },
+  { value: 'solid-uwp', label: 'Solid UWP', color: 'bg-yellow-500' },
+];
+
+const getLeaningColor = (leaning: string | undefined) => {
+    return politicalLeaningOptions.find(o => o.value === leaning)?.color || 'bg-gray-500';
+}
 
 export default function AdminMapPage() {
     const { firestore } = useFirebase();
@@ -74,7 +88,7 @@ export default function AdminMapPage() {
     <div className="container mx-auto px-4 py-8 space-y-8">
          <PageHeader
             title="Manage Electoral Map"
-            description="Upload the constituency map and manage the overlay positions."
+            description="Upload the constituency map and manage the overlay positions and colors."
         />
         
         <Card>
@@ -124,12 +138,11 @@ function OverlayManager({ mapUrl, loadingMap }: { mapUrl: string | null; loading
         }
     }, [constituencies]);
     
-    const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>, id: string) => {
+    const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
         e.preventDefault();
         const target = e.currentTarget;
         const rect = target.getBoundingClientRect();
-        const mapRect = mapRef.current!.getBoundingClientRect();
-
+        
         draggedItemRef.current = {
             id,
             offsetX: e.clientX - rect.left,
@@ -193,6 +206,20 @@ function OverlayManager({ mapUrl, loadingMap }: { mapUrl: string | null; loading
             });
     };
 
+    const handleLeaningChange = (constituencyId: string, leaning: string) => {
+        if (!firestore) return;
+        const constituencyRef = doc(firestore, 'constituencies', constituencyId);
+        updateDoc(constituencyRef, { politicalLeaning: leaning })
+            .catch((error) => {
+                 const contextualError = new FirestorePermissionError({
+                    path: constituencyRef.path,
+                    operation: 'update',
+                    requestResourceData: { politicalLeaning: leaning }
+                });
+                errorEmitter.emit('permission-error', contextualError);
+            });
+    }
+
     if (loadingConstituencies || loadingMap) {
         return <div className="text-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
     }
@@ -201,7 +228,7 @@ function OverlayManager({ mapUrl, loadingMap }: { mapUrl: string | null; loading
         <Card>
             <CardHeader>
                 <CardTitle>Manage Overlays</CardTitle>
-                <CardDescription>Drag and drop the labels on the map to set the position for each constituency. Changes are saved automatically.</CardDescription>
+                <CardDescription>Drag and drop the labels to set position. Click a label to set its color.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div 
@@ -220,14 +247,33 @@ function OverlayManager({ mapUrl, loadingMap }: { mapUrl: string | null; loading
                         if (!pointCoords) return null;
 
                         return (
-                            <div 
-                                key={c.id} 
-                                className="absolute p-1 rounded-md text-xs font-bold text-white bg-red-600/80 transform -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing"
-                                style={{ top: `${pointCoords.top}%`, left: `${pointCoords.left}%` }}
-                                onMouseDown={e => handleMouseDown(e, c.id)}
-                            >
-                                {isSaving[c.id] ? <Loader2 className="w-3 h-3 animate-spin" /> : c.name}
-                            </div>
+                           <Popover key={c.id}>
+                                <PopoverTrigger asChild>
+                                    <button 
+                                        className={cn("absolute p-1 rounded-md text-xs font-bold text-white transform -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing", getLeaningColor(c.politicalLeaning))}
+                                        style={{ top: `${pointCoords.top}%`, left: `${pointCoords.left}%` }}
+                                        onMouseDown={e => handleMouseDown(e, c.id)}
+                                    >
+                                        {isSaving[c.id] ? <Loader2 className="w-3 h-3 animate-spin" /> : c.name}
+                                    </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-64">
+                                     <div className="space-y-4">
+                                        <h4 className="font-semibold leading-none">Set Leaning for {c.name}</h4>
+                                        <RadioGroup defaultValue={c.politicalLeaning || 'tossup'} onValueChange={(leaning) => handleLeaningChange(c.id, leaning)}>
+                                            {politicalLeaningOptions.map(option => (
+                                                <div key={option.value} className="flex items-center space-x-2">
+                                                    <RadioGroupItem value={option.value} id={`${c.id}-${option.value}`} />
+                                                    <Label htmlFor={`${c.id}-${option.value}`} className="flex items-center gap-2">
+                                                        <span className={cn('w-4 h-4 rounded-full', option.color)}></span>
+                                                        {option.label}
+                                                    </Label>
+                                                </div>
+                                            ))}
+                                        </RadioGroup>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
                         )
                     })}
                 </div>

@@ -171,6 +171,17 @@
         "demographics": {
           "type": "string",
           "description": "Demographic information about the constituency."
+        },
+        "politicalLeaning": {
+          "type": "string",
+          "description": "The political leaning of the constituency.",
+          "enum": [
+            "solid-slp",
+            "lean-slp",
+            "tossup",
+            "lean-uwp",
+            "solid-uwp"
+          ]
         }
       },
       "required": [
