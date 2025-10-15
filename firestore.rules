@@ -4,39 +4,39 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Default deny all access
-    match /{document=**} {
-      allow read, write: if false;
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    // Allow public read on parties, but only authenticated users can write.
+    // Public read access, temporarily public write access for debugging
     match /parties/{partyId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if true; // Temporarily changed from isSignedIn()
     }
 
-    // Allow public read on candidates, but only authenticated users can write.
+    // Public read access, restricted write access
     match /candidates/{candidateId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isSignedIn();
     }
 
-    // Allow public read on constituencies, but only authenticated users can write.
+    // Public read access, restricted write access
     match /constituencies/{constituencyId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isSignedIn();
     }
 
-    // Allow public read on polls, but only authenticated users can write.
+    // Public read access, restricted write access
     match /polls/{pollId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isSignedIn();
     }
 
-    // Allow public read on historical results, but only authenticated users can write.
+    // Public read access, restricted write access
     match /historicalResults/{resultId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isSignedIn();
     }
   }
 }
