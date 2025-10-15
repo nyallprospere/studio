@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function AdminPartiesPage() {
   return (
@@ -36,6 +37,24 @@ export default function AdminPartiesPage() {
                  <div className="space-y-2">
                     <Label htmlFor="party-founded">Year Founded</Label>
                     <Input id="party-founded" type="number" placeholder="e.g., 1964" />
+                </div>
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="party-description">Party Description</Label>
+                <Textarea id="party-description" placeholder="A brief description of the party's history and core values."/>
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="manifesto-summary">Manifesto Summary</Label>
+                <Textarea id="manifesto-summary" placeholder="A short summary of the party's manifesto."/>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="party-logo">Party Logo</Label>
+                    <Input id="party-logo" type="file" />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="party-manifesto">Party Manifesto (PDF)</Label>
+                    <Input id="party-manifesto" type="file" accept=".pdf" />
                 </div>
             </div>
             <div className="space-y-2">

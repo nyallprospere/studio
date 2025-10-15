@@ -6,11 +6,14 @@ export interface Party {
   founded: number;
   color: string;
   logo?: string; // URL to logo in storage
+  description?: string;
+  manifestoUrl?: string; // URL to PDF in storage
+  manifestoSummary?: string;
 }
 
 export interface Candidate {
   id: string;
-  name: string;
+  name:string;
   partyId: string;
   constituencyId: string;
   bio: string;
