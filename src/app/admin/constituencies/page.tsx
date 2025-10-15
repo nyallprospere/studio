@@ -31,10 +31,10 @@ export default function AdminConstituenciesPage() {
 
     useEffect(() => {
         if (constituencies && constituencies.length > 0) {
-            // Find the first constituency that has a map URL
             const url = constituencies.find(c => c.mapImageUrl)?.mapImageUrl;
             if (url) {
-                setMapPreviewUrl(url);
+                // Add a timestamp to bust the cache every time the component loads
+                setMapPreviewUrl(`${url}?t=${new Date().getTime()}`);
             }
         }
     }, [constituencies]);
@@ -79,17 +79,14 @@ export default function AdminConstituenciesPage() {
         }
         setIsLoading(true);
         try {
-            // By adding a timestamp, we force the browser to re-download the image, bypassing the cache.
-            const mapUrl = await uploadFile(mapImage, `maps/st-lucia-constituencies.svg?t=${new Date().getTime()}`);
+            const mapUrl = await uploadFile(mapImage, `maps/st-lucia-constituencies.svg`);
             
-            // For simplicity, we'll store the map URL in the first constituency doc
-            // In a real app, this might be in a separate 'settings' collection
             if (constituencies && constituencies.length > 0) {
                 const firstConstituencyRef = doc(firestore, 'constituencies', constituencies[0].id);
-                // We add another timestamp to the URL we store to ensure React detects the change.
-                const finalUrl = `${mapUrl}&updated=${new Date().getTime()}`;
-                await setDoc(firstConstituencyRef, { mapImageUrl: finalUrl }, { merge: true });
-                setMapPreviewUrl(finalUrl);
+                // We store the clean URL in Firestore
+                await setDoc(firstConstituencyRef, { mapImageUrl: mapUrl }, { merge: true });
+                // We use a timestamped URL for the immediate preview to bust the cache
+                setMapPreviewUrl(`${mapUrl}?t=${new Date().getTime()}`);
             }
             toast({ title: 'Map Uploaded', description: 'The constituency map has been updated.' });
         } catch (error: any) {
