@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Shield } from 'lucide-react';
-import { useCollection, useFirebase } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 
 function PartyCardSkeleton() {
@@ -34,8 +34,8 @@ function PartyCardSkeleton() {
 
 export default function PartiesPage() {
   const { firestore } = useFirebase();
-  const partiesRef = collection(firestore, 'parties');
-  const { data: parties, isLoading } = useCollection<Party>(partiesRef);
+  const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
+  const { data: parties, isLoading } = useCollection<Party>(partiesQuery);
 
   return (
     <div className="container mx-auto px-4 py-8">
