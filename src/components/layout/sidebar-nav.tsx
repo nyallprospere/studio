@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, LogIn, LogOut, UserPlus } from 'lucide-react';
+import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, LogIn, LogOut, UserPlus, FilePlus } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -30,7 +30,8 @@ const adminNavItems = [
     { href: '/admin/candidates', icon: Users, label: 'Candidates' },
     { href: '/admin/polls', icon: BarChart3, label: 'Polling Data' },
     { href: '/admin/results', icon: Landmark, label: 'Election Results' },
-    { href: '/admin/constituencies', icon: Map, label: 'Constituencies' },
+    { href: '/admin/constituencies', icon: FilePlus, label: 'Constituencies' },
+    { href: '/admin/map', icon: Map, label: 'Map' },
 ];
 
 function AuthSection() {

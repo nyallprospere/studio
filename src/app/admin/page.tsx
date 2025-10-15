@@ -2,14 +2,15 @@ import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Shield, Users, BarChart3, Landmark, Map } from 'lucide-react';
+import { Shield, Users, BarChart3, Landmark, Map, FilePlus } from 'lucide-react';
 
 const adminSections = [
     { title: 'Manage Parties', href: '/admin/parties', icon: Shield },
     { title: 'Manage Candidates', href: '/admin/candidates', icon: Users },
     { title: 'Manage Polling Data', href: '/admin/polls', icon: BarChart3 },
     { title: 'Manage Election Results', href: '/admin/results', icon: Landmark },
-    { title: 'Manage Constituencies', href: '/admin/constituencies', icon: Map },
+    { title: 'Manage Constituencies', href: '/admin/constituencies', icon: FilePlus },
+    { title: 'Manage Map', href: '/admin/map', icon: Map },
 ];
 
 export default function AdminDashboardPage() {
