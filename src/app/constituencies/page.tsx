@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -6,7 +7,9 @@ import { PageHeader } from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
-import { ConstituencyMap } from '@/components/constituency-map';
+import { InteractiveMap } from '@/components/interactive-map';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import Link from 'next/link';
 
 function ConstituenciesPageSkeleton() {
     return (
@@ -42,7 +45,34 @@ export default function ConstituenciesPage() {
       {isLoading || !constituencies ? (
           <ConstituenciesPageSkeleton />
       ) : (
-        <ConstituencyMap constituencies={constituencies} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="md:col-span-2">
+                <Card>
+                    <CardContent className="p-2">
+                         <InteractiveMap constituencies={constituencies} />
+                    </CardContent>
+                </Card>
+            </div>
+            <div>
+                <Card className="sticky top-24">
+                  <CardHeader>
+                    <CardTitle className="font-headline">Constituencies</CardTitle>
+                    <CardDescription>Click a constituency on the map or select from the list.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-1 max-h-[60vh] overflow-y-auto">
+                        {constituencies.map(c => (
+                            <li key={c.id}>
+                                <Link href={`/constituencies/${c.id}`} className="block p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors">
+                                    {c.name}
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+            </div>
+        </div>
       )}
     </div>
   );
