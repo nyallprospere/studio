@@ -36,6 +36,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${spaceGrotesk.variable} ${inter.variable} font-body antialiased`}
+        suppressHydrationWarning={true}
       >
         <FirebaseClientProvider>
           {isAuthPage ? children : <MainLayout>{children}</MainLayout>}
