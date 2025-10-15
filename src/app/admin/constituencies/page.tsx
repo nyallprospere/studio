@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useFirebase, useCollection, useDoc, useMemoFirebase } from '@/firebase';
+import { useFirebase, useCollection, useDoc, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { addDoc, collection, doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -64,8 +64,12 @@ export default function AdminConstituenciesPage() {
             setVoters('');
             setLocations('');
         } catch (error: any) {
-            console.error(error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not save the constituency.' });
+            const contextualError = new FirestorePermissionError({
+              path: 'constituencies',
+              operation: 'create',
+              requestResourceData: newConstituency,
+            });
+            errorEmitter.emit('permission-error', contextualError);
         } finally {
             setIsLoading(false);
         }
@@ -85,12 +89,23 @@ export default function AdminConstituenciesPage() {
             const mapUrl = await uploadFile(mapImage, mapPath);
             
             const settingsDocRef = doc(firestore, 'settings', 'site');
-            await setDoc(settingsDocRef, { mapUrl: mapUrl }, { merge: true });
+            const newSettings = { mapUrl: mapUrl };
 
-            // We use a timestamped URL for the immediate preview to bust the cache
-            setMapPreviewUrl(`${mapUrl}?t=${new Date().getTime()}`);
+            setDoc(settingsDocRef, newSettings, { merge: true })
+              .then(() => {
+                // We use a timestamped URL for the immediate preview to bust the cache
+                setMapPreviewUrl(`${mapUrl}?t=${new Date().getTime()}`);
+                toast({ title: 'Map Uploaded', description: 'The constituency map has been updated.' });
+              })
+              .catch((serverError) => {
+                 const permissionError = new FirestorePermissionError({
+                    path: settingsDocRef.path,
+                    operation: 'update',
+                    requestResourceData: newSettings
+                });
+                errorEmitter.emit('permission-error', permissionError);
+              });
 
-            toast({ title: 'Map Uploaded', description: 'The constituency map has been updated.' });
         } catch (error: any) {
              toast({ variant: 'destructive', title: 'Upload Failed', description: error.message || 'Could not upload map.' });
         } finally {
