@@ -79,15 +79,18 @@ export default function AdminConstituenciesPage() {
         }
         setIsLoading(true);
         try {
+            // By adding a timestamp, we force the browser to re-download the image, bypassing the cache.
             const mapUrl = await uploadFile(mapImage, `maps/st-lucia-constituencies.svg?t=${new Date().getTime()}`);
             
             // For simplicity, we'll store the map URL in the first constituency doc
             // In a real app, this might be in a separate 'settings' collection
             if (constituencies && constituencies.length > 0) {
                 const firstConstituencyRef = doc(firestore, 'constituencies', constituencies[0].id);
-                await setDoc(firstConstituencyRef, { mapImageUrl: mapUrl }, { merge: true });
+                // We add another timestamp to the URL we store to ensure React detects the change.
+                const finalUrl = `${mapUrl}&updated=${new Date().getTime()}`;
+                await setDoc(firstConstituencyRef, { mapImageUrl: finalUrl }, { merge: true });
+                setMapPreviewUrl(finalUrl);
             }
-            setMapPreviewUrl(mapUrl);
             toast({ title: 'Map Uploaded', description: 'The constituency map has been updated.' });
         } catch (error: any) {
              toast({ variant: 'destructive', title: 'Upload Failed', description: error.message || 'Could not upload map.' });
@@ -169,8 +172,9 @@ export default function AdminConstituenciesPage() {
                     <CardContent>
                         {loadingConstituencies && <p>Loading map...</p>}
                         {!loadingConstituencies && mapPreviewUrl ? (
-                            <div className="relative w-full h-[600px] border rounded-lg overflow-hidden">
-                                <Image src={mapPreviewUrl} alt="Constituency Map Preview" layout="fill" objectFit="contain" />
+                            <div className="relative w-full h-[600px] border rounded-lg overflow-hidden p-2 flex items-center justify-center">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={mapPreviewUrl} alt="Constituency Map Preview" className="max-w-full max-h-full" />
                             </div>
                         ) : (
                             !loadingConstituencies && <p className="text-muted-foreground text-center py-10">No map has been uploaded yet.</p>
