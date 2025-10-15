@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,8 @@ import { addDoc, collection, doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { uploadFile } from '@/firebase/storage';
+import type { Constituency } from '@/lib/types';
+import Image from 'next/image';
 
 export default function AdminConstituenciesPage() {
     const { firestore } = useFirebase();
@@ -22,9 +24,21 @@ export default function AdminConstituenciesPage() {
     const [locations, setLocations] = useState('');
     const [mapImage, setMapImage] = useState<File | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [mapPreviewUrl, setMapPreviewUrl] = useState<string | null>(null);
 
     const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
-    const { data: constituencies, isLoading: loadingConstituencies } = useCollection(constituenciesQuery);
+    const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
+
+    useEffect(() => {
+        if (constituencies && constituencies.length > 0) {
+            // Find the first constituency that has a map URL
+            const url = constituencies.find(c => c.mapImageUrl)?.mapImageUrl;
+            if (url) {
+                setMapPreviewUrl(url);
+            }
+        }
+    }, [constituencies]);
+
 
     const handleAddConstituency = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -65,7 +79,7 @@ export default function AdminConstituenciesPage() {
         }
         setIsLoading(true);
         try {
-            const mapUrl = await uploadFile(mapImage, 'maps/st-lucia-constituencies.svg');
+            const mapUrl = await uploadFile(mapImage, `maps/st-lucia-constituencies.svg?t=${new Date().getTime()}`);
             
             // For simplicity, we'll store the map URL in the first constituency doc
             // In a real app, this might be in a separate 'settings' collection
@@ -73,7 +87,7 @@ export default function AdminConstituenciesPage() {
                 const firstConstituencyRef = doc(firestore, 'constituencies', constituencies[0].id);
                 await setDoc(firstConstituencyRef, { mapImageUrl: mapUrl }, { merge: true });
             }
-
+            setMapPreviewUrl(mapUrl);
             toast({ title: 'Map Uploaded', description: 'The constituency map has been updated.' });
         } catch (error: any) {
              toast({ variant: 'destructive', title: 'Upload Failed', description: error.message || 'Could not upload map.' });
@@ -86,70 +100,85 @@ export default function AdminConstituenciesPage() {
     }
 
   return (
-    <div className="container mx-auto px-4 py-8 grid gap-8 md:grid-cols-2">
-      <div>
-        <PageHeader
+    <div className="container mx-auto px-4 py-8">
+         <PageHeader
             title="Manage Constituencies"
-            description="Add or edit constituency information."
+            description="Add new constituencies and manage the electoral map."
         />
-        <Card>
-            <form onSubmit={handleAddConstituency}>
-                <CardHeader>
-                <CardTitle>Add New Constituency</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="constituency-name">Constituency Name</Label>
-                        <Input id="constituency-name" placeholder="e.g., Gros Islet" value={name} onChange={e => setName(e.target.value)} disabled={isLoading} />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="constituency-population">Population</Label>
-                        <Input id="constituency-population" type="number" placeholder="25000" value={population} onChange={e => setPopulation(e.target.value)} disabled={isLoading} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="constituency-voters">Registered Voters</Label>
-                        <Input id="constituency-voters" type="number" placeholder="21000" value={voters} onChange={e => setVoters(e.target.value)} disabled={isLoading} />
-                    </div>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="constituency-locations">Polling Locations</Label>
-                        <Textarea id="constituency-locations" placeholder="Enter one location per line..." value={locations} onChange={e => setLocations(e.target.value)} disabled={isLoading}/>
-                    </div>
-                </CardContent>
-                <CardFooter>
-                    <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90"  disabled={isLoading}>
-                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Save Constituency
-                    </Button>
-                </CardFooter>
-            </form>
-        </Card>
-      </div>
-      <div>
-        <PageHeader
-            title="Manage Map"
-            description="Upload the SVG map for all constituencies."
-        />
-        <Card>
-            <CardHeader>
-                <CardTitle>Upload Constituency Map</CardTitle>
-                <CardDescription>Upload an SVG file to be used as the interactive constituency map.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                 <div className="space-y-2">
-                    <Label htmlFor="map-svg">Constituency Map SVG File</Label>
-                    <Input id="map-svg" type="file" accept=".svg" onChange={e => e.target.files && setMapImage(e.target.files[0])} disabled={isLoading} />
-                </div>
-            </CardContent>
-            <CardFooter>
-                <Button onClick={handleMapUpload} disabled={isLoading || !mapImage}>
-                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Upload Map
-                </Button>
-            </CardFooter>
-        </Card>
-      </div>
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            <div className="lg:col-span-1 space-y-8">
+                <Card>
+                    <form onSubmit={handleAddConstituency}>
+                        <CardHeader>
+                        <CardTitle>Add New Constituency</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="constituency-name">Constituency Name</Label>
+                                <Input id="constituency-name" placeholder="e.g., Gros Islet" value={name} onChange={e => setName(e.target.value)} disabled={isLoading} />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="constituency-population">Population</Label>
+                                <Input id="constituency-population" type="number" placeholder="25000" value={population} onChange={e => setPopulation(e.target.value)} disabled={isLoading} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="constituency-voters">Registered Voters</Label>
+                                <Input id="constituency-voters" type="number" placeholder="21000" value={voters} onChange={e => setVoters(e.target.value)} disabled={isLoading} />
+                            </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="constituency-locations">Polling Locations</Label>
+                                <Textarea id="constituency-locations" placeholder="Enter one location per line..." value={locations} onChange={e => setLocations(e.target.value)} disabled={isLoading}/>
+                            </div>
+                        </CardContent>
+                        <CardFooter>
+                            <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90"  disabled={isLoading}>
+                                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                Save Constituency
+                            </Button>
+                        </CardFooter>
+                    </form>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Upload Constituency Map</CardTitle>
+                        <CardDescription>Upload an SVG file to be used as the interactive constituency map.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="map-svg">Constituency Map SVG File</Label>
+                            <Input id="map-svg" type="file" accept="image/svg+xml" onChange={e => e.target.files && setMapImage(e.target.files[0])} disabled={isLoading} />
+                        </div>
+                    </CardContent>
+                    <CardFooter>
+                        <Button onClick={handleMapUpload} disabled={isLoading || !mapImage}>
+                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Upload Map
+                        </Button>
+                    </CardFooter>
+                </Card>
+            </div>
+            <div className="lg:col-span-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Map Preview</CardTitle>
+                        <CardDescription>This is the current map being displayed to users.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {loadingConstituencies && <p>Loading map...</p>}
+                        {!loadingConstituencies && mapPreviewUrl ? (
+                            <div className="relative w-full h-[600px] border rounded-lg overflow-hidden">
+                                <Image src={mapPreviewUrl} alt="Constituency Map Preview" layout="fill" objectFit="contain" />
+                            </div>
+                        ) : (
+                            !loadingConstituencies && <p className="text-muted-foreground text-center py-10">No map has been uploaded yet.</p>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
     </div>
   );
 }
