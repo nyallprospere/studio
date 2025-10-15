@@ -1,42 +1,110 @@
-
+/**
+ * @fileoverview Firestore Security Rules for the St. Lucia Elections Hub application.
+ *
+ * Core Philosophy: This ruleset provides public read access to all collections
+ * while restricting write access. No authorization model is defined, so writes
+ * are disabled as a safe default in this prototyping phase. This allows the app to
+ * iterate on data structures and UI without being blocked by overly restrictive
+ * security rules.
+ *
+ * Data Structure: Data is organized into top-level collections: /parties/{partyId},
+ * /candidates/{candidateId}, /elections/{electionId}, /polling_data/{pollingDataId},
+ * /constituencies/{constituencyId}, and /election_results/{electionResultId}.
+ *
+ * Key Security Decisions:
+ * - Public read access is granted for all collections to facilitate data discovery and prototyping.
+ * - All write operations (create, update, delete) are explicitly denied.
+ *
+ * Denormalization for Authorization: Not applicable in this ruleset as all writes are disabled.
+ *
+ * Structural Segregation: Data is segregated into collections based on entity type.
+ */
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    // Public read access, temporarily public write access for debugging
+    /**
+     * @description Grants public read access to party data and denies all write operations.
+     * @path /parties/{partyId}
+     * @allow get, list: Everyone can read party data.
+     * @deny create, update, delete: No one can create, update, or delete party data.
+     * @principle Public read, no writes allowed during prototyping.
+     */
     match /parties/{partyId} {
-      allow read: if true;
-      allow write: if true; // Temporarily changed from isSignedIn()
+      allow get, list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
-    // Public read access, restricted write access
+    /**
+     * @description Grants public read access to candidate data and denies all write operations.
+     * @path /candidates/{candidateId}
+     * @allow get, list: Everyone can read candidate data.
+     * @deny create, update, delete: No one can create, update, or delete candidate data.
+     * @principle Public read, no writes allowed during prototyping.
+     */
     match /candidates/{candidateId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow get, list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
-    // Public read access, restricted write access
+    /**
+     * @description Grants public read access to election data and denies all write operations.
+     * @path /elections/{electionId}
+     * @allow get, list: Everyone can read election data.
+     * @deny create, update, delete: No one can create, update, or delete election data.
+     * @principle Public read, no writes allowed during prototyping.
+     */
+    match /elections/{electionId} {
+      allow get, list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Grants public read access to polling data and denies all write operations.
+     * @path /polling_data/{pollingDataId}
+     * @allow get, list: Everyone can read polling data.
+     * @deny create, update, delete: No one can create, update, or delete polling data.
+     * @principle Public read, no writes allowed during prototyping.
+     */
+    match /polling_data/{pollingDataId} {
+      allow get, list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Grants public read access to constituency data and denies all write operations.
+     * @path /constituencies/{constituencyId}
+     * @allow get, list: Everyone can read constituency data.
+     * @deny create, update, delete: No one can create, update, or delete constituency data.
+     * @principle Public read, no writes allowed during prototyping.
+     */
     match /constituencies/{constituencyId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow get, list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
-    // Public read access, restricted write access
-    match /polls/{pollId} {
-      allow read: if true;
-      allow write: if isSignedIn();
-    }
-
-    // Public read access, restricted write access
-    match /historicalResults/{resultId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+    /**
+     * @description Grants public read access to election result data and denies all write operations.
+     * @path /election_results/{electionResultId}
+     * @allow get, list: Everyone can read election result data.
+     * @deny create, update, delete: No one can create, update, or delete election result data.
+     * @principle Public read, no writes allowed during prototyping.
+     */
+    match /election_results/{electionResultId} {
+      allow get, list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
   }
 }

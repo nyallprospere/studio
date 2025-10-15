@@ -1,0 +1,315 @@
+{
+  "entities": {
+    "Candidate": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Candidate",
+      "type": "object",
+      "description": "Represents a candidate running for election.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the candidate."
+        },
+        "partyId": {
+          "type": "string",
+          "description": "Reference to the political party the candidate belongs to. (Relationship: Party 1:N Candidate)"
+        },
+        "constituencyId": {
+          "type": "string",
+          "description": "Reference to the constituency the candidate is running in. (Relationship: Constituency 1:N Candidate)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The candidate's full name."
+        },
+        "bio": {
+          "type": "string",
+          "description": "A short biography of the candidate."
+        },
+        "policyPositions": {
+          "type": "string",
+          "description": "The candidate's stances on key policy issues."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to the candidate's image.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "partyId",
+        "constituencyId",
+        "name"
+      ]
+    },
+    "Party": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Party",
+      "type": "object",
+      "description": "Represents a political party.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the party."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the political party."
+        },
+        "logoUrl": {
+          "type": "string",
+          "description": "URL to the party's logo.",
+          "format": "uri"
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the party's platform and ideology."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "Election": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Election",
+      "type": "object",
+      "description": "Represents an election event.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the election."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the election."
+        },
+        "date": {
+          "type": "string",
+          "description": "The date of the election.",
+          "format": "date-time"
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the election."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "date"
+      ]
+    },
+    "PollingData": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PollingData",
+      "type": "object",
+      "description": "Represents polling data for an election.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the polling data."
+        },
+        "electionId": {
+          "type": "string",
+          "description": "Reference to the election the polling data is for. (Relationship: Election 1:N PollingData)"
+        },
+        "constituencyId": {
+          "type": "string",
+          "description": "Reference to the constituency the polling data is for. (Relationship: Constituency 1:N PollingData)"
+        },
+        "date": {
+          "type": "string",
+          "description": "The date the polling data was collected.",
+          "format": "date-time"
+        },
+        "partyVotes": {
+          "type": "string",
+          "description": "Votes/percentage for the party."
+        },
+        "sampleSize": {
+          "type": "number",
+          "description": "The sample size of the poll."
+        }
+      },
+      "required": [
+        "id",
+        "electionId",
+        "constituencyId",
+        "date"
+      ]
+    },
+    "Constituency": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Constituency",
+      "type": "object",
+      "description": "Represents a voting district/constituency.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the constituency."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the constituency."
+        },
+        "mapCoordinates": {
+          "type": "string",
+          "description": "GeoJSON coordinates of the constituency."
+        },
+        "demographics": {
+          "type": "string",
+          "description": "Demographic information about the constituency."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "ElectionResult": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ElectionResult",
+      "type": "object",
+      "description": "Represents the results of an election.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the election result."
+        },
+        "electionId": {
+          "type": "string",
+          "description": "Reference to the election. (Relationship: Election 1:N ElectionResult)"
+        },
+        "constituencyId": {
+          "type": "string",
+          "description": "Reference to the constituency. (Relationship: Constituency 1:N ElectionResult)"
+        },
+        "candidateId": {
+          "type": "string",
+          "description": "Reference to the candidate. (Relationship: Candidate 1:N ElectionResult)"
+        },
+        "votes": {
+          "type": "number",
+          "description": "The number of votes the candidate received."
+        }
+      },
+      "required": [
+        "id",
+        "electionId",
+        "constituencyId",
+        "candidateId",
+        "votes"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/parties/{partyId}",
+        "definition": {
+          "entityName": "Party",
+          "schema": {
+            "$ref": "#/backend/entities/Party"
+          },
+          "description": "Stores information about political parties.  The `partyId` is used as the document ID.",
+          "params": [
+            {
+              "name": "partyId",
+              "description": "The unique identifier of the party."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/candidates/{candidateId}",
+        "definition": {
+          "entityName": "Candidate",
+          "schema": {
+            "$ref": "#/backend/entities/Candidate"
+          },
+          "description": "Stores information about candidates. The `candidateId` is used as the document ID.",
+          "params": [
+            {
+              "name": "candidateId",
+              "description": "The unique identifier of the candidate."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/elections/{electionId}",
+        "definition": {
+          "entityName": "Election",
+          "schema": {
+            "$ref": "#/backend/entities/Election"
+          },
+          "description": "Stores information about elections. The `electionId` is used as the document ID.",
+          "params": [
+            {
+              "name": "electionId",
+              "description": "The unique identifier of the election."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/polling_data/{pollingDataId}",
+        "definition": {
+          "entityName": "PollingData",
+          "schema": {
+            "$ref": "#/backend/entities/PollingData"
+          },
+          "description": "Stores polling data for elections. The `pollingDataId` is used as the document ID.",
+          "params": [
+            {
+              "name": "pollingDataId",
+              "description": "The unique identifier of the polling data."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/constituencies/{constituencyId}",
+        "definition": {
+          "entityName": "Constituency",
+          "schema": {
+            "$ref": "#/backend/entities/Constituency"
+          },
+          "description": "Stores information about constituencies. The `constituencyId` is used as the document ID.",
+          "params": [
+            {
+              "name": "constituencyId",
+              "description": "The unique identifier of the constituency."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/election_results/{electionResultId}",
+        "definition": {
+          "entityName": "ElectionResult",
+          "schema": {
+            "$ref": "#/backend/entities/ElectionResult"
+          },
+          "description": "Stores election results. The `electionResultId` is used as the document ID.",
+          "params": [
+            {
+              "name": "electionResultId",
+              "description": "The unique identifier of the election result."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support the St. Lucia Elections Hub application, focusing on tracking candidates, parties, elections, polling data, constituencies, and election results. The structure prioritizes Authorization Independence by avoiding hierarchical authorization dependencies and denormalizing data where necessary. Structural Segregation is applied by keeping data with similar access needs in separate collections. Access Modeling employs path-based ownership and membership maps where appropriate. Data Clarity and Predictability are achieved through explicit state modeling and consistent naming conventions.\n\nAuthorization Independence is achieved primarily through structural choices that avoid the need for `get()` calls in security rules.  For instance, access to candidate information does not require reading party or constituency data.\n\nThe structure supports the required QAPs (Rules are not Filters) by:\n\n*   Segregating data into collections with homogeneous security needs.\n*   Avoiding overly complex rule logic that could lead to inefficient queries."
+  }
+}
