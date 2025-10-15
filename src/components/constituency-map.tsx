@@ -1,46 +1,44 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { StLuciaMap } from '@/components/icons/st-lucia-map';
+import { useState, useEffect } from 'react';
 import type { Constituency } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '../ui/skeleton';
+import Image from 'next/image';
 
 interface ConstituencyMapProps {
   constituencies: Constituency[];
 }
 
 export function ConstituencyMap({ constituencies }: ConstituencyMapProps) {
-  const [hoveredConstituency, setHoveredConstituency] = useState<Constituency | null>(null);
-  const router = useRouter();
+  const [mapUrl, setMapUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleConstituencyClick = (constituencyId: string) => {
-    const constituency = constituencies.find(c => c.id === constituencyId);
-    if (constituency) {
-      router.push(`/constituencies/${constituency.id}`);
+  useEffect(() => {
+    // Find a constituency that has the mapImageUrl
+    const constituencyWithMap = constituencies.find(c => c.mapImageUrl);
+    if (constituencyWithMap && constituencyWithMap.mapImageUrl) {
+      setMapUrl(constituencyWithMap.mapImageUrl);
     }
-  };
-
-  const handleMouseEnter = (constituencyId: string) => {
-    const constituency = constituencies.find(c => c.id === constituencyId);
-    setHoveredConstituency(constituency || null);
-  };
-
-  const handleMouseLeave = () => {
-    setHoveredConstituency(null);
-  };
+    setIsLoading(false);
+  }, [constituencies]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
       <div className="md:col-span-2">
         <Card>
           <CardContent className="p-2">
-            <StLuciaMap
-              onClick={handleConstituencyClick}
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
-              hoveredId={hoveredConstituency?.id}
-            />
+            {isLoading ? (
+              <Skeleton className="h-[600px] w-full" />
+            ) : mapUrl ? (
+              <div className="relative w-full h-[600px]">
+                <Image src={mapUrl} alt="Constituency Map of St. Lucia" layout="fill" objectFit="contain" />
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-[600px] text-muted-foreground">
+                <p>No map has been uploaded yet. Please upload one in the admin panel.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -50,19 +48,7 @@ export function ConstituencyMap({ constituencies }: ConstituencyMapProps) {
             <CardTitle className="font-headline">Constituency Info</CardTitle>
           </CardHeader>
           <CardContent>
-            {hoveredConstituency ? (
-              <div>
-                <h3 className="text-lg font-semibold">{hoveredConstituency.name}</h3>
-                <p className="text-sm text-muted-foreground">
-                  Population: {hoveredConstituency.demographics.population.toLocaleString()}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Registered Voters: {hoveredConstituency.demographics.registeredVoters.toLocaleString()}
-                </p>
-              </div>
-            ) : (
-              <p className="text-muted-foreground">Hover over a constituency on the map to see details.</p>
-            )}
+            <p className="text-muted-foreground">Constituency details will be shown here once the interactive map functionality is fully restored.</p>
           </CardContent>
         </Card>
       </div>

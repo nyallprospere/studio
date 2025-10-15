@@ -1,50 +1,155 @@
+'use client';
+
+import { useState } from 'react';
 import { PageHeader } from '@/components/page-header';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
+import { addDoc, collection, doc, setDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
+import { uploadFile } from '@/firebase/storage';
 
 export default function AdminConstituenciesPage() {
+    const { firestore } = useFirebase();
+    const { toast } = useToast();
+    const [name, setName] = useState('');
+    const [population, setPopulation] = useState('');
+    const [voters, setVoters] = useState('');
+    const [locations, setLocations] = useState('');
+    const [mapImage, setMapImage] = useState<File | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
+    const { data: constituencies, isLoading: loadingConstituencies } = useCollection(constituenciesQuery);
+
+    const handleAddConstituency = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!firestore || !name || !population || !voters) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Please fill in all required fields.' });
+            return;
+        }
+        setIsLoading(true);
+
+        const newConstituency = {
+            name,
+            demographics: {
+                population: Number(population),
+                registeredVoters: Number(voters),
+            },
+            pollingLocations: locations.split('\n').filter(l => l.trim() !== ''),
+        };
+
+        try {
+            await addDoc(collection(firestore, 'constituencies'), newConstituency);
+            toast({ title: 'Success!', description: `${name} has been added.` });
+            setName('');
+            setPopulation('');
+            setVoters('');
+            setLocations('');
+        } catch (error: any) {
+            console.error(error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not save the constituency.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    const handleMapUpload = async () => {
+        if (!mapImage || !firestore) {
+             toast({ variant: 'destructive', title: 'Error', description: 'Please select an SVG file to upload.' });
+            return;
+        }
+        setIsLoading(true);
+        try {
+            const mapUrl = await uploadFile(mapImage, 'maps/st-lucia-constituencies.svg');
+            
+            // For simplicity, we'll store the map URL in the first constituency doc
+            // In a real app, this might be in a separate 'settings' collection
+            if (constituencies && constituencies.length > 0) {
+                const firstConstituencyRef = doc(firestore, 'constituencies', constituencies[0].id);
+                await setDoc(firstConstituencyRef, { mapImageUrl: mapUrl }, { merge: true });
+            }
+
+            toast({ title: 'Map Uploaded', description: 'The constituency map has been updated.' });
+        } catch (error: any) {
+             toast({ variant: 'destructive', title: 'Upload Failed', description: error.message || 'Could not upload map.' });
+        } finally {
+            setIsLoading(false);
+            setMapImage(null);
+            const fileInput = document.getElementById('map-svg') as HTMLInputElement;
+            if(fileInput) fileInput.value = '';
+        }
+    }
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Manage Constituencies"
-        description="Add or edit constituency information."
-      />
-      <Card>
-        <CardHeader>
-          <CardTitle>Add New Constituency</CardTitle>
-          <CardDescription>Fill out the form to add a new constituency. Forms are for demonstration purposes only.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="constituency-name">Constituency Name</Label>
-              <Input id="constituency-name" placeholder="e.g., Gros Islet" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div className="space-y-2">
-                <Label htmlFor="constituency-population">Population</Label>
-                <Input id="constituency-population" type="number" placeholder="25000" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="constituency-voters">Registered Voters</Label>
-                 <Input id="constituency-voters" type="number" placeholder="21000" />
-              </div>
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="constituency-locations">Polling Locations</Label>
-                <Textarea id="constituency-locations" placeholder="Enter one location per line..."/>
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="constituency-map">Map Image URL</Label>
-                <Input id="constituency-map" placeholder="https://example.com/map.jpg" />
-            </div>
-            <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90">Save Constituency</Button>
-          </form>
-        </CardContent>
-      </Card>
+    <div className="container mx-auto px-4 py-8 grid gap-8 md:grid-cols-2">
+      <div>
+        <PageHeader
+            title="Manage Constituencies"
+            description="Add or edit constituency information."
+        />
+        <Card>
+            <form onSubmit={handleAddConstituency}>
+                <CardHeader>
+                <CardTitle>Add New Constituency</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="constituency-name">Constituency Name</Label>
+                        <Input id="constituency-name" placeholder="e.g., Gros Islet" value={name} onChange={e => setName(e.target.value)} disabled={isLoading} />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="constituency-population">Population</Label>
+                        <Input id="constituency-population" type="number" placeholder="25000" value={population} onChange={e => setPopulation(e.target.value)} disabled={isLoading} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="constituency-voters">Registered Voters</Label>
+                        <Input id="constituency-voters" type="number" placeholder="21000" value={voters} onChange={e => setVoters(e.target.value)} disabled={isLoading} />
+                    </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="constituency-locations">Polling Locations</Label>
+                        <Textarea id="constituency-locations" placeholder="Enter one location per line..." value={locations} onChange={e => setLocations(e.target.value)} disabled={isLoading}/>
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90"  disabled={isLoading}>
+                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Save Constituency
+                    </Button>
+                </CardFooter>
+            </form>
+        </Card>
+      </div>
+      <div>
+        <PageHeader
+            title="Manage Map"
+            description="Upload the SVG map for all constituencies."
+        />
+        <Card>
+            <CardHeader>
+                <CardTitle>Upload Constituency Map</CardTitle>
+                <CardDescription>Upload an SVG file to be used as the interactive constituency map.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                 <div className="space-y-2">
+                    <Label htmlFor="map-svg">Constituency Map SVG File</Label>
+                    <Input id="map-svg" type="file" accept=".svg" onChange={e => e.target.files && setMapImage(e.target.files[0])} disabled={isLoading} />
+                </div>
+            </CardContent>
+            <CardFooter>
+                <Button onClick={handleMapUpload} disabled={isLoading || !mapImage}>
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Upload Map
+                </Button>
+            </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 }
