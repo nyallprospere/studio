@@ -25,7 +25,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useCollection } from '@/firebase';
+import { useFirestore, useCollection, useStorage } from '@/firebase';
 import { addDoc, collection, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Party } from '@/lib/types';
@@ -42,8 +42,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
-const fileSchema = z.instanceof(File).optional();
+const fileSchema = z.instanceof(File).optional().nullable();
 
 const partySchema = z.object({
   name: z.string().min(2, 'Party name is required'),
@@ -62,7 +64,7 @@ type PartyFormValues = z.infer<typeof partySchema>;
 export default function AdminPartiesPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
-  const storage = getStorage();
+  const storage = useStorage();
   const [isLoading, setIsLoading] = useState(false);
   const [editingParty, setEditingParty] = useState<Party | null>(null);
 
@@ -78,9 +80,11 @@ export default function AdminPartiesPage() {
       description: '',
       manifestoSummary: '',
       color: '#000000',
+      logo: null,
+      manifesto: null,
     },
   });
-
+  
   const uploadFile = async (file: File, path: string): Promise<string> => {
     const storageRef = ref(storage, path);
     const snapshot = await uploadBytes(storageRef, file);
@@ -88,59 +92,64 @@ export default function AdminPartiesPage() {
   };
 
   const onSubmit = async (values: PartyFormValues) => {
+    if (!firestore) return;
     setIsLoading(true);
+    
     try {
-      let logoUrl = editingParty?.logo;
-      if (values.logo) {
-        logoUrl = await uploadFile(values.logo, `party_logos/${values.acronym}_${Date.now()}`);
-      }
+        let logoUrl = editingParty?.logo;
+        if (values.logo) {
+            logoUrl = await uploadFile(values.logo, `party_logos/${values.acronym}_${Date.now()}`);
+        }
 
-      let manifestoUrl = editingParty?.manifestoUrl;
-      if (values.manifesto) {
-        manifestoUrl = await uploadFile(values.manifesto, `party_manifestos/${values.acronym}_${Date.now()}.pdf`);
-      }
+        let manifestoUrl = editingParty?.manifestoUrl;
+        if (values.manifesto) {
+            manifestoUrl = await uploadFile(values.manifesto, `party_manifestos/${values.acronym}_${Date.now()}.pdf`);
+        }
 
-      const partyData = {
-        name: values.name,
-        acronym: values.acronym,
-        leader: values.leader,
-        founded: values.founded,
-        description: values.description,
-        manifestoSummary: values.manifestoSummary,
-        color: values.color,
-        logo: logoUrl,
-        manifestoUrl: manifestoUrl,
-      };
+        const partyData = {
+            name: values.name,
+            acronym: values.acronym,
+            leader: values.leader,
+            founded: values.founded,
+            description: values.description || "",
+            manifestoSummary: values.manifestoSummary || "",
+            color: values.color,
+            logo: logoUrl || "",
+            manifestoUrl: manifestoUrl || "",
+        };
 
-      if (editingParty) {
-        // Update existing party
-        const partyRef = doc(firestore, 'parties', editingParty.id);
-        await updateDoc(partyRef, partyData);
-        toast({ title: 'Party Updated', description: `${values.name} has been successfully updated.` });
-      } else {
-        // Add new party
-        await addDoc(collection(firestore, 'parties'), partyData);
-        toast({ title: 'Party Added', description: `${values.name} has been successfully added.` });
-      }
-
-      form.reset({
-        name: '',
-        acronym: '',
-        leader: '',
-        founded: new Date().getFullYear(),
-        description: '',
-        manifestoSummary: '',
-        color: '#000000',
-      });
-      setEditingParty(null);
-
-    } catch (error) {
-      console.error("Error saving party: ", error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'An error occurred while saving the party.',
-      });
+        if (editingParty) {
+            const partyRef = doc(firestore, 'parties', editingParty.id);
+            updateDoc(partyRef, partyData)
+                .then(() => {
+                    toast({ title: 'Party Updated', description: `${values.name} has been successfully updated.` });
+                    form.reset({ name: '', acronym: '', leader: '', founded: new Date().getFullYear(), description: '', manifestoSummary: '', color: '#000000', logo: null, manifesto: null });
+                    setEditingParty(null);
+                })
+                .catch(async (error) => {
+                    const permissionError = new FirestorePermissionError({ path: partyRef.path, operation: 'update', requestResourceData: partyData });
+                    errorEmitter.emit('permission-error', permissionError);
+                });
+        } else {
+            const collectionRef = collection(firestore, 'parties');
+            addDoc(collectionRef, partyData)
+                .then(() => {
+                    toast({ title: 'Party Added', description: `${values.name} has been successfully added.` });
+                    form.reset({ name: '', acronym: '', leader: '', founded: new Date().getFullYear(), description: '', manifestoSummary: '', color: '#000000', logo: null, manifesto: null });
+                })
+                .catch(async (error) => {
+                    const permissionError = new FirestorePermissionError({ path: collectionRef.path, operation: 'create', requestResourceData: partyData });
+                    errorEmitter.emit('permission-error', permissionError);
+                });
+        }
+    } catch (e) {
+        // This will catch errors from file upload, etc.
+        console.error("An unexpected error occurred:", e);
+        toast({
+            variant: "destructive",
+            title: "Upload Error",
+            description: "An error occurred while uploading a file. Please check storage rules.",
+        });
     } finally {
         setIsLoading(false);
     }
@@ -160,17 +169,16 @@ export default function AdminPartiesPage() {
   };
 
   const handleDelete = async (partyId: string) => {
-    try {
-      await deleteDoc(doc(firestore, "parties", partyId));
-      toast({ title: "Party Deleted", description: "The party has been successfully deleted." });
-    } catch (error) {
-      console.error("Error deleting party: ", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "An error occurred while deleting the party.",
-      });
-    }
+    if (!firestore) return;
+    const partyRef = doc(firestore, "parties", partyId);
+    deleteDoc(partyRef)
+        .then(() => {
+            toast({ title: "Party Deleted", description: "The party has been successfully deleted." });
+        })
+        .catch(async (error) => {
+            const permissionError = new FirestorePermissionError({ path: partyRef.path, operation: 'delete' });
+            errorEmitter.emit('permission-error', permissionError);
+        });
   };
 
   return (
@@ -282,7 +290,7 @@ export default function AdminPartiesPage() {
                         <FormItem>
                             <FormLabel>Party Logo</FormLabel>
                             <FormControl>
-                            <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)} {...rest} />
+                            <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -295,7 +303,7 @@ export default function AdminPartiesPage() {
                         <FormItem>
                             <FormLabel>Party Manifesto (PDF)</FormLabel>
                             <FormControl>
-                            <Input type="file" accept=".pdf" onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)} {...rest} />
+                            <Input type="file" accept=".pdf" onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -330,7 +338,7 @@ export default function AdminPartiesPage() {
                 </Button>
                 {editingParty && (
                     <Button variant="outline" onClick={() => { setEditingParty(null); form.reset({
-                      name: '', acronym: '', leader: '', founded: new Date().getFullYear(), description: '', manifestoSummary: '', color: '#000000'
+                      name: '', acronym: '', leader: '', founded: new Date().getFullYear(), description: '', manifestoSummary: '', color: '#000000', logo: null, manifesto: null
                     }); }}>
                         Cancel Edit
                     </Button>
@@ -355,7 +363,9 @@ export default function AdminPartiesPage() {
                     {parties?.map((party) => (
                         <div key={party.id} className="flex items-center justify-between p-3 rounded-lg border">
                             <div className="flex items-center gap-4">
-                                <div className="h-10 w-10 rounded-full flex-shrink-0" style={{ backgroundColor: party.color }}></div>
+                                <div className="h-10 w-10 rounded-full flex-shrink-0" style={{ backgroundColor: party.color }}>
+                                    {party.logo && <img src={party.logo} alt={party.name} className="h-full w-full object-cover rounded-full" />}
+                                </div>
                                 <div>
                                     <p className="font-semibold">{party.name} ({party.acronym})</p>
                                     <p className="text-sm text-muted-foreground">{party.leader}</p>
