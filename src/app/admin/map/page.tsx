@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -76,58 +76,43 @@ export default function AdminMapPage() {
             title="Manage Electoral Map"
             description="Upload the constituency map and manage the overlay positions."
         />
-        <div className="grid gap-8 md:grid-cols-2">
-            <div>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Upload Constituency Map</CardTitle>
-                        <CardDescription>Upload an SVG, PNG, or JPG file to be used as the constituency map.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="map-svg">Constituency Map File</Label>
-                            <Input id="map-svg" type="file" accept="image/svg+xml,image/png,image/jpeg" onChange={e => e.target.files && setMapImage(e.target.files[0])} disabled={isLoading} />
-                        </div>
-                    </CardContent>
-                    <CardFooter>
-                        <Button onClick={handleMapUpload} disabled={isLoading || !mapImage}>
-                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            Upload Map
-                        </Button>
-                    </CardFooter>
-                </Card>
-            </div>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Map Preview</CardTitle>
-                    <CardDescription>This is the current map being displayed to users.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {(loadingSettings) && <div className="h-[400px] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>}
-                    {!(loadingSettings) && mapPreviewUrl ? (
-                        <div className="relative w-full h-[400px] border rounded-lg overflow-hidden p-2 flex items-center justify-center">
-                            <Image src={mapPreviewUrl} alt="Constituency Map Preview" fill className="object-contain" />
-                        </div>
-                    ) : (
-                        !loadingSettings && <p className="text-muted-foreground text-center py-10">No map has been uploaded yet.</p>
-                    )}
-                </CardContent>
-            </Card>
-        </div>
-        <OverlayManager />
+        
+        <Card>
+            <CardHeader>
+                <CardTitle>Upload Constituency Map</CardTitle>
+                <CardDescription>Upload an SVG, PNG, or JPG file to be used as the constituency map. This will replace the current map.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="map-svg">Constituency Map File</Label>
+                    <Input id="map-svg" type="file" accept="image/svg+xml,image/png,image/jpeg" onChange={e => e.target.files && setMapImage(e.target.files[0])} disabled={isLoading} />
+                </div>
+            </CardContent>
+            <CardFooter>
+                <Button onClick={handleMapUpload} disabled={isLoading || !mapImage}>
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Upload Map
+                </Button>
+            </CardFooter>
+        </Card>
+        
+        <OverlayManager mapUrl={mapPreviewUrl} loadingMap={loadingSettings} />
     </div>
   );
 }
 
 
-function OverlayManager() {
+function OverlayManager({ mapUrl, loadingMap }: { mapUrl: string | null; loadingMap: boolean; }) {
     const { firestore } = useFirebase();
     const { toast } = useToast();
     const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
     const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
     
     const [coords, setCoords] = useState<Record<string, { top: string, left: string }>>({});
+    const [dirty, setDirty] = useState<Record<string, boolean>>({});
     const [isSaving, setIsSaving] = useState<Record<string, boolean>>({});
+    const mapRef = useRef<HTMLDivElement>(null);
+    const draggedItemRef = useRef<{id: string; offsetX: number; offsetY: number} | null>(null);
 
     useEffect(() => {
         if (constituencies) {
@@ -138,25 +123,57 @@ function OverlayManager() {
             setCoords(initialCoords);
         }
     }, [constituencies]);
-
-    const handleCoordChange = (id: string, field: 'top' | 'left', value: string) => {
-        setCoords(prev => ({
-            ...prev,
-            [id]: { ...prev[id], [field]: value }
-        }));
+    
+    const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>, id: string) => {
+        e.preventDefault();
+        const target = e.currentTarget;
+        const rect = target.getBoundingClientRect();
+        draggedItemRef.current = {
+            id,
+            offsetX: e.clientX - rect.left,
+            offsetY: e.clientY - rect.top
+        };
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
     };
 
-    const handleSaveCoords = (constituency: Constituency) => {
+    const handleMouseMove = (e: MouseEvent) => {
+        if (!draggedItemRef.current || !mapRef.current) return;
+
+        const mapRect = mapRef.current.getBoundingClientRect();
+        const { id, offsetX, offsetY } = draggedItemRef.current;
+
+        const newLeft = e.clientX - mapRect.left - offsetX;
+        const newTop = e.clientY - mapRect.top - offsetY;
+
+        const newLeftPercent = Math.max(0, Math.min(100, (newLeft / mapRect.width) * 100));
+        const newTopPercent = Math.max(0, Math.min(100, (newTop / mapRect.height) * 100));
+        
+        setCoords(prev => ({
+            ...prev,
+            [id]: { top: newTopPercent.toFixed(2), left: newLeftPercent.toFixed(2) }
+        }));
+        setDirty(prev => ({ ...prev, [id]: true }));
+    };
+
+    const handleMouseUp = () => {
+        draggedItemRef.current = null;
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    const handleSaveCoords = (constituencyId: string) => {
         if (!firestore) return;
         
-        setIsSaving(prev => ({ ...prev, [constituency.id]: true }));
+        setIsSaving(prev => ({ ...prev, [constituencyId]: true }));
 
-        const newCoords = coords[constituency.id];
-        const constituencyRef = doc(firestore, 'constituencies', constituency.id);
+        const newCoords = coords[constituencyId];
+        const constituencyRef = doc(firestore, 'constituencies', constituencyId);
         
         updateDoc(constituencyRef, { mapCoordinates: newCoords })
             .then(() => {
-                toast({ title: 'Saved!', description: `Coordinates for ${constituency.name} have been updated.` });
+                toast({ title: 'Saved!', description: `Coordinates for ${constituencies?.find(c=>c.id===constituencyId)?.name} have been updated.` });
+                setDirty(prev => ({...prev, [constituencyId]: false}));
             })
             .catch((error) => {
                  const contextualError = new FirestorePermissionError({
@@ -167,11 +184,11 @@ function OverlayManager() {
                 errorEmitter.emit('permission-error', contextualError);
             })
             .finally(() => {
-                setIsSaving(prev => ({ ...prev, [constituency.id]: false }));
+                setIsSaving(prev => ({ ...prev, [constituencyId]: false }));
             });
     };
 
-    if (loadingConstituencies) {
+    if (loadingConstituencies || loadingMap) {
         return <div className="text-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
     }
 
@@ -179,44 +196,52 @@ function OverlayManager() {
         <Card>
             <CardHeader>
                 <CardTitle>Manage Overlays</CardTitle>
-                <CardDescription>Set the position of each constituency's interactive point on the map. Values are percentages (%).</CardDescription>
+                <CardDescription>Drag and drop the points on the map to set the position for each constituency. Click save on each point to persist changes.</CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
-                    {constituencies?.map(c => (
-                        <div key={c.id} className="p-3 border rounded-md bg-muted/20">
-                            <h4 className="font-semibold mb-2">{c.name}</h4>
-                            <div className="flex items-center gap-4">
-                                <div className="flex-1 space-y-1">
-                                    <Label htmlFor={`top-${c.id}`} className="text-xs">Top (%)</Label>
-                                    <Input 
-                                        id={`top-${c.id}`} 
-                                        type="number" 
-                                        value={coords[c.id]?.top || ''}
-                                        onChange={e => handleCoordChange(c.id, 'top', e.target.value)}
-                                        className="h-8"
-                                        disabled={isSaving[c.id]}
-                                    />
-                                </div>
-                                <div className="flex-1 space-y-1">
-                                    <Label htmlFor={`left-${c.id}`} className="text-xs">Left (%)</Label>
-                                    <Input 
-                                        id={`left-${c.id}`} 
-                                        type="number"
-                                        value={coords[c.id]?.left || ''}
-                                        onChange={e => handleCoordChange(c.id, 'left', e.target.value)}
-                                        className="h-8"
-                                        disabled={isSaving[c.id]}
-                                    />
-                                </div>
-                                <div className="self-end">
-                                    <Button size="icon" className="h-8 w-8" onClick={() => handleSaveCoords(c)} disabled={isSaving[c.id]}>
-                                        {isSaving[c.id] ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                                    </Button>
+                <div 
+                  ref={mapRef}
+                  className="relative w-full aspect-[4/5] max-w-3xl mx-auto border rounded-lg overflow-hidden bg-muted"
+                >
+                    {mapUrl ? (
+                        <Image src={mapUrl} alt="Constituency Map" fill className="object-contain" />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <p className="text-muted-foreground">No map uploaded.</p>
+                        </div>
+                    )}
+                    {constituencies?.map(c => {
+                        const pointCoords = coords[c.id];
+                        if (!pointCoords) return null;
+
+                        return (
+                            <div 
+                                key={c.id} 
+                                className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing group"
+                                style={{ top: `${pointCoords.top}%`, left: `${pointCoords.left}%` }}
+                                onMouseDown={e => handleMouseDown(e, c.id)}
+                            >
+                                <div className="w-4 h-4 bg-primary rounded-full ring-2 ring-white transition-transform group-hover:scale-125" />
+                                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-background text-foreground text-xs font-semibold px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                    {c.name}
+                                    {dirty[c.id] && (
+                                         <Button 
+                                            size="sm" 
+                                            className="h-6 w-14 ml-2" 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleSaveCoords(c.id);
+                                            }}
+                                            disabled={isSaving[c.id]}
+                                         >
+                                            {isSaving[c.id] ? <Loader2 className="h-3 w-3 animate-spin"/> : <Save className="h-3 w-3"/>}
+                                            Save
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
             </CardContent>
         </Card>
