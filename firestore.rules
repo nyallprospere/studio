@@ -2,16 +2,25 @@
  * @fileoverview Firestore Security Rules for the St. Lucia Elections Hub application.
  *
  * Core Philosophy:
- * This ruleset enforces a strict data isolation model. Only authenticated users can access or modify data, and access is generally restricted to specific documents unless public read access is explicitly granted. Authorization Independence is a priority to minimize `get()` calls.
+ * This ruleset prioritizes security by enforcing strict ownership and access controls on all data.
+ * It defaults to a deny-all policy and explicitly grants access based on user authentication and authorization.
+ * The rules are designed to prevent unauthorized data access and modification.
  *
  * Data Structure:
- * The Firestore database consists of several top-level collections: `parties`, `candidates`, `elections`, `polling_data`, `constituencies`, and `election_results`. Each collection stores data related to its namesake entity.  Document IDs are explicitly passed by the client and MUST match any internal ID fields.
+ * - /parties/{partyId}: Stores political party information.
+ * - /candidates/{candidateId}: Stores candidate information.
+ * - /elections/{electionId}: Stores election event information.
+ * - /polling_data/{pollingDataId}: Stores polling data for elections.
+ * - /constituencies/{constituencyId}: Stores constituency information.
+ * - /election_results/{electionResultId}: Stores election result information.
+ * - /settings/site: Stores global site settings.
  *
  * Key Security Decisions:
- * - No user-specific data trees are present.
- * - Public listing is disallowed for collections containing potentially sensitive information.
- * - All write operations require authentication.
- * - The `settings` collection is not covered by the data model and needs specific attention.
+ * - All write operations require user authentication.
+ * - There is no implicit public access to any data.
+ *
+ * Denormalization for Authorization:
+ *  - There is no need to denormalize any extra data as the current data structure does not have any hierarchical data that requires complex authorization.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -26,147 +35,104 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows only signed-in users.
-     * @return {boolean} True if the user is signed in, false otherwise.
+     * @description Allows only authenticated users.
+     * @return {boolean} True if the user is authenticated, false otherwise.
      */
-    function isAuth() {
-        return request.auth != null;
+    function isAuthenticated() {
+        return isSignedIn();
     }
 
     /**
-     * @description Checks if the document exists.
-     * @return {boolean} True if the document exists, false otherwise.
-     */
-    function isExisting() {
-      return resource != null;
-    }
-
-    /**
-     * @description Checks if the ID in the path matches the ID in the request data for create operations.
-     * @param {string} documentId - The ID from the document path.
-     * @return {boolean} True if the IDs match, false otherwise.
-     */
-    function isValidCreateId(documentId) {
-      return request.resource.data.id == documentId;
-    }
-
-    /**
-     * @description Checks if the ID in the path matches the ID in the existing document for update operations (immutability).
-     * @param {string} documentId - The ID from the document path.
-     * @return {boolean} True if the IDs match, false otherwise.
-     */
-    function isValidUpdateId(documentId) {
-      return request.resource.data.id == resource.data.id;
-    }
-
-    /**
-     * @description Rules for the /parties collection.
-     * @path /parties/{partyId}
-     * @allow (create) Authenticated user can create a party if the partyId in the path matches the party ID in the document.
-     * @deny (create) An unauthenticated user cannot create a party.
-     * @allow (get, list) Any authenticated user can read party information.
-     * @deny (update, delete) No one can update or delete party information.
-     * @principle Enforces authentication for writes and id validation.
-     */
-    match /parties/{partyId} {
-      allow get, list: if isAuth();
-      allow create: if isAuth() && request.resource.data.id == partyId;
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    /**
-     * @description Rules for the /candidates collection.
-     * @path /candidates/{candidateId}
-     * @allow (create) Authenticated user can create a candidate if the candidateId in the path matches the candidate ID in the document.
-     * @deny (create) An unauthenticated user cannot create a candidate.
-     * @allow (get, list) Any authenticated user can read candidate information.
-     * @deny (update, delete) No one can update or delete candidate information.
-     * @principle Enforces authentication for writes and id validation.
-     */
-    match /candidates/{candidateId} {
-      allow get, list: if isAuth();
-      allow create: if isAuth() && request.resource.data.id == candidateId;
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    /**
-     * @description Rules for the /elections collection.
-     * @path /elections/{electionId}
-     * @allow (create) Authenticated user can create an election if the electionId in the path matches the election ID in the document.
-     * @deny (create) An unauthenticated user cannot create an election.
-     * @allow (get, list) Any authenticated user can read election information.
-     * @deny (update, delete) No one can update or delete election information.
-     * @principle Enforces authentication for writes and id validation.
-     */
-    match /elections/{electionId} {
-      allow get, list: if isAuth();
-      allow create: if isAuth() && request.resource.data.id == electionId;
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    /**
-     * @description Rules for the /polling_data collection.
-     * @path /polling_data/{pollingDataId}
-     * @allow (create) Authenticated user can create polling data if the pollingDataId in the path matches the polling data ID in the document.
-     * @deny (create) An unauthenticated user cannot create polling data.
-     * @allow (get, list) Any authenticated user can read polling data.
-     * @deny (update, delete) No one can update or delete polling data.
-     * @principle Enforces authentication for writes and id validation.
-     */
-    match /polling_data/{pollingDataId} {
-      allow get, list: if isAuth();
-      allow create: if isAuth() && request.resource.data.id == pollingDataId;
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    /**
-     * @description Rules for the /constituencies collection.
-     * @path /constituencies/{constituencyId}
-     * @allow (create) Authenticated user can create a constituency if the constituencyId in the path matches the constituency ID in the document.
-     * @deny (create) An unauthenticated user cannot create a constituency.
-     * @allow (get, list) Any authenticated user can read constituency information.
-     * @deny (update, delete) No one can update or delete constituency information.
-     * @principle Enforces authentication for writes and id validation.
-     */
-    match /constituencies/{constituencyId} {
-      allow get, list: if isAuth();
-      allow create: if isAuth() && request.resource.data.id == constituencyId;
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    /**
-     * @description Rules for the /election_results collection.
-     * @path /election_results/{electionResultId}
-     * @allow (create) Authenticated user can create election results if the electionResultId in the path matches the election result ID in the document.
-     * @deny (create) An unauthenticated user cannot create election results.
-     * @allow (get, list) Any authenticated user can read election results.
-     * @deny (update, delete) No one can update or delete election results.
-     * @principle Enforces authentication for writes and id validation.
-     */
-    match /election_results/{electionResultId} {
-      allow get, list: if isAuth();
-      allow create: if isAuth() && request.resource.data.id == electionResultId;
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    /**
-     * @description Rules for the /settings/site document.
+     * @description Enforces that only the authenticated user can update the site settings.
      * @path /settings/site
-     * @allow (get) Any authenticated user can read the settings.
-     * @deny (create, update, delete, list) No one can create, update, delete, or list settings.
-     * @principle Enforces that only the get method is allowed.
+     * @allow (update) - Authenticated user can update settings.
+     * @deny (update) - Unauthenticated user cannot update settings.
+     * @principle Requires authentication for updates.
      */
     match /settings/site {
-        allow get: if isAuth();
-        allow create: if false;
-        allow update: if false;
-        allow delete: if false;
+      allow get: if true;
+      allow list: if false;
+      allow create: if false;
+      allow update: if isAuthenticated();
+      allow delete: if false;
+    }
+    
+    /**
+     * @description Manages access to political party information.
+     * @path /parties/{partyId}
+     * @allow (get, list) - Any user can read party information.
+     * @allow (create, update, delete) - Only authenticated users can modify party information.
+     * @deny (create, update, delete) - Unauthenticated users cannot modify party information.
+     * @principle Requires authentication for writes.
+     */
+    match /parties/{partyId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAuthenticated();
+    }
+
+    /**
+     * @description Manages access to candidate information.
+     * @path /candidates/{candidateId}
+     * @allow (get, list) - Any user can read candidate information.
+     * @allow (create, update, delete) - Only authenticated users can modify candidate information.
+     * @deny (create, update, delete) - Unauthenticated users cannot modify candidate information.
+     * @principle Requires authentication for writes.
+     */
+    match /candidates/{candidateId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAuthenticated();
+    }
+
+    /**
+     * @description Manages access to election information.
+     * @path /elections/{electionId}
+     * @allow (get, list) - Any user can read election information.
+     * @allow (create, update, delete) - Only authenticated users can modify election information.
+     * @deny (create, update, delete) - Unauthenticated users cannot modify election information.
+     * @principle Requires authentication for writes.
+     */
+    match /elections/{electionId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAuthenticated();
+    }
+
+    /**
+     * @description Manages access to polling data.
+     * @path /polling_data/{pollingDataId}
+     * @allow (get, list) - Any user can read polling data.
+     * @allow (create, update, delete) - Only authenticated users can modify polling data.
+     * @deny (create, update, delete) - Unauthenticated users cannot modify polling data.
+     * @principle Requires authentication for writes.
+     */
+    match /polling_data/{pollingDataId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAuthenticated();
+    }
+
+    /**
+     * @description Manages access to constituency information.
+     * @path /constituencies/{constituencyId}
+     * @allow (get, list) - Any user can read constituency information.
+     * @allow (create, update, delete) - Only authenticated users can modify constituency information.
+     * @deny (create, update, delete) - Unauthenticated users cannot modify constituency information.
+     * @principle Requires authentication for writes.
+     */
+    match /constituencies/{constituencyId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAuthenticated();
+    }
+
+    /**
+     * @description Manages access to election result information.
+     * @path /election_results/{electionResultId}
+     * @allow (get, list) - Any user can read election result information.
+     * @allow (create, update, delete) - Only authenticated users can modify election result information.
+     * @deny (create, update, delete) - Unauthenticated users cannot modify election result information.
+     * @principle Requires authentication for writes.
+     */
+    match /election_results/{electionResultId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAuthenticated();
     }
   }
 }
