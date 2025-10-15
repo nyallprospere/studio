@@ -51,7 +51,7 @@ export default function AdminPartiesPage() {
       name: '',
       acronym: '',
       leader: '',
-      founded: undefined,
+      founded: '' as any, // Use empty string to avoid uncontrolled input warning
       color: '#000000',
       description: '',
       manifestoSummary: '',
