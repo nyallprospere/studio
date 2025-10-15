@@ -5,13 +5,10 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarFooter,
-  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield } from 'lucide-react';
+import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, KeyRound } from 'lucide-react';
 import { Button } from '../ui/button';
 
 const mainNavItems = [
@@ -30,6 +27,7 @@ const adminNavItems = [
     { href: '/admin/polls', icon: BarChart3, label: 'Polling Data' },
     { href: '/admin/results', icon: Landmark, label: 'Election Results' },
     { href: '/admin/constituencies', icon: Map, label: 'Constituencies' },
+    { href: '/admin/apikeys', icon: KeyRound, label: 'API Keys' },
 ];
 
 export function SidebarNav() {
@@ -66,25 +64,18 @@ export function SidebarNav() {
           </SidebarMenuItem>
         ))}
       </SidebarMenu>
-      <SidebarFooter className="mt-auto">
-        <SidebarMenu>
-          <SidebarMenuItem>
-             <Button
-                asChild
-                variant={isAdminPath ? 'default' : 'outline'}
-                className="w-full justify-start bg-accent text-accent-foreground hover:bg-accent/90"
-            >
-                <Link href={isAdminPath ? "/" : "/admin"}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    {isAdminPath ? 'Exit Admin' : 'Admin Panel'}
-                </Link>
-            </Button>
-          </SidebarMenuItem>
-          <div className="md:hidden p-2">
-            <SidebarTrigger />
-          </div>
-        </SidebarMenu>
-      </SidebarFooter>
+      <div className="mt-auto p-2">
+        <Button
+            asChild
+            variant={isAdminPath ? 'default' : 'outline'}
+            className="w-full justify-start bg-accent text-accent-foreground hover:bg-accent/90"
+        >
+            <Link href={isAdminPath ? "/" : "/admin"}>
+                <Settings className="mr-2 h-4 w-4" />
+                {isAdminPath ? 'Exit Admin' : 'Admin Panel'}
+            </Link>
+        </Button>
+      </div>
     </Sidebar>
   );
 }
