@@ -3,9 +3,9 @@ import { FirebaseOptions } from 'firebase/app';
 
 export const firebaseConfig: FirebaseOptions = {
   "apiKey": "mock-api-key",
-  "authDomain": "mock-auth-domain",
+  "authDomain": "studio-6540754669-81720.firebaseapp.com",
   "projectId": "studio-6540754669-81720",
-  "storageBucket": "mock-storage-bucket",
+  "storageBucket": "studio-6540754669-81720.appspot.com",
   "messagingSenderId": "mock-messaging-sender-id",
   "appId": "mock-app-id"
 };
