@@ -71,33 +71,33 @@ export default function AdminCandidatesPage() {
     
     setIsLoading(true);
 
-    try {
-        let uploadedImageUrl = '';
-        if (imageUrl) {
+    let uploadedImageUrl = '';
+    if (imageUrl) {
+        try {
             uploadedImageUrl = await uploadFile(imageUrl, `candidate-photos/${Date.now()}-${imageUrl.name}`);
+        } catch (uploadError: any) {
+            toast({ variant: 'destructive', title: 'Upload Error', description: uploadError.message || 'Failed to upload image.' });
+            setIsLoading(false);
+            return;
         }
-
-        const candidatesCollection = collection(firestore, 'candidates');
-        
-        const candidateData = {
-            name,
-            partyId,
-            constituencyId,
-            bio,
-            imageUrl: uploadedImageUrl,
-            policyPositions: [], // Default to empty array
-        };
-        
-        addDocumentNonBlocking(candidatesCollection, candidateData);
-
-        toast({ title: 'Success!', description: 'The new candidate has been saved.' });
-        resetForm();
-    } catch (error: any) {
-        console.error("Error saving candidate: ", error);
-        toast({ variant: 'destructive', title: 'Error', description: error.message || 'An error occurred while saving the candidate.' });
-    } finally {
-        setIsLoading(false);
     }
+
+    const candidatesCollection = collection(firestore, 'candidates');
+    
+    const candidateData = {
+        name,
+        partyId,
+        constituencyId,
+        bio,
+        imageUrl: uploadedImageUrl,
+        policyPositions: [], // Default to empty array
+    };
+    
+    addDocumentNonBlocking(candidatesCollection, candidateData);
+
+    toast({ title: 'Success!', description: 'The new candidate has been saved.' });
+    resetForm();
+    setIsLoading(false);
   };
 
   return (
