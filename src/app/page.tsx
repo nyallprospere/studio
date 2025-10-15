@@ -1,51 +1,135 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+'use client';
+
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Users, BarChart3, TrendingUp, Landmark, Shield, Vote, Map } from 'lucide-react';
+import { Users, BarChart3, TrendingUp, Landmark, Shield, Vote, Map, GripVertical } from 'lucide-react';
 import Countdown from '@/components/countdown';
 import { PageHeader } from '@/components/page-header';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
-export default function Home() {
-  const electionDate = new Date('2026-07-26T00:00:00');
-
-  const keyFeatures = [
+const initialKeyFeatures = [
     {
+      id: 'candidates',
       title: 'Candidate Profiles',
       description: 'Learn about the candidates and their platforms.',
-      icon: <Users className="w-8 h-8 text-primary" />,
+      icon: Users,
       href: '/candidates',
     },
     {
+      id: 'polls',
       title: 'Polling Data',
       description: 'View the latest poll results and trends.',
-      icon: <BarChart3 className="w-8 h-8 text-primary" />,
+      icon: BarChart3,
       href: '/polls',
     },
     {
+      id: 'predictions',
       title: 'AI Predictions',
       description: 'See our AI-powered election outcome predictions.',
-      icon: <TrendingUp className="w-8 h-8 text-primary" />,
+      icon: TrendingUp,
       href: '/predictions',
     },
     {
+      id: 'results',
       title: 'Past Results',
       description: 'Explore historical election data from 1974.',
-      icon: <Landmark className="w-8 h-8 text-primary" />,
+      icon: Landmark,
       href: '/results',
     },
      {
+      id: 'parties',
       title: 'Party Information',
       description: 'Discover the parties contesting the election.',
-      icon: <Shield className="w-8 h-8 text-primary" />,
+      icon: Shield,
       href: '/parties',
     },
     {
+      id: 'constituencies',
       title: 'Constituencies',
       description: 'Find your constituency and its voting information.',
-      icon: <Map className="w-8 h-8 text-primary" />,
+      icon: Map,
       href: '/constituencies',
     },
-  ];
+];
+
+function SortableFeatureCard({ feature }: { feature: typeof initialKeyFeatures[0] }) {
+  const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+  } = useSortable({ id: feature.id });
+
+  const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+  };
+
+  return (
+      <div ref={setNodeRef} style={style} {...attributes}>
+        <Card className="flex flex-col hover:shadow-xl transition-shadow duration-300 h-full">
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <div {...listeners} className="cursor-grab p-2">
+                        <GripVertical className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                     <div className="flex items-center gap-4">
+                        <feature.icon className="w-8 h-8 text-primary" />
+                        <CardTitle className="font-headline text-xl">{feature.title}</CardTitle>
+                    </div>
+                </div>
+            </CardHeader>
+            <CardContent className="flex-grow">
+              <p className="text-muted-foreground">{feature.description}</p>
+            </CardContent>
+            <CardFooter>
+              <Button asChild className="w-full bg-primary hover:bg-primary/90">
+                <Link href={feature.href}>View Details</Link>
+              </Button>
+            </CardFooter>
+          </Card>
+      </div>
+  );
+}
+
+
+export default function Home() {
+  const electionDate = new Date('2026-07-26T00:00:00');
+  const [keyFeatures, setKeyFeatures] = useState(initialKeyFeatures);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor)
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const {active, over} = event;
+    
+    if (over && active.id !== over.id) {
+      setKeyFeatures((items) => {
+        const oldIndex = items.findIndex(item => item.id === active.id);
+        const newIndex = items.findIndex(item => item.id === over.id);
+        
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -65,24 +149,23 @@ export default function Home() {
         </CardContent>
       </Card>
       
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {keyFeatures.map((feature) => (
-          <Card key={feature.title} className="flex flex-col hover:shadow-xl transition-shadow duration-300">
-            <CardHeader className="flex flex-row items-center gap-4">
-              {feature.icon}
-              <CardTitle className="font-headline text-xl">{feature.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <p className="text-muted-foreground">{feature.description}</p>
-            </CardContent>
-            <div className="p-6 pt-0">
-              <Button asChild className="w-full bg-primary hover:bg-primary/90">
-                <Link href={feature.href}>View Details</Link>
-              </Button>
+       <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={keyFeatures.map(f => f.id)}
+          strategy={verticalListSortingStrategy}
+        >
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {keyFeatures.map((feature) => (
+                    <SortableFeatureCard key={feature.id} feature={feature} />
+                ))}
             </div>
-          </Card>
-        ))}
-      </div>
+        </SortableContext>
+      </DndContext>
+
        <Card className="mt-8">
         <CardHeader>
           <CardTitle className="font-headline flex items-center gap-2">
