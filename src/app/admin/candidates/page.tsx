@@ -10,11 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Loader2 } from 'lucide-react';
-import { collection } from 'firebase/firestore';
+import { collection, addDoc } from 'firebase/firestore';
 import type { Party, Constituency } from '@/lib/types';
+import { uploadFile } from '@/firebase/storage';
 
 
 export default function AdminCandidatesPage() {
@@ -31,29 +30,23 @@ export default function AdminCandidatesPage() {
   const [partyId, setPartyId] = useState('');
   const [constituencyId, setConstituencyId] = useState('');
   const [bio, setBio] = useState('');
-  const [imageUrl, setImageUrl] = useState<File | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('Saving...');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setImageUrl(e.target.files[0]);
+      setPhotoFile(e.target.files[0]);
     }
   };
 
-  const uploadFile = async (file: File, path: string): Promise<string> => {
-    const storage = getStorage();
-    const storageRef = ref(storage, path);
-    const snapshot = await uploadBytes(storageRef, file);
-    return getDownloadURL(snapshot.ref);
-  };
-  
   const resetForm = () => {
     setName('');
     setPartyId('');
     setConstituencyId('');
     setBio('');
-    setImageUrl(null);
+    setPhotoFile(null);
     const imageInput = document.getElementById('candidate-photo') as HTMLInputElement;
     if (imageInput) imageInput.value = '';
   };
@@ -72,18 +65,19 @@ export default function AdminCandidatesPage() {
     setIsLoading(true);
 
     let uploadedImageUrl = '';
-    if (imageUrl) {
+    if (photoFile) {
+        setLoadingMessage('Uploading photo...');
         try {
-            uploadedImageUrl = await uploadFile(imageUrl, `candidate-photos/${Date.now()}-${imageUrl.name}`);
+            uploadedImageUrl = await uploadFile(photoFile, `candidate-photos/${Date.now()}-${photoFile.name}`);
         } catch (uploadError: any) {
             toast({ variant: 'destructive', title: 'Upload Error', description: uploadError.message || 'Failed to upload image.' });
             setIsLoading(false);
+            setLoadingMessage('Saving...');
             return;
         }
     }
 
-    const candidatesCollection = collection(firestore, 'candidates');
-    
+    setLoadingMessage('Saving candidate...');
     const candidateData = {
         name,
         partyId,
@@ -93,11 +87,18 @@ export default function AdminCandidatesPage() {
         policyPositions: [], // Default to empty array
     };
     
-    addDocumentNonBlocking(candidatesCollection, candidateData);
-
-    toast({ title: 'Success!', description: 'The new candidate has been saved.' });
-    resetForm();
-    setIsLoading(false);
+    try {
+        const candidatesCollection = collection(firestore, 'candidates');
+        await addDoc(candidatesCollection, candidateData);
+        toast({ title: 'Success!', description: 'The new candidate has been saved.' });
+        resetForm();
+    } catch(error: any) {
+        console.error("Failed to save candidate:", error);
+        toast({ variant: 'destructive', title: 'Database Error', description: 'Failed to save candidate to database.' });
+    } finally {
+        setIsLoading(false);
+        setLoadingMessage('Saving...');
+    }
   };
 
   return (
@@ -115,12 +116,12 @@ export default function AdminCandidatesPage() {
             <CardContent className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="candidate-name">Candidate Name *</Label>
-                    <Input id="candidate-name" placeholder="e.g., Jane Doe" value={name} onChange={e => setName(e.target.value)} required />
+                    <Input id="candidate-name" placeholder="e.g., Jane Doe" value={name} onChange={e => setName(e.target.value)} required disabled={isLoading} />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="candidate-party">Party *</Label>
-                    <Select value={partyId} onValueChange={setPartyId} required>
+                    <Select value={partyId} onValueChange={setPartyId} required disabled={isLoading || loadingParties}>
                         <SelectTrigger id="candidate-party">
                             <SelectValue placeholder="Select a party" />
                         </SelectTrigger>
@@ -133,7 +134,7 @@ export default function AdminCandidatesPage() {
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="candidate-constituency">Constituency *</Label>
-                    <Select value={constituencyId} onValueChange={setConstituencyId} required>
+                    <Select value={constituencyId} onValueChange={setConstituencyId} required disabled={isLoading || loadingConstituencies}>
                         <SelectTrigger id="candidate-constituency">
                             <SelectValue placeholder="Select a constituency" />
                         </SelectTrigger>
@@ -147,11 +148,11 @@ export default function AdminCandidatesPage() {
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="candidate-bio">Biography</Label>
-                    <Textarea id="candidate-bio" placeholder="A brief bio of the candidate..." value={bio} onChange={e => setBio(e.target.value)} />
+                    <Textarea id="candidate-bio" placeholder="A brief bio of the candidate..." value={bio} onChange={e => setBio(e.target.value)} disabled={isLoading} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="candidate-photo">Candidate Photo</Label>
-                    <Input id="candidate-photo" type="file" accept="image/*" onChange={handleFileChange} />
+                    <Input id="candidate-photo" type="file" accept="image/*" onChange={handleFileChange} disabled={isLoading} />
                 </div>
             </CardContent>
             <CardFooter>
@@ -159,7 +160,7 @@ export default function AdminCandidatesPage() {
                 {isLoading ? (
                     <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
+                    {loadingMessage}
                     </>
                 ) : (
                     'Save Candidate'

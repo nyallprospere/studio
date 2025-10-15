@@ -9,8 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
-import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { addDoc, collection, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { Loader2, Edit, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -29,8 +28,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import type { Party } from '@/lib/types';
 import Image from 'next/image';
-import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import Link from 'next/link';
+import { uploadFile, deleteFile } from '@/firebase/storage';
 
 const partySchema = z.object({
   name: z.string().min(2, 'Party name must be at least 2 characters.'),
@@ -72,13 +71,6 @@ export default function AdminPartiesPage() {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
     }
-  };
-
-  const uploadFile = async (file: File, path: string): Promise<string> => {
-    const storage = getStorage();
-    const storageRef = ref(storage, path);
-    const snapshot = await uploadBytes(storageRef, file);
-    return getDownloadURL(snapshot.ref);
   };
   
   const onSubmit = async (values: z.infer<typeof partySchema>) => {
@@ -293,18 +285,18 @@ function PartyList({ parties, isLoading }: { parties: Party[] | null, isLoading:
         toast({ title: "Deletion Started", description: `${party.name} is being removed.` });
 
         try {
+            // Delete files first
+            if (party.logoUrl) {
+                await deleteFile(party.logoUrl);
+            }
+            if (party.manifestoUrl) {
+                await deleteFile(party.manifestoUrl);
+            }
+
+            // Then delete the document
             const partyRef = doc(firestore, 'parties', party.id);
             await deleteDoc(partyRef);
 
-            const storage = getStorage();
-            if (party.logoUrl) {
-                const logoRef = ref(storage, party.logoUrl);
-                await deleteObject(logoRef);
-            }
-            if (party.manifestoUrl) {
-                const manifestoRef = ref(storage, party.manifestoUrl);
-                await deleteObject(manifestoRef);
-            }
             toast({ title: "Party Deleted", description: `${party.name} has been successfully removed.`});
         } catch (error: any) {
             console.error("Deletion failed:", error);
@@ -407,13 +399,6 @@ function EditPartyDialog({ party }: { party: Party }) {
         }
     }, [open, party, form]);
 
-    const uploadFile = async (file: File, path: string): Promise<string> => {
-        const storage = getStorage();
-        const storageRef = ref(storage, path);
-        const snapshot = await uploadBytes(storageRef, file);
-        return getDownloadURL(snapshot.ref);
-    };
-
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, setFile: React.Dispatch<React.SetStateAction<File | null>>) => {
         if (e.target.files && e.target.files[0]) {
             setFile(e.target.files[0]);
@@ -424,14 +409,14 @@ function EditPartyDialog({ party }: { party: Party }) {
         if (!firestore) return;
         
         setIsUpdating(true);
-        let updatedData: any = { ...values };
-        const storage = getStorage();
+        let updatedData: Partial<Party> = { ...values };
 
         try {
             if (newLogo) {
                 setUpdateMessage('Uploading new logo...');
+                // Delete old file if it exists, then upload new one
                 if (party.logoUrl) {
-                    await deleteObject(ref(storage, party.logoUrl)).catch(e => console.warn("Old logo deletion failed, continuing...", e));
+                    await deleteFile(party.logoUrl);
                 }
                 const logoUrl = await uploadFile(newLogo, `party-logos/${Date.now()}-${newLogo.name}`);
                 updatedData.logoUrl = logoUrl;
@@ -439,8 +424,9 @@ function EditPartyDialog({ party }: { party: Party }) {
             
             if (newManifesto) {
                 setUpdateMessage('Uploading new manifesto...');
+                 // Delete old file if it exists, then upload new one
                 if (party.manifestoUrl) {
-                    await deleteObject(ref(storage, party.manifestoUrl)).catch(e => console.warn("Old manifesto deletion failed, continuing...", e));
+                    await deleteFile(party.manifestoUrl);
                 }
                 const manifestoUrl = await uploadFile(newManifesto, `party-manifestos/${Date.now()}-${newManifesto.name}`);
                 updatedData.manifestoUrl = manifestoUrl;
@@ -522,4 +508,3 @@ function EditPartyDialog({ party }: { party: Party }) {
         </Dialog>
     );
 }
-    

@@ -2,13 +2,14 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow public read access to all files.
+    // Allow public read access to all files
     match /{allPaths=**} {
-      allow read: if true;
+      allow read;
     }
 
-    // Allow write access only for authenticated users.
-    // This is a basic rule; you might want to restrict by file type, size, or path.
+    // Allow writes only for authenticated users
+    // This is a basic rule. For production, you would likely want more specific
+    // rules, e.g., only allowing users to write to their own directory.
     match /{allPaths=**} {
       allow write: if request.auth != null;
     }

@@ -12,7 +12,7 @@ import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, writeBatch, doc } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes } from 'firebase/storage';
+import { uploadFile } from '@/firebase/storage';
 
 const electionYears = [
   "2021", "2016", "2011", "2006", "2001", "1997", "1992", 
@@ -45,9 +45,7 @@ export default function AdminResultsPage() {
 
     try {
         // 1. Upload file to Firebase Storage
-        const storage = getStorage();
-        const storageRef = ref(storage, `election-results-imports/${Date.now()}-${file.name}`);
-        await uploadBytes(storageRef, file);
+        await uploadFile(file, `election-results-imports/${Date.now()}-${file.name}`);
 
         // 2. Read the file for processing
         const reader = new FileReader();
@@ -250,5 +248,3 @@ export default function AdminResultsPage() {
     </div>
   );
 }
-
-    
