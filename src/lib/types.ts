@@ -28,7 +28,6 @@ export interface Constituency {
   demographics: {
     registeredVoters: number;
   };
-  pollingLocations: string[];
 }
 
 export interface Poll {

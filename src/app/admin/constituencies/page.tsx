@@ -62,7 +62,6 @@ export default function AdminConstituenciesPage() {
             demographics: {
                 registeredVoters: values.registeredVoters,
             },
-            pollingLocations: [],
         };
         
         const constituenciesCollection = collection(firestore, 'constituencies');
@@ -111,7 +110,6 @@ export default function AdminConstituenciesPage() {
                             demographics: {
                                 registeredVoters: Number(row['Registered Voters']),
                             },
-                            pollingLocations: []
                        };
                        const constituencyRef = doc(collection(firestore, 'constituencies'));
                        batch.set(constituencyRef, constituencyData);
@@ -351,7 +349,6 @@ function EditConstituencyDialog({ constituency }: { constituency: Constituency }
             demographics: {
                 registeredVoters: values.registeredVoters,
             },
-            pollingLocations: constituency.pollingLocations || [],
         };
         
         const constituencyRef = doc(firestore, 'constituencies', constituency.id);

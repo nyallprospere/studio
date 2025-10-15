@@ -26,7 +26,7 @@ const constituencyCoords: { [key: string]: { top: string; left: string } } = {
   'Castries Central': { top: '42%', left: '40%' },
   'Castries South': { top: '48%', left: '42%' },
   'Castries South East': { top: '50%', left: '50%' },
-  'Anse La Raye/Canaries': { top: '60%', left: '30%' },
+  'Anse la Raye/Canaries': { top: '60%', left: '30%' },
   'Soufriere': { top: '75%', left: '25%' },
   'Choiseul': { top: '85%', left: '35%' },
   'Laborie': { top: '90%', left: '45%' },
@@ -69,7 +69,10 @@ export function InteractiveMap({ constituencies }: InteractiveMapProps) {
         />
         {constituencies.map(c => {
             const coords = constituencyCoords[c.name];
-            if (!coords) return null;
+            if (!coords) {
+                console.warn(`No coordinates found for constituency: ${c.name}`);
+                return null;
+            }
 
             return (
                 <Popover key={c.id}>
