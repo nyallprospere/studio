@@ -31,6 +31,7 @@ export default function AdminConstituenciesPage() {
 
     useEffect(() => {
         if (constituencies && constituencies.length > 0) {
+            // Find any constituency that has a mapImageUrl
             const url = constituencies.find(c => c.mapImageUrl)?.mapImageUrl;
             if (url) {
                 // Add a timestamp to bust the cache every time the component loads
@@ -74,18 +75,24 @@ export default function AdminConstituenciesPage() {
     
     const handleMapUpload = async () => {
         if (!mapImage || !firestore) {
-             toast({ variant: 'destructive', title: 'Error', description: 'Please select an SVG file to upload.' });
+             toast({ variant: 'destructive', title: 'Error', description: 'Please select a file to upload.' });
             return;
         }
         setIsLoading(true);
         try {
-            const mapUrl = await uploadFile(mapImage, `maps/st-lucia-constituencies.svg`);
+            // Use a consistent name for the map file to overwrite it
+            const fileExtension = mapImage.name.split('.').pop();
+            const mapPath = `maps/st-lucia-constituencies.${fileExtension}`;
+
+            const mapUrl = await uploadFile(mapImage, mapPath);
             
+            // To ensure the map URL is available for all constituencies, we can store it on one, or create a separate settings document.
+            // For simplicity, we'll try to update an existing constituency.
             if (constituencies && constituencies.length > 0) {
                 const firstConstituencyRef = doc(firestore, 'constituencies', constituencies[0].id);
                 // We store the clean URL in Firestore
                 await setDoc(firstConstituencyRef, { mapImageUrl: mapUrl }, { merge: true });
-                // We use a timestamped URL for the immediate preview to bust the cache
+                 // We use a timestamped URL for the immediate preview to bust the cache
                 setMapPreviewUrl(`${mapUrl}?t=${new Date().getTime()}`);
             }
             toast({ title: 'Map Uploaded', description: 'The constituency map has been updated.' });
@@ -144,12 +151,12 @@ export default function AdminConstituenciesPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Upload Constituency Map</CardTitle>
-                        <CardDescription>Upload an SVG file to be used as the interactive constituency map.</CardDescription>
+                        <CardDescription>Upload an SVG, PNG, or JPG file to be used as the constituency map.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="map-svg">Constituency Map SVG File</Label>
-                            <Input id="map-svg" type="file" accept="image/svg+xml" onChange={e => e.target.files && setMapImage(e.target.files[0])} disabled={isLoading} />
+                            <Label htmlFor="map-svg">Constituency Map File</Label>
+                            <Input id="map-svg" type="file" accept="image/svg+xml,image/png,image/jpeg" onChange={e => e.target.files && setMapImage(e.target.files[0])} disabled={isLoading} />
                         </div>
                     </CardContent>
                     <CardFooter>
@@ -171,7 +178,7 @@ export default function AdminConstituenciesPage() {
                         {!loadingConstituencies && mapPreviewUrl ? (
                             <div className="relative w-full h-[600px] border rounded-lg overflow-hidden p-2 flex items-center justify-center">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={mapPreviewUrl} alt="Constituency Map Preview" className="max-w-full max-h-full" />
+                                <img src={mapPreviewUrl} alt="Constituency Map Preview" className="max-w-full max-h-full object-contain" />
                             </div>
                         ) : (
                             !loadingConstituencies && <p className="text-muted-foreground text-center py-10">No map has been uploaded yet.</p>
