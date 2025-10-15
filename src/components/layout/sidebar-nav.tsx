@@ -8,8 +8,11 @@ import {
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield } from 'lucide-react';
+import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, LogIn, LogOut, UserPlus } from 'lucide-react';
 import { Button } from '../ui/button';
+import { useUser, useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
 
 const mainNavItems = [
   { href: '/', icon: Home, label: 'Dashboard' },
@@ -30,8 +33,69 @@ const adminNavItems = [
     { href: '/admin/constituencies', icon: Map, label: 'Constituencies' },
 ];
 
+function AuthSection() {
+    const { user, isUserLoading } = useUser();
+    const auth = useAuth();
+    const router = useRouter();
+
+    const handleLogout = async () => {
+        await signOut(auth);
+        router.push('/');
+    };
+
+    if (isUserLoading) {
+        return null; // Don't show anything while loading
+    }
+    
+    if (user) {
+         return (
+             <SidebarMenuItem>
+                <Button
+                    onClick={handleLogout}
+                    variant='ghost'
+                    className="w-full justify-start"
+                >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                </Button>
+            </SidebarMenuItem>
+         );
+    }
+
+    return (
+        <>
+            <SidebarMenuItem>
+                <Button
+                asChild
+                variant='ghost'
+                className="w-full justify-start"
+                >
+                <Link href="/login">
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Login
+                </Link>
+                </Button>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+                <Button
+                    asChild
+                    variant='ghost'
+                    className="w-full justify-start"
+                >
+                    <Link href="/signup">
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Sign Up
+                    </Link>
+                </Button>
+            </SidebarMenuItem>
+        </>
+    );
+}
+
+
 export function SidebarNav() {
   const pathname = usePathname();
+  const { user } = useUser();
   const isAdminPath = pathname.startsWith('/admin');
   const navItems = isAdminPath ? adminNavItems : mainNavItems;
 
@@ -64,17 +128,22 @@ export function SidebarNav() {
           </SidebarMenuItem>
         ))}
       </SidebarMenu>
-      <div className="mt-auto p-2">
-        <Button
-            asChild
-            variant={isAdminPath ? 'default' : 'outline'}
-            className="w-full justify-start bg-accent text-accent-foreground hover:bg-accent/90"
-        >
-            <Link href={isAdminPath ? "/" : "/admin"}>
-                <Settings className="mr-2 h-4 w-4" />
-                {isAdminPath ? 'Exit Admin' : 'Admin Panel'}
-            </Link>
-        </Button>
+      <div className="mt-auto p-2 space-y-2">
+         <SidebarMenu>
+            <AuthSection />
+         </SidebarMenu>
+        {user && (
+            <Button
+                asChild
+                variant={isAdminPath ? 'default' : 'outline'}
+                className="w-full justify-start bg-accent text-accent-foreground hover:bg-accent/90"
+            >
+                <Link href={isAdminPath ? "/" : "/admin"}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    {isAdminPath ? 'Exit Admin' : 'Admin Panel'}
+                </Link>
+            </Button>
+        )}
       </div>
     </Sidebar>
   );

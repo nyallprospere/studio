@@ -26,13 +26,19 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isAuthPage =
+    // @ts-ignore
+    children?.props?.childProp?.segment === 'login' ||
+    // @ts-ignore
+    children?.props?.childProp?.segment === 'signup';
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${spaceGrotesk.variable} ${inter.variable} font-body antialiased`}
       >
         <FirebaseClientProvider>
-          <MainLayout>{children}</MainLayout>
+          {isAuthPage ? children : <MainLayout>{children}</MainLayout>}
         </FirebaseClientProvider>
         <Toaster />
       </body>
