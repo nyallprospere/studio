@@ -157,6 +157,9 @@ function OverlayManager({ mapUrl, loadingMap }: { mapUrl: string | null; loading
     };
 
     const handleMouseUp = () => {
+        if (draggedItemRef.current && dirty[draggedItemRef.current.id]) {
+            handleSaveCoords(draggedItemRef.current.id);
+        }
         draggedItemRef.current = null;
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
@@ -196,12 +199,12 @@ function OverlayManager({ mapUrl, loadingMap }: { mapUrl: string | null; loading
         <Card>
             <CardHeader>
                 <CardTitle>Manage Overlays</CardTitle>
-                <CardDescription>Drag and drop the points on the map to set the position for each constituency. Click save on each point to persist changes.</CardDescription>
+                <CardDescription>Drag and drop the points on the map to set the position for each constituency. Changes are saved automatically.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div 
                   ref={mapRef}
-                  className="relative w-full aspect-[4/5] max-w-3xl mx-auto border rounded-lg overflow-hidden bg-muted"
+                  className="relative w-full aspect-[4/5] max-w-2xl mx-auto border rounded-lg overflow-hidden bg-muted"
                 >
                     {mapUrl ? (
                         <Image src={mapUrl} alt="Constituency Map" fill className="object-contain" />
@@ -221,25 +224,10 @@ function OverlayManager({ mapUrl, loadingMap }: { mapUrl: string | null; loading
                                 style={{ top: `${pointCoords.top}%`, left: `${pointCoords.left}%` }}
                                 onMouseDown={e => handleMouseDown(e, c.id)}
                             >
-                                <div className="w-4 h-4 bg-primary rounded-full ring-2 ring-white transition-transform group-hover:scale-125" />
+                                <div className={`w-4 h-4 rounded-full ring-2 ring-white transition-all ${isSaving[c.id] ? 'bg-yellow-500 animate-pulse' : 'bg-primary'} group-hover:scale-125`} />
                                 <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-background text-foreground text-xs font-semibold px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                                     <div className="flex items-center gap-2">
                                         <span>{c.name}</span>
-                                        {dirty[c.id] && (
-                                            <Button 
-                                                size="sm" 
-                                                variant="outline"
-                                                className="h-6 w-14" 
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleSaveCoords(c.id);
-                                                }}
-                                                disabled={isSaving[c.id]}
-                                            >
-                                                {isSaving[c.id] ? <Loader2 className="h-3 w-3 animate-spin"/> : <Save className="h-3 w-3"/>}
-                                                Save
-                                            </Button>
-                                        )}
                                     </div>
                                 </div>
                             </div>
