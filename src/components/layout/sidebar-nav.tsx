@@ -13,6 +13,7 @@ import { Button } from '../ui/button';
 
 const mainNavItems = [
   { href: '/', icon: Home, label: 'Dashboard' },
+  { href: '/parties', icon: Shield, label: 'Parties' },
   { href: '/candidates', icon: Users, label: 'Candidates' },
   { href: '/polls', icon: BarChart3, label: 'Polls' },
   { href: '/predictions', icon: TrendingUp, label: 'Predictions' },

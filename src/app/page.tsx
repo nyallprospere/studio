@@ -37,7 +37,7 @@ export default function Home() {
       title: 'Party Information',
       description: 'Discover the parties contesting the election.',
       icon: <Shield className="w-8 h-8 text-primary" />,
-      href: '/admin/parties',
+      href: '/parties',
     },
     {
       title: 'Constituencies',
