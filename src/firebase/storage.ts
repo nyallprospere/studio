@@ -34,6 +34,7 @@ export const deleteFile = async (fileUrl: string): Promise<void> => {
     const storage = getStorage();
     try {
         const storageRef = ref(storage, fileUrl);
+        await getDownloadURL(storageRef); // Check if file exists before trying to delete.
         await deleteObject(storageRef);
     } catch (error: any) {
         // It's common to encounter 'object-not-found' if the file is already deleted
