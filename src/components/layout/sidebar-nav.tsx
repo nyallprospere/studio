@@ -44,7 +44,7 @@ export function SidebarNav() {
             <Vote className="w-8 h-8 text-primary" />
             <div className="flex flex-col">
                 <h2 className="text-lg font-headline font-semibold">
-                    St. Lucia Elections
+                    LucianVotes
                 </h2>
                 <p className="text-xs text-muted-foreground">2026 Hub</p>
             </div>

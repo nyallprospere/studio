@@ -17,7 +17,7 @@ export default function AdminDashboardPage() {
     <div className="container mx-auto px-4 py-8">
       <PageHeader
         title="Admin Dashboard"
-        description="Manage the content for the St. Lucia Elections Hub."
+        description="Manage the content for LucianVotes."
       />
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {adminSections.map(section => (

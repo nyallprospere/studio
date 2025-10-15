@@ -50,7 +50,7 @@ export default function Home() {
   return (
     <div className="container mx-auto px-4 py-8">
       <PageHeader
-        title="St. Lucia Elections Hub"
+        title="LucianVotes"
         description="Your comprehensive guide to the 2026 General Elections."
       />
 
