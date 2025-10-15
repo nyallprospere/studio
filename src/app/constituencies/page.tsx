@@ -11,14 +11,16 @@ import { InteractiveMap } from '@/components/interactive-map';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
 
 const politicalLeaningOptions = [
-  { value: 'solid-slp', label: 'Solid SLP', color: 'bg-red-700' },
-  { value: 'lean-slp', label: 'Lean SLP', color: 'bg-red-400' },
-  { value: 'tossup', label: 'Tossup', color: 'bg-purple-500' },
-  { value: 'lean-uwp', label: 'Lean UWP', color: 'bg-yellow-300' },
-  { value: 'solid-uwp', label: 'Solid UWP', color: 'bg-yellow-500' },
+  { value: 'solid-slp', label: 'Solid SLP', color: 'hsl(var(--chart-5))' },
+  { value: 'lean-slp', label: 'Lean SLP', color: 'hsl(var(--chart-3))' },
+  { value: 'tossup', label: 'Tossup', color: 'hsl(var(--chart-4))' },
+  { value: 'lean-uwp', label: 'Lean UWP', color: 'hsl(var(--chart-2))' },
+  { value: 'solid-uwp', label: 'Solid UWP', color: 'hsl(var(--chart-1))' },
 ];
 
 
@@ -52,10 +54,8 @@ export default function ConstituenciesPage() {
 
     const isLoading = loadingConstituencies;
 
-    const leaningSummary = useMemo(() => {
-        if (!constituencies) {
-            return politicalLeaningOptions.map(opt => ({ ...opt, count: 0 }));
-        }
+    const chartData = useMemo(() => {
+        if (!constituencies) return [];
 
         const counts = constituencies.reduce((acc, constituency) => {
             const leaning = constituency.politicalLeaning || 'tossup';
@@ -63,11 +63,23 @@ export default function ConstituenciesPage() {
             return acc;
         }, {} as Record<string, number>);
 
-        return politicalLeaningOptions.map(option => ({
-            ...option,
-            count: counts[option.value] || 0,
-        }));
+        const data = { name: 'Seats' };
+        politicalLeaningOptions.forEach(opt => {
+            // @ts-ignore
+            data[opt.label] = counts[opt.value] || 0;
+        });
+        
+        return [data];
     }, [constituencies]);
+
+    const chartConfig = politicalLeaningOptions.reduce((acc, option) => {
+        // @ts-ignore
+        acc[option.label] = {
+            label: option.label,
+            color: option.color,
+        };
+        return acc;
+    }, {});
 
 
   return (
@@ -94,17 +106,41 @@ export default function ConstituenciesPage() {
                     <CardDescription>Current political leaning of the 17 constituencies.</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <ul className="space-y-3">
-                        {leaningSummary.map(leaning => (
-                            <li key={leaning.value} className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <span className={cn('w-4 h-4 rounded-full', leaning.color)}></span>
-                                    <span className="font-medium text-sm">{leaning.label}</span>
-                                </div>
-                                <Badge variant="secondary" className="text-base font-bold">{leaning.count}</Badge>
-                            </li>
+                     <ChartContainer config={chartConfig} className="h-24 w-full">
+                        <ResponsiveContainer width="100%" height={50}>
+                            <BarChart
+                                layout="vertical"
+                                data={chartData}
+                                stackOffset="expand"
+                                margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
+                                >
+                                <XAxis type="number" hide />
+                                <YAxis type="category" dataKey="name" hide />
+                                <ChartTooltip 
+                                    cursor={false}
+                                    content={<ChartTooltipContent hideLabel />}
+                                />
+                                {politicalLeaningOptions.map((option) => (
+                                    <Bar 
+                                        key={option.value} 
+                                        dataKey={option.label} 
+                                        fill={option.color} 
+                                        stackId="a" 
+                                        radius={[4, 4, 4, 4]} 
+                                    />
+                                ))}
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </ChartContainer>
+                     <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-xs">
+                        {politicalLeaningOptions.map((option) => (
+                            <div key={option.value} className="flex items-center gap-1.5">
+                                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: option.color }}></span>
+                                <span>{option.label}</span>
+                                <span className="font-bold">({chartData[0]?.[option.label] || 0})</span>
+                            </div>
                         ))}
-                    </ul>
+                    </div>
                   </CardContent>
                 </Card>
             </div>
