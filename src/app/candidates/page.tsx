@@ -1,6 +1,6 @@
 'use client';
 
-import { useCollection } from '@/firebase/hooks/use-collection';
+import { useCollection } from '@/firebase';
 import type { Candidate, Party, Constituency } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

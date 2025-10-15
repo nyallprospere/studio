@@ -3,7 +3,7 @@
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { useCollection } from '@/firebase/hooks/use-collection';
+import { useCollection } from '@/firebase';
 import type { Poll, Party } from '@/lib/types';
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import type { ChartConfig } from '@/components/ui/chart';

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCollection } from '@/firebase/hooks/use-collection';
+import { useCollection } from '@/firebase';
 import type { Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';

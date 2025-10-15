@@ -1,5 +1,5 @@
 'use client';
-import { useCollection } from '@/firebase/hooks/use-collection';
+import { useCollection } from '@/firebase';
 import { getPartyById, getConstituencyById } from '@/lib/data';
 import type { ElectionYearResult, Party, Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
