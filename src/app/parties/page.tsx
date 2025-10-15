@@ -1,6 +1,5 @@
 'use client';
 
-import { parties as partiesData } from '@/lib/data';
 import type { Party } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -8,7 +7,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Shield } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useCollection, useFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
 function PartyCardSkeleton() {
   return (
@@ -33,16 +33,9 @@ function PartyCardSkeleton() {
 }
 
 export default function PartiesPage() {
-  const [parties, setParties] = useState<Party[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Simulate fetching data
-    setTimeout(() => {
-        setParties(partiesData);
-        setLoading(false);
-    }, 500);
-  }, []);
+  const { firestore } = useFirebase();
+  const partiesRef = collection(firestore, 'parties');
+  const { data: parties, isLoading } = useCollection<Party>(partiesRef);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -51,15 +44,15 @@ export default function PartiesPage() {
         description="Learn more about the political parties in St. Lucia."
       />
       <div className="grid gap-8 md:grid-cols-2">
-        {loading ? (
+        {isLoading ? (
           Array.from({ length: 2 }).map((_, i) => <PartyCardSkeleton key={i} />)
         ) : (
           parties?.map((party) => (
             <Card key={party.id} className="overflow-hidden hover:shadow-lg transition-shadow" style={{ borderTop: `4px solid ${party.color}` }}>
               <CardHeader className="flex flex-row items-start gap-4">
-                {party.logo ? (
+                {party.logoUrl ? (
                     <div className="relative h-16 w-16 flex-shrink-0">
-                        <Image src={party.logo} alt={`${party.name} logo`} fill className="rounded-full object-contain" />
+                        <Image src={party.logoUrl} alt={`${party.name} logo`} fill className="rounded-full object-contain" />
                     </div>
                 ) : (
                     <div className="h-16 w-16 flex-shrink-0 rounded-full bg-muted flex items-center justify-center">
@@ -91,7 +84,7 @@ export default function PartiesPage() {
             </Card>
           ))
         )}
-        {parties?.length === 0 && !loading && (
+        {parties?.length === 0 && !isLoading && (
             <p className="text-center text-muted-foreground col-span-2">No parties have been added yet.</p>
         )}
       </div>

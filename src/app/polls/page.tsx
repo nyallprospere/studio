@@ -1,32 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { Poll, Party } from '@/lib/types';
-import { polls as pollsData, parties as partiesData } from '@/lib/data';
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import type { ChartConfig } from '@/components/ui/chart';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
 export default function PollsPage() {
-  const [polls, setPolls] = useState<Poll[]>([]);
-  const [parties, setParties] = useState<Party[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { firestore } = useFirebase();
 
-  useEffect(() => {
-    // Simulate fetching data
-    setTimeout(() => {
-        setPolls(pollsData);
-        setParties(partiesData);
-        setLoading(false);
-    }, 500);
-  }, []);
+  const pollsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'polling_data') : null, [firestore]);
+  const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
+
+  const { data: polls, isLoading: loadingPolls } = useCollection<Poll>(pollsQuery);
+  const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
 
   const chartData = polls?.map(poll => {
     const pollResults: { [key: string]: number | string } = { date: new Date(poll.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) };
     poll.results.forEach(result => {
-        const party = parties.find(p => p.id === result.partyId);
+        const party = parties?.find(p => p.id === result.partyId);
         if (party) {
             pollResults[party.acronym] = result.percentage;
         }

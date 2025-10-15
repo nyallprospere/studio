@@ -1,28 +1,29 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getPartyById, getConstituencyById, historicalResults as historicalResultsData, parties as partiesData, constituencies as constituenciesData } from '@/lib/data';
 import type { ElectionYearResult, Party, Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { collection, orderBy, query } from 'firebase/firestore';
 
 export default function ResultsPage() {
-  const [historicalResults, setHistoricalResults] = useState<ElectionYearResult[]>([]);
-  const [parties, setParties] = useState<Party[]>([]);
-  const [constituencies, setConstituencies] = useState<Omit<Constituency, 'mapImageUrl'>[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { firestore } = useFirebase();
 
-  useEffect(() => {
-    // Simulate fetching data
-    setTimeout(() => {
-        setHistoricalResults(historicalResultsData.sort((a, b) => b.year - a.year));
-        setParties(partiesData);
-        setConstituencies(constituenciesData);
-        setLoading(false);
-    }, 500);
-  }, []);
+  const resultsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'election_results'), orderBy('year', 'desc')) : null, [firestore]);
+  const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
+  const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
+  
+  const { data: historicalResults, isLoading: loadingResults } = useCollection<ElectionYearResult>(resultsQuery);
+  const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
+  const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Omit<Constituency, 'mapImageUrl'>>(constituenciesQuery);
+
+  const getPartyById = (id: string) => parties?.find(p => p.id === id);
+  const getConstituencyById = (id: string) => constituencies?.find(c => c.id === id);
+  
+  const loading = loadingResults || loadingParties || loadingConstituencies;
 
   if (loading) {
     return (
@@ -61,7 +62,7 @@ export default function ResultsPage() {
                   </h3>
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     {result.summary.map((summaryItem) => {
-                      const party = getPartyById(summaryItem.partyId, parties || []);
+                      const party = getPartyById(summaryItem.partyId);
                       return (
                         <Card key={summaryItem.partyId} style={{ borderLeftColor: party?.color, borderLeftWidth: '4px' }}>
                           <CardHeader>
@@ -90,8 +91,8 @@ export default function ResultsPage() {
                     </TableHeader>
                     <TableBody>
                       {result.constituencyResults.length > 0 ? result.constituencyResults.map((cr, index) => {
-                        const constituency = getConstituencyById(cr.constituencyId, constituencies || []);
-                        const party = getPartyById(cr.partyId, parties || []);
+                        const constituency = getConstituencyById(cr.constituencyId);
+                        const party = getPartyById(cr.partyId);
                         return (
                           <TableRow key={index}>
                             <TableCell className="font-medium">{constituency?.name || cr.constituencyId}</TableCell>

@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { candidates as candidatesData, parties as partiesData, constituencies as constituenciesData } from '@/lib/data';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { Candidate, Party, Constituency } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +8,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { PageHeader } from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
 
 function CandidateCardSkeleton() {
   return (
@@ -34,28 +34,20 @@ function CandidateCardSkeleton() {
 }
 
 export default function CandidatesPage() {
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [parties, setParties] = useState<Party[]>([]);
-  const [constituencies, setConstituencies] = useState<Omit<Constituency, 'mapImageUrl'>[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { firestore } = useFirebase();
 
-  useEffect(() => {
-    // Simulate fetching data
-    setTimeout(() => {
-      const enrichedCandidates = candidatesData.map(c => ({
-        ...c,
-        id: `${c.name.toLowerCase().replace(/\s/g, '-')}`,
-        imageUrl: PlaceHolderImages.find(p => p.id === c.imageId)?.imageUrl || '',
-      }));
-      setCandidates(enrichedCandidates);
-      setParties(partiesData);
-      setConstituencies(constituenciesData);
-      setLoading(false);
-    }, 500);
-  }, []);
+  const candidatesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'candidates') : null, [firestore]);
+  const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
+  const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
+
+  const { data: candidates, isLoading: loadingCandidates } = useCollection<Candidate>(candidatesQuery);
+  const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
+  const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
 
   const getPartyById = (id: string) => parties?.find(p => p.id === id);
   const getConstituencyById = (id: string) => constituencies?.find(c => c.id === id);
+
+  const loading = loadingCandidates || loadingParties || loadingConstituencies;
 
   return (
     <div className="container mx-auto px-4 py-8">

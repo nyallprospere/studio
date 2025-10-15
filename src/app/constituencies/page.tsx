@@ -1,8 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { constituencies as constituenciesData } from '@/lib/data';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -11,6 +8,8 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Users } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
 function ConstituencyCardSkeleton() {
     return (
@@ -31,20 +30,9 @@ function ConstituencyCardSkeleton() {
 }
 
 export default function ConstituenciesPage() {
-    const [constituencies, setConstituencies] = useState<Constituency[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        setTimeout(() => {
-            const enrichedConstituencies = constituenciesData.map(c => ({
-                ...c,
-                id: c.id,
-                mapImageUrl: PlaceHolderImages.find(p => p.id === c.mapImageId)?.imageUrl || ''
-            }));
-            setConstituencies(enrichedConstituencies as Constituency[]);
-            setLoading(false);
-        }, 500);
-    }, []);
+    const { firestore } = useFirebase();
+    const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
+    const { data: constituencies, isLoading } = useCollection<Constituency>(constituenciesQuery);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -53,7 +41,7 @@ export default function ConstituenciesPage() {
         description="Explore the 17 electoral districts of St. Lucia."
       />
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {loading ? (
+        {isLoading ? (
             Array.from({ length: 6 }).map((_, i) => <ConstituencyCardSkeleton key={i} />)
         ) : (
             constituencies?.map((constituency) => (

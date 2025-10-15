@@ -5,7 +5,7 @@ export interface Party {
   leader: string;
   founded: number;
   color: string;
-  logo?: string; // URL to logo in storage
+  logoUrl?: string; // URL to logo in storage
   description?: string;
   manifestoUrl?: string; // URL to PDF in storage
   manifestoSummary?: string;
@@ -17,7 +17,6 @@ export interface Candidate {
   partyId: string;
   constituencyId: string;
   bio: string;
-  imageId: string;
   imageUrl?: string; // URL to photo in storage
   policyPositions: { title: string; description: string }[];
 }
@@ -25,7 +24,6 @@ export interface Candidate {
 export interface Constituency {
   id: string;
   name: string;
-  mapImageId: string;
   mapImageUrl?: string; // URL to map in storage
   demographics: {
     population: number;
@@ -37,7 +35,7 @@ export interface Constituency {
 export interface Poll {
   id: string;
   source: string;
-  date: string;
+  date: string; // Stored as ISO string
   results: {
     partyId: string;
     percentage: number;
@@ -53,7 +51,7 @@ export interface ConstituencyResult {
 }
 
 export interface ElectionYearResult {
-  id?: string;
+  id: string;
   year: number;
   summary: {
     partyId: string;
