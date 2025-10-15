@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -49,6 +50,7 @@ export default function AdminPartiesPage() {
   const [logo, setLogo] = useState<File | null>(null);
   const [manifesto, setManifesto] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('Saving...');
 
   const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
@@ -92,17 +94,21 @@ export default function AdminPartiesPage() {
 
     try {
       if (logo) {
+          setLoadingMessage('Uploading logo...');
           logoUrl = await uploadFile(logo, `party-logos/${Date.now()}-${logo.name}`);
       }
       if (manifesto) {
+          setLoadingMessage('Uploading manifesto...');
           manifestoUrl = await uploadFile(manifesto, `party-manifestos/${Date.now()}-${manifesto.name}`);
       }
     } catch (uploadError: any) {
         toast({ variant: 'destructive', title: 'Upload Error', description: uploadError.message || 'Failed to upload a file.' });
         setIsLoading(false);
+        setLoadingMessage('Saving...');
         return;
     }
 
+    setLoadingMessage('Saving party...');
     const partyData = {
         ...values,
         logoUrl,
@@ -122,6 +128,7 @@ export default function AdminPartiesPage() {
     if (manifestoInput) manifestoInput.value = '';
     
     setIsLoading(false);
+    setLoadingMessage('Saving...');
   };
   
   return (
@@ -254,7 +261,7 @@ export default function AdminPartiesPage() {
                     {isLoading ? (
                         <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
+                        {loadingMessage}
                         </>
                     ) : (
                         'Save Party'
@@ -368,6 +375,7 @@ function EditPartyDialog({ party }: { party: Party }) {
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [updateMessage, setUpdateMessage] = useState('Updating...');
     const [newLogo, setNewLogo] = useState<File | null>(null);
     const [newManifesto, setNewManifesto] = useState<File | null>(null);
 
@@ -398,11 +406,13 @@ function EditPartyDialog({ party }: { party: Party }) {
 
         try {
             if (newLogo) {
+                setUpdateMessage('Uploading logo...');
                 if (party.logoUrl) await deleteObject(ref(storage, party.logoUrl)).catch(e => console.warn(e)); // Delete old logo
                 const logoUrl = await uploadFile(newLogo, `party-logos/${Date.now()}-${newLogo.name}`);
                 updatedData = { ...updatedData, logoUrl };
             }
             if (newManifesto) {
+                setUpdateMessage('Uploading manifesto...');
                 if (party.manifestoUrl) await deleteObject(ref(storage, party.manifestoUrl)).catch(e => console.warn(e)); // Delete old manifesto
                 const manifestoUrl = await uploadFile(newManifesto, `party-manifestos/${Date.now()}-${newManifesto.name}`);
                 updatedData = { ...updatedData, manifestoUrl };
@@ -410,9 +420,11 @@ function EditPartyDialog({ party }: { party: Party }) {
         } catch (uploadError: any) {
             toast({ variant: 'destructive', title: 'Upload Error', description: uploadError.message });
             setIsUpdating(false);
+            setUpdateMessage('Updating...');
             return;
         }
 
+        setUpdateMessage('Saving changes...');
         const partyRef = doc(firestore, 'parties', party.id);
         updateDocumentNonBlocking(partyRef, updatedData);
         
@@ -421,6 +433,7 @@ function EditPartyDialog({ party }: { party: Party }) {
         setOpen(false);
         setNewLogo(null);
         setNewManifesto(null);
+        setUpdateMessage('Updating...');
     };
 
     return (
@@ -467,7 +480,7 @@ function EditPartyDialog({ party }: { party: Party }) {
                                 <Button type="button" variant="secondary">Cancel</Button>
                             </DialogClose>
                             <Button type="submit" disabled={isUpdating} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                                {isUpdating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Updating...</> : 'Save Changes'}
+                                {isUpdating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {updateMessage}</> : 'Save Changes'}
                             </Button>
                         </DialogFooter>
                     </form>
@@ -476,3 +489,4 @@ function EditPartyDialog({ party }: { party: Party }) {
         </Dialog>
     );
 }
+    
