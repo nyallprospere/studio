@@ -5,7 +5,7 @@ export interface Party {
   leader: string;
   founded: number;
   color: string;
-  logo: React.ComponentType<{ className?: string }>;
+  logo?: string; // URL to logo in storage
 }
 
 export interface Candidate {
@@ -15,6 +15,7 @@ export interface Candidate {
   constituencyId: string;
   bio: string;
   imageId: string;
+  imageUrl?: string; // URL to photo in storage
   policyPositions: { title: string; description: string }[];
 }
 
@@ -22,6 +23,7 @@ export interface Constituency {
   id: string;
   name: string;
   mapImageId: string;
+  mapImageUrl?: string; // URL to map in storage
   demographics: {
     population: number;
     registeredVoters: number;
@@ -48,6 +50,7 @@ export interface ConstituencyResult {
 }
 
 export interface ElectionYearResult {
+  id?: string;
   year: number;
   summary: {
     partyId: string;

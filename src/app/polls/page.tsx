@@ -3,24 +3,28 @@
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { polls, parties } from '@/lib/data';
+import { useCollection } from '@/firebase/hooks/use-collection';
+import type { Poll, Party } from '@/lib/types';
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import type { ChartConfig } from '@/components/ui/chart';
 
 export default function PollsPage() {
-  const chartData = polls.map(poll => {
+  const { data: polls, loading: loadingPolls } = useCollection<Poll>('polls', { orderBy: ['date', 'asc'] });
+  const { data: parties, loading: loadingParties } = useCollection<Party>('parties');
+
+  const chartData = polls?.map(poll => {
     const pollResults: { [key: string]: number | string } = { date: new Date(poll.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) };
     poll.results.forEach(result => {
       pollResults[result.partyId] = result.percentage;
     });
     return pollResults;
-  }).reverse();
+  }) || [];
 
   const chartConfig: ChartConfig = {};
-  parties.forEach((party, index) => {
+  parties?.forEach((party, index) => {
     chartConfig[party.id] = {
       label: party.acronym,
-      color: `hsl(var(--chart-${index + 1}))`,
+      color: party.color,
     };
   });
 
@@ -46,15 +50,15 @@ export default function PollsPage() {
                   cursor={false}
                   content={<ChartTooltipContent indicator="dot" />}
                 />
-                {parties.map((party) => (
+                {parties?.map((party) => (
                    <Line
                     key={party.id}
                     dataKey={party.id}
                     type="monotone"
-                    stroke={chartConfig[party.id].color}
+                    stroke={chartConfig[party.id]?.color || '#ccc'}
                     strokeWidth={2}
                     dot={{
-                        fill: chartConfig[party.id].color,
+                        fill: chartConfig[party.id]?.color,
                     }}
                     activeDot={{
                         r: 6,

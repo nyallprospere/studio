@@ -1,6 +1,9 @@
 import type { Party, Candidate, Constituency, Poll, ElectionYearResult } from '@/lib/types';
 import { UwpLogo, SlpLogo } from '@/components/icons';
 
+// This file now primarily serves to provide data structures and initial data for seeding.
+// The live application data will be fetched from Firestore.
+
 export const parties: Party[] = [
   {
     id: 'uwp',
@@ -9,7 +12,6 @@ export const parties: Party[] = [
     leader: 'Allen Chastanet',
     founded: 1964,
     color: '#F1C40F', // Sun Yellow
-    logo: UwpLogo,
   },
   {
     id: 'slp',
@@ -18,11 +20,10 @@ export const parties: Party[] = [
     leader: 'Philip J. Pierre',
     founded: 1950,
     color: '#E74C3C', // A red for contrast
-    logo: SlpLogo,
   },
 ];
 
-export const constituencies: Constituency[] = [
+export const constituencies: Omit<Constituency, 'mapImageUrl'>[] = [
     { id: "castries-central", name: "Castries Central", mapImageId: "map1", demographics: { population: 10500, registeredVoters: 7800 }, pollingLocations: ["Castries City Hall", "Anglican School"] },
     { id: "castries-east", name: "Castries East", mapImageId: "map2", demographics: { population: 12000, registeredVoters: 8500 }, pollingLocations: ["Entrepot Secondary School"] },
     { id: "castries-north", name: "Castries North", mapImageId: "map3", demographics: { population: 11000, registeredVoters: 8100 }, pollingLocations: ["Vide Bouteille Secondary School"] },
@@ -42,9 +43,8 @@ export const constituencies: Constituency[] = [
     { id: "anse-la-raye", name: "Anse La Raye/Canaries", mapImageId: "map17", demographics: { population: 9500, registeredVoters: 7500 }, pollingLocations: ["Anse La Raye Primary", "Canaries Primary"] },
 ];
 
-export const candidates: Candidate[] = [
+export const candidates: Omit<Candidate, 'imageUrl' | 'id'>[] = [
   {
-    id: 'allen-chastanet',
     name: 'Allen Chastanet',
     partyId: 'uwp',
     constituencyId: 'micoud-south',
@@ -56,7 +56,6 @@ export const candidates: Candidate[] = [
     ],
   },
   {
-    id: 'philip-j-pierre',
     name: 'Philip J. Pierre',
     partyId: 'slp',
     constituencyId: 'castries-east',
@@ -68,7 +67,6 @@ export const candidates: Candidate[] = [
     ],
   },
   {
-    id: 'guy-joseph',
     name: 'Guy Joseph',
     partyId: 'uwp',
     constituencyId: 'castries-south-east',
@@ -80,7 +78,6 @@ export const candidates: Candidate[] = [
     ],
   },
   {
-    id: 'stephenson-king',
     name: 'Stephenson King',
     partyId: 'uwp', // Note: Historically has switched. Representing as UWP for this data.
     constituencyId: 'castries-north',
@@ -92,7 +89,6 @@ export const candidates: Candidate[] = [
     ],
   },
   {
-    id: 'kenny-anthony',
     name: 'Kenny Anthony',
     partyId: 'slp',
     constituencyId: 'vieux-fort-south',
@@ -105,9 +101,8 @@ export const candidates: Candidate[] = [
   },
 ];
 
-export const polls: Poll[] = [
+export const polls: Omit<Poll, 'id'>[] = [
   {
-    id: 'poll1',
     source: 'CADRES',
     date: '2025-11-15',
     results: [
@@ -116,7 +111,6 @@ export const polls: Poll[] = [
     ],
   },
   {
-    id: 'poll2',
     source: 'BLAIS',
     date: '2026-01-20',
     results: [
@@ -125,7 +119,6 @@ export const polls: Poll[] = [
     ],
   },
   {
-    id: 'poll3',
     source: 'CADRES',
     date: '2026-04-05',
     results: [
@@ -179,11 +172,11 @@ export const historicalResults: ElectionYearResult[] = [
             { partyId: 'uwp', seats: 10, totalVotes: 17300 },
         ],
         constituencyResults: [
-            { constituencyId: 'castries-north-west', candidateName: 'John Compton', partyId: 'uwp', votes: 1, isWinner: true },
         ],
     },
 ];
 
-export const getPartyById = (id: string) => parties.find(p => p.id === id);
-export const getCandidateById = (id: string) => candidates.find(c => c.id === id);
-export const getConstituencyById = (id: string) => constituencies.find(c => c.id === id);
+// The functions below are deprecated and will be removed once all components are updated to use Firestore hooks.
+export const getPartyById = (id: string, partiesData: Party[]) => partiesData.find(p => p.id === id);
+export const getCandidateById = (id: string, candidatesData: Candidate[]) => candidatesData.find(c => c.id === id);
+export const getConstituencyById = (id: string, constituenciesData: Constituency[]) => constituenciesData.find(c => c.id === id);
