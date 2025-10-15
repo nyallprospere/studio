@@ -5,6 +5,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+const electionYears = [
+  "2021",
+  "2016",
+  "2011",
+  "2006",
+  "2001",
+  "1997",
+  "1992",
+  "1987 (Apr 30)",
+  "1987 (April 6)",
+  "1982",
+  "1979",
+  "1974",
+];
+
 export default function AdminResultsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
@@ -22,7 +37,16 @@ export default function AdminResultsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="result-year">Election Year</Label>
-                    <Input id="result-year" type="number" placeholder="2026" />
+                    <Select>
+                      <SelectTrigger id="result-year">
+                        <SelectValue placeholder="Select an election" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {electionYears.map(year => (
+                          <SelectItem key={year} value={year}>{year}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="result-constituency">Constituency</Label>
