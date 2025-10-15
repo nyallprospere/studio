@@ -1,3 +1,4 @@
+
 export interface Party {
   id: string;
   name: string;
@@ -27,6 +28,10 @@ export interface Constituency {
   mapImageUrl?: string; // URL to map in storage
   demographics: {
     registeredVoters: number;
+  };
+  mapCoordinates?: {
+    top: string;
+    left: string;
   };
 }
 

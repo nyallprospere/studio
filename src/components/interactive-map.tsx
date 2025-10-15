@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useState } from 'react';
 import type { Constituency } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Users, ArrowRight, MapPin } from 'lucide-react';
@@ -15,29 +14,6 @@ import Image from 'next/image';
 interface InteractiveMapProps {
   constituencies: Constituency[];
 }
-
-// Approximate coordinates (top %, left %) for each constituency
-// These will likely need to be adjusted for the specific map image.
-const constituencyCoords: { [key: string]: { top: string; left: string } } = {
-  'Gros Islet': { top: '10%', left: '55%' },
-  'Babonneau': { top: '25%', left: '50%' },
-  'Castries North': { top: '35%', left: '35%' },
-  'Castries East': { top: '40%', left: '45%' },
-  'Castries Central': { top: '42%', left: '40%' },
-  'Castries South': { top: '48%', left: '42%' },
-  'Castries South East': { top: '50%', left: '50%' },
-  'Anse la Raye/Canaries': { top: '60%', left: '30%' },
-  'Soufriere': { top: '75%', left: '25%' },
-  'Choiseul': { top: '85%', left: '35%' },
-  'Laborie': { top: '90%', left: '45%' },
-  'Vieux Fort South': { top: '95%', left: '60%' },
-  'Vieux Fort North': { top: '90%', left: '68%' },
-  'Micoud South': { top: '80%', left: '80%' },
-  'Micoud North': { top: '70%', left: '75%' },
-  'Dennery South': { top: '60%', left: '70%' },
-  'Dennery North': { top: '50%', left: '65%' },
-};
-
 
 export function InteractiveMap({ constituencies }: InteractiveMapProps) {
   const { firestore } = useFirebase();
@@ -66,11 +42,11 @@ export function InteractiveMap({ constituencies }: InteractiveMapProps) {
             width={800} 
             height={1200}
             className="object-contain"
+            priority
         />
         {constituencies.map(c => {
-            const coords = constituencyCoords[c.name];
-            if (!coords) {
-                console.warn(`No coordinates found for constituency: ${c.name}`);
+            const coords = c.mapCoordinates;
+            if (!coords || !coords.top || !coords.left) {
                 return null;
             }
 
@@ -79,7 +55,7 @@ export function InteractiveMap({ constituencies }: InteractiveMapProps) {
                     <PopoverTrigger asChild>
                         <button 
                             className="absolute w-4 h-4 bg-primary rounded-full transform -translate-x-1/2 -translate-y-1/2 cursor-pointer ring-2 ring-white hover:scale-150 transition-transform duration-200"
-                            style={{ top: coords.top, left: coords.left }}
+                            style={{ top: `${coords.top}%`, left: `${coords.left}%` }}
                             aria-label={`Info for ${c.name}`}
                         />
                     </PopoverTrigger>

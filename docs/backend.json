@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Candidate": {
@@ -156,8 +157,16 @@
           "description": "The name of the constituency."
         },
         "mapCoordinates": {
-          "type": "string",
-          "description": "GeoJSON coordinates of the constituency."
+          "type": "object",
+          "description": "XY coordinates for the interactive map overlay.",
+          "properties": {
+            "top": {
+              "type": "string"
+            },
+            "left": {
+              "type": "string"
+            }
+          }
         },
         "demographics": {
           "type": "string",
