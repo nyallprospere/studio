@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import type { Constituency } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '../ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 
 interface ConstituencyMapProps {
