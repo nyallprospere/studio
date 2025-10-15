@@ -23,8 +23,17 @@ const politicalLeaningOptions = [
   { value: 'solid-uwp', label: 'Solid UWP', color: 'bg-yellow-500' },
 ];
 
-const getLeaningColor = (leaning: string | undefined) => {
-    return politicalLeaningOptions.find(o => o.value === leaning)?.color || 'bg-gray-500';
+const getLeaningInfo = (leaning: string | undefined, constituencyName: string) => {
+    if (constituencyName === 'Castries North' && (leaning === 'solid-slp' || leaning === 'lean-slp')) {
+        return {
+            className: '',
+            style: {
+                background: 'repeating-linear-gradient(45deg, #4299e1, #4299e1 10px, #e53e3e 10px, #e53e3e 20px)'
+            }
+        };
+    }
+    const colorClass = politicalLeaningOptions.find(o => o.value === leaning)?.color || 'bg-gray-500';
+    return { className: colorClass, style: {} };
 }
 
 export function InteractiveMap({ constituencies }: InteractiveMapProps) {
@@ -61,12 +70,14 @@ export function InteractiveMap({ constituencies }: InteractiveMapProps) {
                 return null;
             }
 
+            const { className: leaningClassName, style: leaningStyle } = getLeaningInfo(c.politicalLeaning, c.name);
+
             return (
                 <Popover key={c.id}>
                     <PopoverTrigger asChild>
                         <button 
-                            className={cn("absolute p-1 rounded-md text-xs font-bold text-white hover:scale-110 transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-200", getLeaningColor(c.politicalLeaning))}
-                            style={{ top: `${coords.top}%`, left: `${coords.left}%` }}
+                            className={cn("absolute p-2 rounded-md text-sm font-bold text-white hover:scale-110 transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-200", leaningClassName)}
+                            style={{ top: `${coords.top}%`, left: `${coords.left}%`, ...leaningStyle }}
                             aria-label={`Info for ${c.name}`}
                         >
                             {c.name}

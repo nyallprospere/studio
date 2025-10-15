@@ -25,8 +25,17 @@ const politicalLeaningOptions = [
   { value: 'solid-uwp', label: 'Solid UWP', color: 'bg-yellow-500' },
 ];
 
-const getLeaningColor = (leaning: string | undefined) => {
-    return politicalLeaningOptions.find(o => o.value === leaning)?.color || 'bg-gray-500';
+const getLeaningInfo = (leaning: string | undefined, constituencyName: string) => {
+    if (constituencyName === 'Castries North' && (leaning === 'solid-slp' || leaning === 'lean-slp')) {
+        return {
+            className: '',
+            style: {
+                background: 'repeating-linear-gradient(45deg, #4299e1, #4299e1 10px, #e53e3e 10px, #e53e3e 20px)'
+            }
+        };
+    }
+    const colorClass = politicalLeaningOptions.find(o => o.value === leaning)?.color || 'bg-gray-500';
+    return { className: colorClass, style: {} };
 }
 
 export default function AdminMapPage() {
@@ -118,15 +127,11 @@ export default function AdminMapPage() {
 
 function OverlayManager({ mapUrl, loadingMap }: { mapUrl: string | null; loadingMap: boolean; }) {
     const { firestore } = useFirebase();
-    const { toast } = useToast();
     const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
     const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
     
     const [coords, setCoords] = useState<Record<string, { top: string, left: string }>>({});
-    const [dirty, setDirty] = useState<Record<string, boolean>>({});
-    const [isSaving, setIsSaving] = useState<Record<string, boolean>>({});
     const mapRef = useRef<HTMLDivElement>(null);
-    const draggedItemRef = useRef<{id: string; offsetX: number; offsetY: number} | null>(null);
 
     useEffect(() => {
         if (constituencies) {
@@ -137,74 +142,6 @@ function OverlayManager({ mapUrl, loadingMap }: { mapUrl: string | null; loading
             setCoords(initialCoords);
         }
     }, [constituencies]);
-    
-    const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
-        e.preventDefault();
-        const target = e.currentTarget;
-        const rect = target.getBoundingClientRect();
-        
-        draggedItemRef.current = {
-            id,
-            offsetX: e.clientX - rect.left,
-            offsetY: e.clientY - rect.top
-        };
-        window.addEventListener('mousemove', handleMouseMove);
-        window.addEventListener('mouseup', handleMouseUp);
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-        if (!draggedItemRef.current || !mapRef.current) return;
-
-        const mapRect = mapRef.current.getBoundingClientRect();
-        const { id, offsetX, offsetY } = draggedItemRef.current;
-
-        const newLeft = e.clientX - mapRect.left - offsetX;
-        const newTop = e.clientY - mapRect.top - offsetY;
-
-        const newLeftPercent = Math.max(0, Math.min(100, (newLeft / mapRect.width) * 100));
-        const newTopPercent = Math.max(0, Math.min(100, (newTop / mapRect.height) * 100));
-        
-        setCoords(prev => ({
-            ...prev,
-            [id]: { top: newTopPercent.toFixed(2), left: newLeftPercent.toFixed(2) }
-        }));
-        setDirty(prev => ({ ...prev, [id]: true }));
-    };
-
-    const handleMouseUp = () => {
-        if (draggedItemRef.current && dirty[draggedItemRef.current.id]) {
-            handleSaveCoords(draggedItemRef.current.id);
-        }
-        draggedItemRef.current = null;
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    const handleSaveCoords = (constituencyId: string) => {
-        if (!firestore) return;
-        
-        setIsSaving(prev => ({ ...prev, [constituencyId]: true }));
-
-        const newCoords = coords[constituencyId];
-        const constituencyRef = doc(firestore, 'constituencies', constituencyId);
-        
-        updateDoc(constituencyRef, { mapCoordinates: newCoords })
-            .then(() => {
-                toast({ title: 'Saved!', description: `Coordinates for ${constituencies?.find(c=>c.id===constituencyId)?.name} have been updated.` });
-                setDirty(prev => ({...prev, [constituencyId]: false}));
-            })
-            .catch((error) => {
-                 const contextualError = new FirestorePermissionError({
-                    path: constituencyRef.path,
-                    operation: 'update',
-                    requestResourceData: { mapCoordinates: newCoords }
-                });
-                errorEmitter.emit('permission-error', contextualError);
-            })
-            .finally(() => {
-                setIsSaving(prev => ({ ...prev, [constituencyId]: false }));
-            });
-    };
 
     const handleLeaningChange = (constituencyId: string, leaning: string) => {
         if (!firestore) return;
@@ -228,7 +165,7 @@ function OverlayManager({ mapUrl, loadingMap }: { mapUrl: string | null; loading
         <Card>
             <CardHeader>
                 <CardTitle>Manage Overlays</CardTitle>
-                <CardDescription>Drag and drop the labels to set position. Click a label to set its color.</CardDescription>
+                <CardDescription>Click a label to set its color.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div 
@@ -246,15 +183,16 @@ function OverlayManager({ mapUrl, loadingMap }: { mapUrl: string | null; loading
                         const pointCoords = coords[c.id];
                         if (!pointCoords) return null;
 
+                        const { className: leaningClassName, style: leaningStyle } = getLeaningInfo(c.politicalLeaning, c.name);
+
                         return (
                            <Popover key={c.id}>
                                 <PopoverTrigger asChild>
                                     <button 
-                                        className={cn("absolute p-1 rounded-md text-xs font-bold text-white transform -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing", getLeaningColor(c.politicalLeaning))}
-                                        style={{ top: `${pointCoords.top}%`, left: `${pointCoords.left}%` }}
-                                        onMouseDown={e => handleMouseDown(e, c.id)}
+                                        className={cn("absolute p-2 rounded-md text-sm font-bold text-white transform -translate-x-1/2 -translate-y-1/2 cursor-pointer", leaningClassName)}
+                                        style={{ top: `${pointCoords.top}%`, left: `${pointCoords.left}%`, ...leaningStyle }}
                                     >
-                                        {isSaving[c.id] ? <Loader2 className="w-3 h-3 animate-spin" /> : c.name}
+                                        {c.name}
                                     </button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-64">
