@@ -10,8 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
-import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection, doc } from 'firebase/firestore';
+import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { Loader2, Edit, Trash2 } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
@@ -31,6 +30,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import type { Party } from '@/lib/types';
 import Image from 'next/image';
+import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const partySchema = z.object({
   name: z.string().min(2, 'Party name must be at least 2 characters.'),
@@ -49,8 +49,7 @@ export default function AdminPartiesPage() {
   
   const [logo, setLogo] = useState<File | null>(null);
   const [manifesto, setManifesto] = useState<File | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState('Saving...');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
@@ -81,54 +80,57 @@ export default function AdminPartiesPage() {
     return getDownloadURL(snapshot.ref);
   };
   
-  const onSubmit = async (values: z.infer<typeof partySchema>) => {
+  const onSubmit = (values: z.infer<typeof partySchema>) => {
     if (!firestore) {
         toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not initialized.' });
         return;
     }
-    
-    setIsLoading(true);
 
-    let logoUrl = '';
-    let manifestoUrl = '';
+    setIsSubmitting(true);
+    toast({ title: 'Success!', description: 'The new party is being saved.' });
 
-    try {
-      if (logo) {
-          setLoadingMessage('Uploading logo...');
-          logoUrl = await uploadFile(logo, `party-logos/${Date.now()}-${logo.name}`);
-      }
-      if (manifesto) {
-          setLoadingMessage('Uploading manifesto...');
-          manifestoUrl = await uploadFile(manifesto, `party-manifestos/${Date.now()}-${manifesto.name}`);
-      }
-    } catch (uploadError: any) {
-        toast({ variant: 'destructive', title: 'Upload Error', description: uploadError.message || 'Failed to upload a file.' });
-        setIsLoading(false);
-        setLoadingMessage('Saving...');
-        return;
-    }
+    const performSave = async () => {
+        let logoUrl = '';
+        let manifestoUrl = '';
 
-    setLoadingMessage('Saving party...');
-    const partyData = {
-        ...values,
-        logoUrl,
-        manifestoUrl,
+        try {
+            if (logo) {
+                logoUrl = await uploadFile(logo, `party-logos/${Date.now()}-${logo.name}`);
+            }
+            if (manifesto) {
+                manifestoUrl = await uploadFile(manifesto, `party-manifestos/${Date.now()}-${manifesto.name}`);
+            }
+        } catch (uploadError: any) {
+            toast({ variant: 'destructive', title: 'Upload Error', description: uploadError.message || 'Failed to upload a file.' });
+            setIsSubmitting(false);
+            return;
+        }
+
+        const partyData = {
+            ...values,
+            logoUrl,
+            manifestoUrl,
+        };
+        
+        try {
+            const partiesCollection = collection(firestore, 'parties');
+            await addDoc(partiesCollection, partyData);
+            toast({ title: 'Save Complete!', description: `${values.name} has been saved.` });
+        } catch (error: any) {
+             toast({ variant: 'destructive', title: 'Database Error', description: 'Failed to save party to database.' });
+        } finally {
+            form.reset();
+            setLogo(null);
+            setManifesto(null);
+            const logoInput = document.getElementById('logo') as HTMLInputElement;
+            if (logoInput) logoInput.value = '';
+            const manifestoInput = document.getElementById('manifesto') as HTMLInputElement;
+            if (manifestoInput) manifestoInput.value = '';
+            setIsSubmitting(false);
+        }
     };
-    
-    const partiesCollection = collection(firestore, 'parties');
-    addDocumentNonBlocking(partiesCollection, partyData);
 
-    toast({ title: 'Success!', description: 'The new party has been saved.' });
-    form.reset();
-    setLogo(null);
-    setManifesto(null);
-    const logoInput = document.getElementById('logo') as HTMLInputElement;
-    if (logoInput) logoInput.value = '';
-    const manifestoInput = document.getElementById('manifesto') as HTMLInputElement;
-    if (manifestoInput) manifestoInput.value = '';
-    
-    setIsLoading(false);
-    setLoadingMessage('Saving...');
+    performSave();
   };
   
   return (
@@ -154,7 +156,7 @@ export default function AdminPartiesPage() {
                                 <FormItem>
                                     <FormLabel>Party Name *</FormLabel>
                                     <FormControl>
-                                        <Input {...field} />
+                                        <Input {...field} disabled={isSubmitting} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -167,7 +169,7 @@ export default function AdminPartiesPage() {
                                 <FormItem>
                                     <FormLabel>Acronym *</FormLabel>
                                     <FormControl>
-                                        <Input {...field} />
+                                        <Input {...field} disabled={isSubmitting} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -182,7 +184,7 @@ export default function AdminPartiesPage() {
                             <FormItem>
                                 <FormLabel>Party Leader *</FormLabel>
                                 <FormControl>
-                                    <Input {...field} />
+                                    <Input {...field} disabled={isSubmitting} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -197,7 +199,7 @@ export default function AdminPartiesPage() {
                                 <FormItem>
                                     <FormLabel>Year Founded *</FormLabel>
                                     <FormControl>
-                                        <Input type="number" {...field} />
+                                        <Input type="number" {...field} disabled={isSubmitting} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -210,7 +212,7 @@ export default function AdminPartiesPage() {
                                 <FormItem>
                                     <FormLabel>Party Color</FormLabel>
                                     <FormControl>
-                                    <Input type="color" {...field} className="h-10 p-1" />
+                                    <Input type="color" {...field} className="h-10 p-1" disabled={isSubmitting} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -225,7 +227,7 @@ export default function AdminPartiesPage() {
                             <FormItem>
                                 <FormLabel>Description</FormLabel>
                                 <FormControl>
-                                    <Textarea placeholder="A brief description of the party's history and ideology..." {...field} />
+                                    <Textarea placeholder="A brief description of the party's history and ideology..." {...field} disabled={isSubmitting}/>
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -238,7 +240,7 @@ export default function AdminPartiesPage() {
                             <FormItem>
                                 <FormLabel>Manifesto Summary</FormLabel>
                                 <FormControl>
-                                <Textarea placeholder="A short summary of the key points in the party's manifesto..." {...field} />
+                                <Textarea placeholder="A short summary of the key points in the party's manifesto..." {...field} disabled={isSubmitting}/>
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -248,20 +250,20 @@ export default function AdminPartiesPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="logo">Party Logo</Label>
-                            <Input id="logo" type="file" accept="image/*" onChange={(e) => handleFileChange(e, setLogo)} />
+                            <Input id="logo" type="file" accept="image/*" onChange={(e) => handleFileChange(e, setLogo)} disabled={isSubmitting} />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="manifesto">Party Manifesto (PDF)</Label>
-                            <Input id="manifesto" type="file" accept=".pdf" onChange={(e) => handleFileChange(e, setManifesto)} />
+                            <Input id="manifesto" type="file" accept=".pdf" onChange={(e) => handleFileChange(e, setManifesto)} disabled={isSubmitting}/>
                         </div>
                     </div>
                 </CardContent>
                 <CardFooter>
-                    <Button type="submit" disabled={isLoading} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                    {isLoading ? (
+                    <Button type="submit" disabled={isSubmitting} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                    {isSubmitting ? (
                         <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {loadingMessage}
+                        Saving in background...
                         </>
                     ) : (
                         'Save Party'
@@ -289,15 +291,14 @@ function PartyList({ parties, isLoading }: { parties: Party[] | null, isLoading:
         const partyRef = doc(firestore, 'parties', party.id);
         deleteDocumentNonBlocking(partyRef);
 
-        // Also delete associated files from storage
         const storage = getStorage();
         if (party.logoUrl) {
             const logoRef = ref(storage, party.logoUrl);
-            await deleteObject(logoRef).catch(e => console.error("Error deleting logo:", e));
+            deleteObject(logoRef).catch(e => console.error("Error deleting logo:", e));
         }
         if (party.manifestoUrl) {
             const manifestoRef = ref(storage, party.manifestoUrl);
-            await deleteObject(manifestoRef).catch(e => console.error("Error deleting manifesto:", e));
+            deleteObject(manifestoRef).catch(e => console.error("Error deleting manifesto:", e));
         }
 
         toast({ title: "Party Deleted", description: `${party.name} has been removed.`});
@@ -375,7 +376,6 @@ function EditPartyDialog({ party }: { party: Party }) {
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
-    const [updateMessage, setUpdateMessage] = useState('Updating...');
     const [newLogo, setNewLogo] = useState<File | null>(null);
     const [newManifesto, setNewManifesto] = useState<File | null>(null);
 
@@ -383,6 +383,14 @@ function EditPartyDialog({ party }: { party: Party }) {
         resolver: zodResolver(partySchema),
         defaultValues: { ...party, founded: party.founded || ('' as any) },
     });
+    
+    useEffect(() => {
+        if (open) {
+            form.reset({ ...party, founded: party.founded || ('' as any) });
+            setNewLogo(null);
+            setNewManifesto(null);
+        }
+    }, [open, party, form]);
 
     const uploadFile = async (file: File, path: string): Promise<string> => {
         const storage = getStorage();
@@ -397,43 +405,49 @@ function EditPartyDialog({ party }: { party: Party }) {
         }
     };
 
-    const onUpdate = async (values: z.infer<typeof partySchema>) => {
+    const onUpdate = (values: z.infer<typeof partySchema>) => {
         if (!firestore) return;
+        
         setIsUpdating(true);
-        
-        let updatedData = { ...values };
-        const storage = getStorage();
-
-        try {
-            if (newLogo) {
-                setUpdateMessage('Uploading logo...');
-                if (party.logoUrl) await deleteObject(ref(storage, party.logoUrl)).catch(e => console.warn(e)); // Delete old logo
-                const logoUrl = await uploadFile(newLogo, `party-logos/${Date.now()}-${newLogo.name}`);
-                updatedData = { ...updatedData, logoUrl };
-            }
-            if (newManifesto) {
-                setUpdateMessage('Uploading manifesto...');
-                if (party.manifestoUrl) await deleteObject(ref(storage, party.manifestoUrl)).catch(e => console.warn(e)); // Delete old manifesto
-                const manifestoUrl = await uploadFile(newManifesto, `party-manifestos/${Date.now()}-${newManifesto.name}`);
-                updatedData = { ...updatedData, manifestoUrl };
-            }
-        } catch (uploadError: any) {
-            toast({ variant: 'destructive', title: 'Upload Error', description: uploadError.message });
-            setIsUpdating(false);
-            setUpdateMessage('Updating...');
-            return;
-        }
-
-        setUpdateMessage('Saving changes...');
-        const partyRef = doc(firestore, 'parties', party.id);
-        updateDocumentNonBlocking(partyRef, updatedData);
-        
-        toast({ title: "Update Successful", description: `${party.name} has been updated.`});
-        setIsUpdating(false);
         setOpen(false);
-        setNewLogo(null);
-        setNewManifesto(null);
-        setUpdateMessage('Updating...');
+        toast({ title: "Update Started", description: `Updating ${party.name} in the background.` });
+
+        const performUpdate = async () => {
+            let updatedData: any = { ...values };
+            const storage = getStorage();
+
+            try {
+                if (newLogo) {
+                    if (party.logoUrl) {
+                        await deleteObject(ref(storage, party.logoUrl)).catch(e => console.warn("Old logo deletion failed, continuing...", e));
+                    }
+                    const logoUrl = await uploadFile(newLogo, `party-logos/${Date.now()}-${newLogo.name}`);
+                    updatedData.logoUrl = logoUrl;
+                }
+                
+                if (newManifesto) {
+                    if (party.manifestoUrl) {
+                        await deleteObject(ref(storage, party.manifestoUrl)).catch(e => console.warn("Old manifesto deletion failed, continuing...", e));
+                    }
+                    const manifestoUrl = await uploadFile(newManifesto, `party-manifestos/${Date.now()}-${newManifesto.name}`);
+                    updatedData.manifestoUrl = manifestoUrl;
+                }
+
+                const partyRef = doc(firestore, 'parties', party.id);
+                await updateDoc(partyRef, updatedData);
+                
+                toast({ title: "Update Successful", description: `${party.name} has been updated.` });
+
+            } catch (error: any) {
+                console.error("Update failed:", error);
+                const description = error.message || 'An unknown error occurred during the update.';
+                toast({ variant: 'destructive', title: 'Update Failed', description });
+            } finally {
+                setIsUpdating(false);
+            }
+        };
+
+        performUpdate();
     };
 
     return (
@@ -480,7 +494,7 @@ function EditPartyDialog({ party }: { party: Party }) {
                                 <Button type="button" variant="secondary">Cancel</Button>
                             </DialogClose>
                             <Button type="submit" disabled={isUpdating} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                                {isUpdating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {updateMessage}</> : 'Save Changes'}
+                                Save Changes
                             </Button>
                         </DialogFooter>
                     </form>
@@ -489,4 +503,6 @@ function EditPartyDialog({ party }: { party: Party }) {
         </Dialog>
     );
 }
+    
+
     
