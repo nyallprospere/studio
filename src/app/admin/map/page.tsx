@@ -128,6 +128,8 @@ function OverlayManager({ mapUrl, loadingMap }: { mapUrl: string | null; loading
         e.preventDefault();
         const target = e.currentTarget;
         const rect = target.getBoundingClientRect();
+        const mapRect = mapRef.current!.getBoundingClientRect();
+
         draggedItemRef.current = {
             id,
             offsetX: e.clientX - rect.left,
@@ -199,7 +201,7 @@ function OverlayManager({ mapUrl, loadingMap }: { mapUrl: string | null; loading
         <Card>
             <CardHeader>
                 <CardTitle>Manage Overlays</CardTitle>
-                <CardDescription>Drag and drop the points on the map to set the position for each constituency. Changes are saved automatically.</CardDescription>
+                <CardDescription>Drag and drop the labels on the map to set the position for each constituency. Changes are saved automatically.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div 
@@ -220,16 +222,11 @@ function OverlayManager({ mapUrl, loadingMap }: { mapUrl: string | null; loading
                         return (
                             <div 
                                 key={c.id} 
-                                className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing group"
+                                className="absolute p-1 rounded-md text-xs font-bold text-white bg-black/50 transform -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing"
                                 style={{ top: `${pointCoords.top}%`, left: `${pointCoords.left}%` }}
                                 onMouseDown={e => handleMouseDown(e, c.id)}
                             >
-                                <div className={`w-4 h-4 rounded-full ring-2 ring-white transition-all ${isSaving[c.id] ? 'bg-yellow-500 animate-pulse' : 'bg-primary'} group-hover:scale-125`} />
-                                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-background text-foreground text-xs font-semibold px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                    <div className="flex items-center gap-2">
-                                        <span>{c.name}</span>
-                                    </div>
-                                </div>
+                                {isSaving[c.id] ? <Loader2 className="w-3 h-3 animate-spin" /> : c.name}
                             </div>
                         )
                     })}
@@ -238,4 +235,3 @@ function OverlayManager({ mapUrl, loadingMap }: { mapUrl: string | null; loading
         </Card>
     );
 }
-

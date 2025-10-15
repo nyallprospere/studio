@@ -53,10 +53,12 @@ export function InteractiveMap({ constituencies }: InteractiveMapProps) {
                 <Popover key={c.id}>
                     <PopoverTrigger asChild>
                         <button 
-                            className="absolute w-4 h-4 bg-primary rounded-full transform -translate-x-1/2 -translate-y-1/2 cursor-pointer ring-2 ring-white hover:scale-150 transition-transform duration-200"
+                            className="absolute p-1 rounded-md text-xs font-bold text-white bg-black/60 hover:bg-primary/80 transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-colors duration-200"
                             style={{ top: `${coords.top}%`, left: `${coords.left}%` }}
                             aria-label={`Info for ${c.name}`}
-                        />
+                        >
+                            {c.name}
+                        </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-64">
                         <div className="space-y-4">
