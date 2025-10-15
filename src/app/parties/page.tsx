@@ -1,6 +1,6 @@
 'use client';
 
-import { useCollection } from '@/firebase';
+import { parties as partiesData } from '@/lib/data';
 import type { Party } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Shield } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 function PartyCardSkeleton() {
   return (
@@ -32,7 +33,16 @@ function PartyCardSkeleton() {
 }
 
 export default function PartiesPage() {
-  const { data: parties, loading } = useCollection<Party>('parties');
+  const [parties, setParties] = useState<Party[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate fetching data
+    setTimeout(() => {
+        setParties(partiesData);
+        setLoading(false);
+    }, 500);
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-8">

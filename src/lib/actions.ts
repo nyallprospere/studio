@@ -2,38 +2,30 @@
 
 import { generateElectionPredictions } from '@/ai/flows/generate-election-predictions';
 import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
-import { collection, getDocs, orderBy, query, limit } from 'firebase/firestore';
-import { getFirestore } from 'firebase-admin/firestore';
-import { getFirebaseAdminApp } from '@/firebase/admin';
+import { parties, historicalResults, polls } from './data';
 
 async function getCollectionData(collectionName: string) {
-    const adminApp = getFirebaseAdminApp();
-    const firestore = getFirestore(adminApp);
-    const q = query(collection(firestore, collectionName));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    switch (collectionName) {
+        case 'polls':
+            return polls;
+        default:
+            return [];
+    }
 }
 
 async function getLatestHistoricalResult() {
-    const adminApp = getFirebaseAdminApp();
-    const firestore = getFirestore(adminApp);
-    const q = query(collection(firestore, 'historicalResults'), orderBy('year', 'desc'), limit(1));
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) {
-        return null;
-    }
-    return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+    return historicalResults.sort((a, b) => b.year - a.year)[0];
 }
 
 
 export async function getPrediction(newsSummary: string) {
   try {
-    const polls = await getCollectionData('polls');
+    const pollsData = await getCollectionData('polls');
     const latestHistoricalResult = await getLatestHistoricalResult();
 
     // Step 1: Generate a baseline prediction
     const initialPrediction = await generateElectionPredictions({
-      pollingData: JSON.stringify(polls),
+      pollingData: JSON.stringify(pollsData),
       historicalData: JSON.stringify(latestHistoricalResult),
       recentEvents: 'Standard political climate, no major recent events before this news.',
     });

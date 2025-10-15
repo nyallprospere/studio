@@ -1,6 +1,7 @@
 'use client';
-import { useCollection } from '@/firebase';
-import { getPartyById, getConstituencyById } from '@/lib/data';
+
+import { useState, useEffect } from 'react';
+import { getPartyById, getConstituencyById, historicalResults as historicalResultsData, parties as partiesData, constituencies as constituenciesData } from '@/lib/data';
 import type { ElectionYearResult, Party, Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,11 +9,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export default function ResultsPage() {
-  const { data: historicalResults, loading: loadingResults } = useCollection<ElectionYearResult>('historicalResults', { orderBy: ['year', 'desc'] });
-  const { data: parties, loading: loadingParties } = useCollection<Party>('parties');
-  const { data: constituencies, loading: loadingConstituencies } = useCollection<Constituency>('constituencies');
+  const [historicalResults, setHistoricalResults] = useState<ElectionYearResult[]>([]);
+  const [parties, setParties] = useState<Party[]>([]);
+  const [constituencies, setConstituencies] = useState<Omit<Constituency, 'mapImageUrl'>[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const loading = loadingResults || loadingParties || loadingConstituencies;
+  useEffect(() => {
+    // Simulate fetching data
+    setTimeout(() => {
+        setHistoricalResults(historicalResultsData.sort((a, b) => b.year - a.year));
+        setParties(partiesData);
+        setConstituencies(constituenciesData);
+        setLoading(false);
+    }, 500);
+  }, []);
 
   if (loading) {
     return (

@@ -1,6 +1,8 @@
 'use client';
 
-import { useCollection } from '@/firebase';
+import { useState, useEffect } from 'react';
+import { constituencies as constituenciesData } from '@/lib/data';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -29,7 +31,20 @@ function ConstituencyCardSkeleton() {
 }
 
 export default function ConstituenciesPage() {
-  const { data: constituencies, loading } = useCollection<Constituency>('constituencies');
+    const [constituencies, setConstituencies] = useState<Constituency[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        setTimeout(() => {
+            const enrichedConstituencies = constituenciesData.map(c => ({
+                ...c,
+                id: c.id,
+                mapImageUrl: PlaceHolderImages.find(p => p.id === c.mapImageId)?.imageUrl || ''
+            }));
+            setConstituencies(enrichedConstituencies as Constituency[]);
+            setLoading(false);
+        }, 500);
+    }, []);
 
   return (
     <div className="container mx-auto px-4 py-8">

@@ -1,28 +1,42 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { useCollection } from '@/firebase';
 import type { Poll, Party } from '@/lib/types';
+import { polls as pollsData, parties as partiesData } from '@/lib/data';
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import type { ChartConfig } from '@/components/ui/chart';
 
 export default function PollsPage() {
-  const { data: polls, loading: loadingPolls } = useCollection<Poll>('polls', { orderBy: ['date', 'asc'] });
-  const { data: parties, loading: loadingParties } = useCollection<Party>('parties');
+  const [polls, setPolls] = useState<Poll[]>([]);
+  const [parties, setParties] = useState<Party[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate fetching data
+    setTimeout(() => {
+        setPolls(pollsData);
+        setParties(partiesData);
+        setLoading(false);
+    }, 500);
+  }, []);
 
   const chartData = polls?.map(poll => {
     const pollResults: { [key: string]: number | string } = { date: new Date(poll.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) };
     poll.results.forEach(result => {
-      pollResults[result.partyId] = result.percentage;
+        const party = parties.find(p => p.id === result.partyId);
+        if (party) {
+            pollResults[party.acronym] = result.percentage;
+        }
     });
     return pollResults;
   }) || [];
 
   const chartConfig: ChartConfig = {};
-  parties?.forEach((party, index) => {
-    chartConfig[party.id] = {
+  parties?.forEach((party) => {
+    chartConfig[party.acronym] = {
       label: party.acronym,
       color: party.color,
     };
@@ -53,12 +67,12 @@ export default function PollsPage() {
                 {parties?.map((party) => (
                    <Line
                     key={party.id}
-                    dataKey={party.id}
+                    dataKey={party.acronym}
                     type="monotone"
-                    stroke={chartConfig[party.id]?.color || '#ccc'}
+                    stroke={chartConfig[party.acronym]?.color || '#ccc'}
                     strokeWidth={2}
                     dot={{
-                        fill: chartConfig[party.id]?.color,
+                        fill: chartConfig[party.acronym]?.color,
                     }}
                     activeDot={{
                         r: 6,
