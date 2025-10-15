@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { Loader2 } from 'lucide-react';
 import { collection, addDoc } from 'firebase/firestore';
 import type { Party, Constituency } from '@/lib/types';
@@ -87,18 +87,24 @@ export default function AdminCandidatesPage() {
         policyPositions: [], // Default to empty array
     };
     
-    try {
-        const candidatesCollection = collection(firestore, 'candidates');
-        await addDoc(candidatesCollection, candidateData);
-        toast({ title: 'Success!', description: 'The new candidate has been saved.' });
-        resetForm();
-    } catch(error: any) {
-        console.error("Failed to save candidate:", error);
-        toast({ variant: 'destructive', title: 'Database Error', description: 'Failed to save candidate to database.' });
-    } finally {
-        setIsLoading(false);
-        setLoadingMessage('Saving...');
-    }
+    const candidatesCollection = collection(firestore, 'candidates');
+    addDoc(candidatesCollection, candidateData)
+        .then(() => {
+            toast({ title: 'Success!', description: 'The new candidate has been saved.' });
+            resetForm();
+        })
+        .catch((error: any) => {
+            const contextualError = new FirestorePermissionError({
+              path: 'candidates',
+              operation: 'create',
+              requestResourceData: candidateData,
+            });
+            errorEmitter.emit('permission-error', contextualError);
+        })
+        .finally(() => {
+            setIsLoading(false);
+            setLoadingMessage('Saving...');
+        });
   };
 
   return (

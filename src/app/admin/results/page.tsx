@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Upload, Download, Loader2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, writeBatch, doc } from 'firebase/firestore';
 import { uploadFile } from '@/firebase/storage';
 
@@ -59,29 +59,40 @@ export default function AdminResultsPage() {
                 
                 // 3. Batch write to Firestore
                 const batch = writeBatch(firestore);
-                let recordsProcessed = 0;
+                let recordsToProcess: any[] = [];
 
                 jsonData.forEach(row => {
                     // Basic validation
                     if (row['Election Year'] && row['Constituency'] && row['Candidate'] && row['Votes']) {
-                       const resultRef = doc(collection(firestore, 'election_results'));
-                       batch.set(resultRef, {
+                       const resultData = {
                             year: row['Election Year'],
                             constituencyName: row['Constituency'],
                             candidateName: row['Candidate'],
                             partyAcronym: row['Party'],
                             votes: row['Votes'],
-                       });
-                       recordsProcessed++;
+                       };
+                       const resultRef = doc(collection(firestore, 'election_results'));
+                       batch.set(resultRef, resultData);
+                       recordsToProcess.push(resultData);
                     }
                 });
 
-                if (recordsProcessed > 0) {
-                    await batch.commit();
-                    toast({
-                        title: 'Import Successful',
-                        description: `Successfully imported and saved ${recordsProcessed} records.`,
-                    });
+                if (recordsToProcess.length > 0) {
+                    batch.commit()
+                        .then(() => {
+                             toast({
+                                title: 'Import Successful',
+                                description: `Successfully imported and saved ${recordsToProcess.length} records.`,
+                            });
+                        })
+                        .catch((error: any) => {
+                             const contextualError = new FirestorePermissionError({
+                                path: 'election_results',
+                                operation: 'write',
+                                requestResourceData: recordsToProcess,
+                            });
+                            errorEmitter.emit('permission-error', contextualError);
+                        });
                 } else {
                      toast({
                         variant: 'destructive',

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirebase, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { addDoc, collection, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { Loader2, Edit, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -108,23 +108,30 @@ export default function AdminPartiesPage() {
         manifestoUrl,
     };
     
-    try {
-        const partiesCollection = collection(firestore, 'parties');
-        await addDoc(partiesCollection, partyData);
-        toast({ title: 'Save Complete!', description: `${values.name} has been saved.` });
-        form.reset();
-        setLogo(null);
-        setManifesto(null);
-        const logoInput = document.getElementById('logo') as HTMLInputElement;
-        if (logoInput) logoInput.value = '';
-        const manifestoInput = document.getElementById('manifesto') as HTMLInputElement;
-        if (manifestoInput) manifestoInput.value = '';
-    } catch (error: any) {
-         toast({ variant: 'destructive', title: 'Database Error', description: 'Failed to save party to database.' });
-    } finally {
-        setIsSubmitting(false);
-        setLoadingMessage('Saving...');
-    }
+    const partiesCollection = collection(firestore, 'parties');
+    addDoc(partiesCollection, partyData)
+        .then(() => {
+            toast({ title: 'Save Complete!', description: `${values.name} has been saved.` });
+            form.reset();
+            setLogo(null);
+            setManifesto(null);
+            const logoInput = document.getElementById('logo') as HTMLInputElement;
+            if (logoInput) logoInput.value = '';
+            const manifestoInput = document.getElementById('manifesto') as HTMLInputElement;
+            if (manifestoInput) manifestoInput.value = '';
+        })
+        .catch((error: any) => {
+            const contextualError = new FirestorePermissionError({
+                path: 'parties',
+                operation: 'create',
+                requestResourceData: partyData,
+            });
+            errorEmitter.emit('permission-error', contextualError);
+        })
+        .finally(() => {
+            setIsSubmitting(false);
+            setLoadingMessage('Saving...');
+        });
   };
   
   return (
@@ -295,9 +302,18 @@ function PartyList({ parties, isLoading }: { parties: Party[] | null, isLoading:
 
             // Then delete the document
             const partyRef = doc(firestore, 'parties', party.id);
-            await deleteDoc(partyRef);
+            deleteDoc(partyRef)
+                .then(() => {
+                     toast({ title: "Party Deleted", description: `${party.name} has been successfully removed.`});
+                })
+                .catch((error: any) => {
+                    const contextualError = new FirestorePermissionError({
+                        path: partyRef.path,
+                        operation: 'delete',
+                    });
+                    errorEmitter.emit('permission-error', contextualError);
+                });
 
-            toast({ title: "Party Deleted", description: `${party.name} has been successfully removed.`});
         } catch (error: any) {
             console.error("Deletion failed:", error);
             const description = error.message || "An unknown error occurred during deletion.";
@@ -434,10 +450,19 @@ function EditPartyDialog({ party }: { party: Party }) {
             
             setUpdateMessage('Saving changes...');
             const partyRef = doc(firestore, 'parties', party.id);
-            await updateDoc(partyRef, updatedData);
-            
-            toast({ title: "Update Successful", description: `${party.name} has been updated.` });
-            setOpen(false);
+            updateDoc(partyRef, updatedData)
+                .then(() => {
+                    toast({ title: "Update Successful", description: `${party.name} has been updated.` });
+                    setOpen(false);
+                })
+                .catch((error: any) => {
+                    const contextualError = new FirestorePermissionError({
+                        path: partyRef.path,
+                        operation: 'update',
+                        requestResourceData: updatedData,
+                    });
+                    errorEmitter.emit('permission-error', contextualError);
+                });
 
         } catch (error: any) {
             console.error("Update failed:", error);
