@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
 import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import { Loader2, Edit, Trash2 } from 'lucide-react';
+import { Loader2, Edit, Trash2, View } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -31,6 +31,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import type { Party } from '@/lib/types';
 import Image from 'next/image';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import Link from 'next/link';
 
 const partySchema = z.object({
   name: z.string().min(2, 'Party name must be at least 2 characters.'),
@@ -321,7 +322,7 @@ function PartyList({ parties, isLoading }: { parties: Party[] | null, isLoading:
                             <TableHead>Logo</TableHead>
                             <TableHead>Name</TableHead>
                             <TableHead>Leader</TableHead>
-                            <TableHead>Founded</TableHead>
+                            <TableHead>Files</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -334,7 +335,12 @@ function PartyList({ parties, isLoading }: { parties: Party[] | null, isLoading:
                                     </TableCell>
                                     <TableCell className="font-medium">{party.name} ({party.acronym})</TableCell>
                                     <TableCell>{party.leader}</TableCell>
-                                    <TableCell>{party.founded}</TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col space-y-1">
+                                            {party.logoUrl && <Link href={party.logoUrl} target="_blank" className="text-sm text-blue-500 hover:underline">View Logo</Link>}
+                                            {party.manifestoUrl && <Link href={party.manifestoUrl} target="_blank" className="text-sm text-blue-500 hover:underline">View Manifesto</Link>}
+                                        </div>
+                                    </TableCell>
                                     <TableCell className="text-right space-x-2">
                                         <EditPartyDialog party={party} />
                                         
@@ -408,7 +414,6 @@ function EditPartyDialog({ party }: { party: Party }) {
     const onUpdate = (values: z.infer<typeof partySchema>) => {
         if (!firestore) return;
         
-        setIsUpdating(true);
         setOpen(false);
         toast({ title: "Update Started", description: `Updating ${party.name} in the background.` });
 
@@ -479,14 +484,20 @@ function EditPartyDialog({ party }: { party: Party }) {
                                 <FormControl>
                                     <Input type="file" accept="image/*" onChange={(e) => handleFileChange(e, setNewLogo)} />
                                 </FormControl>
-                                <FormDescription>Upload a new logo to replace the current one.</FormDescription>
+                                <FormDescription className="flex items-center gap-2">
+                                    Upload a new logo to replace the current one.
+                                    {party.logoUrl && <Link href={party.logoUrl} target="_blank" className="text-blue-500 text-xs hover:underline">(View Current)</Link>}
+                                </FormDescription>
                             </FormItem>
                             <FormItem>
                                 <FormLabel>Party Manifesto (PDF)</FormLabel>
                                 <FormControl>
                                     <Input type="file" accept=".pdf" onChange={(e) => handleFileChange(e, setNewManifesto)} />
                                 </FormControl>
-                                <FormDescription>Upload a new manifesto to replace the current one.</FormDescription>
+                                <FormDescription className="flex items-center gap-2">
+                                    Upload a new manifesto to replace the current one.
+                                    {party.manifestoUrl && <Link href={party.manifestoUrl} target="_blank" className="text-blue-500 text-xs hover:underline">(View Current)</Link>}
+                                </FormDescription>
                             </FormItem>
                         </div>
                         <DialogFooter>
