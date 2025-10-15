@@ -7,13 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirebase, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { addDoc, collection, doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { uploadFile } from '@/firebase/storage';
 import type { Constituency } from '@/lib/types';
-import Image from 'next/image';
 
 export default function AdminConstituenciesPage() {
     const { firestore } = useFirebase();
@@ -29,16 +28,15 @@ export default function AdminConstituenciesPage() {
     const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
     const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
 
+    const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'site') : null, [firestore]);
+    const { data: siteSettings, isLoading: loadingSettings } = useDoc(settingsRef);
+
     useEffect(() => {
-        if (constituencies && constituencies.length > 0) {
-            // Find any constituency that has a mapImageUrl
-            const url = constituencies.find(c => c.mapImageUrl)?.mapImageUrl;
-            if (url) {
-                // Add a timestamp to bust the cache every time the component loads
-                setMapPreviewUrl(`${url}?t=${new Date().getTime()}`);
-            }
+        if (siteSettings && siteSettings.mapUrl) {
+            // Add a timestamp to bust the cache every time the component loads
+            setMapPreviewUrl(`${siteSettings.mapUrl}?t=${new Date().getTime()}`);
         }
-    }, [constituencies]);
+    }, [siteSettings]);
 
 
     const handleAddConstituency = async (e: React.FormEvent) => {
@@ -86,15 +84,12 @@ export default function AdminConstituenciesPage() {
 
             const mapUrl = await uploadFile(mapImage, mapPath);
             
-            // To ensure the map URL is available for all constituencies, we can store it on one, or create a separate settings document.
-            // For simplicity, we'll try to update an existing constituency.
-            if (constituencies && constituencies.length > 0) {
-                const firstConstituencyRef = doc(firestore, 'constituencies', constituencies[0].id);
-                // We store the clean URL in Firestore
-                await setDoc(firstConstituencyRef, { mapImageUrl: mapUrl }, { merge: true });
-                 // We use a timestamped URL for the immediate preview to bust the cache
-                setMapPreviewUrl(`${mapUrl}?t=${new Date().getTime()}`);
-            }
+            const settingsDocRef = doc(firestore, 'settings', 'site');
+            await setDoc(settingsDocRef, { mapUrl: mapUrl }, { merge: true });
+
+            // We use a timestamped URL for the immediate preview to bust the cache
+            setMapPreviewUrl(`${mapUrl}?t=${new Date().getTime()}`);
+
             toast({ title: 'Map Uploaded', description: 'The constituency map has been updated.' });
         } catch (error: any) {
              toast({ variant: 'destructive', title: 'Upload Failed', description: error.message || 'Could not upload map.' });
@@ -174,14 +169,14 @@ export default function AdminConstituenciesPage() {
                         <CardDescription>This is the current map being displayed to users.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {loadingConstituencies && <p>Loading map...</p>}
-                        {!loadingConstituencies && mapPreviewUrl ? (
+                        {(loadingConstituencies || loadingSettings) && <p>Loading map...</p>}
+                        {!(loadingConstituencies || loadingSettings) && mapPreviewUrl ? (
                             <div className="relative w-full h-[600px] border rounded-lg overflow-hidden p-2 flex items-center justify-center">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={mapPreviewUrl} alt="Constituency Map Preview" className="max-w-full max-h-full object-contain" />
                             </div>
                         ) : (
-                            !loadingConstituencies && <p className="text-muted-foreground text-center py-10">No map has been uploaded yet.</p>
+                            !loadingConstituencies && !loadingSettings && <p className="text-muted-foreground text-center py-10">No map has been uploaded yet.</p>
                         )}
                     </CardContent>
                 </Card>

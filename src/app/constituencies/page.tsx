@@ -3,9 +3,9 @@
 import type { Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useCollection, useDoc, useFirebase, useMemoFirebase } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users } from 'lucide-react';
 import Link from 'next/link';
 
@@ -23,9 +23,13 @@ function ConstituenciesPageSkeleton() {
 export default function ConstituenciesPage() {
     const { firestore } = useFirebase();
     const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
-    const { data: constituencies, isLoading } = useCollection<Constituency>(constituenciesQuery);
+    const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
 
-    const mapUrl = constituencies?.find(c => c.mapImageUrl)?.mapImageUrl;
+    const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'site') : null, [firestore]);
+    const { data: siteSettings, isLoading: loadingSettings } = useDoc(settingsRef);
+
+    const isLoading = loadingConstituencies || loadingSettings;
+    const mapUrl = siteSettings?.mapUrl;
 
   return (
     <div className="container mx-auto px-4 py-8">
