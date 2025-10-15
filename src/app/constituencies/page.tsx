@@ -12,7 +12,7 @@ import { InteractiveMap } from '@/components/interactive-map';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { Pie, PieChart, ResponsiveContainer, Cell } from 'recharts';
+import { Pie, PieChart, ResponsiveContainer, Cell, Label } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
 
@@ -105,7 +105,7 @@ export default function ConstituenciesPage() {
                     <CardDescription>Current political leaning of the 17 constituencies.</CardDescription>
                   </CardHeader>
                   <CardContent className="flex flex-col items-center">
-                     <ChartContainer config={chartConfig} className="h-48 w-full">
+                     <ChartContainer config={chartConfig} className="h-40 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <ChartTooltip 
@@ -117,7 +117,7 @@ export default function ConstituenciesPage() {
                                     dataKey="value"
                                     nameKey="name"
                                     cx="50%" 
-                                    cy="100%" 
+                                    cy="80%" 
                                     startAngle={180} 
                                     endAngle={0} 
                                     innerRadius="60%"
@@ -127,11 +127,27 @@ export default function ConstituenciesPage() {
                                      {chartData.map((entry) => (
                                         <Cell key={`cell-${entry.name}`} fill={entry.fill} />
                                     ))}
+                                     <Label
+                                        content={({ viewBox }) => {
+                                        if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
+                                            return (
+                                            <text
+                                                x={viewBox.cx}
+                                                y={viewBox.cy}
+                                                textAnchor="middle"
+                                                dominantBaseline="middle"
+                                                className="fill-foreground text-sm font-medium"
+                                            >
+                                                9 for a Majority
+                                            </text>
+                                            );
+                                        }
+                                        }}
+                                    />
                                 </Pie>
                             </PieChart>
                         </ResponsiveContainer>
                     </ChartContainer>
-                     <p className="text-sm font-medium text-muted-foreground -mt-12">9 for a Majority</p>
                      <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-xs">
                         {politicalLeaningOptions.map((option) => {
                             const count = chartData.find(d => d.name === option.label)?.value || 0;
