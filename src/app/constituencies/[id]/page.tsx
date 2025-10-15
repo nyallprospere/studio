@@ -84,22 +84,6 @@ export default function ConstituencyDetailPage() {
                 </CardContent>
             </Card>
 
-            <Card className="mt-8">
-                 <CardHeader>
-                    <CardTitle>Polling Locations</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {constituency.pollingLocations && constituency.pollingLocations.length > 0 ? (
-                        <ul className="list-disc list-inside space-y-2">
-                            {constituency.pollingLocations.map((location, index) => (
-                                <li key={index}>{location}</li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <p className="text-muted-foreground">No polling locations listed.</p>
-                    )}
-                </CardContent>
-            </Card>
         </div>
       </div>
     </div>

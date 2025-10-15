@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { useFirebase, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { addDoc, collection, doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -33,7 +32,6 @@ import type { Constituency } from '@/lib/types';
 const constituencySchema = z.object({
     name: z.string().min(3, 'Constituency name must be at least 3 characters.'),
     registeredVoters: z.coerce.number().positive('Voters must be a positive number.'),
-    pollingLocations: z.string().optional(),
 });
 
 export default function AdminConstituenciesPage() {
@@ -52,7 +50,6 @@ export default function AdminConstituenciesPage() {
         defaultValues: {
             name: '',
             registeredVoters: '' as any,
-            pollingLocations: '',
         },
     });
 
@@ -65,7 +62,7 @@ export default function AdminConstituenciesPage() {
             demographics: {
                 registeredVoters: values.registeredVoters,
             },
-            pollingLocations: values.pollingLocations?.split('\n').filter(l => l.trim() !== '') || [],
+            pollingLocations: [],
         };
         
         const constituenciesCollection = collection(firestore, 'constituencies');
@@ -114,7 +111,7 @@ export default function AdminConstituenciesPage() {
                             demographics: {
                                 registeredVoters: Number(row['Registered Voters']),
                             },
-                            pollingLocations: row['Polling Locations']?.split(',').map((l:string) => l.trim()).filter((l:string) => l) || []
+                            pollingLocations: []
                        };
                        const constituencyRef = doc(collection(firestore, 'constituencies'));
                        batch.set(constituencyRef, constituencyData);
@@ -155,7 +152,6 @@ export default function AdminConstituenciesPage() {
             const dataToExport = constituencies.map(c => ({
                 'Name': c.name,
                 'Registered Voters': c.demographics.registeredVoters,
-                'Polling Locations': c.pollingLocations.join(', '),
             }));
 
             const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -200,17 +196,6 @@ export default function AdminConstituenciesPage() {
                                 <FormMessage />
                             </FormItem>
                         )} />
-
-                        <FormField control={form.control} name="pollingLocations" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Polling Locations</FormLabel>
-                                <FormControl>
-                                    <Textarea placeholder="Enter one location per line..." {...field} disabled={isSubmitting} />
-                                </FormControl>
-                                <FormDescription>Each line will be saved as a separate location.</FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
                     </CardContent>
                     <CardFooter>
                         <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90"  disabled={isSubmitting}>
@@ -244,7 +229,7 @@ export default function AdminConstituenciesPage() {
                         </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                        For imports, ensure your file has columns: 'Name', 'Registered Voters', and 'Polling Locations' (optional, comma-separated).
+                        For imports, ensure your file has columns: 'Name' and 'Registered Voters'.
                     </p>
                 </CardContent>
             </Card>
@@ -345,7 +330,6 @@ function EditConstituencyDialog({ constituency }: { constituency: Constituency }
         defaultValues: {
             name: constituency.name,
             registeredVoters: constituency.demographics.registeredVoters,
-            pollingLocations: constituency.pollingLocations.join('\n'),
         },
     });
 
@@ -354,7 +338,6 @@ function EditConstituencyDialog({ constituency }: { constituency: Constituency }
              form.reset({
                 name: constituency.name,
                 registeredVoters: constituency.demographics.registeredVoters,
-                pollingLocations: constituency.pollingLocations.join('\n'),
             });
         }
     }, [open, constituency, form]);
@@ -368,7 +351,7 @@ function EditConstituencyDialog({ constituency }: { constituency: Constituency }
             demographics: {
                 registeredVoters: values.registeredVoters,
             },
-            pollingLocations: values.pollingLocations?.split('\n').filter(l => l.trim() !== '') || [],
+            pollingLocations: constituency.pollingLocations || [],
         };
         
         const constituencyRef = doc(firestore, 'constituencies', constituency.id);
@@ -404,13 +387,6 @@ function EditConstituencyDialog({ constituency }: { constituency: Constituency }
                     <form onSubmit={form.handleSubmit(onUpdate)} className="space-y-4">
                         <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel>Constituency Name *</FormLabel><FormControl><Input {...field} disabled={isUpdating} /></FormControl><FormMessage /></FormItem> )} />
                         <FormField control={form.control} name="registeredVoters" render={({ field }) => ( <FormItem><FormLabel>Registered Voters *</FormLabel><FormControl><Input type="number" {...field} disabled={isUpdating} /></FormControl><FormMessage /></FormItem> )} />
-                        <FormField control={form.control} name="pollingLocations" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Polling Locations</FormLabel>
-                                <FormControl><Textarea placeholder="Enter one location per line..." {...field} disabled={isUpdating} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
 
                         <DialogFooter>
                             <DialogClose asChild><Button type="button" variant="secondary" disabled={isUpdating}>Cancel</Button></DialogClose>
