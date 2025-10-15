@@ -222,7 +222,7 @@ function OverlayManager({ mapUrl, loadingMap }: { mapUrl: string | null; loading
                         return (
                             <div 
                                 key={c.id} 
-                                className="absolute p-1 rounded-md text-xs font-bold text-white bg-black/50 transform -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing"
+                                className="absolute p-1 rounded-md text-xs font-bold text-white bg-red-600/80 transform -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing"
                                 style={{ top: `${pointCoords.top}%`, left: `${pointCoords.left}%` }}
                                 onMouseDown={e => handleMouseDown(e, c.id)}
                             >
