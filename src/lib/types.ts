@@ -26,7 +26,6 @@ export interface Constituency {
   name: string;
   mapImageUrl?: string; // URL to map in storage
   demographics: {
-    population: number;
     registeredVoters: number;
   };
   pollingLocations: string[];

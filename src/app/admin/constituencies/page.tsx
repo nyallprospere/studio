@@ -32,7 +32,6 @@ import type { Constituency } from '@/lib/types';
 
 const constituencySchema = z.object({
     name: z.string().min(3, 'Constituency name must be at least 3 characters.'),
-    population: z.coerce.number().positive('Population must be a positive number.'),
     registeredVoters: z.coerce.number().positive('Voters must be a positive number.'),
     pollingLocations: z.string().optional(),
 });
@@ -52,7 +51,6 @@ export default function AdminConstituenciesPage() {
         resolver: zodResolver(constituencySchema),
         defaultValues: {
             name: '',
-            population: '' as any,
             registeredVoters: '' as any,
             pollingLocations: '',
         },
@@ -65,7 +63,6 @@ export default function AdminConstituenciesPage() {
         const newConstituency = {
             name: values.name,
             demographics: {
-                population: values.population,
                 registeredVoters: values.registeredVoters,
             },
             pollingLocations: values.pollingLocations?.split('\n').filter(l => l.trim() !== '') || [],
@@ -111,11 +108,10 @@ export default function AdminConstituenciesPage() {
                 let recordsToProcess: any[] = [];
 
                 jsonData.forEach(row => {
-                    if (row['Name'] && row['Population'] && row['Registered Voters']) {
+                    if (row['Name'] && row['Registered Voters']) {
                        const constituencyData = {
                             name: row['Name'],
                             demographics: {
-                                population: Number(row['Population']),
                                 registeredVoters: Number(row['Registered Voters']),
                             },
                             pollingLocations: row['Polling Locations']?.split(',').map((l:string) => l.trim()).filter((l:string) => l) || []
@@ -136,7 +132,7 @@ export default function AdminConstituenciesPage() {
                      toast({
                         variant: 'destructive',
                         title: 'Import Failed',
-                        description: 'No valid records found. Check column names: Name, Population, Registered Voters.',
+                        description: 'No valid records found. Check column names: Name, Registered Voters.',
                     });
                 }
             } catch (error: any) {
@@ -158,7 +154,6 @@ export default function AdminConstituenciesPage() {
         try {
             const dataToExport = constituencies.map(c => ({
                 'Name': c.name,
-                'Population': c.demographics.population,
                 'Registered Voters': c.demographics.registeredVoters,
                 'Polling Locations': c.pollingLocations.join(', '),
             }));
@@ -198,22 +193,13 @@ export default function AdminConstituenciesPage() {
                             </FormItem>
                         )} />
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField control={form.control} name="population" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Population *</FormLabel>
-                                    <FormControl><Input type="number" {...field} disabled={isSubmitting} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
-                            <FormField control={form.control} name="registeredVoters" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Registered Voters *</FormLabel>
-                                    <FormControl><Input type="number" {...field} disabled={isSubmitting} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
-                        </div>
+                        <FormField control={form.control} name="registeredVoters" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Registered Voters *</FormLabel>
+                                <FormControl><Input type="number" {...field} disabled={isSubmitting} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
 
                         <FormField control={form.control} name="pollingLocations" render={({ field }) => (
                             <FormItem>
@@ -258,7 +244,7 @@ export default function AdminConstituenciesPage() {
                         </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                        For imports, ensure your file has columns: 'Name', 'Population', 'Registered Voters', and 'Polling Locations' (optional, comma-separated).
+                        For imports, ensure your file has columns: 'Name', 'Registered Voters', and 'Polling Locations' (optional, comma-separated).
                     </p>
                 </CardContent>
             </Card>
@@ -308,7 +294,6 @@ function ConstituencyList({ constituencies, isLoading }: { constituencies: Const
                     <TableHeader>
                         <TableRow>
                             <TableHead>Name</TableHead>
-                            <TableHead>Population</TableHead>
                             <TableHead>Registered Voters</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -317,7 +302,6 @@ function ConstituencyList({ constituencies, isLoading }: { constituencies: Const
                         {constituencies && constituencies.length > 0 ? constituencies.map(c => (
                             <TableRow key={c.id}>
                                 <TableCell className="font-medium">{c.name}</TableCell>
-                                <TableCell>{c.demographics.population.toLocaleString()}</TableCell>
                                 <TableCell>{c.demographics.registeredVoters.toLocaleString()}</TableCell>
                                 <TableCell className="text-right space-x-2">
                                     <EditConstituencyDialog constituency={c} />
@@ -340,7 +324,7 @@ function ConstituencyList({ constituencies, isLoading }: { constituencies: Const
                             </TableRow>
                         )) : (
                             <TableRow>
-                                <TableCell colSpan={4} className="text-center">No constituencies found.</TableCell>
+                                <TableCell colSpan={3} className="text-center">No constituencies found.</TableCell>
                             </TableRow>
                         )}
                     </TableBody>
@@ -360,7 +344,6 @@ function EditConstituencyDialog({ constituency }: { constituency: Constituency }
         resolver: zodResolver(constituencySchema),
         defaultValues: {
             name: constituency.name,
-            population: constituency.demographics.population,
             registeredVoters: constituency.demographics.registeredVoters,
             pollingLocations: constituency.pollingLocations.join('\n'),
         },
@@ -370,7 +353,6 @@ function EditConstituencyDialog({ constituency }: { constituency: Constituency }
         if (open) {
              form.reset({
                 name: constituency.name,
-                population: constituency.demographics.population,
                 registeredVoters: constituency.demographics.registeredVoters,
                 pollingLocations: constituency.pollingLocations.join('\n'),
             });
@@ -384,7 +366,6 @@ function EditConstituencyDialog({ constituency }: { constituency: Constituency }
         const updatedData = {
             name: values.name,
             demographics: {
-                population: values.population,
                 registeredVoters: values.registeredVoters,
             },
             pollingLocations: values.pollingLocations?.split('\n').filter(l => l.trim() !== '') || [],
@@ -422,10 +403,7 @@ function EditConstituencyDialog({ constituency }: { constituency: Constituency }
                  <Form {...form}>
                     <form onSubmit={form.handleSubmit(onUpdate)} className="space-y-4">
                         <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel>Constituency Name *</FormLabel><FormControl><Input {...field} disabled={isUpdating} /></FormControl><FormMessage /></FormItem> )} />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField control={form.control} name="population" render={({ field }) => ( <FormItem><FormLabel>Population *</FormLabel><FormControl><Input type="number" {...field} disabled={isUpdating} /></FormControl><FormMessage /></FormItem> )} />
-                            <FormField control={form.control} name="registeredVoters" render={({ field }) => ( <FormItem><FormLabel>Registered Voters *</FormLabel><FormControl><Input type="number" {...field} disabled={isUpdating} /></FormControl><FormMessage /></FormItem> )} />
-                        </div>
+                        <FormField control={form.control} name="registeredVoters" render={({ field }) => ( <FormItem><FormLabel>Registered Voters *</FormLabel><FormControl><Input type="number" {...field} disabled={isUpdating} /></FormControl><FormMessage /></FormItem> )} />
                         <FormField control={form.control} name="pollingLocations" render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Polling Locations</FormLabel>
@@ -446,5 +424,3 @@ function EditConstituencyDialog({ constituency }: { constituency: Constituency }
         </Dialog>
     );
 }
-
-    

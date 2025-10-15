@@ -26,7 +26,6 @@ function ConstituencyDetailPageSkeleton() {
               <Skeleton className="h-8 w-1/2" />
             </CardHeader>
             <CardContent className="space-y-4">
-              <Skeleton className="h-6 w-3/4" />
               <Skeleton className="h-6 w-2/3" />
             </CardContent>
           </Card>
@@ -77,11 +76,6 @@ export default function ConstituencyDetailPage() {
                     <CardTitle>Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                     <div className="flex items-center text-lg">
-                        <Users className="w-5 h-5 mr-3 text-muted-foreground" />
-                        <span className="font-semibold mr-2">Population:</span>
-                        <span>{constituency.demographics.population.toLocaleString()}</span>
-                    </div>
                     <div className="flex items-center text-lg">
                         <Users className="w-5 h-5 mr-3 text-primary" />
                          <span className="font-semibold mr-2">Registered Voters:</span>
