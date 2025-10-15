@@ -43,7 +43,10 @@ export default function ConstituencyDetailPage() {
   const constituencyRef = useMemoFirebase(() => firestore ? doc(firestore, 'constituencies', id as string) : null, [firestore, id]);
   const { data: constituency, isLoading } = useDoc<Constituency>(constituencyRef);
 
-  if (isLoading || !constituency) {
+  const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'site') : null, [firestore]);
+  const { data: siteSettings, isLoading: loadingSettings } = useDoc(settingsRef);
+
+  if (isLoading || loadingSettings || !constituency) {
     return (
       <div className="container mx-auto px-4 py-8">
         <ConstituencyDetailPageSkeleton />
@@ -62,11 +65,11 @@ export default function ConstituencyDetailPage() {
         <div className="md:col-span-3">
           <Card>
             <CardContent className="p-0">
-                {constituency.mapImageUrl && (
+                {siteSettings?.mapUrl ? (
                     <div className="relative h-96 w-full">
-                        <Image src={constituency.mapImageUrl} alt={`Map of ${constituency.name}`} fill className="object-contain" />
+                        <Image src={siteSettings.mapUrl} alt={`Map of St. Lucia`} fill className="object-contain" />
                     </div>
-                )}
+                ) : <div className="h-96 flex items-center justify-center"><p className="text-muted-foreground">Map not available.</p></div>}
             </CardContent>
           </Card>
         </div>
