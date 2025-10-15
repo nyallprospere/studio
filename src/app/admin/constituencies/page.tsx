@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,12 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirebase, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { addDoc, collection, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Edit, Trash2 } from 'lucide-react';
+import { Loader2, Edit, Trash2, Upload, Download } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import * as XLSX from 'xlsx';
 import {
   Form,
   FormControl,
@@ -40,9 +41,12 @@ export default function AdminConstituenciesPage() {
     const { firestore } = useFirebase();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
-    const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
+    const { data: constituencies, isLoading: loadingConstituencies, error } = useCollection<Constituency>(constituenciesQuery);
 
     const form = useForm<z.infer<typeof constituencySchema>>({
         resolver: zodResolver(constituencySchema),
@@ -85,6 +89,91 @@ export default function AdminConstituenciesPage() {
                 setIsSubmitting(false);
             });
     };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file || !firestore) {
+            toast({ variant: 'destructive', title: 'Import Failed', description: 'No file selected or Firestore not available.'});
+            return;
+        };
+        setIsImporting(true);
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const data = new Uint8Array(e.target?.result as ArrayBuffer);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+                
+                const batch = writeBatch(firestore);
+                let recordsToProcess: any[] = [];
+
+                jsonData.forEach(row => {
+                    if (row['Name'] && row['Population'] && row['Registered Voters']) {
+                       const constituencyData = {
+                            name: row['Name'],
+                            demographics: {
+                                population: Number(row['Population']),
+                                registeredVoters: Number(row['Registered Voters']),
+                            },
+                            pollingLocations: row['Polling Locations']?.split(',').map((l:string) => l.trim()).filter((l:string) => l) || []
+                       };
+                       const constituencyRef = doc(collection(firestore, 'constituencies'));
+                       batch.set(constituencyRef, constituencyData);
+                       recordsToProcess.push(constituencyData);
+                    }
+                });
+
+                if (recordsToProcess.length > 0) {
+                    await batch.commit();
+                    toast({
+                        title: 'Import Successful',
+                        description: `Successfully imported and saved ${recordsToProcess.length} constituencies.`,
+                    });
+                } else {
+                     toast({
+                        variant: 'destructive',
+                        title: 'Import Failed',
+                        description: 'No valid records found. Check column names: Name, Population, Registered Voters.',
+                    });
+                }
+            } catch (error: any) {
+                 toast({ variant: 'destructive', title: 'Import Error', description: error.message || 'Could not parse or save the data.' });
+            } finally {
+                setIsImporting(false);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    };
+
+    const handleExport = () => {
+        if (!constituencies) {
+            toast({ variant: 'destructive', title: 'Export Failed', description: 'No constituencies to export.' });
+            return;
+        }
+        setIsExporting(true);
+        try {
+            const dataToExport = constituencies.map(c => ({
+                'Name': c.name,
+                'Population': c.demographics.population,
+                'Registered Voters': c.demographics.registeredVoters,
+                'Polling Locations': c.pollingLocations.join(', '),
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Constituencies");
+            XLSX.writeFile(workbook, "Constituency_List.xlsx");
+            toast({ title: 'Export Successful' });
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Export Failed', description: error.message || 'An error occurred.' });
+        } finally {
+            setIsExporting(false);
+        }
+    };
     
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
@@ -92,58 +181,88 @@ export default function AdminConstituenciesPage() {
             title="Manage Constituencies"
             description="Add, edit, or delete constituencies from the electoral list."
         />
-        <Card>
-            <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <Card>
+                <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <CardHeader>
+                        <CardTitle>Add New Constituency</CardTitle>
+                        <CardDescription>Fill out the form to add a new constituency.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <FormField control={form.control} name="name" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Constituency Name *</FormLabel>
+                                <FormControl><Input {...field} disabled={isSubmitting} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField control={form.control} name="population" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Population *</FormLabel>
+                                    <FormControl><Input type="number" {...field} disabled={isSubmitting} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                            <FormField control={form.control} name="registeredVoters" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Registered Voters *</FormLabel>
+                                    <FormControl><Input type="number" {...field} disabled={isSubmitting} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                        </div>
+
+                        <FormField control={form.control} name="pollingLocations" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Polling Locations</FormLabel>
+                                <FormControl>
+                                    <Textarea placeholder="Enter one location per line..." {...field} disabled={isSubmitting} />
+                                </FormControl>
+                                <FormDescription>Each line will be saved as a separate location.</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                    </CardContent>
+                    <CardFooter>
+                        <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90"  disabled={isSubmitting}>
+                            {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : 'Save Constituency'}
+                        </Button>
+                    </CardFooter>
+                </form>
+                </Form>
+            </Card>
+            <Card>
                 <CardHeader>
-                    <CardTitle>Add New Constituency</CardTitle>
-                    <CardDescription>Fill out the form to add a new constituency.</CardDescription>
+                    <CardTitle>Bulk Data Management</CardTitle>
+                    <CardDescription>Import or export all constituencies using a CSV or Excel file.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <FormField control={form.control} name="name" render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Constituency Name *</FormLabel>
-                            <FormControl><Input {...field} disabled={isSubmitting} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )} />
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField control={form.control} name="population" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Population *</FormLabel>
-                                <FormControl><Input type="number" {...field} disabled={isSubmitting} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                        <FormField control={form.control} name="registeredVoters" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Registered Voters *</FormLabel>
-                                <FormControl><Input type="number" {...field} disabled={isSubmitting} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        className="hidden"
+                        accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                    />
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <Button onClick={() => fileInputRef.current?.click()} disabled={isImporting} className="w-full">
+                            {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                            Import from File
+                        </Button>
+                        <Button onClick={handleExport} variant="outline" disabled={isExporting || loadingConstituencies} className="w-full">
+                            {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                            Export to Excel
+                        </Button>
                     </div>
-
-                    <FormField control={form.control} name="pollingLocations" render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Polling Locations</FormLabel>
-                            <FormControl>
-                                <Textarea placeholder="Enter one location per line..." {...field} disabled={isSubmitting} />
-                            </FormControl>
-                            <FormDescription>Each line will be saved as a separate location.</FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                     )} />
+                    <p className="text-xs text-muted-foreground">
+                        For imports, ensure your file has columns: 'Name', 'Population', 'Registered Voters', and 'Polling Locations' (optional, comma-separated).
+                    </p>
                 </CardContent>
-                <CardFooter>
-                    <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90"  disabled={isSubmitting}>
-                        {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : 'Save Constituency'}
-                    </Button>
-                </CardFooter>
-            </form>
-            </Form>
-        </Card>
+            </Card>
+        </div>
         
         <ConstituencyList constituencies={constituencies} isLoading={loadingConstituencies} />
     </div>
@@ -327,3 +446,5 @@ function EditConstituencyDialog({ constituency }: { constituency: Constituency }
         </Dialog>
     );
 }
+
+    
