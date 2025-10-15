@@ -18,10 +18,15 @@ function ConstituenciesPageSkeleton() {
         <Skeleton className="h-6 w-1/2 mt-2" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
             <div className="md:col-span-2">
-                <Skeleton className="h-96 w-full" />
+                <Skeleton className="h-[70vh] w-full" />
             </div>
             <div>
-                <Skeleton className="h-48 w-full" />
+                <Card>
+                    <CardHeader><Skeleton className="h-8 w-2/3" /></CardHeader>
+                    <CardContent className="space-y-2">
+                        {Array.from({length: 10}).map((_, i) => <Skeleton key={i} className="h-6 w-full" />)}
+                    </CardContent>
+                </Card>
             </div>
         </div>
       </div>

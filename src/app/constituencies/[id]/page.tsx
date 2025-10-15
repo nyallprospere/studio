@@ -1,14 +1,14 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
-import { doc, collection } from 'firebase/firestore';
+import { useDoc, useFirebase, useMemoFirebase, useCollection } from '@/firebase';
+import { doc, collection, query, where } from 'firebase/firestore';
 import type { Constituency, Candidate, Party } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
-import { Users } from 'lucide-react';
+import { Users, UserSquare } from 'lucide-react';
 import Link from 'next/link';
 
 function ConstituencyDetailPageSkeleton() {
@@ -18,15 +18,23 @@ function ConstituencyDetailPageSkeleton() {
       <Skeleton className="h-6 w-1/2" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
-          <Skeleton className="h-96 w-full" />
-        </div>
-        <div>
           <Card>
             <CardHeader>
               <Skeleton className="h-8 w-1/2" />
             </CardHeader>
             <CardContent className="space-y-4">
               <Skeleton className="h-6 w-2/3" />
+            </CardContent>
+          </Card>
+        </div>
+        <div>
+           <Card>
+            <CardHeader>
+              <Skeleton className="h-8 w-1/2" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
             </CardContent>
           </Card>
         </div>
@@ -40,13 +48,20 @@ export default function ConstituencyDetailPage() {
   const { id } = useParams();
   const { firestore } = useFirebase();
 
-  const constituencyRef = useMemoFirebase(() => firestore ? doc(firestore, 'constituencies', id as string) : null, [firestore, id]);
-  const { data: constituency, isLoading } = useDoc<Constituency>(constituencyRef);
+  const constituencyRef = useMemoFirebase(() => firestore && id ? doc(firestore, 'constituencies', id as string) : null, [firestore, id]);
+  const { data: constituency, isLoading: loadingConstituency } = useDoc<Constituency>(constituencyRef);
 
-  const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'site') : null, [firestore]);
-  const { data: siteSettings, isLoading: loadingSettings } = useDoc(settingsRef);
+  const candidatesQuery = useMemoFirebase(() => firestore && id ? query(collection(firestore, 'candidates'), where('constituencyId', '==', id)) : null, [firestore, id]);
+  const { data: candidates, isLoading: loadingCandidates } = useCollection<Candidate>(candidatesQuery);
 
-  if (isLoading || loadingSettings || !constituency) {
+  const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
+  const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
+
+  const getParty = (partyId: string) => parties?.find(p => p.id === partyId);
+
+  const isLoading = loadingConstituency || loadingCandidates || loadingParties;
+
+  if (isLoading || !constituency) {
     return (
       <div className="container mx-auto px-4 py-8">
         <ConstituencyDetailPageSkeleton />
@@ -61,19 +76,8 @@ export default function ConstituencyDetailPage() {
         description={`Detailed information for the ${constituency.name} constituency.`}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-        <div className="md:col-span-3">
-          <Card>
-            <CardContent className="p-0">
-                {siteSettings?.mapUrl ? (
-                    <div className="relative h-96 w-full">
-                        <Image src={siteSettings.mapUrl} alt={`Map of St. Lucia`} fill className="object-contain" />
-                    </div>
-                ) : <div className="h-96 flex items-center justify-center"><p className="text-muted-foreground">Map not available.</p></div>}
-            </CardContent>
-          </Card>
-        </div>
-        <div className="md:col-span-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div>
             <Card>
                 <CardHeader>
                     <CardTitle>Details</CardTitle>
@@ -86,7 +90,39 @@ export default function ConstituencyDetailPage() {
                     </div>
                 </CardContent>
             </Card>
-
+        </div>
+        <div>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Candidates</CardTitle>
+                    <CardDescription>Individuals contesting in this constituency.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {loadingCandidates ? <p>Loading candidates...</p> : 
+                    candidates && candidates.length > 0 ? (
+                        candidates.map(candidate => {
+                            const party = getParty(candidate.partyId);
+                            return (
+                                <Link key={candidate.id} href={`/candidates/${candidate.id}`} className="flex items-center gap-4 p-2 rounded-md hover:bg-accent transition-colors">
+                                    <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
+                                    {candidate.imageUrl ? (
+                                        <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" />
+                                    ) : (
+                                        <UserSquare className="h-full w-full text-muted-foreground" />
+                                    )}
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold">{candidate.name}</p>
+                                        {party && <p className="text-sm" style={{color: party.color}}>{party.name}</p>}
+                                    </div>
+                                </Link>
+                            )
+                        })
+                    ) : (
+                        <p className="text-muted-foreground">No candidates have been declared for this constituency yet.</p>
+                    )}
+                </CardContent>
+            </Card>
         </div>
       </div>
     </div>

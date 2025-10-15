@@ -223,21 +223,24 @@ function OverlayManager({ mapUrl, loadingMap }: { mapUrl: string | null; loading
                             >
                                 <div className="w-4 h-4 bg-primary rounded-full ring-2 ring-white transition-transform group-hover:scale-125" />
                                 <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-background text-foreground text-xs font-semibold px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                    {c.name}
-                                    {dirty[c.id] && (
-                                         <Button 
-                                            size="sm" 
-                                            className="h-6 w-14 ml-2" 
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleSaveCoords(c.id);
-                                            }}
-                                            disabled={isSaving[c.id]}
-                                         >
-                                            {isSaving[c.id] ? <Loader2 className="h-3 w-3 animate-spin"/> : <Save className="h-3 w-3"/>}
-                                            Save
-                                        </Button>
-                                    )}
+                                    <div className="flex items-center gap-2">
+                                        <span>{c.name}</span>
+                                        {dirty[c.id] && (
+                                            <Button 
+                                                size="sm" 
+                                                variant="outline"
+                                                className="h-6 w-14" 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleSaveCoords(c.id);
+                                                }}
+                                                disabled={isSaving[c.id]}
+                                            >
+                                                {isSaving[c.id] ? <Loader2 className="h-3 w-3 animate-spin"/> : <Save className="h-3 w-3"/>}
+                                                Save
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         )

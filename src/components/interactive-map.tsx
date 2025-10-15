@@ -21,7 +21,7 @@ export function InteractiveMap({ constituencies }: InteractiveMapProps) {
   const { data: siteSettings, isLoading: loadingSettings } = useDoc(settingsRef);
 
   if (loadingSettings) {
-    return <Skeleton className="w-full h-[600px]" />;
+    return <Skeleton className="w-full h-[70vh]" />;
   }
 
   if (!siteSettings?.mapUrl) {
@@ -35,12 +35,11 @@ export function InteractiveMap({ constituencies }: InteractiveMapProps) {
   }
 
   return (
-    <div className="w-full h-auto flex items-center justify-center relative">
+    <div className="w-full relative aspect-[4/5]">
         <Image 
             src={siteSettings.mapUrl} 
             alt="Constituency Map of St. Lucia" 
-            width={800} 
-            height={1200}
+            fill
             className="object-contain"
             priority
         />
@@ -64,7 +63,7 @@ export function InteractiveMap({ constituencies }: InteractiveMapProps) {
                             <h4 className="font-semibold leading-none">{c.name}</h4>
                             <div className="flex items-center text-sm">
                                 <Users className="w-4 h-4 mr-2 text-muted-foreground" />
-                                <span>{c.demographics.registeredVoters.toLocaleString()} Voters</span>
+                                <span>{c.demographics?.registeredVoters?.toLocaleString() || 'N/A'} Voters</span>
                             </div>
                              <Button asChild size="sm" className="w-full">
                                 <Link href={`/constituencies/${c.id}`}>
