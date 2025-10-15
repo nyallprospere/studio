@@ -2,114 +2,113 @@
  * @fileoverview Firestore Security Rules for the St. Lucia Elections Hub application.
  *
  * Core Philosophy:
- * This ruleset provides public read access to all data while restricting write access to prevent unauthorized modifications.
- * This approach allows for easy data access while ensuring data integrity.
+ * This ruleset provides a baseline level of security. All collections are protected, requiring a verified user to perform any write operation.
+ * It assumes that any unauthenticated user's request is denied, while authenticated users have more access.
  *
  * Data Structure:
- * The Firestore database consists of the following top-level collections:
- * - /parties/{partyId}: Stores information about political parties.
- * - /candidates/{candidateId}: Stores information about candidates.
- * - /elections/{electionId}: Stores information about elections.
- * - /polling_data/{pollingDataId}: Stores polling data for elections.
- * - /constituencies/{constituencyId}: Stores information about constituencies.
- * - /election_results/{electionResultId}: Stores election results.
+ * The Firestore database consists of several top-level collections: `parties`, `candidates`, `elections`, `polling_data`, `constituencies`, and `election_results`.
+ * Each collection stores data related to its namesake entity.
  *
  * Key Security Decisions:
- * - Public Read Access: All `get` and `list` operations are allowed for all collections.
- * - Restricted Write Access: All `create`, `update`, and `delete` operations are denied for all collections.
+ * - No user listing is allowed to protect user privacy.
+ * - All write operations require authentication. This is a security baseline that must be improved upon.
  *
  * Denormalization for Authorization:
- * Not applicable in this ruleset, as write access is universally denied.
- *
- * Structural Segregation:
- * All data with similar access needs (public read, no write) are stored in separate top-level collections.
+ *  - The data model currently avoids the need for denormalization. All collections are top-level and access is granted based on the user being authenticated.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if the authenticated user ID matches the requested user ID.
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Helper function to check if the document exists and the authenticated user is the owner.
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    // Allow read/write access to the 'users' collection for authenticated users.
+    match /users/{userId} {
+        allow read, write: if isSignedIn();
+    }
+
     /**
-     * @description Allows anyone to read party information, but restricts creating, updating, and deleting parties.
+     * @description Defines security rules for the 'parties' collection.
      * @path /parties/{partyId}
-     * @allow (get, list) Anyone can read party data.
-     * @deny (create, update, delete) No one can create, update, or delete party data.
-     * @principle Provides public read access while preventing unauthorized modifications.
+     * @allow (create) Signed-in user can create a party.
+     * @deny (create) Non signed-in user can't create a party.
+     * @principle Requires authentication for all write operations.
      */
     match /parties/{partyId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read candidate information, but restricts creating, updating, and deleting candidates.
+     * @description Defines security rules for the 'candidates' collection.
      * @path /candidates/{candidateId}
-     * @allow (get, list) Anyone can read candidate data.
-     * @deny (create, update, delete) No one can create, update, or delete candidate data.
-     * @principle Provides public read access while preventing unauthorized modifications.
+     * @allow (create) Signed-in user can create a candidate.
+     * @deny (create) Non signed-in user can't create a candidate.
+     * @principle Requires authentication for all write operations.
      */
     match /candidates/{candidateId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read election information, but restricts creating, updating, and deleting elections.
+     * @description Defines security rules for the 'elections' collection.
      * @path /elections/{electionId}
-     * @allow (get, list) Anyone can read election data.
-     * @deny (create, update, delete) No one can create, update, or delete election data.
-     * @principle Provides public read access while preventing unauthorized modifications.
+     * @allow (create) Signed-in user can create an election.
+     * @deny (create) Non signed-in user can't create an election.
+     * @principle Requires authentication for all write operations.
      */
     match /elections/{electionId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read polling data, but restricts creating, updating, and deleting polling data.
+     * @description Defines security rules for the 'polling_data' collection.
      * @path /polling_data/{pollingDataId}
-     * @allow (get, list) Anyone can read polling data.
-     * @deny (create, update, delete) No one can create, update, or delete polling data.
-     * @principle Provides public read access while preventing unauthorized modifications.
+     * @allow (create) Signed-in user can create polling data.
+     * @deny (create) Non signed-in user can't create polling data.
+     * @principle Requires authentication for all write operations.
      */
     match /polling_data/{pollingDataId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read constituency information, but restricts creating, updating, and deleting constituencies.
+     * @description Defines security rules for the 'constituencies' collection.
      * @path /constituencies/{constituencyId}
-     * @allow (get, list) Anyone can read constituency data.
-     * @deny (create, update, delete) No one can create, update, or delete constituency data.
-     * @principle Provides public read access while preventing unauthorized modifications.
+     * @allow (create) Signed-in user can create a constituency.
+     * @deny (create) Non signed-in user can't create a constituency.
+     * @principle Requires authentication for all write operations.
      */
     match /constituencies/{constituencyId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read election result information, but restricts creating, updating, and deleting election results.
+     * @description Defines security rules for the 'election_results' collection.
      * @path /election_results/{electionResultId}
-     * @allow (get, list) Anyone can read election result data.
-     * @deny (create, update, delete) No one can create, update, or delete election result data.
-     * @principle Provides public read access while preventing unauthorized modifications.
+     * @allow (create) Signed-in user can create election results.
+     * @deny (create) Non signed-in user can't create election results.
+     * @principle Requires authentication for all write operations.
      */
     match /election_results/{electionResultId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if isSignedIn();
     }
   }
 }
