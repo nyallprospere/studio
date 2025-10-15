@@ -105,7 +105,7 @@ export default function ConstituenciesPage() {
                     <CardDescription>Current political leaning of the 17 constituencies.</CardDescription>
                   </CardHeader>
                   <CardContent className="flex flex-col items-center">
-                     <ChartContainer config={chartConfig} className="h-40 w-full">
+                     <ChartContainer config={chartConfig} className="h-64 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <ChartTooltip 
@@ -117,7 +117,7 @@ export default function ConstituenciesPage() {
                                     dataKey="value"
                                     nameKey="name"
                                     cx="50%" 
-                                    cy="80%" 
+                                    cy="100%" 
                                     startAngle={180} 
                                     endAngle={0} 
                                     innerRadius="60%"
@@ -127,23 +127,6 @@ export default function ConstituenciesPage() {
                                      {chartData.map((entry) => (
                                         <Cell key={`cell-${entry.name}`} fill={entry.fill} />
                                     ))}
-                                     <Label
-                                        content={({ viewBox }) => {
-                                        if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
-                                            return (
-                                            <text
-                                                x={viewBox.cx}
-                                                y={viewBox.cy}
-                                                textAnchor="middle"
-                                                dominantBaseline="middle"
-                                                className="fill-foreground text-sm font-medium"
-                                            >
-                                                9 for a Majority
-                                            </text>
-                                            );
-                                        }
-                                        }}
-                                    />
                                 </Pie>
                             </PieChart>
                         </ResponsiveContainer>
