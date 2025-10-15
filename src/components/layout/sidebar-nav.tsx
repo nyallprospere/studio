@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, KeyRound } from 'lucide-react';
+import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield } from 'lucide-react';
 import { Button } from '../ui/button';
 
 const mainNavItems = [
@@ -27,7 +27,6 @@ const adminNavItems = [
     { href: '/admin/polls', icon: BarChart3, label: 'Polling Data' },
     { href: '/admin/results', icon: Landmark, label: 'Election Results' },
     { href: '/admin/constituencies', icon: Map, label: 'Constituencies' },
-    { href: '/admin/apikeys', icon: KeyRound, label: 'API Keys' },
 ];
 
 export function SidebarNav() {
