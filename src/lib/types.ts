@@ -15,12 +15,15 @@ export interface Party {
 
 export interface Candidate {
   id: string;
-  name:string;
+  firstName: string;
+  lastName: string;
   partyId: string;
   constituencyId: string;
   bio: string;
   imageUrl?: string; // URL to photo in storage
   policyPositions: { title: string; description: string }[];
+  isIncumbent?: boolean;
+  isPartyLeader?: boolean;
 }
 
 export interface Constituency {
