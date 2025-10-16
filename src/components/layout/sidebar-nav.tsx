@@ -31,8 +31,6 @@ import { ScrollArea } from '../ui/scroll-area';
 
 const mainNavItems = [
   { href: '/', icon: Home, label: 'Dashboard' },
-  { href: '/candidates', icon: Users, label: 'UWP Candidates' },
-  { href: '/candidates-2', icon: Users, label: 'SLP Candidates' },
   { href: '/polls', icon: BarChart3, label: 'Polls' },
   { href: '/predictions', icon: TrendingUp, label: 'Predictions' },
   { href: '/constituencies', icon: Map, label: 'Constituencies' },
@@ -114,8 +112,8 @@ export function SidebarNav() {
   const { user } = useUser();
   const { firestore } = useFirebase();
   const [isResultsOpen, setIsResultsOpen] = useState(pathname.startsWith('/results'));
-  const [isUwpOpen, setIsUwpOpen] = useState(pathname.startsWith('/parties/5D8qXvMoV06pPGdSyotD'));
-  const [isSlpOpen, setIsSlpOpen] = useState(pathname.startsWith('/parties/C0L5o2t9g3b1J4K7m8N9'));
+  const [isUwpOpen, setIsUwpOpen] = useState(pathname.startsWith('/parties/5D8qXvMoV06pPGdSyotD') || pathname.startsWith('/candidates'));
+  const [isSlpOpen, setIsSlpOpen] = useState(pathname.startsWith('/parties/C0L5o2t9g3b1J4K7m8N9') || pathname.startsWith('/candidates-2'));
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
@@ -145,6 +143,8 @@ export function SidebarNav() {
 
   useEffect(() => {
     setIsResultsOpen(pathname.startsWith('/results'));
+    setIsUwpOpen(pathname.startsWith('/parties/5D8qXvMoV06pPGdSyotD') || pathname.startsWith('/candidates'));
+    setIsSlpOpen(pathname.startsWith('/parties/C0L5o2t9g3b1J4K7m8N9') || pathname.startsWith('/candidates-2'));
   }, [pathname]);
   
   return (
@@ -210,16 +210,12 @@ export function SidebarNav() {
               <SidebarMenuItem>
                   <Collapsible open={isUwpOpen} onOpenChange={setIsUwpOpen}>
                       <CollapsibleTrigger asChild>
-                          <Button asChild variant={pathname.startsWith(`/parties/${uwpParty.id}`) || pathname === '/candidates' ? 'secondary' : 'ghost'} className="w-full justify-between">
-                              <div className='w-full'>
-                                  <Link href={`/parties/${uwpParty.id}`} className='flex items-center justify-between'>
-                                      <div className="flex items-center gap-2">
-                                          <UwpLogo className="mr-2 h-4 w-4" />
-                                          UWP
-                                      </div>
-                                      <ChevronRight className={`h-4 w-4 transition-transform ${isUwpOpen ? 'rotate-90' : ''}`} />
-                                  </Link>
+                          <Button variant={pathname.startsWith(`/parties/${uwpParty.id}`) || pathname === '/candidates' ? 'secondary' : 'ghost'} className="w-full justify-between">
+                              <div className="flex items-center gap-2">
+                                  <UwpLogo className="mr-2 h-4 w-4" />
+                                  <Link href={`/parties/${uwpParty.id}`} className="flex-grow text-left">UWP</Link>
                               </div>
+                              <ChevronRight className={`h-4 w-4 transition-transform ${isUwpOpen ? 'rotate-90' : ''}`} />
                           </Button>
                       </CollapsibleTrigger>
                       <CollapsibleContent>
@@ -241,16 +237,12 @@ export function SidebarNav() {
               <SidebarMenuItem>
                   <Collapsible open={isSlpOpen} onOpenChange={setIsSlpOpen}>
                       <CollapsibleTrigger asChild>
-                           <Button asChild variant={pathname.startsWith(`/parties/${slpParty.id}`) || pathname === '/candidates-2' ? 'secondary' : 'ghost'} className="w-full justify-between">
-                              <div className='w-full'>
-                                <Link href={`/parties/${slpParty.id}`} className='flex items-center justify-between'>
-                                  <div className="flex items-center gap-2">
-                                      <SlpLogo className="mr-2 h-4 w-4" />
-                                      SLP
-                                  </div>
-                                  <ChevronRight className={`h-4 w-4 transition-transform ${isSlpOpen ? 'rotate-90' : ''}`} />
-                                </Link>
+                           <Button variant={pathname.startsWith(`/parties/${slpParty.id}`) || pathname === '/candidates-2' ? 'secondary' : 'ghost'} className="w-full justify-between">
+                              <div className="flex items-center gap-2">
+                                  <SlpLogo className="mr-2 h-4 w-4" />
+                                  <Link href={`/parties/${slpParty.id}`} className="flex-grow text-left">SLP</Link>
                               </div>
+                              <ChevronRight className={`h-4 w-4 transition-transform ${isSlpOpen ? 'rotate-90' : ''}`} />
                           </Button>
                       </CollapsibleTrigger>
                       <CollapsibleContent>
