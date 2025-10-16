@@ -24,6 +24,7 @@ import { ChevronRight } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import type { Election, Party } from '@/lib/types';
 import { collection, query, orderBy, where } from 'firebase/firestore';
+import { SlpLogo, UwpLogo } from '../icons';
 
 
 const mainNavItems = [
@@ -111,9 +112,17 @@ export function SidebarNav() {
   const { user } = useUser();
   const { firestore } = useFirebase();
   const [isResultsOpen, setIsResultsOpen] = useState(pathname.startsWith('/results'));
+  const [isUwpOpen, setIsUwpOpen] = useState(pathname.includes('uwp'));
+  const [isSlpOpen, setIsSlpOpen] = useState(pathname.includes('slp'));
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
+
+  const partiesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'parties')) : null, [firestore]);
+  const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
+
+  const uwpParty = useMemo(() => parties?.find(p => p.acronym === 'UWP'), [parties]);
+  const slpParty = useMemo(() => parties?.find(p => p.acronym === 'SLP'), [parties]);
 
   const sortedElections = useMemo(() => {
     if (!elections) return [];
@@ -127,7 +136,9 @@ export function SidebarNav() {
 
   useEffect(() => {
     setIsResultsOpen(pathname.startsWith('/results'));
-  }, [pathname]);
+    if (uwpParty) setIsUwpOpen(pathname.includes(uwpParty.id));
+    if (slpParty) setIsSlpOpen(pathname.includes(slpParty.id));
+  }, [pathname, uwpParty, slpParty]);
   
   return (
     <Sidebar>
@@ -184,6 +195,44 @@ export function SidebarNav() {
                 </CollapsibleContent>
             </Collapsible>
         </SidebarMenuItem>
+        
+        {uwpParty && (
+            <SidebarMenuItem>
+                <Collapsible open={isUwpOpen} onOpenChange={setIsUwpOpen}>
+                    <CollapsibleTrigger asChild>
+                        <Button variant={isUwpOpen ? 'secondary' : 'ghost'} className="w-full justify-between">
+                            <div className="flex items-center gap-2">
+                                <UwpLogo className="mr-2 h-4 w-4" style={{ color: uwpParty.color }}/>
+                                United Workers Party
+                            </div>
+                            <ChevronRight className={`h-4 w-4 transition-transform ${isUwpOpen ? 'rotate-90' : ''}`} />
+                        </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        {/* Sub-menu items for UWP can go here */}
+                    </CollapsibleContent>
+                </Collapsible>
+            </SidebarMenuItem>
+        )}
+
+        {slpParty && (
+            <SidebarMenuItem>
+                <Collapsible open={isSlpOpen} onOpenChange={setIsSlpOpen}>
+                    <CollapsibleTrigger asChild>
+                         <Button variant={isSlpOpen ? 'secondary' : 'ghost'} className="w-full justify-between">
+                            <div className="flex items-center gap-2">
+                                <SlpLogo className="mr-2 h-4 w-4" style={{ color: slpParty.color }}/>
+                                Saint Lucia Labour Party
+                            </div>
+                            <ChevronRight className={`h-4 w-4 transition-transform ${isSlpOpen ? 'rotate-90' : ''}`} />
+                        </Button>
+                    </CollapsibleTrigger>
+                     <CollapsibleContent>
+                        {/* Sub-menu items for SLP can go here */}
+                    </CollapsibleContent>
+                </Collapsible>
+            </SidebarMenuItem>
+        )}
 
 
         {user && (
@@ -220,5 +269,3 @@ export function SidebarNav() {
     </Sidebar>
   );
 }
-
-    
