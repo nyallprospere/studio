@@ -72,17 +72,19 @@ export function useDoc<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
-        const contextualError = new FirestorePermissionError({
-          operation: 'get',
-          path: memoizedDocRef.path,
-        })
+        // Create the rich, contextual error asynchronously.
+        const permissionError = new FirestorePermissionError({
+            path: memoizedDocRef.path,
+            operation: 'get',
+        });
+        
+        // Emit the error with the global error emitter
+        errorEmitter.emit('permission-error', permissionError);
 
-        setError(contextualError)
-        setData(null)
-        setIsLoading(false)
-
-        // trigger global error propagation
-        errorEmitter.emit('permission-error', contextualError);
+        // Also update local component state to show an error UI.
+        setError(permissionError);
+        setData(null);
+        setIsLoading(false);
       }
     );
 
