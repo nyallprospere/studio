@@ -1,158 +1,203 @@
 /**
- * @fileoverview Firestore Security Rules for the St. Lucia Elections Hub application.
+ * @fileoverview Firestore Security Rules for St. Lucia Elections Hub application.
  *
  * Core Philosophy:
- * This ruleset provides public read access to all collections, but restricts write access.
- * Only authenticated users can create, update, or delete documents, and they can only
- * modify documents in the `pageLayouts` and `site` settings documents. All other write access is denied.
+ * This ruleset adopts an admin-only access model. Only authenticated users are allowed, but the data model doesn't include any user or roles. Therefore, this ruleset implements a base level of protection by blocking all data access.
  *
  * Data Structure:
- * The Firestore database consists of several top-level collections: `parties`, `candidates`,
- * `elections`, `polling_data`, `constituencies`, and `election_results`. There are also two singleton documents: `settings/pageLayouts` and `settings/site`.
+ * The Firestore database contains several top-level collections: `parties`, `candidates`, `elections`, `polling_data`, `constituencies`, `election_results`, and `settings`. The `settings` collection contains the documents: `pageLayouts` and `site`.
  *
  * Key Security Decisions:
- * - Unauthenticated users can freely read election-related data (parties, candidates, elections, etc.).
- * - Unauthenticated users CANNOT read the layout or site settings.
- * - Authenticated users can update the layout or site settings.
+ * - Strict Denial: All read and write operations are explicitly denied unless overridden by a specific rule.
+ * - No User Listing: Listing all users is disallowed.
+ * - Denormalization for Authorization: This ruleset avoids costly `get()` calls by assuming that all authorization data will be present within the document being secured, although, this has not been implemented as admin-only access has been enforced.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
     /**
-     * @description Rules for the 'parties' collection. Allows public read access, restricts all write access.
+     * @description Enforces admin-only access for all parties.
      * @path /parties/{partyId}
-     * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no writes allowed.
+     * @allow (create) - Denied. Admins are not yet implemented.
+     * @allow (update) - Denied. Admins are not yet implemented.
+     * @allow (delete) - Denied. Admins are not yet implemented.
+     * @allow (get) - Denied. Admins are not yet implemented.
+     * @allow (list) - Denied. Admins are not yet implemented.
+     * @deny create: if true;
+     * @deny update: if true;
+     * @deny delete: if true;
+     * @deny get: if true;
+     * @deny list: if true;
+     * @principle Restricts all access to party data.
      */
     match /parties/{partyId} {
-      allow get, list: if true;
       allow create: if false;
       allow update: if false;
       allow delete: if false;
+      allow get: if false;
+      allow list: if false;
     }
 
     /**
-     * @description Rules for the 'candidates' collection. Allows public read access, restricts all write access.
+     * @description Enforces admin-only access for all candidates.
      * @path /candidates/{candidateId}
-     * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no writes allowed.
+     * @allow (create) - Denied. Admins are not yet implemented.
+     * @allow (update) - Denied. Admins are not yet implemented.
+     * @allow (delete) - Denied. Admins are not yet implemented.
+     * @allow (get) - Denied. Admins are not yet implemented.
+     * @allow (list) - Denied. Admins are not yet implemented.
+     * @deny create: if true;
+     * @deny update: if true;
+     * @deny delete: if true;
+     * @deny get: if true;
+     * @deny list: if true;
+     * @principle Restricts all access to candidate data.
      */
     match /candidates/{candidateId} {
-      allow get, list: if true;
       allow create: if false;
       allow update: if false;
       allow delete: if false;
+      allow get: if false;
+      allow list: if false;
     }
 
     /**
-     * @description Rules for the 'elections' collection. Allows public read access, restricts all write access.
+     * @description Enforces admin-only access for all elections.
      * @path /elections/{electionId}
-     * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no writes allowed.
+     * @allow (create) - Denied. Admins are not yet implemented.
+     * @allow (update) - Denied. Admins are not yet implemented.
+     * @allow (delete) - Denied. Admins are not yet implemented.
+     * @allow (get) - Denied. Admins are not yet implemented.
+     * @allow (list) - Denied. Admins are not yet implemented.
+     * @deny create: if true;
+     * @deny update: if true;
+     * @deny delete: if true;
+     * @deny get: if true;
+     * @deny list: if false;
+     * @principle Restricts all access to election data.
      */
     match /elections/{electionId} {
-      allow get, list: if true;
       allow create: if false;
       allow update: if false;
       allow delete: if false;
+      allow get: if false;
+      allow list: if false;
     }
 
     /**
-     * @description Rules for the 'polling_data' collection. Allows public read access, restricts all write access.
+     * @description Enforces admin-only access for all polling data.
      * @path /polling_data/{pollingDataId}
-     * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no writes allowed.
+     * @allow (create) - Denied. Admins are not yet implemented.
+     * @allow (update) - Denied. Admins are not yet implemented.
+     * @allow (delete) - Denied. Admins are not yet implemented.
+     * @allow (get) - Denied. Admins are not yet implemented.
+     * @allow (list) - Denied. Admins are not yet implemented.
+     * @deny create: if true;
+     * @deny update: if true;
+     * @deny delete: if true;
+     * @deny get: if true;
+     * @deny list: if true;
+     * @principle Restricts all access to polling data.
      */
     match /polling_data/{pollingDataId} {
-      allow get, list: if true;
       allow create: if false;
       allow update: if false;
       allow delete: if false;
+      allow get: if false;
+      allow list: if false;
     }
 
     /**
-     * @description Rules for the 'constituencies' collection. Allows public read access, restricts all write access.
+     * @description Enforces admin-only access for all constituencies.
      * @path /constituencies/{constituencyId}
-     * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no writes allowed.
+     * @allow (create) - Denied. Admins are not yet implemented.
+     * @allow (update) - Denied. Admins are not yet implemented.
+     * @allow (delete) - Denied. Admins are not yet implemented.
+     * @allow (get) - Denied. Admins are not yet implemented.
+     * @allow (list) - Denied. Admins are not yet implemented.
+     * @deny create: if true;
+     * @deny update: if true;
+     * @deny delete: if true;
+     * @deny get: if true;
+     * @deny list: if true;
+     * @principle Restricts all access to constituency data.
      */
     match /constituencies/{constituencyId} {
-      allow get, list: if true;
       allow create: if false;
       allow update: if false;
       allow delete: if false;
+      allow get: if false;
+      allow list: if false;
     }
 
     /**
-     * @description Rules for the 'election_results' collection. Allows public read access, restricts all write access.
+     * @description Enforces admin-only access for all election results.
      * @path /election_results/{electionResultId}
-     * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no writes allowed.
+     * @allow (create) - Denied. Admins are not yet implemented.
+     * @allow (update) - Denied. Admins are not yet implemented.
+     * @allow (delete) - Denied. Admins are not yet implemented.
+     * @allow (get) - Denied. Admins are not yet implemented.
+     * @allow (list) - Denied. Admins are not yet implemented.
+     * @deny create: if true;
+     * @deny update: if true;
+     * @deny delete: if true;
+     * @deny get: if true;
+     * @deny list: if true;
+     * @principle Restricts all access to election result data.
      */
     match /election_results/{electionResultId} {
-      allow get, list: if true;
       allow create: if false;
       allow update: if false;
       allow delete: if false;
+      allow get: if false;
+      allow list: if false;
     }
 
     /**
-     * @description Rules for the 'pageLayouts' document. Allows authenticated users to create, update, and delete the document.
+     * @description Enforces admin-only access for page layouts settings.
      * @path /settings/pageLayouts
-     * @allow get: if true;
-     * @allow list: if false;
-     * @allow create: if isSignedIn();
-     * @allow update: if isSignedIn();
-     * @allow delete: if isSignedIn();
-     * @principle Authenticated users can manage page layouts.
+     * @allow (create) - Denied. Admins are not yet implemented.
+     * @allow (update) - Denied. Admins are not yet implemented.
+     * @allow (delete) - Denied. Admins are not yet implemented.
+     * @allow (get) - Denied. Admins are not yet implemented.
+     * @allow (list) - Denied. Admins are not yet implemented.
+     * @deny create: if true;
+     * @deny update: if true;
+     * @deny delete: if true;
+     * @deny get: if false;
+     * @deny list: if false;
+     * @principle Restricts all access to page layouts settings.
      */
     match /settings/pageLayouts {
-      allow get: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+      allow get: if false;
       allow list: if false;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
     }
 
     /**
-     * @description Rules for the 'site' document. Allows authenticated users to create, update, and delete the document.
+     * @description Enforces admin-only access for site settings.
      * @path /settings/site
-     * @allow get: if true;
-     * @allow list: if false;
-     * @allow create: if isSignedIn();
-     * @allow update: if isSignedIn();
-     * @allow delete: if isSignedIn();
-     * @principle Authenticated users can manage site settings.
+     * @allow (create) - Denied. Admins are not yet implemented.
+     * @allow (update) - Denied. Admins are not yet implemented.
+     * @allow (delete) - Denied. Admins are not yet implemented.
+     * @allow (get) - Denied. Admins are not yet implemented.
+     * @allow (list) - Denied. Admins are not yet implemented.
+     * @deny create: if true;
+     * @deny update: if true;
+     * @deny delete: if true;
+     * @deny get: if false;
+     * @deny list: if false;
+     * @principle Restricts all access to site settings.
      */
     match /settings/site {
-      allow get: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+      allow get: if false;
       allow list: if false;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
     }
   }
 }
