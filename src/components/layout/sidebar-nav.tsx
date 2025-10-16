@@ -209,16 +209,29 @@ export function SidebarNav() {
               <SidebarMenuItem>
                   <Collapsible open={isUwpOpen} onOpenChange={setIsUwpOpen}>
                       <CollapsibleTrigger asChild>
-                          <Button asChild variant={pathname.startsWith(`/parties/${uwpParty.id}`) ? 'secondary' : 'ghost'} className="w-full justify-between">
-                              <Link href={`/parties/${uwpParty.id}`}>
-                                  <div className="flex items-center gap-2">
-                                      <UwpLogo className="mr-2 h-4 w-4" />
-                                      UWP
-                                  </div>
-                                  <ChevronRight className={`h-4 w-4 transition-transform ${isUwpOpen ? 'rotate-90' : ''}`} />
-                              </Link>
+                          <Button asChild variant={pathname.startsWith(`/parties/${uwpParty.id}`) || pathname === '/candidates' ? 'secondary' : 'ghost'} className="w-full justify-between">
+                              <div className='w-full'>
+                                  <Link href={`/parties/${uwpParty.id}`} className='flex items-center justify-between'>
+                                      <div className="flex items-center gap-2">
+                                          <UwpLogo className="mr-2 h-4 w-4" />
+                                          UWP
+                                      </div>
+                                      <ChevronRight className={`h-4 w-4 transition-transform ${isUwpOpen ? 'rotate-90' : ''}`} />
+                                  </Link>
+                              </div>
                           </Button>
                       </CollapsibleTrigger>
+                       <CollapsibleContent>
+                        <SidebarMenuSub>
+                            <SidebarMenuItem>
+                                <SidebarMenuSubButton asChild isActive={pathname === '/candidates'}>
+                                    <Link href="/candidates">
+                                        Candidates
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuItem>
+                        </SidebarMenuSub>
+                    </CollapsibleContent>
                   </Collapsible>
               </SidebarMenuItem>
           )}
@@ -227,16 +240,29 @@ export function SidebarNav() {
               <SidebarMenuItem>
                   <Collapsible open={isSlpOpen} onOpenChange={setIsSlpOpen}>
                       <CollapsibleTrigger asChild>
-                           <Button asChild variant={pathname.startsWith(`/parties/${slpParty.id}`) ? 'secondary' : 'ghost'} className="w-full justify-between">
-                              <Link href={`/parties/${slpParty.id}`}>
+                           <Button asChild variant={pathname.startsWith(`/parties/${slpParty.id}`) || pathname === '/candidates' ? 'secondary' : 'ghost'} className="w-full justify-between">
+                              <div className='w-full'>
+                                <Link href={`/parties/${slpParty.id}`} className='flex items-center justify-between'>
                                   <div className="flex items-center gap-2">
                                       <SlpLogo className="mr-2 h-4 w-4" />
                                       SLP
                                   </div>
                                   <ChevronRight className={`h-4 w-4 transition-transform ${isSlpOpen ? 'rotate-90' : ''}`} />
-                              </Link>
+                                </Link>
+                              </div>
                           </Button>
                       </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                            <SidebarMenuItem>
+                                <SidebarMenuSubButton asChild isActive={pathname === '/candidates'}>
+                                    <Link href="/candidates">
+                                        Candidates
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuItem>
+                        </SidebarMenuSub>
+                    </CollapsibleContent>
                   </Collapsible>
               </SidebarMenuItem>
           )}
@@ -276,4 +302,5 @@ export function SidebarNav() {
     </Sidebar>
   );
 }
+
 
