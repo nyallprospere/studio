@@ -146,8 +146,8 @@ export default function CandidatesPage() {
             <CandidateCardSkeleton />
           ) : uwpLeader ? (
             <div className="mb-8">
-                <h3 className="text-lg font-semibold text-muted-foreground uppercase tracking-wider mb-2">Party Leader</h3>
-                <div className="max-w-sm">
+                <h3 className="text-center text-lg font-semibold text-muted-foreground uppercase tracking-wider mb-2">Party Leader</h3>
+                <div className="max-w-sm mx-auto">
                  <CandidateCard candidate={uwpLeader} />
                 </div>
             </div>
@@ -169,8 +169,8 @@ export default function CandidatesPage() {
                 <CandidateCardSkeleton />
             ) : slpLeader ? (
                 <div className="mb-8">
-                    <h3 className="text-lg font-semibold text-muted-foreground uppercase tracking-wider mb-2">Party Leader</h3>
-                    <div className="max-w-sm">
+                    <h3 className="text-center text-lg font-semibold text-muted-foreground uppercase tracking-wider mb-2">Party Leader</h3>
+                    <div className="max-w-sm mx-auto">
                     <CandidateCard candidate={slpLeader} />
                     </div>
                 </div>
