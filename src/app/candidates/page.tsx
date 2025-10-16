@@ -96,6 +96,23 @@ export default function CandidatesPage() {
 
   const loading = loadingCandidates || loadingParties;
 
+  const sortCandidates = (a: Candidate, b: Candidate) => {
+    // Party Leader first
+    if (a.isPartyLeader) return -1;
+    if (b.isPartyLeader) return 1;
+    
+    // Deputy Leader next
+    if (a.isDeputyLeader && !b.isDeputyLeader) return -1;
+    if (!a.isDeputyLeader && b.isDeputyLeader) return 1;
+
+    // Higher partyLevel next
+    if (a.partyLevel === 'higher' && b.partyLevel !== 'higher') return -1;
+    if (a.partyLevel !== 'higher' && b.partyLevel === 'higher') return 1;
+    
+    // Then alphabetically by last name
+    return a.lastName.localeCompare(b.lastName);
+  };
+
   const {
     uwpLeader,
     featuredUwpCandidates,
@@ -116,23 +133,19 @@ export default function CandidatesPage() {
     }
     const uwp = parties.find(p => p.acronym === 'UWP');
     const slp = parties.find(p => p.acronym === 'SLP');
+    
+    const uwpCandidates = candidates.filter(c => c.partyId === uwp?.id).sort(sortCandidates);
+    const slpCandidates = candidates.filter(c => c.partyId === slp?.id).sort(sortCandidates);
 
-    const uwpLeader = candidates.find(c => c.partyId === uwp?.id && c.isPartyLeader);
-    const slpLeader = candidates.find(c => c.partyId === slp?.id && c.isPartyLeader);
+    const uwpLeader = uwpCandidates.find(c => c.isPartyLeader);
+    const slpLeader = slpCandidates.find(c => c.isPartyLeader);
 
-    const featuredUwpCandidates = candidates.filter(
-      c => c.partyId === uwp?.id && c.isDeputyLeader
-    );
-    const otherUwpCandidates = candidates.filter(
-      c => c.partyId === uwp?.id && !c.isPartyLeader && !c.isDeputyLeader
-    );
+    const featuredUwpCandidates = uwpCandidates.filter(c => c.isDeputyLeader);
+    const otherUwpCandidates = uwpCandidates.filter(c => !c.isPartyLeader && !c.isDeputyLeader);
 
-    const featuredSlpCandidates = candidates.filter(
-      c => c.partyId === slp?.id && c.isDeputyLeader
-    );
-    const otherSlpCandidates = candidates.filter(
-      c => c.partyId === slp?.id && !c.isPartyLeader && !c.isDeputyLeader
-    );
+    const featuredSlpCandidates = slpCandidates.filter(c => c.isDeputyLeader);
+    const otherSlpCandidates = slpCandidates.filter(c => !c.isPartyLeader && !c.isDeputyLeader);
+
 
     return {
       uwpLeader,

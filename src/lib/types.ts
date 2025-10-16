@@ -1,4 +1,5 @@
 
+
 export interface Party {
   id: string;
   name: string;
@@ -28,6 +29,7 @@ export interface Candidate {
   isIncumbent?: boolean;
   isPartyLeader?: boolean;
   isDeputyLeader?: boolean;
+  partyLevel?: 'higher' | 'lower';
 }
 
 export interface Constituency {

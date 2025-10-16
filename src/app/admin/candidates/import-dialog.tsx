@@ -71,6 +71,9 @@ export function ImportDialog({ isOpen, onClose, onImport, parties, constituencie
             if (REQUIRED_HEADERS.includes(normalizedHeader)) {
                 initialMapping[header] = normalizedHeader;
             }
+             if (normalizedHeader === 'partylevel') {
+                initialMapping[header] = 'partyLevel';
+            }
         });
         setMapping(initialMapping);
 
@@ -175,6 +178,7 @@ export function ImportDialog({ isOpen, onClose, onImport, parties, constituencie
                                                 <SelectItem value="isIncumbent">Is Incumbent (Yes/No)</SelectItem>
                                                 <SelectItem value="isPartyLeader">Is Party Leader (Yes/No)</SelectItem>
                                                 <SelectItem value="isDeputyLeader">Is Deputy Leader (Yes/No)</SelectItem>
+                                                <SelectItem value="partyLevel">Party Level (higher/lower)</SelectItem>
                                                 <SelectItem value="imageUrl">Image URL</SelectItem>
                                             </SelectContent>
                                         </Select>

@@ -24,6 +24,7 @@ const candidateSchema = z.object({
   isIncumbent: z.boolean().default(false),
   isPartyLeader: z.boolean().default(false),
   isDeputyLeader: z.boolean().default(false),
+  partyLevel: z.enum(['higher', 'lower']).default('lower'),
 });
 
 type CandidateFormProps = {
@@ -47,6 +48,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
       isIncumbent: false,
       isPartyLeader: false,
       isDeputyLeader: false,
+      partyLevel: 'lower',
     },
   });
 
@@ -57,6 +59,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
         isIncumbent: initialData.isIncumbent ?? false,
         isPartyLeader: initialData.isPartyLeader ?? false,
         isDeputyLeader: initialData.isDeputyLeader ?? false,
+        partyLevel: initialData.partyLevel ?? 'lower',
       });
     } else {
         form.reset({
@@ -69,6 +72,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
           isIncumbent: false,
           isPartyLeader: false,
           isDeputyLeader: false,
+          partyLevel: 'lower',
         });
     }
   }, [initialData, form]);
@@ -184,7 +188,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
           )}
         />
         
-        <div className="flex items-center space-x-6">
+        <div className="flex items-start gap-6">
           <FormField
             control={form.control}
             name="isIncumbent"
@@ -252,7 +256,31 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
             )}
           />
         </div>
-
+        
+        <FormField
+            control={form.control}
+            name="partyLevel"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Party Level</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a level" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="higher">Higher</SelectItem>
+                    <SelectItem value="lower">Lower</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                    Higher level candidates appear first in the list on the public candidates page.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
         <div className="flex justify-end gap-4 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>
