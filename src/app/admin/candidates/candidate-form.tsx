@@ -154,7 +154,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
           name="bio"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Biography</FormLabel>
+              <FormLabel>Meet the Candidate</FormLabel>
               <FormControl>
                 <Textarea placeholder="A brief biography of the candidate..." {...field} rows={5} />
               </FormControl>
