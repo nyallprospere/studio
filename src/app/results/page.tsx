@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -241,6 +242,7 @@ export default function ResultsPage() {
                                 <TableHead>UWP Votes</TableHead>
                                 <TableHead>Other Votes</TableHead>
                                 <TableHead className="text-right">Total Votes</TableHead>
+                                <TableHead className="text-right">Registered Voters</TableHead>
                                 <TableHead className="text-right">Turnout</TableHead>
                             </TableRow>
                             </TableHeader>
@@ -261,12 +263,13 @@ export default function ResultsPage() {
                                     <TableCell>{cr.uwpVotes.toLocaleString()}</TableCell>
                                     <TableCell>{cr.otherVotes.toLocaleString()}</TableCell>
                                     <TableCell className="text-right font-semibold">{cr.totalVotes.toLocaleString()}</TableCell>
-                                    <TableCell className="text-right">{cr.turnout}%</TableCell>
+                                    <TableCell className="text-right">{cr.registeredVoters === 0 ? 'N/A' : cr.registeredVoters.toLocaleString()}</TableCell>
+                                    <TableCell className="text-right">{cr.turnout === 0 ? 'N/A' : `${cr.turnout}%`}</TableCell>
                                 </TableRow>
                                 );
                             }) : (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center text-muted-foreground h-24">Detailed constituency data not available for this year.</TableCell>
+                                    <TableCell colSpan={8} className="text-center text-muted-foreground h-24">Detailed constituency data not available for this year.</TableCell>
                                 </TableRow>
                             )}
                             </TableBody>

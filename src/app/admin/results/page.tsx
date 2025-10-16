@@ -61,12 +61,24 @@ export default function AdminResultsPage() {
   const handleFormSubmit = async (values: any) => {
     try {
       const totalVotes = values.slpVotes + values.uwpVotes + values.otherVotes;
-      const turnout = values.registeredVoters > 0 
-        ? (totalVotes / values.registeredVoters) * 100 
-        : 0;
+      
+      let registeredVoters = values.registeredVoters;
+      let turnout = 0;
+
+      if (values.votersNotAvailable) {
+        registeredVoters = 0;
+        turnout = 0;
+      } else if (registeredVoters > 0) {
+        turnout = (totalVotes / registeredVoters) * 100;
+      }
       
       const resultData = { 
-        ...values,
+        electionId: values.electionId,
+        constituencyId: values.constituencyId,
+        slpVotes: values.slpVotes,
+        uwpVotes: values.uwpVotes,
+        otherVotes: values.otherVotes,
+        registeredVoters,
         totalVotes,
         turnout: parseFloat(turnout.toFixed(2))
       };
@@ -134,12 +146,12 @@ export default function AdminResultsPage() {
         'Year': election?.year,
         'Election Name': election?.name,
         'Constituency': constituency?.name,
-        'Registered Voters': r.registeredVoters || constituency?.demographics.registeredVoters || 0,
+        'Registered Voters': r.registeredVoters === 0 ? 'N/A' : (r.registeredVoters || constituency?.demographics.registeredVoters || 0),
         'SLP Votes': r.slpVotes,
         'UWP Votes': r.uwpVotes,
         'Other Votes': r.otherVotes,
         'Total Votes': r.totalVotes,
-        'Turnout %': r.turnout,
+        'Turnout %': r.turnout === 0 ? 'N/A' : r.turnout,
       };
     });
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -172,7 +184,7 @@ export default function AdminResultsPage() {
             const uwpVotes = Number(row.uwpVotes) || 0;
             const otherVotes = Number(row.otherVotes) || 0;
             const totalVotes = slpVotes + uwpVotes + otherVotes;
-            const registeredVoters = Number(row.registeredVoters) || constituency.demographics.registeredVoters || 0;
+            const registeredVoters = row.registeredVoters === 'N/A' ? 0 : Number(row.registeredVoters) || constituency.demographics.registeredVoters || 0;
             const turnout = registeredVoters > 0 
                 ? (totalVotes / registeredVoters) * 100 
                 : 0;
@@ -317,15 +329,16 @@ export default function AdminResultsPage() {
                     {results && results.length > 0 ? results.map(result => {
                         const constituency = getConstituency(result.constituencyId);
                         const winner = result.slpVotes > result.uwpVotes ? 'SLP' : 'UWP';
+                        const registeredVoters = result.registeredVoters || constituency?.demographics.registeredVoters || 0;
                         return (
                             <TableRow key={result.id}>
                                 <TableCell className="font-medium" style={{ color: winner === 'SLP' ? 'red': 'orange'}}>{constituency?.name}</TableCell>
-                                <TableCell>{(result.registeredVoters || constituency?.demographics.registeredVoters || 0).toLocaleString()}</TableCell>
+                                <TableCell>{registeredVoters === 0 ? 'N/A' : registeredVoters.toLocaleString()}</TableCell>
                                 <TableCell>{result.slpVotes.toLocaleString()}</TableCell>
                                 <TableCell>{result.uwpVotes.toLocaleString()}</TableCell>
                                 <TableCell>{result.otherVotes.toLocaleString()}</TableCell>
                                 <TableCell className="font-semibold">{result.totalVotes.toLocaleString()}</TableCell>
-                                <TableCell>{result.turnout}%</TableCell>
+                                <TableCell>{result.turnout === 0 ? 'N/A' : `${result.turnout}%`}</TableCell>
                                 <TableCell className="text-right">
                                     <Button variant="ghost" size="icon" onClick={() => { setEditingResult(result); setIsFormOpen(true);}}>
                                         <Pencil className="h-4 w-4" />

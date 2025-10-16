@@ -6,11 +6,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useEffect, useMemo } from 'react';
 import type { ElectionResult, Election, Constituency } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const resultSchema = z.object({
   electionId: z.string().min(1, "Election is required"),
@@ -19,6 +20,7 @@ const resultSchema = z.object({
   slpVotes: z.coerce.number().min(0, "Votes must be a positive number"),
   otherVotes: z.coerce.number().min(0, "Votes must be a positive number"),
   registeredVoters: z.coerce.number().min(0, "Registered voters must be a positive number"),
+  votersNotAvailable: z.boolean().default(false),
 });
 
 type ResultFormProps = {
@@ -39,20 +41,25 @@ export function ResultForm({ onSubmit, initialData, onCancel, elections, constit
       slpVotes: 0,
       otherVotes: 0,
       registeredVoters: 0,
+      votersNotAvailable: false,
     },
   });
 
   const watchAllFields = form.watch();
+  const votersNotAvailable = watchAllFields.votersNotAvailable;
 
   const selectedConstituency = useMemo(() => {
     return constituencies.find(c => c.id === watchAllFields.constituencyId);
   }, [watchAllFields.constituencyId, constituencies]);
 
   useEffect(() => {
-    if (selectedConstituency && !form.getValues('registeredVoters')) {
+    if (selectedConstituency && !form.getValues('registeredVoters') && !votersNotAvailable) {
         form.setValue('registeredVoters', selectedConstituency.demographics.registeredVoters || 0);
     }
-  }, [selectedConstituency, form]);
+    if (votersNotAvailable) {
+        form.setValue('registeredVoters', 0);
+    }
+  }, [selectedConstituency, form, votersNotAvailable]);
 
   const totalVotes = useMemo(() => {
     return (watchAllFields.slpVotes || 0) + (watchAllFields.uwpVotes || 0) + (watchAllFields.otherVotes || 0);
@@ -61,17 +68,19 @@ export function ResultForm({ onSubmit, initialData, onCancel, elections, constit
   const registeredVoters = watchAllFields.registeredVoters;
 
   const turnout = useMemo(() => {
-    if (registeredVoters > 0) {
-      return ((totalVotes / registeredVoters) * 100).toFixed(2);
+    if (votersNotAvailable || !registeredVoters || registeredVoters <= 0) {
+        return 'N/A';
     }
-    return '0.00';
-  }, [totalVotes, registeredVoters]);
+    return ((totalVotes / registeredVoters) * 100).toFixed(2);
+  }, [totalVotes, registeredVoters, votersNotAvailable]);
 
   useEffect(() => {
     if (initialData) {
+      const isVotersNA = initialData.registeredVoters === 0;
       form.reset({
         ...initialData,
-        registeredVoters: initialData.registeredVoters || selectedConstituency?.demographics.registeredVoters || 0,
+        registeredVoters: isVotersNA ? 0 : initialData.registeredVoters || selectedConstituency?.demographics.registeredVoters || 0,
+        votersNotAvailable: isVotersNA
       });
     } else {
       const defaultRegisteredVoters = selectedConstituency?.demographics.registeredVoters || 0;
@@ -81,13 +90,14 @@ export function ResultForm({ onSubmit, initialData, onCancel, elections, constit
         uwpVotes: 0,
         slpVotes: 0,
         otherVotes: 0,
-        registeredVoters: defaultRegisteredVoters,
+        registeredVoters: votersNotAvailable ? 0 : defaultRegisteredVoters,
+        votersNotAvailable: votersNotAvailable
       });
-       if(watchAllFields.constituencyId) {
+       if(watchAllFields.constituencyId && !votersNotAvailable) {
            form.setValue('registeredVoters', defaultRegisteredVoters);
        }
     }
-  }, [initialData, form, selectedConstituency, watchAllFields.electionId, watchAllFields.constituencyId]);
+  }, [initialData, form, selectedConstituency, watchAllFields.electionId, watchAllFields.constituencyId, votersNotAvailable]);
 
   return (
     <Form {...form}>
@@ -182,16 +192,25 @@ export function ResultForm({ onSubmit, initialData, onCancel, elections, constit
         </div>
 
         <Card className="bg-muted/50">
-            <CardContent className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <CardContent className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                 <FormField
                     control={form.control}
                     name="registeredVoters"
                     render={({ field }) => (
                         <FormItem className="text-center">
                             <FormLabel className="text-sm text-muted-foreground">Registered Voters</FormLabel>
-                            <FormControl>
-                                <Input type="number" {...field} className="text-lg font-bold text-center bg-transparent border-0 border-b-2 rounded-none h-auto p-1 focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-primary" />
-                            </FormControl>
+                            {votersNotAvailable ? (
+                                <p className="text-lg font-bold">N/A</p>
+                            ) : (
+                               <FormControl>
+                                <Input
+                                    type="number"
+                                    {...field}
+                                    className="text-lg font-bold text-center bg-transparent border-0 border-b-2 rounded-none h-auto p-1 focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-primary"
+                                    disabled={votersNotAvailable}
+                                />
+                               </FormControl>
+                            )}
                              <FormMessage />
                         </FormItem>
                     )}
@@ -202,10 +221,32 @@ export function ResultForm({ onSubmit, initialData, onCancel, elections, constit
                 </div>
                  <div className="text-center">
                     <p className="text-sm text-muted-foreground">Turnout</p>
-                    <p className="text-lg font-bold">{turnout}%</p>
+                    <p className="text-lg font-bold">{turnout === 'N/A' ? 'N/A' : `${turnout}%`}</p>
                 </div>
             </CardContent>
         </Card>
+        
+        <FormField
+            control={form.control}
+            name="votersNotAvailable"
+            render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                        <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                        <FormLabel>Voters N/A</FormLabel>
+                        <FormDescription>
+                           Check if registered voter count is not available for this entry.
+                        </FormDescription>
+                    </div>
+                </FormItem>
+            )}
+        />
+
 
         <div className="flex justify-end gap-4 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>
