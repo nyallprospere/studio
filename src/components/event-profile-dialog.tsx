@@ -2,14 +2,22 @@
 'use client';
 
 import type { Event, Party } from '@/lib/types';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import Image from 'next/image';
-import { Calendar, MapPin, Shield } from 'lucide-react';
+import { Calendar, MapPin, Shield, Twitter, Facebook, Share2 } from 'lucide-react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { ScrollArea } from './ui/scroll-area';
 import { Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
+import { Button } from './ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import Link from 'next/link';
 
 interface EventProfileDialogProps {
   event: Event | null;
@@ -29,6 +37,12 @@ export function EventProfileDialog({ event, isOpen, onClose }: EventProfileDialo
 
   const party = parties?.find(p => p.id === event.partyId);
   const eventDate = (event.date as unknown as Timestamp)?.toDate ? (event.date as unknown as Timestamp).toDate() : new Date(event.date);
+  
+  const eventUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const shareText = `Check out this event: ${event.title} on ${format(eventDate, "PPP")}`;
+  const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(eventUrl)}`;
+  const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(eventUrl)}`;
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -66,6 +80,30 @@ export function EventProfileDialog({ event, isOpen, onClose }: EventProfileDialo
             </div>
           )}
         </ScrollArea>
+        <DialogFooter className="pr-6">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Share Event
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem asChild>
+                  <Link href={twitterShareUrl} target="_blank" rel="noopener noreferrer">
+                    <Twitter className="mr-2 h-4 w-4" />
+                    Share on Twitter
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={facebookShareUrl} target="_blank" rel="noopener noreferrer">
+                    <Facebook className="mr-2 h-4 w-4" />
+                    Share on Facebook
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </DialogFooter>
       </DialogContent>
     </Dialog>
   );
