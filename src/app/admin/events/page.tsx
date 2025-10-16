@@ -41,6 +41,19 @@ export default function AdminEventsPage() {
   const getPartyName = (partyId: string) => parties?.find(p => p.id === partyId)?.name || 'N/A';
   const isLoading = loadingEvents || loadingParties;
 
+  const { uwpEvents, slpEvents, uwpParty, slpParty } = useMemo(() => {
+    if (!events || !parties) {
+      return { uwpEvents: [], slpEvents: [], uwpParty: null, slpParty: null };
+    }
+    const uwp = parties.find(p => p.acronym === 'UWP');
+    const slp = parties.find(p => p.acronym === 'SLP');
+    
+    const uwpEvents = uwp ? events.filter(e => e.partyId === uwp.id) : [];
+    const slpEvents = slp ? events.filter(e => e.partyId === slp.id) : [];
+
+    return { uwpEvents, slpEvents, uwpParty: uwp, slpParty: slp };
+  }, [events, parties]);
+
   const handleFormSubmit = async (values: any) => {
     if (!firestore) return;
     try {
@@ -105,10 +118,11 @@ export default function AdminEventsPage() {
         </Dialog>
       </div>
 
+      <div className="grid md:grid-cols-2 gap-8">
       <Card>
         <CardHeader>
-          <CardTitle>Existing Events</CardTitle>
-          <CardDescription>A list of all party events currently in the system.</CardDescription>
+          <CardTitle>UWP Events</CardTitle>
+          <CardDescription>A list of all UWP events currently in the system.</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -121,9 +135,8 @@ export default function AdminEventsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {events && events.length > 0 ? (
-                events.map((event) => {
-                  // Firestore timestamps need to be converted to JS Dates
+              {uwpEvents && uwpEvents.length > 0 ? (
+                uwpEvents.map((event) => {
                   const eventDate = (event.date as unknown as Timestamp)?.toDate ? (event.date as unknown as Timestamp).toDate() : new Date(event.date);
                   return (
                   <div key={event.id} className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50">
@@ -161,16 +174,16 @@ export default function AdminEventsPage() {
                   );
                 })
               ) : (
-                <p className="text-center text-muted-foreground py-8">No events have been added yet.</p>
+                <p className="text-center text-muted-foreground py-8">No UWP events have been added yet.</p>
               )}
             </div>
           )}
         </CardContent>
       </Card>
-      <Card className="mt-8">
+      <Card>
         <CardHeader>
-          <CardTitle>Existing Events</CardTitle>
-          <CardDescription>A list of all party events currently in the system.</CardDescription>
+          <CardTitle>SLP Events</CardTitle>
+          <CardDescription>A list of all SLP events currently in the system.</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -183,9 +196,8 @@ export default function AdminEventsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {events && events.length > 0 ? (
-                events.map((event) => {
-                  // Firestore timestamps need to be converted to JS Dates
+              {slpEvents && slpEvents.length > 0 ? (
+                slpEvents.map((event) => {
                   const eventDate = (event.date as unknown as Timestamp)?.toDate ? (event.date as unknown as Timestamp).toDate() : new Date(event.date);
                   return (
                   <div key={event.id} className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50">
@@ -223,12 +235,13 @@ export default function AdminEventsPage() {
                   );
                 })
               ) : (
-                <p className="text-center text-muted-foreground py-8">No events have been added yet.</p>
+                <p className="text-center text-muted-foreground py-8">No SLP events have been added yet.</p>
               )}
             </div>
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
