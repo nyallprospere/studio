@@ -1,120 +1,118 @@
 /**
  * @fileoverview Firestore Security Rules for the St. Lucia Elections Hub application.
  *
- * Core Philosophy:
- * This ruleset provides open read access to all collections and restricts write access.
- * All write operations are disallowed in this prototype.
+ * Core Philosophy: This ruleset prioritizes data security by enforcing strict
+ * access controls on all data stored in Firestore. It assumes a public-read,
+ * owner-write model for most top-level collections.  It provides a public read access to the `/settings/pageLayouts` document.
  *
- * Data Structure:
- * The database consists of several top-level collections: `/parties`, `/candidates`, `/elections`, `/polling_data`, `/constituencies`, `/election_results`, and `/settings`.
- * Each collection contains documents representing the corresponding entity.
+ * Data Structure: The database comprises several top-level collections:
+ *   /parties/{partyId}: Stores political party information.
+ *   /candidates/{candidateId}: Stores candidate information.
+ *   /elections/{electionId}: Stores election event information.
+ *   /polling_data/{pollingDataId}: Stores polling data for elections.
+ *   /constituencies/{constituencyId}: Stores constituency information.
+ *   /election_results/{electionResultId}: Stores election result information.
+ *   /settings/pageLayouts: Stores layout settings for pages.
  *
  * Key Security Decisions:
- * - Open read access is enabled for all collections to facilitate data discovery and rapid prototyping.
- * - All write operations are denied to prevent unauthorized data modification during the prototype phase.
- * - Data validation is minimal, focusing on authorization and relationship integrity.
+ *   - Public read access is enabled for all top-level collections
+ *   - Write access to all collections is denied without authentication (as a base).
+ *   - The `settings/pageLayouts` document is publicly readable.
  *
+ * Denormalization for Authorization:  None. This ruleset assumes no denormalized data
+ * is required for authorization decisions given the current data model.
+ *
+ * Structural Segregation:  The segregation of data into separate top-level collections
+ * based on entity type (parties, candidates, elections, etc.) inherently supports
+ * structural segregation. This allows for the application of distinct security
+ * rules to each collection based on its specific access requirements.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Grants read access to party documents and denies all write operations.
+     * @description Grants public read access and denies all write access to the 'parties' collection.
      * @path /parties/{partyId}
-     * @allow get, list: if true;
-     * @deny create, update, delete: if false;
-     * @principle Open read, no writes.
+     * @allow get, list: Anyone can read party information.
+     * @deny create, update, delete: No one can create, update, or delete party information through direct Firestore access.
+     * @principle Public read, no direct write access.
      */
     match /parties/{partyId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Grants read access to candidate documents and denies all write operations.
+     * @description Grants public read access and denies all write access to the 'candidates' collection.
      * @path /candidates/{candidateId}
-     * @allow get, list: if true;
-     * @deny create, update, delete: if false;
-     * @principle Open read, no writes.
+     * @allow get, list: Anyone can read candidate information.
+     * @deny create, update, delete: No one can create, update, or delete candidate information through direct Firestore access.
+     * @principle Public read, no direct write access.
      */
     match /candidates/{candidateId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Grants read access to election documents and denies all write operations.
+     * @description Grants public read access and denies all write access to the 'elections' collection.
      * @path /elections/{electionId}
-     * @allow get, list: if true;
-     * @deny create, update, delete: if false;
-     * @principle Open read, no writes.
+     * @allow get, list: Anyone can read election information.
+     * @deny create, update, delete: No one can create, update, or delete election information through direct Firestore access.
+     * @principle Public read, no direct write access.
      */
     match /elections/{electionId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Grants read access to polling data documents and denies all write operations.
+     * @description Grants public read access and denies all write access to the 'polling_data' collection.
      * @path /polling_data/{pollingDataId}
-     * @allow get, list: if true;
-     * @deny create, update, delete: if false;
-     * @principle Open read, no writes.
+     * @allow get, list: Anyone can read polling data.
+     * @deny create, update, delete: No one can create, update, or delete polling data through direct Firestore access.
+     * @principle Public read, no direct write access.
      */
     match /polling_data/{pollingDataId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Grants read access to constituency documents and denies all write operations.
+     * @description Grants public read access and denies all write access to the 'constituencies' collection.
      * @path /constituencies/{constituencyId}
-     * @allow get, list: if true;
-     * @deny create, update, delete: if false;
-     * @principle Open read, no writes.
+     * @allow get, list: Anyone can read constituency information.
+     * @deny create, update, delete: No one can create, update, or delete constituency information through direct Firestore access.
+     * @principle Public read, no direct write access.
      */
     match /constituencies/{constituencyId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Grants read access to election result documents and denies all write operations.
+     * @description Grants public read access and denies all write access to the 'election_results' collection.
      * @path /election_results/{electionResultId}
-     * @allow get, list: if true;
-     * @deny create, update, delete: if false;
-     * @principle Open read, no writes.
+     * @allow get, list: Anyone can read election results.
+     * @deny create, update, delete: No one can create, update, or delete election results through direct Firestore access.
+     * @principle Public read, no direct write access.
      */
     match /election_results/{electionResultId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
      /**
-      * @description Grants read access to the page layouts settings document and denies all write operations.
-      * @path /settings/site
-      * @allow get, list: if true;
-      * @deny create, update, delete: if false;
-      * @principle Open read, no writes.
+      * @description Grants public read access to the 'pageLayouts' document in the 'settings' collection.
+      * @path /settings/pageLayouts
+      * @allow get, list: Anyone can read the page layout settings.
+      * @deny create, update, delete: No one can create, update, or delete the page layout settings through direct Firestore access.
+      * @principle Public read, no direct write access.
       */
-    match /settings/site {
-        allow get, list: if true;
-        allow create: if false;
-        allow update: if false;
-        allow delete: if false;
+    match /settings/pageLayouts {
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
   }
 }
