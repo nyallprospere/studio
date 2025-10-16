@@ -263,14 +263,13 @@ export function SidebarNav() {
                   </SidebarGroup>
               </>
           )}
-
         </SidebarMenu>
+        <div className="mt-auto p-2 space-y-2">
+            <SidebarMenu>
+                <AuthSection />
+            </SidebarMenu>
+        </div>
       </SidebarContent>
-      <div className="mt-auto p-2 space-y-2">
-         <SidebarMenu>
-            <AuthSection />
-         </SidebarMenu>
-      </div>
     </Sidebar>
   );
 }
