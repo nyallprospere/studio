@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ResultForm } from './result-form';
 import { ImportDialog } from './import-dialog';
-import { Pencil, Trash2, Upload, Download, PlusCircle } from 'lucide-react';
+import { Pencil, Trash2, Upload, Download, PlusCircle, UserX } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -131,6 +131,28 @@ export default function AdminResultsPage() {
     } catch (error) {
         console.error('Error deleting all results:', error);
         toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not delete all results. Check console for details.' });
+    }
+  }
+
+  const handleSetAllVotersNA = async () => {
+    if (!firestore || !results || results.length === 0) {
+        toast({ variant: 'destructive', title: 'Error', description: 'No results to update for the selected year.' });
+        return;
+    }
+    const election = getElection(selectedElectionId);
+    if (!election) return;
+
+    try {
+        const batch = writeBatch(firestore);
+        results.forEach(result => {
+            const docRef = doc(firestore, 'election_results', result.id);
+            batch.update(docRef, { registeredVoters: 0, turnout: 0 });
+        });
+        await batch.commit();
+        toast({ title: 'Bulk Update Successful', description: `All results for ${election.name} have been set to N/A for voters.`});
+    } catch (error) {
+        console.error('Error updating all results:', error);
+        toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not update all results. Check console for details.' });
     }
   }
 
@@ -271,6 +293,26 @@ export default function AdminResultsPage() {
               <CardDescription>Browse results by election year.</CardDescription>
             </div>
             <div className="flex items-center gap-2">
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                       <Button variant="outline" size="sm" disabled={!selectedElectionId || !results || results.length === 0}>
+                            <UserX className="mr-2 h-4 w-4" />
+                            Voters N/A
+                       </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will set the Registered Voters and Turnout to N/A for all {results?.length} results for the <strong>{getElection(selectedElectionId)?.name}</strong> election. This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleSetAllVotersNA}>Set to N/A</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
                  <AlertDialog>
                     <AlertDialogTrigger asChild>
                        <Button variant="destructive" size="sm" disabled={!selectedElectionId || !results || results.length === 0}>
@@ -375,3 +417,5 @@ export default function AdminResultsPage() {
     </div>
   );
 }
+
+    
