@@ -2,112 +2,148 @@
  * @fileoverview Firestore Security Rules for the St. Lucia Elections Hub application.
  *
  * Core Philosophy:
- * This ruleset provides open read access to all collections while restricting write access. Write access is generally denied, as the application is intended for data consumption. However, in the `/settings/pageLayouts` path, it allows authenticated users to modify settings, supporting user-defined layouts.
+ * This ruleset prioritizes Authorization Independence, avoiding hierarchical authorization dependencies
+ * and denormalizing data where necessary to minimize `get()` calls. All data is organized in
+ * top-level collections. Access control is primarily role-based, with the possibility to expand to
+ * owner-based access where appropriate (e.g., if user-specific data is added).
  *
  * Data Structure:
- * The database contains top-level collections for parties, candidates, elections, polling data, constituencies, and election results. A single document at `/settings/pageLayouts` stores page layout configurations.
+ * - /parties/{partyId}: Stores information about political parties.
+ * - /candidates/{candidateId}: Stores information about candidates.
+ * - /elections/{electionId}: Stores information about elections.
+ * - /polling_data/{pollingDataId}: Stores polling data for elections.
+ * - /constituencies/{constituencyId}: Stores information about constituencies.
+ * - /election_results/{electionResultId}: Stores election results.
+ * - /settings/pageLayouts: Stores user-defined layouts for various pages.
  *
  * Key Security Decisions:
- * - Public read access to all election-related data (parties, candidates, elections, etc.) to facilitate open data access.
- * - Restricted write access to prevent unauthorized data modification.
- * - Authenticated users can modify settings at `/settings/pageLayouts` to allow customization of the application's look and feel.
+ * - Read access to all collections is public.
+ * - Write access to all collections is denied in this prototype.
+ * - Future iterations may implement role-based access control for write operations.
+ * - No user-specific data is currently stored, so owner-based rules are not implemented.
+ * - The 'settings' collection is used to store configurations and also has public read access.
+ *
+ * Denormalization for Authorization:
+ * Not applicable in this prototype, as all access is public read or denied write. Future iterations
+ * may denormalize role information into documents if role-based access control is implemented.
+ *
+ * Structural Segregation:
+ * Data with similar access needs (public read) is placed in separate top-level collections.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read Parties; denies all writes.
+     * @description Allows anyone to read party information. Write operations are not allowed in this prototype.
      * @path /parties/{partyId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Public read access, no write access.
+     * @allow (get, list): Any user can read party data.
+     * @deny (create, update, delete): No one can modify party data in this prototype.
+     * @principle Public read access for party information.
      */
     match /parties/{partyId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Allows anyone to read Candidates; denies all writes.
+     * @description Allows anyone to read candidate information. Write operations are not allowed in this prototype.
      * @path /candidates/{candidateId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Public read access, no write access.
+     * @allow (get, list): Any user can read candidate data.
+     * @deny (create, update, delete): No one can modify candidate data in this prototype.
+     * @principle Public read access for candidate information.
      */
     match /candidates/{candidateId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Allows anyone to read Elections; denies all writes.
+     * @description Allows anyone to read election information. Write operations are not allowed in this prototype.
      * @path /elections/{electionId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Public read access, no write access.
+     * @allow (get, list): Any user can read election data.
+     * @deny (create, update, delete): No one can modify election data in this prototype.
+     * @principle Public read access for election information.
      */
     match /elections/{electionId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Allows anyone to read PollingData; denies all writes.
+     * @description Allows anyone to read polling data. Write operations are not allowed in this prototype.
      * @path /polling_data/{pollingDataId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Public read access, no write access.
+     * @allow (get, list): Any user can read polling data.
+     * @deny (create, update, delete): No one can modify polling data in this prototype.
+     * @principle Public read access for polling data.
      */
     match /polling_data/{pollingDataId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Allows anyone to read Constituencies; denies all writes.
+     * @description Allows anyone to read constituency information. Write operations are not allowed in this prototype.
      * @path /constituencies/{constituencyId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Public read access, no write access.
+     * @allow (get, list): Any user can read constituency data.
+     * @deny (create, update, delete): No one can modify constituency data in this prototype.
+     * @principle Public read access for constituency information.
      */
     match /constituencies/{constituencyId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Allows anyone to read ElectionResults; denies all writes.
+     * @description Allows anyone to read election result information. Write operations are not allowed in this prototype.
      * @path /election_results/{electionResultId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Public read access, no write access.
+     * @allow (get, list): Any user can read election result data.
+     * @deny (create, update, delete): No one can modify election result data in this prototype.
+     * @principle Public read access for election result information.
      */
     match /election_results/{electionResultId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Allows authenticated users to read and modify page layouts.
+     * @description Allows anyone to read page layout settings. Write operations are not allowed in this prototype.
      * @path /settings/pageLayouts
-     * @allow (get): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (list): if false
-     * @principle Authenticated users can customize page layouts.
+     * @allow (get, list): Any user can read page layout settings.
+     * @deny (create, update, delete): No one can modify page layout settings in this prototype.
+     * @principle Public read access for page layout settings.
      */
     match /settings/pageLayouts {
-      allow get: if true;
-      allow create, update, delete: if isSignedIn();
-      allow list: if false;
+      allow get, list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
-    /**
-     * @description Checks if the user is signed in.
-     * @return {bool} True if the user is signed in, false otherwise.
+        /**
+     * @description Allows anyone to read site settings. Write operations are not allowed in this prototype.
+     * @path /settings/site
+     * @allow (get, list): Any user can read site settings.
+     * @deny (create, update, delete): No one can modify site settings in this prototype.
+     * @principle Public read access for site settings.
      */
-    function isSignedIn() {
-      return request.auth != null;
+    match /settings/site {
+          allow get, list: if true;
+          allow create: if false;
+          allow update: if false;
+          allow delete: if false;
     }
   }
 }
