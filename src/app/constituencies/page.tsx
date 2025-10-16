@@ -53,11 +53,8 @@ function ConstituenciesPageSkeleton() {
 }
 
 type SectionId = 'map' | 'seatCount';
-type SectionLayout = {
-    [key in SectionId]: { span: number };
-}
 
-function SortableSection({ id, children, onResize }: { id: SectionId, children: React.ReactNode, onResize: (id: SectionId, direction: 'expand' | 'compress') => void }) {
+function SortableSection({ id, children, span, onResize }: { id: SectionId, children: React.ReactNode, span: number, onResize: (id: SectionId, direction: 'expand' | 'compress') => void }) {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
     const { user } = useUser();
   
@@ -66,10 +63,12 @@ function SortableSection({ id, children, onResize }: { id: SectionId, children: 
       transition,
     };
   
-    if (!user) return <>{children}</>;
+    if (!user) {
+        return <div className={`w-full md:col-span-${span}`}>{children}</div>;
+    }
   
     return (
-      <div ref={setNodeRef} style={style} className="relative group/section">
+      <div ref={setNodeRef} style={style} className={`relative group/section w-full md:col-span-${span}`}>
         <div className="absolute top-2 right-2 z-10 opacity-0 group-hover/section:opacity-100 transition-opacity flex items-center gap-1">
             <Button size="icon" variant="secondary" className="h-7 w-7" onClick={() => onResize(id, 'compress')}><Minus className="h-4 w-4" /></Button>
             <Button size="icon" variant="secondary" className="h-7 w-7" onClick={() => onResize(id, 'expand')}><Plus className="h-4 w-4" /></Button>
@@ -100,9 +99,9 @@ export default function ConstituenciesPage() {
     const [isEditingSeatCountDescription, setIsEditingSeatCountDescription] = useState(false);
 
     const [sections, setSections] = useState<SectionId[]>(['map', 'seatCount']);
-    const [sectionLayout, setSectionLayout] = useState<SectionLayout>({
-        map: { span: 2 },
-        seatCount: { span: 1 },
+    const [sectionSpans, setSectionSpans] = useState<Record<SectionId, number>>({
+        map: 2,
+        seatCount: 1,
     });
 
     const sensors = useSensors(useSensor(PointerSensor));
@@ -119,19 +118,24 @@ export default function ConstituenciesPage() {
     };
 
     const handleResize = (id: SectionId, direction: 'expand' | 'compress') => {
-        setSectionLayout(prevLayout => {
-            const newLayout = { ...prevLayout };
-            const currentSpan = newLayout[id].span;
-            const otherId = id === 'map' ? 'seatCount' : 'map';
-            const otherSpan = newLayout[otherId].span;
+        setSectionSpans(prevSpans => {
+            const newSpans = { ...prevSpans };
+            const currentSpan = newSpans[id];
             
-            if (direction === 'expand' && currentSpan < 3 && (currentSpan + otherSpan < 3)) {
-                newLayout[id].span = currentSpan + 1;
+            if (direction === 'expand' && currentSpan < 3) {
+                newSpans[id] = currentSpan + 1;
             } else if (direction === 'compress' && currentSpan > 1) {
-                newLayout[id].span = currentSpan - 1;
+                newSpans[id] = currentSpan - 1;
+            }
+            
+            // Ensure total span does not exceed 3
+            const totalSpan = Object.values(newSpans).reduce((sum, span) => sum + span, 0);
+            if (totalSpan > 3) {
+                // If it exceeds, revert the change. A more complex logic could be to shrink the other one.
+                return prevSpans;
             }
 
-            return newLayout;
+            return newSpans;
         });
     };
 
@@ -165,80 +169,76 @@ export default function ConstituenciesPage() {
 
     const pageContent = {
         map: (
-            <div className={cn("w-full", `md:col-span-${sectionLayout.map.span}`)}>
-                <Card>
-                    <CardContent className="p-2">
-                         <InteractiveMap constituencies={constituencies ?? []} />
-                    </CardContent>
-                </Card>
-            </div>
+            <Card>
+                <CardContent className="p-2">
+                     <InteractiveMap constituencies={constituencies ?? []} />
+                </CardContent>
+            </Card>
         ),
         seatCount: (
-             <div className={cn("w-full", `md:col-span-${sectionLayout.seatCount.span}`)}>
-                <Card className="sticky top-24">
-                  <CardHeader>
-                    {isEditingSeatCountTitle && user ? (
-                        <div className="flex items-center gap-2">
-                            <Input value={seatCountTitle} onChange={(e) => setSeatCountTitle(e.target.value)} className="font-headline" />
-                            <Button size="sm" onClick={() => setIsEditingSeatCountTitle(false)}>Save</Button>
-                        </div>
-                    ) : (
-                        <CardTitle className="font-headline" onClick={() => user && setIsEditingSeatCountTitle(true)}>
-                            {seatCountTitle}
-                        </CardTitle>
-                    )}
-                    {isEditingSeatCountDescription && user ? (
-                        <div className="flex items-center gap-2">
-                           <Input value={seatCountDescription} onChange={(e) => setSeatCountDescription(e.target.value)} />
-                           <Button size="sm" onClick={() => setIsEditingSeatCountDescription(false)}>Save</Button>
-                        </div>
-                    ) : (
-                        <CardDescription onClick={() => user && setIsEditingSeatCountDescription(true)}>{seatCountDescription}</CardDescription>
-                    )}
-                  </CardHeader>
-                  <CardContent className="flex flex-col items-center">
-                     <ChartContainer config={chartConfig} className="h-64 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <ChartTooltip 
-                                    cursor={false}
-                                    content={<ChartTooltipContent hideLabel />}
-                                />
-                                <Pie 
-                                    data={chartData} 
-                                    dataKey="value"
-                                    nameKey="name"
-                                    cx="50%" 
-                                    cy="50%" 
-                                    startAngle={180} 
-                                    endAngle={0} 
-                                    innerRadius="60%"
-                                    outerRadius="100%"
-                                    paddingAngle={2}
-                                >
-                                     {chartData.map((entry) => (
-                                        <Cell key={`cell-${entry.name}`} fill={entry.fill} />
-                                    ))}
-                                </Pie>
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </ChartContainer>
-                     <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-xs">
-                        {politicalLeaningOptions.map((option) => {
-                            const count = chartData.find(d => d.name === option.label)?.value || 0;
-                            if (count === 0) return null;
-                            return (
-                                <div key={option.value} className="flex items-center gap-1.5">
-                                    <span className="w-3 h-3 rounded-full" style={{ backgroundColor: option.color }}></span>
-                                    <span>{option.label}</span>
-                                    <span className="font-bold">({count})</span>
-                                </div>
-                            )
-                        })}
+            <Card className="sticky top-24">
+              <CardHeader>
+                {isEditingSeatCountTitle && user ? (
+                    <div className="flex items-center gap-2">
+                        <Input value={seatCountTitle} onChange={(e) => setSeatCountTitle(e.target.value)} className="font-headline" />
+                        <Button size="sm" onClick={() => setIsEditingSeatCountTitle(false)}>Save</Button>
                     </div>
-                  </CardContent>
-                </Card>
-            </div>
+                ) : (
+                    <CardTitle className="font-headline" onClick={() => user && setIsEditingSeatCountTitle(true)}>
+                        {seatCountTitle}
+                    </CardTitle>
+                )}
+                {isEditingSeatCountDescription && user ? (
+                    <div className="flex items-center gap-2">
+                       <Input value={seatCountDescription} onChange={(e) => setSeatCountDescription(e.target.value)} />
+                       <Button size="sm" onClick={() => setIsEditingSeatCountDescription(false)}>Save</Button>
+                    </div>
+                ) : (
+                    <CardDescription onClick={() => user && setIsEditingSeatCountDescription(true)}>{seatCountDescription}</CardDescription>
+                )}
+              </CardHeader>
+              <CardContent className="flex flex-col items-center">
+                 <ChartContainer config={chartConfig} className="h-64 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <ChartTooltip 
+                                cursor={false}
+                                content={<ChartTooltipContent hideLabel />}
+                            />
+                            <Pie 
+                                data={chartData} 
+                                dataKey="value"
+                                nameKey="name"
+                                cx="50%" 
+                                cy="50%" 
+                                startAngle={180} 
+                                endAngle={0} 
+                                innerRadius="60%"
+                                outerRadius="100%"
+                                paddingAngle={2}
+                            >
+                                 {chartData.map((entry) => (
+                                    <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                                ))}
+                            </Pie>
+                        </PieChart>
+                    </ResponsiveContainer>
+                </ChartContainer>
+                 <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-xs">
+                    {politicalLeaningOptions.map((option) => {
+                        const count = chartData.find(d => d.name === option.label)?.value || 0;
+                        if (count === 0) return null;
+                        return (
+                            <div key={option.value} className="flex items-center gap-1.5">
+                                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: option.color }}></span>
+                                <span>{option.label}</span>
+                                <span className="font-bold">({count})</span>
+                            </div>
+                        )
+                    })}
+                </div>
+              </CardContent>
+            </Card>
         )
     };
 
@@ -278,7 +278,7 @@ export default function ConstituenciesPage() {
                     {sections.map(sectionId => {
                         const sectionContent = pageContent[sectionId];
                         return sectionContent ? (
-                            <SortableSection key={sectionId} id={sectionId} onResize={handleResize}>
+                            <SortableSection key={sectionId} id={sectionId} span={sectionSpans[sectionId]} onResize={handleResize}>
                                 {sectionContent}
                             </SortableSection>
                         ) : null;

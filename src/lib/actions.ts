@@ -1,26 +1,34 @@
+
 'use server';
 
 import { generateElectionPredictions } from '@/ai/flows/generate-election-predictions';
 import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
-import { parties, historicalResults, polls } from './data';
+import { initializeFirebase } from '@/firebase';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 
 async function getCollectionData(collectionName: string) {
-    switch (collectionName) {
-        case 'polls':
-            return polls;
-        default:
-            return [];
-    }
+    const { firestore } = initializeFirebase();
+    const collRef = collection(firestore, collectionName);
+    const snapshot = await getDocs(collRef);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
 async function getLatestHistoricalResult() {
-    return historicalResults.sort((a, b) => b.year - a.year)[0];
+    const { firestore } = initializeFirebase();
+    const resultsRef = collection(firestore, 'election_results');
+    const q = query(resultsRef, orderBy('year', 'desc'), limit(1));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+        return null;
+    }
+    const doc = snapshot.docs[0];
+    return { id: doc.id, ...doc.data() };
 }
 
 
 export async function getPrediction(newsSummary: string) {
   try {
-    const pollsData = await getCollectionData('polls');
+    const pollsData = await getCollectionData('polling_data');
     const latestHistoricalResult = await getLatestHistoricalResult();
 
     // Step 1: Generate a baseline prediction
