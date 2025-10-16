@@ -1,13 +1,12 @@
 
-
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import type { Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useCollection, useFirebase, useMemoFirebase, useUser } from '@/firebase';
-import { collection }from 'firebase/firestore';
+import { useCollection, useFirebase, useMemoFirebase, useUser, useDoc } from '@/firebase';
+import { collection, doc, setDoc } from 'firebase/firestore';
 import { InteractiveMap } from '@/components/interactive-map';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Pie, PieChart, ResponsiveContainer, Cell, Label } from 'recharts';
@@ -19,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { GripVertical, Plus, Minus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
+import { debounce } from 'lodash';
 
 const politicalLeaningOptions = [
   { value: 'solid-slp', label: 'Solid SLP', color: 'hsl(var(--chart-5))' },
@@ -28,7 +27,6 @@ const politicalLeaningOptions = [
   { value: 'lean-uwp', label: 'Lean UWP', color: 'hsl(var(--chart-2))' },
   { value: 'solid-uwp', label: 'Solid UWP', color: 'hsl(var(--chart-1))' },
 ];
-
 
 function ConstituenciesPageSkeleton() {
     return (
@@ -54,6 +52,20 @@ function ConstituenciesPageSkeleton() {
 
 type SectionId = 'map' | 'seatCount';
 
+const DEFAULT_LAYOUT = {
+    pageTitle: 'Constituencies',
+    pageDescription: 'Explore the 17 electoral districts of St. Lucia.',
+    seatCountTitle: 'Seat Count',
+    seatCountDescription: 'Current political leaning of the 17 constituencies.',
+    sections: ['map', 'seatCount'] as SectionId[],
+    sectionSpans: {
+        map: 2,
+        seatCount: 1,
+    } as Record<SectionId, number>,
+};
+
+type LayoutConfiguration = typeof DEFAULT_LAYOUT;
+
 function SortableSection({ id, children, span, onResize }: { id: SectionId, children: React.ReactNode, span: number, onResize: (id: SectionId, direction: 'expand' | 'compress') => void }) {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
     const { user } = useUser();
@@ -63,12 +75,14 @@ function SortableSection({ id, children, span, onResize }: { id: SectionId, chil
       transition,
     };
   
+    const gridSpanClass = `md:col-span-${span}`;
+
     if (!user) {
-        return <div className={`w-full md:col-span-${span}`}>{children}</div>;
+        return <div className={cn("w-full", gridSpanClass)}>{children}</div>;
     }
   
     return (
-      <div ref={setNodeRef} style={style} className={`relative group/section w-full md:col-span-${span}`}>
+      <div ref={setNodeRef} style={style} className={cn("relative group/section w-full", gridSpanClass)}>
         <div className="absolute top-2 right-2 z-10 opacity-0 group-hover/section:opacity-100 transition-opacity flex items-center gap-1">
             <Button size="icon" variant="secondary" className="h-7 w-7" onClick={() => onResize(id, 'compress')}><Minus className="h-4 w-4" /></Button>
             <Button size="icon" variant="secondary" className="h-7 w-7" onClick={() => onResize(id, 'expand')}><Plus className="h-4 w-4" /></Button>
@@ -88,23 +102,50 @@ export default function ConstituenciesPage() {
     const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
     const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
 
-    const [pageTitle, setPageTitle] = useState('Constituencies');
-    const [pageDescription, setPageDescription] = useState('Explore the 17 electoral districts of St. Lucia.');
-    const [seatCountTitle, setSeatCountTitle] = useState('Seat Count');
-    const [seatCountDescription, setSeatCountDescription] = useState('Current political leaning of the 17 constituencies.');
+    const layoutRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'pageLayouts') : null, [firestore]);
+    const { data: savedLayouts, isLoading: loadingLayout } = useDoc(layoutRef);
+
+    const [pageTitle, setPageTitle] = useState(DEFAULT_LAYOUT.pageTitle);
+    const [pageDescription, setPageDescription] = useState(DEFAULT_LAYOUT.pageDescription);
+    const [seatCountTitle, setSeatCountTitle] = useState(DEFAULT_LAYOUT.seatCountTitle);
+    const [seatCountDescription, setSeatCountDescription] = useState(DEFAULT_LAYOUT.seatCountDescription);
     
     const [isEditingPageTitle, setIsEditingPageTitle] = useState(false);
     const [isEditingPageDescription, setIsEditingPageDescription] = useState(false);
     const [isEditingSeatCountTitle, setIsEditingSeatCountTitle] = useState(false);
     const [isEditingSeatCountDescription, setIsEditingSeatCountDescription] = useState(false);
 
-    const [sections, setSections] = useState<SectionId[]>(['map', 'seatCount']);
-    const [sectionSpans, setSectionSpans] = useState<Record<SectionId, number>>({
-        map: 2,
-        seatCount: 1,
-    });
+    const [sections, setSections] = useState<SectionId[]>(DEFAULT_LAYOUT.sections);
+    const [sectionSpans, setSectionSpans] = useState<Record<SectionId, number>>(DEFAULT_LAYOUT.sectionSpans);
 
     const sensors = useSensors(useSensor(PointerSensor));
+
+    const debouncedSaveLayout = useCallback(
+        debounce((layout: LayoutConfiguration) => {
+            if (firestore && user) {
+                const docRef = doc(firestore, 'settings', 'pageLayouts');
+                setDoc(docRef, { constituenciesPage: layout }, { merge: true });
+            }
+        }, 1000), [firestore, user]
+    );
+
+    useEffect(() => {
+        const layoutState = { pageTitle, pageDescription, seatCountTitle, seatCountDescription, sections, sectionSpans };
+        debouncedSaveLayout(layoutState);
+    }, [pageTitle, pageDescription, seatCountTitle, seatCountDescription, sections, sectionSpans, debouncedSaveLayout]);
+
+
+    useEffect(() => {
+        const savedConstituenciesLayout = savedLayouts?.constituenciesPage as LayoutConfiguration | undefined;
+        if (savedConstituenciesLayout) {
+            setPageTitle(savedConstituenciesLayout.pageTitle || DEFAULT_LAYOUT.pageTitle);
+            setPageDescription(savedConstituenciesLayout.pageDescription || DEFAULT_LAYOUT.pageDescription);
+            setSeatCountTitle(savedConstituenciesLayout.seatCountTitle || DEFAULT_LAYOUT.seatCountTitle);
+            setSeatCountDescription(savedConstituenciesLayout.seatCountDescription || DEFAULT_LAYOUT.seatCountDescription);
+            setSections(savedConstituenciesLayout.sections || DEFAULT_LAYOUT.sections);
+            setSectionSpans(savedConstituenciesLayout.sectionSpans || DEFAULT_LAYOUT.sectionSpans);
+        }
+    }, [savedLayouts]);
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
@@ -120,26 +161,24 @@ export default function ConstituenciesPage() {
     const handleResize = (id: SectionId, direction: 'expand' | 'compress') => {
         setSectionSpans(prevSpans => {
             const newSpans = { ...prevSpans };
+            const otherId = sections.find(s => s !== id);
+            if (!otherId) return prevSpans; // Should not happen in a 2-item layout
+            
             const currentSpan = newSpans[id];
             
-            if (direction === 'expand' && currentSpan < 3) {
+            if (direction === 'expand' && currentSpan < 2) {
                 newSpans[id] = currentSpan + 1;
+                newSpans[otherId] = newSpans[otherId] - 1;
             } else if (direction === 'compress' && currentSpan > 1) {
                 newSpans[id] = currentSpan - 1;
+                newSpans[otherId] = newSpans[otherId] + 1;
             }
             
-            // Ensure total span does not exceed 3
-            const totalSpan = Object.values(newSpans).reduce((sum, span) => sum + span, 0);
-            if (totalSpan > 3) {
-                // If it exceeds, revert the change. A more complex logic could be to shrink the other one.
-                return prevSpans;
-            }
-
             return newSpans;
         });
     };
 
-    const isLoading = loadingConstituencies;
+    const isLoading = loadingConstituencies || loadingLayout;
 
     const chartData = useMemo(() => {
         if (!constituencies) return [];
@@ -198,7 +237,7 @@ export default function ConstituenciesPage() {
                 )}
               </CardHeader>
               <CardContent className="flex flex-col items-center">
-                 <ChartContainer config={chartConfig} className="h-64 w-full">
+                 <ChartContainer config={chartConfig} className="h-40 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <ChartTooltip 
@@ -210,7 +249,7 @@ export default function ConstituenciesPage() {
                                 dataKey="value"
                                 nameKey="name"
                                 cx="50%" 
-                                cy="50%" 
+                                cy="100%" 
                                 startAngle={180} 
                                 endAngle={0} 
                                 innerRadius="60%"
@@ -290,3 +329,5 @@ export default function ConstituenciesPage() {
     </div>
   );
 }
+
+    
