@@ -221,6 +221,11 @@ export function SidebarNav() {
                               </div>
                           </Button>
                       </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                            {/* Blank sub-category */}
+                        </SidebarMenuSub>
+                    </CollapsibleContent>
                   </Collapsible>
               </SidebarMenuItem>
           )}
@@ -243,13 +248,7 @@ export function SidebarNav() {
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <SidebarMenuSub>
-                            <SidebarMenuItem>
-                                <SidebarMenuSubButton asChild isActive={pathname === '/candidates'}>
-                                    <Link href="/candidates">
-                                        Candidates
-                                    </Link>
-                                </SidebarMenuSubButton>
-                            </SidebarMenuItem>
+                            {/* Blank sub-category */}
                         </SidebarMenuSub>
                     </CollapsibleContent>
                   </Collapsible>
@@ -291,6 +290,3 @@ export function SidebarNav() {
     </Sidebar>
   );
 }
-
-
-
