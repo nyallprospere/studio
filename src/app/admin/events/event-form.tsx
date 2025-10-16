@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useEffect } from 'react';
 import type { Event, Party } from '@/lib/types';
+import { Timestamp } from 'firebase/firestore';
 
 const eventSchema = z.object({
   title: z.string().min(1, "Event title is required"),
@@ -47,9 +48,10 @@ export function EventForm({ onSubmit, initialData, onCancel, parties }: EventFor
 
   useEffect(() => {
     if (initialData) {
+      const eventDate = (initialData.date as unknown as Timestamp)?.toDate ? (initialData.date as unknown as Timestamp).toDate() : new Date(initialData.date);
       form.reset({
         ...initialData,
-        date: new Date(initialData.date),
+        date: eventDate,
       });
     } else {
       form.reset({
@@ -179,5 +181,3 @@ export function EventForm({ onSubmit, initialData, onCancel, parties }: EventFor
     </Form>
   );
 }
-
-    
