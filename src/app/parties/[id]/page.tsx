@@ -1,7 +1,7 @@
-
 'use client';
 
 import { useParams } from 'next/navigation';
+import { useMemo } from 'react';
 import type { Party, Candidate, Constituency } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
