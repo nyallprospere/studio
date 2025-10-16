@@ -11,6 +11,7 @@ import {
   SidebarSeparator,
   SidebarMenuSub,
   SidebarMenuSubButton,
+  SidebarContent,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -111,6 +112,8 @@ export function SidebarNav() {
   const { user } = useUser();
   const { firestore } = useFirebase();
   const [isResultsOpen, setIsResultsOpen] = useState(pathname.startsWith('/results'));
+  const [isUwpOpen, setIsUwpOpen] = useState(pathname.startsWith('/parties/5D8qXvMoV06pPGdSyotD'));
+  const [isSlpOpen, setIsSlpOpen] = useState(pathname.startsWith('/parties/C0L5o2t9g3b1J4K7m8N9'));
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
@@ -120,6 +123,13 @@ export function SidebarNav() {
 
   const uwpParty = useMemo(() => parties?.find(p => p.acronym === 'UWP'), [parties]);
   const slpParty = useMemo(() => parties?.find(p => p.acronym === 'SLP'), [parties]);
+  
+  const uwpCandidatesQuery = useMemoFirebase(() => (firestore && uwpParty) ? query(collection(firestore, 'candidates'), where('partyId', '==', uwpParty.id)) : null, [firestore, uwpParty]);
+  const { data: uwpCandidates, isLoading: loadingUwpCandidates } = useCollection<Candidate>(uwpCandidatesQuery);
+
+  const slpCandidatesQuery = useMemoFirebase(() => (firestore && slpParty) ? query(collection(firestore, 'candidates'), where('partyId', '==', slpParty.id)) : null, [firestore, slpParty]);
+  const { data: slpCandidates, isLoading: loadingSlpCandidates } = useCollection<Candidate>(slpCandidatesQuery);
+
 
   const sortedElections = useMemo(() => {
     if (!elections) return [];
@@ -148,102 +158,114 @@ export function SidebarNav() {
             </div>
         </Link>
       </SidebarHeader>
-      <SidebarMenu>
-        {mainNavItems.map((item) => (
-          <SidebarMenuItem key={item.href}>
-            <Button
-              asChild
-              variant={pathname === item.href ? 'secondary' : 'ghost'}
-              className="w-full justify-start"
-            >
-              <Link href={item.href}>
-                <item.icon className="mr-2 h-4 w-4" />
-                {item.label}
-              </Link>
-            </Button>
+      <SidebarContent>
+        <SidebarMenu>
+          {mainNavItems.map((item) => (
+            <SidebarMenuItem key={item.href}>
+              <Button
+                asChild
+                variant={pathname === item.href ? 'secondary' : 'ghost'}
+                className="w-full justify-start"
+              >
+                <Link href={item.href}>
+                  <item.icon className="mr-2 h-4 w-4" />
+                  {item.label}
+                </Link>
+              </Button>
+            </SidebarMenuItem>
+          ))}
+
+          <SidebarMenuItem>
+              <Collapsible open={isResultsOpen} onOpenChange={setIsResultsOpen}>
+                  <CollapsibleTrigger asChild>
+                      <Button variant={pathname.startsWith('/results') ? 'secondary' : 'ghost'} className="w-full justify-between">
+                          <div className="flex items-center gap-2">
+                              <Landmark className="mr-2 h-4 w-4" />
+                              Past Results
+                          </div>
+                          <ChevronRight className={`h-4 w-4 transition-transform ${isResultsOpen ? 'rotate-90' : ''}`} />
+                      </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                      <SidebarMenuSub>
+                          {loadingElections ? <p className="p-2 text-xs text-muted-foreground">Loading years...</p> : sortedElections.map(election => (
+                              <SidebarMenuItem key={election.id}>
+                                  <SidebarMenuSubButton asChild isActive={pathname.includes(`year=${election.id}`)}>
+                                      <Link href={`/results?year=${election.id}`}>
+                                          {election.name}
+                                      </Link>
+                                  </SidebarMenuSubButton>
+                              </SidebarMenuItem>
+                          ))}
+                      </SidebarMenuSub>
+                  </CollapsibleContent>
+              </Collapsible>
           </SidebarMenuItem>
-        ))}
+          
+          {uwpParty && (
+              <SidebarMenuItem>
+                  <Collapsible open={isUwpOpen} onOpenChange={setIsUwpOpen}>
+                      <CollapsibleTrigger asChild>
+                          <Button asChild variant={pathname.startsWith(`/parties/${uwpParty.id}`) ? 'secondary' : 'ghost'} className="w-full justify-between">
+                              <Link href={`/parties/${uwpParty.id}`}>
+                                  <div className="flex items-center gap-2">
+                                      <UwpLogo className="mr-2 h-4 w-4" />
+                                      UWP
+                                  </div>
+                                  <ChevronRight className={`h-4 w-4 transition-transform ${isUwpOpen ? 'rotate-90' : ''}`} />
+                              </Link>
+                          </Button>
+                      </CollapsibleTrigger>
+                  </Collapsible>
+              </SidebarMenuItem>
+          )}
 
-        <SidebarMenuItem>
-            <Collapsible open={isResultsOpen} onOpenChange={setIsResultsOpen}>
-                <CollapsibleTrigger asChild>
-                    <Button variant={pathname.startsWith('/results') ? 'secondary' : 'ghost'} className="w-full justify-between">
-                         <div className="flex items-center gap-2">
-                            <Landmark className="mr-2 h-4 w-4" />
-                            Past Results
-                        </div>
-                        <ChevronRight className={`h-4 w-4 transition-transform ${isResultsOpen ? 'rotate-90' : ''}`} />
-                    </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                    <SidebarMenuSub>
-                        {loadingElections ? <p className="p-2 text-xs text-muted-foreground">Loading years...</p> : sortedElections.map(election => (
-                            <SidebarMenuItem key={election.id}>
-                                <SidebarMenuSubButton asChild isActive={pathname.includes(`year=${election.id}`)}>
-                                    <Link href={`/results?year=${election.id}`}>
-                                        {election.name}
-                                    </Link>
-                                </SidebarMenuSubButton>
-                            </SidebarMenuItem>
-                        ))}
-                    </SidebarMenuSub>
-                </CollapsibleContent>
-            </Collapsible>
-        </SidebarMenuItem>
-        
-        {uwpParty && (
-            <SidebarMenuItem>
-                 <Button asChild variant={pathname.startsWith(`/parties/${uwpParty.id}`) ? 'secondary' : 'ghost'} className="w-full justify-start">
-                    <Link href={`/parties/${uwpParty.id}`}>
-                        <div className="flex items-center gap-2">
-                            <UwpLogo className="mr-2 h-4 w-4" style={{ color: uwpParty.color }}/>
-                            UWP
-                        </div>
-                    </Link>
-                </Button>
-            </SidebarMenuItem>
-        )}
-
-        {slpParty && (
-            <SidebarMenuItem>
-                 <Button asChild variant={pathname.startsWith(`/parties/${slpParty.id}`) ? 'secondary' : 'ghost'} className="w-full justify-start">
-                    <Link href={`/parties/${slpParty.id}`}>
-                        <div className="flex items-center gap-2">
-                            <SlpLogo className="mr-2 h-4 w-4" style={{ color: slpParty.color }}/>
-                            SLP
-                        </div>
-                    </Link>
-                </Button>
-            </SidebarMenuItem>
-        )}
+          {slpParty && (
+              <SidebarMenuItem>
+                  <Collapsible open={isSlpOpen} onOpenChange={setIsSlpOpen}>
+                      <CollapsibleTrigger asChild>
+                           <Button asChild variant={pathname.startsWith(`/parties/${slpParty.id}`) ? 'secondary' : 'ghost'} className="w-full justify-between">
+                              <Link href={`/parties/${slpParty.id}`}>
+                                  <div className="flex items-center gap-2">
+                                      <SlpLogo className="mr-2 h-4 w-4" />
+                                      SLP
+                                  </div>
+                                  <ChevronRight className={`h-4 w-4 transition-transform ${isSlpOpen ? 'rotate-90' : ''}`} />
+                              </Link>
+                          </Button>
+                      </CollapsibleTrigger>
+                  </Collapsible>
+              </SidebarMenuItem>
+          )}
 
 
-        {user && (
-            <>
-                <SidebarSeparator className="my-2" />
-                <SidebarGroup>
-                    <SidebarGroupLabel>Admin</SidebarGroupLabel>
-                    <SidebarMenu>
-                        {adminNavItems.map((item) => (
-                            <SidebarMenuItem key={item.href}>
-                                <Button
-                                asChild
-                                variant={pathname.startsWith(item.href) ? 'secondary' : 'ghost'}
-                                className="w-full justify-start"
-                                >
-                                <Link href={item.href}>
-                                    <item.icon className="mr-2 h-4 w-4" />
-                                    {item.label}
-                                </Link>
-                                </Button>
-                            </SidebarMenuItem>
-                        ))}
-                    </SidebarMenu>
-                </SidebarGroup>
-            </>
-        )}
+          {user && (
+              <>
+                  <SidebarSeparator className="my-2" />
+                  <SidebarGroup>
+                      <SidebarGroupLabel>Admin</SidebarGroupLabel>
+                      <SidebarMenu>
+                          {adminNavItems.map((item) => (
+                              <SidebarMenuItem key={item.href}>
+                                  <Button
+                                  asChild
+                                  variant={pathname.startsWith(item.href) ? 'secondary' : 'ghost'}
+                                  className="w-full justify-start"
+                                  >
+                                  <Link href={item.href}>
+                                      <item.icon className="mr-2 h-4 w-4" />
+                                      {item.label}
+                                  </Link>
+                                  </Button>
+                              </SidebarMenuItem>
+                          ))}
+                      </SidebarMenu>
+                  </SidebarGroup>
+              </>
+          )}
 
-      </SidebarMenu>
+        </SidebarMenu>
+      </SidebarContent>
       <div className="mt-auto p-2 space-y-2">
          <SidebarMenu>
             <AuthSection />
