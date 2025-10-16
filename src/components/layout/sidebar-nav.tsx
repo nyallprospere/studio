@@ -5,6 +5,9 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarSeparator
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -23,6 +26,16 @@ const mainNavItems = [
   { href: '/results', icon: Landmark, label: 'Past Results' },
   { href: '/constituencies', icon: Map, label: 'Constituencies' },
 ];
+
+const adminNavItems = [
+    { href: '/admin/parties', icon: Shield, label: 'Manage Parties' },
+    { href: '/admin/candidates', icon: Users, label: 'Manage Candidates' },
+    { href: '/admin/polls', icon: BarChart3, label: 'Manage Polling Data' },
+    { href: '/admin/results', icon: Landmark, label: 'Manage Election Results' },
+    { href: '/admin/constituencies', icon: FilePlus, label: 'Manage Constituencies' },
+    { href: '/admin/map', icon: Map, label: 'Manage Map' },
+];
+
 
 function AuthSection() {
     const { user, isUserLoading } = useUser();
@@ -86,6 +99,7 @@ function AuthSection() {
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const { user } = useUser();
   
   const itemsToDisplay = mainNavItems;
 
@@ -117,6 +131,32 @@ export function SidebarNav() {
             </Button>
           </SidebarMenuItem>
         ))}
+
+        {user && (
+            <>
+                <SidebarSeparator className="my-2" />
+                <SidebarGroup>
+                    <SidebarGroupLabel>Admin</SidebarGroupLabel>
+                    <SidebarMenu>
+                        {adminNavItems.map((item) => (
+                            <SidebarMenuItem key={item.href}>
+                                <Button
+                                asChild
+                                variant={pathname === item.href ? 'secondary' : 'ghost'}
+                                className="w-full justify-start"
+                                >
+                                <Link href={item.href}>
+                                    <item.icon className="mr-2 h-4 w-4" />
+                                    {item.label}
+                                </Link>
+                                </Button>
+                            </SidebarMenuItem>
+                        ))}
+                    </SidebarMenu>
+                </SidebarGroup>
+            </>
+        )}
+
       </SidebarMenu>
       <div className="mt-auto p-2 space-y-2">
          <SidebarMenu>
