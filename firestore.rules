@@ -2,42 +2,31 @@
  * @fileoverview Firestore Security Rules for the St. Lucia Elections Hub application.
  *
  * Core Philosophy:
- * This ruleset enforces a flat data structure with authorization decisions made independently
- * at each document level.  This avoids complex hierarchical authorization and costly `get()` calls.
- * All write operations require authentication, but read operations are generally public.
+ * This ruleset provides open read access to all collections while restricting write access. Only authenticated users can create, update, or delete documents.
  *
  * Data Structure:
- * The database consists of several top-level collections: /parties, /candidates, /elections,
- * /polling_data, /constituencies, and /election_results.  There are also two singleton documents
- * at /settings/pageLayouts and /settings/site. Each collection stores data for a specific entity.
+ * - Top-level collections for parties, events, candidates, elections, polling data, constituencies, and election results.
+ * - Single documents within the /settings collection for page layouts and site settings.
  *
  * Key Security Decisions:
- * - Public Read Access: Most data is publicly readable to allow for open access to election information.
- * - Authenticated Writes: All create, update, and delete operations require a logged-in user.
- * - No User-Specific Data: The rules do not currently implement any user-specific data restrictions
- *   beyond requiring authentication for writes.
- * - Singleton Settings Documents: The `/settings/pageLayouts` and `/settings/site` documents
- *   are treated as publicly readable but require authentication to modify.
- * - Denormalization for Authorization: The rules avoid `get()` calls by assuming that all data
- *   necessary for authorization is present within the document being evaluated.
+ * - Public read access is granted for all collections to allow for easy data consumption by the application.
+ * - Write access is restricted to authenticated users.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Rules for the /parties collection. Allows public read access and authenticated write access.
+     * @description Allows public read access and authenticated-user-only write access for party data.
      * @path /parties/{partyId}
      * @allow get, list: if true;
      * @allow create: if isSignedIn();
      * @allow update: if isSignedIn() && resource != null;
      * @allow delete: if isSignedIn() && resource != null;
-     * @deny get: if false;
-     * @deny list: if false;
      * @deny create: if false;
      * @deny update: if false;
      * @deny delete: if false;
-     * @principle Allows any authenticated user to create, update, or delete parties. Read access is public.
+     * @principle Allows any user to read party information, but only authenticated users can create, update, or delete parties.
      */
     match /parties/{partyId} {
       allow get, list: if true;
@@ -47,18 +36,35 @@ service cloud.firestore {
     }
 
     /**
-     * @description Rules for the /candidates collection. Allows public read access and authenticated write access.
+     * @description Allows public read access and authenticated-user-only write access for event data.
+     * @path /events/{eventId}
+     * @allow get, list: if true;
+     * @allow create: if isSignedIn();
+     * @allow update: if isSignedIn() && resource != null;
+     * @allow delete: if isSignedIn() && resource != null;
+     * @deny create: if false;
+     * @deny update: if false;
+     * @deny delete: if false;
+     * @principle Allows any user to read event information, but only authenticated users can create, update, or delete events.
+     */
+    match /events/{eventId} {
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && resource != null;
+      allow delete: if isSignedIn() && resource != null;
+    }
+
+    /**
+     * @description Allows public read access and authenticated-user-only write access for candidate data.
      * @path /candidates/{candidateId}
      * @allow get, list: if true;
      * @allow create: if isSignedIn();
      * @allow update: if isSignedIn() && resource != null;
      * @allow delete: if isSignedIn() && resource != null;
-     * @deny get: if false;
-     * @deny list: if false;
      * @deny create: if false;
      * @deny update: if false;
      * @deny delete: if false;
-     * @principle Allows any authenticated user to create, update, or delete candidates. Read access is public.
+     * @principle Allows any user to read candidate information, but only authenticated users can create, update, or delete candidates.
      */
     match /candidates/{candidateId} {
       allow get, list: if true;
@@ -68,18 +74,16 @@ service cloud.firestore {
     }
 
     /**
-     * @description Rules for the /elections collection. Allows public read access and authenticated write access.
+     * @description Allows public read access and authenticated-user-only write access for election data.
      * @path /elections/{electionId}
      * @allow get, list: if true;
      * @allow create: if isSignedIn();
      * @allow update: if isSignedIn() && resource != null;
      * @allow delete: if isSignedIn() && resource != null;
-     * @deny get: if false;
-     * @deny list: if false;
      * @deny create: if false;
      * @deny update: if false;
      * @deny delete: if false;
-     * @principle Allows any authenticated user to create, update, or delete elections. Read access is public.
+     * @principle Allows any user to read election information, but only authenticated users can create, update, or delete elections.
      */
     match /elections/{electionId} {
       allow get, list: if true;
@@ -89,18 +93,16 @@ service cloud.firestore {
     }
 
     /**
-     * @description Rules for the /polling_data collection. Allows public read access and authenticated write access.
+     * @description Allows public read access and authenticated-user-only write access for polling data.
      * @path /polling_data/{pollingDataId}
      * @allow get, list: if true;
      * @allow create: if isSignedIn();
      * @allow update: if isSignedIn() && resource != null;
      * @allow delete: if isSignedIn() && resource != null;
-     * @deny get: if false;
-     * @deny list: if false;
      * @deny create: if false;
      * @deny update: if false;
      * @deny delete: if false;
-     * @principle Allows any authenticated user to create, update, or delete polling data. Read access is public.
+     * @principle Allows any user to read polling data, but only authenticated users can create, update, or delete polling data.
      */
     match /polling_data/{pollingDataId} {
       allow get, list: if true;
@@ -110,18 +112,16 @@ service cloud.firestore {
     }
 
     /**
-     * @description Rules for the /constituencies collection. Allows public read access and authenticated write access.
+     * @description Allows public read access and authenticated-user-only write access for constituency data.
      * @path /constituencies/{constituencyId}
      * @allow get, list: if true;
      * @allow create: if isSignedIn();
      * @allow update: if isSignedIn() && resource != null;
      * @allow delete: if isSignedIn() && resource != null;
-     * @deny get: if false;
-     * @deny list: if false;
      * @deny create: if false;
      * @deny update: if false;
      * @deny delete: if false;
-     * @principle Allows any authenticated user to create, update, or delete constituencies. Read access is public.
+     * @principle Allows any user to read constituency information, but only authenticated users can create, update, or delete constituencies.
      */
     match /constituencies/{constituencyId} {
       allow get, list: if true;
@@ -131,18 +131,16 @@ service cloud.firestore {
     }
 
     /**
-     * @description Rules for the /election_results collection. Allows public read access and authenticated write access.
+     * @description Allows public read access and authenticated-user-only write access for election result data.
      * @path /election_results/{electionResultId}
      * @allow get, list: if true;
      * @allow create: if isSignedIn();
      * @allow update: if isSignedIn() && resource != null;
      * @allow delete: if isSignedIn() && resource != null;
-     * @deny get: if false;
-     * @deny list: if false;
      * @deny create: if false;
      * @deny update: if false;
      * @deny delete: if false;
-     * @principle Allows any authenticated user to create, update, or delete election results. Read access is public.
+     * @principle Allows any user to read election results, but only authenticated users can create, update, or delete election results.
      */
     match /election_results/{electionResultId} {
       allow get, list: if true;
@@ -152,19 +150,17 @@ service cloud.firestore {
     }
 
     /**
-     * @description Rules for the /settings/pageLayouts document. Allows public read access and authenticated write access.
+     * @description Allows public read access and authenticated-user-only write access for page layout settings.
      * @path /settings/pageLayouts
      * @allow get: if true;
      * @allow list: if false;
      * @allow create: if isSignedIn();
      * @allow update: if isSignedIn() && resource != null;
      * @allow delete: if isSignedIn() && resource != null;
-     * @deny get: if false;
-     * @deny list: if true;
      * @deny create: if false;
      * @deny update: if false;
      * @deny delete: if false;
-     * @principle Allows any authenticated user to create, update, or delete page layouts. Read access is public.
+     * @principle Allows any user to read page layout settings, but only authenticated users can create, update, or delete them.  Listing is disallowed as this is a single document.
      */
     match /settings/pageLayouts {
       allow get: if true;
@@ -175,19 +171,17 @@ service cloud.firestore {
     }
 
     /**
-     * @description Rules for the /settings/site document. Allows public read access and authenticated write access.
+     * @description Allows public read access and authenticated-user-only write access for site settings.
      * @path /settings/site
      * @allow get: if true;
      * @allow list: if false;
      * @allow create: if isSignedIn();
      * @allow update: if isSignedIn() && resource != null;
      * @allow delete: if isSignedIn() && resource != null;
-     * @deny get: if false;
-     * @deny list: if true;
      * @deny create: if false;
      * @deny update: if false;
      * @deny delete: if false;
-     * @principle Allows any authenticated user to create, update, or delete site settings. Read access is public.
+     * @principle Allows any user to read site settings, but only authenticated users can create, update, or delete them. Listing is disallowed as this is a single document.
      */
     match /settings/site {
       allow get: if true;
@@ -196,10 +190,9 @@ service cloud.firestore {
       allow update: if isSignedIn() && resource != null;
       allow delete: if isSignedIn() && resource != null;
     }
-  }
 
-  // Helper function to determine if a user is signed in.
-  function isSignedIn() {
-    return request.auth != null;
+    function isSignedIn() {
+      return request.auth != null;
+    }
   }
 }
