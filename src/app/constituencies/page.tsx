@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -121,11 +122,15 @@ export default function ConstituenciesPage() {
         setSectionLayout(prevLayout => {
             const newLayout = { ...prevLayout };
             const currentSpan = newLayout[id].span;
-            if (direction === 'expand' && currentSpan < 3) {
+            const otherId = id === 'map' ? 'seatCount' : 'map';
+            const otherSpan = newLayout[otherId].span;
+            
+            if (direction === 'expand' && currentSpan < 3 && (currentSpan + otherSpan < 3)) {
                 newLayout[id].span = currentSpan + 1;
             } else if (direction === 'compress' && currentSpan > 1) {
                 newLayout[id].span = currentSpan - 1;
             }
+
             return newLayout;
         });
     };
@@ -204,7 +209,7 @@ export default function ConstituenciesPage() {
                                     dataKey="value"
                                     nameKey="name"
                                     cx="50%" 
-                                    cy="100%" 
+                                    cy="50%" 
                                     startAngle={180} 
                                     endAngle={0} 
                                     innerRadius="60%"
@@ -285,5 +290,3 @@ export default function ConstituenciesPage() {
     </div>
   );
 }
-
-    
