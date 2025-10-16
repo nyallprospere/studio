@@ -38,12 +38,10 @@ export default function AdminResultsPage() {
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
   const resultsQuery = useMemoFirebase(() => firestore && selectedElectionId ? query(collection(firestore, 'election_results'), where('electionId', '==', selectedElectionId)) : null, [firestore, selectedElectionId]);
-  const partiesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const constituenciesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
   
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
   const { data: results, isLoading: loadingResults } = useCollection<ElectionResult>(resultsQuery);
-  const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesCollection);
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesCollection);
 
   const sortedElections = useMemo(() => {
@@ -56,13 +54,24 @@ export default function AdminResultsPage() {
     });
   }, [elections]);
 
-  const getParty = (partyId: string) => parties?.find(p => p.id === partyId);
   const getConstituency = (constituencyId: string) => constituencies?.find(c => c.id === constituencyId);
   const getElection = (electionId: string) => elections?.find(e => e.id === electionId);
 
   const handleFormSubmit = async (values: any) => {
     try {
-      const resultData = { ...values, votes: Number(values.votes) };
+      const constituency = getConstituency(values.constituencyId);
+      if (!constituency) throw new Error("Constituency not found");
+
+      const totalVotes = values.slpVotes + values.uwpVotes + values.otherVotes;
+      const turnout = constituency.demographics.registeredVoters > 0 
+        ? (totalVotes / constituency.demographics.registeredVoters) * 100 
+        : 0;
+      
+      const resultData = { 
+        ...values,
+        totalVotes,
+        turnout: parseFloat(turnout.toFixed(2))
+      };
 
       if (editingResult) {
         const resultDoc = doc(firestore, 'election_results', editingResult.id);
@@ -94,22 +103,23 @@ export default function AdminResultsPage() {
   };
 
   const handleExport = () => {
-    if (!results || !parties || !constituencies || !elections) {
+    if (!results || !constituencies || !elections) {
       toast({ variant: "destructive", title: "Error", description: "Data not loaded yet." });
       return;
     }
     const dataToExport = results.map(r => {
       const election = getElection(r.electionId);
-      const party = getParty(r.partyId);
       const constituency = getConstituency(r.constituencyId);
       return {
         'Year': election?.year,
+        'Election Name': election?.name,
         'Constituency': constituency?.name,
-        'Candidate Name': r.candidateName,
-        'Party': party?.name,
-        'Party Acronym': party?.acronym,
-        'Votes': r.votes,
-        'Is Winner': r.isWinner ? 'Yes' : 'No',
+        'Registered Voters': constituency?.demographics.registeredVoters || 0,
+        'SLP Votes': r.slpVotes,
+        'UWP Votes': r.uwpVotes,
+        'Other Votes': r.otherVotes,
+        'Total Votes': r.totalVotes,
+        'Turnout %': r.turnout,
       };
     });
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -120,7 +130,7 @@ export default function AdminResultsPage() {
   };
 
   const handleImport = async (data: any[]) => {
-    if (!firestore || !parties || !constituencies || !elections) {
+    if (!firestore || !constituencies || !elections) {
       toast({ variant: 'destructive', title: 'Error', description: 'Database or related data not ready.' });
       return;
     }
@@ -131,21 +141,29 @@ export default function AdminResultsPage() {
 
         for (const row of data) {
             const election = elections.find(e => e.year.toString() === row.year.toString());
-            const party = parties.find(p => p.name === row.party || p.acronym === row.party);
             const constituency = constituencies.find(c => c.name === row.constituency);
 
-            if (!election || !party || !constituency) {
-                console.warn(`Skipping row due to missing election, party, or constituency:`, row);
+            if (!election || !constituency) {
+                console.warn(`Skipping row due to missing election or constituency:`, row);
                 continue;
             }
+            
+            const slpVotes = Number(row.slpVotes) || 0;
+            const uwpVotes = Number(row.uwpVotes) || 0;
+            const otherVotes = Number(row.otherVotes) || 0;
+            const totalVotes = slpVotes + uwpVotes + otherVotes;
+            const turnout = constituency.demographics.registeredVoters > 0 
+                ? (totalVotes / constituency.demographics.registeredVoters) * 100 
+                : 0;
 
             const newResult: Omit<ElectionResult, 'id'> = {
                 electionId: election.id,
                 constituencyId: constituency.id,
-                candidateName: row.candidateName || '',
-                partyId: party.id,
-                votes: Number(row.votes) || 0,
-                isWinner: ['yes', 'true', true].includes((row.isWinner || 'No').toLowerCase()),
+                slpVotes,
+                uwpVotes,
+                otherVotes,
+                totalVotes,
+                turnout: parseFloat(turnout.toFixed(2)),
             };
             
             const resultRef = doc(collection(firestore, 'election_results'));
@@ -164,7 +182,7 @@ export default function AdminResultsPage() {
     }
   };
   
-  const isLoading = loadingElections || loadingParties || loadingConstituencies;
+  const isLoading = loadingElections || loadingConstituencies;
   const isLoadingTable = isLoading || (selectedElectionId && loadingResults);
 
   return (
@@ -172,7 +190,7 @@ export default function AdminResultsPage() {
       <div className="flex justify-between items-start mb-8">
         <PageHeader
           title="Manage Election Results"
-          description="Add, edit, or remove historical election results."
+          description="Add, edit, or remove historical election results by constituency."
         />
         <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => setIsImportOpen(true)} disabled={isLoading}>
@@ -187,7 +205,7 @@ export default function AdminResultsPage() {
                         <PlusCircle className="mr-2 h-4 w-4" /> Add New Result
                     </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-xl">
                     <DialogHeader>
                         <DialogTitle>{editingResult ? 'Edit Result' : 'Add New Result'}</DialogTitle>
                     </DialogHeader>
@@ -196,7 +214,6 @@ export default function AdminResultsPage() {
                         initialData={editingResult}
                         onCancel={() => setIsFormOpen(false)}
                         elections={sortedElections || []}
-                        parties={parties || []}
                         constituencies={constituencies || []}
                     />
                 </DialogContent>
@@ -210,7 +227,6 @@ export default function AdminResultsPage() {
         onImport={handleImport}
         elections={sortedElections || []}
         constituencies={constituencies || []}
-        parties={parties || []}
       />
 
       <Card>
@@ -246,24 +262,28 @@ export default function AdminResultsPage() {
                 <TableHeader>
                     <TableRow>
                         <TableHead>Constituency</TableHead>
-                        <TableHead>Candidate</TableHead>
-                        <TableHead>Party</TableHead>
-                        <TableHead>Votes</TableHead>
-                        <TableHead>Winner</TableHead>
+                        <TableHead>Registered Voters</TableHead>
+                        <TableHead>SLP Votes</TableHead>
+                        <TableHead>UWP Votes</TableHead>
+                        <TableHead>Other Votes</TableHead>
+                        <TableHead>Total Votes</TableHead>
+                        <TableHead>Turnout</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {results && results.length > 0 ? results.map(result => {
                         const constituency = getConstituency(result.constituencyId);
-                        const party = getParty(result.partyId);
+                        const winner = result.slpVotes > result.uwpVotes ? 'SLP' : 'UWP';
                         return (
                             <TableRow key={result.id}>
-                                <TableCell>{constituency?.name}</TableCell>
-                                <TableCell>{result.candidateName}</TableCell>
-                                <TableCell style={{color: party?.color}}>{party?.acronym}</TableCell>
-                                <TableCell>{result.votes.toLocaleString()}</TableCell>
-                                <TableCell>{result.isWinner ? 'Yes' : 'No'}</TableCell>
+                                <TableCell className="font-medium" style={{ color: winner === 'SLP' ? 'red': 'orange'}}>{constituency?.name}</TableCell>
+                                <TableCell>{constituency?.demographics.registeredVoters.toLocaleString()}</TableCell>
+                                <TableCell>{result.slpVotes.toLocaleString()}</TableCell>
+                                <TableCell>{result.uwpVotes.toLocaleString()}</TableCell>
+                                <TableCell>{result.otherVotes.toLocaleString()}</TableCell>
+                                <TableCell className="font-semibold">{result.totalVotes.toLocaleString()}</TableCell>
+                                <TableCell>{result.turnout}%</TableCell>
                                 <TableCell className="text-right">
                                     <Button variant="ghost" size="icon" onClick={() => { setEditingResult(result); setIsFormOpen(true);}}>
                                         <Pencil className="h-4 w-4" />
@@ -290,7 +310,7 @@ export default function AdminResultsPage() {
                         )
                     }) : (
                         <TableRow>
-                            <TableCell colSpan={6} className="text-center text-muted-foreground h-24">No results found for this year.</TableCell>
+                            <TableCell colSpan={8} className="text-center text-muted-foreground h-24">No results found for this year.</TableCell>
                         </TableRow>
                     )}
                 </TableBody>
@@ -301,5 +321,3 @@ export default function AdminResultsPage() {
     </div>
   );
 }
-
-    

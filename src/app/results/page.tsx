@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import type { Election, ElectionResult, Party, Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
@@ -84,26 +85,45 @@ export default function ResultsPage() {
   const summaryData = useMemo(() => {
     if (!currentElectionResults || !parties) return [];
 
-    const seatsByParty = currentElectionResults.reduce((acc, result) => {
-        if(result.isWinner) {
-            acc[result.partyId] = (acc[result.partyId] || 0) + 1;
-        }
-        return acc;
-    }, {} as Record<string, number>);
+    const slp = parties.find(p => p.acronym === 'SLP');
+    const uwp = parties.find(p => p.acronym === 'UWP');
 
-    const votesByParty = currentElectionResults.reduce((acc, result) => {
-        acc[result.partyId] = (acc[result.partyId] || 0) + result.votes;
-        return acc;
-    }, {} as Record<string, number>);
+    if (!slp || !uwp) return [];
+
+    let slpSeats = 0;
+    let uwpSeats = 0;
+    let otherSeats = 0;
+
+    let slpVotes = 0;
+    let uwpVotes = 0;
+    let otherVotes = 0;
+
+    currentElectionResults.forEach(result => {
+        slpVotes += result.slpVotes;
+        uwpVotes += result.uwpVotes;
+        otherVotes += result.otherVotes;
+
+        if (result.slpVotes > result.uwpVotes) {
+            slpSeats++;
+        } else if (result.uwpVotes > result.slpVotes) {
+            uwpSeats++;
+        } else {
+            // In case of a tie, it might be considered 'other' or a special case.
+            // For now, let's not assign it to either major party.
+        }
+    });
+
+    const summary = [
+        { partyId: slp.id, name: slp.name, acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color },
+        { partyId: uwp.id, name: uwp.name, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color },
+    ];
     
-    return parties.map(party => ({
-      partyId: party.id,
-      acronym: party.acronym,
-      name: party.name,
-      seats: seatsByParty[party.id] || 0,
-      totalVotes: votesByParty[party.id] || 0,
-      color: party.color,
-    })).filter(p => p.seats > 0 || p.totalVotes > 0)
+    // Add "Other" if there are votes or seats
+    if(otherVotes > 0 || otherSeats > 0) {
+        summary.push({ partyId: 'other', name: 'Other/Independent', acronym: 'Other', seats: otherSeats, totalVotes: otherVotes, color: '#8884d8' });
+    }
+
+    return summary.filter(p => p.seats > 0 || p.totalVotes > 0)
      .sort((a,b) => b.seats - a.seats || b.totalVotes - a.totalVotes);
   }, [currentElectionResults, parties]);
 
@@ -216,28 +236,37 @@ export default function ResultsPage() {
                             <TableHeader>
                             <TableRow>
                                 <TableHead>Constituency</TableHead>
-                                <TableHead>Winning Candidate</TableHead>
-                                <TableHead>Party</TableHead>
-                                <TableHead className="text-right">Votes</TableHead>
+                                <TableHead>Winning Party</TableHead>
+                                <TableHead>SLP Votes</TableHead>
+                                <TableHead>UWP Votes</TableHead>
+                                <TableHead>Other Votes</TableHead>
+                                <TableHead className="text-right">Total Votes</TableHead>
+                                <TableHead className="text-right">Turnout</TableHead>
                             </TableRow>
                             </TableHeader>
                             <TableBody>
-                            {currentElectionResults && currentElectionResults.filter(r => r.isWinner).length > 0 ? currentElectionResults.filter(r => r.isWinner).map((cr) => {
+                            {currentElectionResults && currentElectionResults.length > 0 ? currentElectionResults.map((cr) => {
                                 const constituency = getConstituencyById(cr.constituencyId);
-                                const party = getPartyById(cr.partyId);
+                                const winner = cr.slpVotes > cr.uwpVotes ? 'SLP' : 'UWP';
+                                const slpParty = parties?.find(p => p.acronym === 'SLP');
+                                const uwpParty = parties?.find(p => p.acronym === 'UWP');
+
                                 return (
                                 <TableRow key={cr.id}>
                                     <TableCell className="font-medium">{constituency?.name || cr.constituencyId}</TableCell>
-                                    <TableCell>{cr.candidateName}</TableCell>
                                     <TableCell>
-                                        <span className="font-semibold" style={{ color: party?.color }}>{party?.acronym}</span>
+                                        <span className="font-semibold" style={{ color: winner === 'SLP' ? slpParty?.color : uwpParty?.color }}>{winner}</span>
                                     </TableCell>
-                                    <TableCell className="text-right">{cr.votes.toLocaleString()}</TableCell>
+                                    <TableCell>{cr.slpVotes.toLocaleString()}</TableCell>
+                                    <TableCell>{cr.uwpVotes.toLocaleString()}</TableCell>
+                                    <TableCell>{cr.otherVotes.toLocaleString()}</TableCell>
+                                    <TableCell className="text-right font-semibold">{cr.totalVotes.toLocaleString()}</TableCell>
+                                    <TableCell className="text-right">{cr.turnout}%</TableCell>
                                 </TableRow>
                                 );
                             }) : (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center text-muted-foreground h-24">Detailed constituency data not available for this year.</TableCell>
+                                    <TableCell colSpan={7} className="text-center text-muted-foreground h-24">Detailed constituency data not available for this year.</TableCell>
                                 </TableRow>
                             )}
                             </TableBody>

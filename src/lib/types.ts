@@ -60,13 +60,14 @@ export interface Election {
 }
 
 export interface ElectionResult {
-  id:string;
+  id: string;
   electionId: string;
   constituencyId: string;
-  partyId: string;
-  candidateName: string;
-  votes: number;
-  isWinner: boolean;
+  uwpVotes: number;
+  slpVotes: number;
+  otherVotes: number;
+  totalVotes: number;
+  turnout: number;
 }
 
 

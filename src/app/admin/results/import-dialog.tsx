@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -8,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Election, Constituency, Party } from '@/lib/types';
+import type { Election, Constituency } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ImportDialogProps {
@@ -17,12 +18,11 @@ interface ImportDialogProps {
   onImport: (data: any[]) => void;
   elections: Election[];
   constituencies: Constituency[];
-  parties: Party[];
 }
 
-const REQUIRED_HEADERS = ['year', 'constituency', 'candidateName', 'party', 'votes'];
+const REQUIRED_HEADERS = ['year', 'constituency', 'slpVotes', 'uwpVotes'];
 
-export function ImportDialog({ isOpen, onClose, onImport, elections, constituencies, parties }: ImportDialogProps) {
+export function ImportDialog({ isOpen, onClose, onImport, elections, constituencies }: ImportDialogProps) {
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<any[] | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
@@ -60,7 +60,7 @@ export function ImportDialog({ isOpen, onClose, onImport, elections, constituenc
             rowData[header] = row[index];
           });
           return rowData;
-        }).filter(row => REQUIRED_HEADERS.some(h => row[h] !== "" && row[h] !== undefined));
+        }).filter(row => Object.values(row).some(val => val !== "" && val !== undefined));
 
         setHeaders(fileHeaders);
         setParsedData(fileData);
@@ -71,6 +71,8 @@ export function ImportDialog({ isOpen, onClose, onImport, elections, constituenc
             const matchingField = REQUIRED_HEADERS.find(h => h.toLowerCase() === normalizedHeader);
             if (matchingField) {
                 initialMapping[header] = matchingField;
+            } else if (normalizedHeader === 'other' || normalizedHeader === 'othervotes') {
+                initialMapping[header] = 'otherVotes';
             }
         });
         setMapping(initialMapping);
@@ -127,7 +129,7 @@ export function ImportDialog({ isOpen, onClose, onImport, elections, constituenc
         <DialogHeader>
           <DialogTitle>Import Election Results</DialogTitle>
           <DialogDescription>
-            Upload a CSV or Excel file with past election results.
+            Upload a CSV or Excel file with past election results by constituency.
           </DialogDescription>
         </DialogHeader>
         
@@ -141,7 +143,7 @@ export function ImportDialog({ isOpen, onClose, onImport, elections, constituenc
                     className="w-full max-w-xs"
                 />
                  <p className="text-sm text-muted-foreground mt-4">Required columns: {REQUIRED_HEADERS.join(', ')}.</p>
-                 <p className="text-sm text-muted-foreground mt-2">`party` can be the party name or acronym.</p>
+                 <p className="text-sm text-muted-foreground mt-2">Optional column: `otherVotes`.</p>
             </div>
         ) : (
             <div className="flex-grow flex flex-col min-h-0">
@@ -171,10 +173,9 @@ export function ImportDialog({ isOpen, onClose, onImport, elections, constituenc
                                                 <SelectItem value="--ignore--">-- Ignore --</SelectItem>
                                                 <SelectItem value="year">Year</SelectItem>
                                                 <SelectItem value="constituency">Constituency Name</SelectItem>
-                                                <SelectItem value="candidateName">Candidate Name</SelectItem>
-                                                <SelectItem value="party">Party (Name or Acronym)</SelectItem>
-                                                <SelectItem value="votes">Votes</SelectItem>
-                                                <SelectItem value="isWinner">Is Winner (Yes/No)</SelectItem>
+                                                <SelectItem value="slpVotes">SLP Votes</SelectItem>
+                                                <SelectItem value="uwpVotes">UWP Votes</SelectItem>
+                                                <SelectItem value="otherVotes">Other Votes</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </TableCell>

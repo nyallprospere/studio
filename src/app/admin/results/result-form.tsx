@@ -8,17 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useEffect } from 'react';
-import type { ElectionResult, Election, Party, Constituency } from '@/lib/types';
+import type { ElectionResult, Election, Constituency } from '@/lib/types';
 
 const resultSchema = z.object({
   electionId: z.string().min(1, "Election is required"),
   constituencyId: z.string().min(1, "Constituency is required"),
-  partyId: z.string().min(1, "Party is required"),
-  candidateName: z.string().min(1, "Candidate name is required"),
-  votes: z.coerce.number().min(0, "Votes must be a positive number"),
-  isWinner: z.boolean().default(false),
+  uwpVotes: z.coerce.number().min(0, "Votes must be a positive number"),
+  slpVotes: z.coerce.number().min(0, "Votes must be a positive number"),
+  otherVotes: z.coerce.number().min(0, "Votes must be a positive number"),
 });
 
 type ResultFormProps = {
@@ -26,38 +24,32 @@ type ResultFormProps = {
   initialData?: ElectionResult | null;
   onCancel: () => void;
   elections: Election[];
-  parties: Party[];
   constituencies: Constituency[];
 };
 
-export function ResultForm({ onSubmit, initialData, onCancel, elections, parties, constituencies }: ResultFormProps) {
+export function ResultForm({ onSubmit, initialData, onCancel, elections, constituencies }: ResultFormProps) {
   const form = useForm<z.infer<typeof resultSchema>>({
     resolver: zodResolver(resultSchema),
     defaultValues: {
       electionId: '',
       constituencyId: '',
-      partyId: '',
-      candidateName: '',
-      votes: 0,
-      isWinner: false,
+      uwpVotes: 0,
+      slpVotes: 0,
+      otherVotes: 0,
     },
   });
 
   useEffect(() => {
     if (initialData) {
-      form.reset({
-        ...initialData,
-        isWinner: initialData.isWinner ?? false,
-      });
+      form.reset(initialData);
     } else {
-        form.reset({
-          electionId: '',
-          constituencyId: '',
-          partyId: '',
-          candidateName: '',
-          votes: 0,
-          isWinner: false,
-        });
+      form.reset({
+        electionId: '',
+        constituencyId: '',
+        uwpVotes: 0,
+        slpVotes: 0,
+        otherVotes: 0,
+      });
     }
   }, [initialData, form]);
 
@@ -110,78 +102,48 @@ export function ResultForm({ onSubmit, initialData, onCancel, elections, parties
             )}
           />
         </div>
-
-        <FormField
-          control={form.control}
-          name="candidateName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Candidate Name</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., John Doe" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <FormField
                 control={form.control}
-                name="partyId"
+                name="slpVotes"
                 render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Political Party</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                    <FormLabel>SLP Votes</FormLabel>
                     <FormControl>
-                        <SelectTrigger>
-                        <SelectValue placeholder="Select a party" />
-                        </SelectTrigger>
+                    <Input type="number" {...field} />
                     </FormControl>
-                    <SelectContent>
-                        {parties.map(party => (
-                        <SelectItem key={party.id} value={party.id}>{party.name} ({party.acronym})</SelectItem>
-                        ))}
-                    </SelectContent>
-                    </Select>
                     <FormMessage />
                 </FormItem>
                 )}
             />
-             <FormField
+            <FormField
                 control={form.control}
-                name="votes"
+                name="uwpVotes"
                 render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Votes</FormLabel>
+                    <FormLabel>UWP Votes</FormLabel>
                     <FormControl>
-                    <Input type="number" placeholder="e.g., 5432" {...field} />
+                    <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="otherVotes"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Other Votes</FormLabel>
+                    <FormControl>
+                    <Input type="number" {...field} />
                     </FormControl>
                     <FormMessage />
                 </FormItem>
                 )}
             />
         </div>
-        
-        <FormField
-            control={form.control}
-            name="isWinner"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel>
-                    Winning Candidate
-                  </FormLabel>
-                </div>
-              </FormItem>
-            )}
-          />
 
         <div className="flex justify-end gap-4 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>
