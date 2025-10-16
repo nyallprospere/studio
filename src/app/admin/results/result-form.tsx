@@ -71,7 +71,7 @@ export function ResultForm({ onSubmit, initialData, onCancel, elections, parties
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Election Year</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select an election" />
@@ -93,11 +93,11 @@ export function ResultForm({ onSubmit, initialData, onCancel, elections, parties
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Constituency</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a constituency" />
-                    </Trigger>
+                    </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {constituencies.map(c => (
@@ -132,7 +132,7 @@ export function ResultForm({ onSubmit, initialData, onCancel, elections, parties
                 render={({ field }) => (
                 <FormItem>
                     <FormLabel>Political Party</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                     <FormControl>
                         <SelectTrigger>
                         <SelectValue placeholder="Select a party" />
