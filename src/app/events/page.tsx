@@ -77,6 +77,8 @@ function EventsPageSkeleton() {
 
 export default function EventsPage() {
   const { firestore } = useFirebase();
+  const [uwpViewMode, setUwpViewMode] = useState<'upcoming' | 'past'>('upcoming');
+  const [slpViewMode, setSlpViewMode] = useState<'upcoming' | 'past'>('upcoming');
   
   const eventsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'events'), orderBy('date', 'desc')) : null, [firestore]);
   const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
@@ -100,10 +102,36 @@ export default function EventsPage() {
     return { uwpEvents, slpEvents };
   }, [events, parties]);
 
+  const filterAndSortEvents = (events: Event[], mode: 'upcoming' | 'past') => {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0); // Set to start of today
+
+      const filtered = events.filter(event => {
+          const eventDate = (event.date as unknown as Timestamp)?.toDate ? (event.date as unknown as Timestamp).toDate() : new Date(event.date);
+          return mode === 'upcoming' ? eventDate >= now : eventDate < now;
+      });
+
+      // Upcoming events should be sorted ascending (soonest first)
+      if (mode === 'upcoming') {
+          return filtered.sort((a, b) => {
+              const dateA = (a.date as unknown as Timestamp)?.toDate ? (a.date as unknown as Timestamp).toDate() : new Date(a.date);
+              const dateB = (b.date as unknown as Timestamp)?.toDate ? (b.date as unknown as Timestamp).toDate() : new Date(b.date);
+              return dateA.getTime() - dateB.getTime();
+          });
+      }
+      
+      // Past events are already sorted descending by the initial query
+      return filtered;
+  }
+
+  const visibleUwpEvents = useMemo(() => filterAndSortEvents(uwpEvents, uwpViewMode), [uwpEvents, uwpViewMode]);
+  const visibleSlpEvents = useMemo(() => filterAndSortEvents(slpEvents, slpViewMode), [slpEvents, slpViewMode]);
+
+
   return (
     <div className="container mx-auto px-4 py-8">
       <PageHeader
-        title="Upcoming Events"
+        title="Party Events"
         description="Find out about rallies, town halls, and other events from the political parties."
       />
       
@@ -111,34 +139,50 @@ export default function EventsPage() {
           <div className="grid md:grid-cols-2 gap-8">
             <Card>
                 <CardHeader>
-                    <CardTitle>UWP Events</CardTitle>
-                    <CardDescription>Events hosted by the United Workers Party.</CardDescription>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <CardTitle>UWP Events</CardTitle>
+                            <CardDescription>Events hosted by the United Workers Party.</CardDescription>
+                        </div>
+                        <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
+                            <Button size="sm" variant={uwpViewMode === 'upcoming' ? 'secondary' : 'ghost'} onClick={() => setUwpViewMode('upcoming')}>Upcoming</Button>
+                            <Button size="sm" variant={uwpViewMode === 'past' ? 'secondary' : 'ghost'} onClick={() => setUwpViewMode('past')}>Past</Button>
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
-                    {uwpEvents && uwpEvents.length > 0 ? (
-                        uwpEvents.map((event) => (
+                    {visibleUwpEvents.length > 0 ? (
+                        visibleUwpEvents.map((event) => (
                            <EventCard key={event.id} event={event} partyName={getPartyName(event.partyId)} />
                         ))
                     ) : (
-                        <p className="text-center text-muted-foreground py-8">No UWP events have been added yet.</p>
+                        <p className="text-center text-muted-foreground py-8">No {uwpViewMode} UWP events found.</p>
                     )}
                     </div>
                 </CardContent>
             </Card>
             <Card>
                 <CardHeader>
-                    <CardTitle>SLP Events</CardTitle>
-                    <CardDescription>Events hosted by the Saint Lucia Labour Party.</CardDescription>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <CardTitle>SLP Events</CardTitle>
+                            <CardDescription>Events hosted by the Saint Lucia Labour Party.</CardDescription>
+                        </div>
+                         <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
+                            <Button size="sm" variant={slpViewMode === 'upcoming' ? 'secondary' : 'ghost'} onClick={() => setSlpViewMode('upcoming')}>Upcoming</Button>
+                            <Button size="sm" variant={slpViewMode === 'past' ? 'secondary' : 'ghost'} onClick={() => setSlpViewMode('past')}>Past</Button>
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
-                    {slpEvents && slpEvents.length > 0 ? (
-                        slpEvents.map((event) => (
+                    {visibleSlpEvents.length > 0 ? (
+                        visibleSlpEvents.map((event) => (
                            <EventCard key={event.id} event={event} partyName={getPartyName(event.partyId)} />
                         ))
                     ) : (
-                        <p className="text-center text-muted-foreground py-8">No SLP events have been added yet.</p>
+                        <p className="text-center text-muted-foreground py-8">No {slpViewMode} SLP events found.</p>
                     )}
                     </div>
                 </CardContent>
