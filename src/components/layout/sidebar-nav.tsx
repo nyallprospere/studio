@@ -29,7 +29,6 @@ import { SlpLogo, UwpLogo } from '../icons';
 
 const mainNavItems = [
   { href: '/', icon: Home, label: 'Dashboard' },
-  { href: '/parties', icon: Shield, label: 'Parties' },
   { href: '/candidates', icon: Users, label: 'Candidates' },
   { href: '/polls', icon: BarChart3, label: 'Polls' },
   { href: '/predictions', icon: TrendingUp, label: 'Predictions' },
@@ -112,13 +111,13 @@ export function SidebarNav() {
   const { user } = useUser();
   const { firestore } = useFirebase();
   const [isResultsOpen, setIsResultsOpen] = useState(pathname.startsWith('/results'));
-  const [isUwpOpen, setIsUwpOpen] = useState(pathname.includes('uwp'));
-  const [isSlpOpen, setIsSlpOpen] = useState(pathname.includes('slp'));
+  const [isUwpOpen, setIsUwpOpen] = useState(false);
+  const [isSlpOpen, setIsSlpOpen] = useState(false);
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
 
-  const partiesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'parties')) : null, [firestore]);
+  const partiesQuery = useMemoFirebase(() => (firestore ? collection(firestore, 'parties') : null), [firestore]);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
 
   const uwpParty = useMemo(() => parties?.find(p => p.acronym === 'UWP'), [parties]);
@@ -200,12 +199,13 @@ export function SidebarNav() {
             <SidebarMenuItem>
                 <Collapsible open={isUwpOpen} onOpenChange={setIsUwpOpen}>
                     <CollapsibleTrigger asChild>
-                        <Button variant={isUwpOpen ? 'secondary' : 'ghost'} className="w-full justify-between">
-                            <div className="flex items-center gap-2">
-                                <UwpLogo className="mr-2 h-4 w-4" style={{ color: uwpParty.color }}/>
-                                United Workers Party
-                            </div>
-                            <ChevronRight className={`h-4 w-4 transition-transform ${isUwpOpen ? 'rotate-90' : ''}`} />
+                        <Button asChild variant={isUwpOpen ? 'secondary' : 'ghost'} className="w-full justify-between">
+                            <Link href={`/parties/${uwpParty.id}`}>
+                                <div className="flex items-center gap-2">
+                                    <UwpLogo className="mr-2 h-4 w-4" style={{ color: uwpParty.color }}/>
+                                    UWP
+                                </div>
+                            </Link>
                         </Button>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
@@ -219,12 +219,13 @@ export function SidebarNav() {
             <SidebarMenuItem>
                 <Collapsible open={isSlpOpen} onOpenChange={setIsSlpOpen}>
                     <CollapsibleTrigger asChild>
-                         <Button variant={isSlpOpen ? 'secondary' : 'ghost'} className="w-full justify-between">
-                            <div className="flex items-center gap-2">
-                                <SlpLogo className="mr-2 h-4 w-4" style={{ color: slpParty.color }}/>
-                                Saint Lucia Labour Party
-                            </div>
-                            <ChevronRight className={`h-4 w-4 transition-transform ${isSlpOpen ? 'rotate-90' : ''}`} />
+                         <Button asChild variant={isSlpOpen ? 'secondary' : 'ghost'} className="w-full justify-between">
+                            <Link href={`/parties/${slpParty.id}`}>
+                                <div className="flex items-center gap-2">
+                                    <SlpLogo className="mr-2 h-4 w-4" style={{ color: slpParty.color }}/>
+                                    SLP
+                                </div>
+                            </Link>
                         </Button>
                     </CollapsibleTrigger>
                      <CollapsibleContent>

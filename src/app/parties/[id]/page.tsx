@@ -45,7 +45,7 @@ function EventCard({ event }: { event: Event }) {
             <div className="text-sm text-muted-foreground flex items-center gap-4 mt-1">
                 <div className="flex items-center gap-1.5">
                     <CalendarIcon className="w-4 h-4" />
-                    <span>{format(new Date(event.date), "PPP")}</span>
+                    <span>{format(event.date instanceof Date ? event.date : (event.date as any).toDate(), "PPP")}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                     <MapPin className="w-4 h-4" />
@@ -79,8 +79,8 @@ export default function PartyDetailPage() {
 
   const { upcomingEvents, pastEvents } = useMemo(() => {
     if (!events) return { upcomingEvents: [], pastEvents: [] };
-    const upcoming = events.filter(e => new Date(e.date) >= today);
-    const past = events.filter(e => new Date(e.date) < today);
+    const upcoming = events.filter(e => (e.date as any).toDate() >= today);
+    const past = events.filter(e => (e.date as any).toDate() < today);
     return { upcomingEvents: upcoming.reverse(), pastEvents: past }; // Show nearest upcoming event first
   }, [events, today]);
   
@@ -216,5 +216,3 @@ export default function PartyDetailPage() {
     </div>
   );
 }
-
-    
