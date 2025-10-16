@@ -100,6 +100,28 @@ export default function AdminResultsPage() {
     }
   };
 
+  const handleDeleteAllForYear = async () => {
+    if (!firestore || !results || results.length === 0) {
+        toast({ variant: 'destructive', title: 'Error', description: 'No results to delete for the selected year.' });
+        return;
+    }
+    const election = getElection(selectedElectionId);
+    if (!election) return;
+    
+    try {
+        const batch = writeBatch(firestore);
+        results.forEach(result => {
+            const docRef = doc(firestore, 'election_results', result.id);
+            batch.delete(docRef);
+        });
+        await batch.commit();
+        toast({ title: 'All Results Deleted', description: `All results for ${election.name} have been deleted.`});
+    } catch (error) {
+        console.error('Error deleting all results:', error);
+        toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not delete all results. Check console for details.' });
+    }
+  }
+
   const handleExport = () => {
     if (!results || !constituencies || !elections) {
       toast({ variant: "destructive", title: "Error", description: "Data not loaded yet." });
@@ -236,9 +258,29 @@ export default function AdminResultsPage() {
               <CardTitle>Results Browser</CardTitle>
               <CardDescription>Browse results by election year.</CardDescription>
             </div>
-            <div className="w-1/4">
+            <div className="flex items-center gap-2">
+                 <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                       <Button variant="destructive" size="sm" disabled={!selectedElectionId || !results || results.length === 0}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete All
+                       </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete all {results?.length} results for the <strong>{getElection(selectedElectionId)?.name}</strong> election. This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteAllForYear}>Delete All Results</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
                 <Select onValueChange={setSelectedElectionId} value={selectedElectionId} disabled={isLoading}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-56">
                         <SelectValue placeholder="Select Election Year" />
                     </SelectTrigger>
                     <SelectContent>
@@ -321,3 +363,5 @@ export default function AdminResultsPage() {
     </div>
   );
 }
+
+    
