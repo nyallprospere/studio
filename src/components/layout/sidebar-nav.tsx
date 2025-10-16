@@ -111,8 +111,6 @@ export function SidebarNav() {
   const { user } = useUser();
   const { firestore } = useFirebase();
   const [isResultsOpen, setIsResultsOpen] = useState(pathname.startsWith('/results'));
-  const [isUwpOpen, setIsUwpOpen] = useState(false);
-  const [isSlpOpen, setIsSlpOpen] = useState(false);
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
@@ -122,13 +120,6 @@ export function SidebarNav() {
 
   const uwpParty = useMemo(() => parties?.find(p => p.acronym === 'UWP'), [parties]);
   const slpParty = useMemo(() => parties?.find(p => p.acronym === 'SLP'), [parties]);
-
-  const uwpCandidatesQuery = useMemoFirebase(() => uwpParty ? query(collection(firestore, 'candidates'), where('partyId', '==', uwpParty.id)) : null, [uwpParty]);
-  const { data: uwpCandidates, isLoading: loadingUwpCandidates } = useCollection<Candidate>(uwpCandidatesQuery);
-
-  const slpCandidatesQuery = useMemoFirebase(() => slpParty ? query(collection(firestore, 'candidates'), where('partyId', '==', slpParty.id)) : null, [slpParty]);
-  const { data: slpCandidates, isLoading: loadingSlpCandidates } = useCollection<Candidate>(slpCandidatesQuery);
-
 
   const sortedElections = useMemo(() => {
     if (!elections) return [];
@@ -142,9 +133,7 @@ export function SidebarNav() {
 
   useEffect(() => {
     setIsResultsOpen(pathname.startsWith('/results'));
-    if (uwpParty) setIsUwpOpen(pathname.startsWith(`/parties/${uwpParty.id}`) || uwpCandidates?.some(c => pathname.startsWith(`/candidates/${c.id}`)) || false);
-    if (slpParty) setIsSlpOpen(pathname.startsWith(`/parties/${slpParty.id}`) || slpCandidates?.some(c => pathname.startsWith(`/candidates/${c.id}`)) || false);
-  }, [pathname, uwpParty, slpParty, uwpCandidates, slpCandidates]);
+  }, [pathname]);
   
   return (
     <Sidebar>
@@ -204,67 +193,27 @@ export function SidebarNav() {
         
         {uwpParty && (
             <SidebarMenuItem>
-                <Collapsible open={isUwpOpen} onOpenChange={setIsUwpOpen}>
-                    <CollapsibleTrigger asChild>
-                        <Button asChild variant={isUwpOpen ? 'secondary' : 'ghost'} className="w-full justify-between">
-                            <Link href={`/parties/${uwpParty.id}`}>
-                                <div className="flex items-center gap-2">
-                                    <UwpLogo className="mr-2 h-4 w-4" style={{ color: uwpParty.color }}/>
-                                    UWP
-                                </div>
-                            </Link>
-                        </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                        <SidebarMenuSub>
-                             {loadingUwpCandidates ? <p className="p-2 text-xs text-muted-foreground">Loading...</p> : 
-                             uwpCandidates && uwpCandidates.length > 0 ?
-                             uwpCandidates.map(c => (
-                                 <SidebarMenuItem key={c.id}>
-                                     <SidebarMenuSubButton asChild isActive={pathname === `/candidates/${c.id}`}>
-                                         <Link href={`/candidates/${c.id}`}>
-                                             {c.firstName} {c.lastName}
-                                         </Link>
-                                     </SidebarMenuSubButton>
-                                 </SidebarMenuItem>
-                             )) : <p className="p-2 text-xs text-muted-foreground">No candidates found.</p>
-                             }
-                        </SidebarMenuSub>
-                    </CollapsibleContent>
-                </Collapsible>
+                 <Button asChild variant={pathname.startsWith(`/parties/${uwpParty.id}`) ? 'secondary' : 'ghost'} className="w-full justify-start">
+                    <Link href={`/parties/${uwpParty.id}`}>
+                        <div className="flex items-center gap-2">
+                            <UwpLogo className="mr-2 h-4 w-4" style={{ color: uwpParty.color }}/>
+                            UWP
+                        </div>
+                    </Link>
+                </Button>
             </SidebarMenuItem>
         )}
 
         {slpParty && (
             <SidebarMenuItem>
-                <Collapsible open={isSlpOpen} onOpenChange={setIsSlpOpen}>
-                    <CollapsibleTrigger asChild>
-                         <Button asChild variant={isSlpOpen ? 'secondary' : 'ghost'} className="w-full justify-between">
-                            <Link href={`/parties/${slpParty.id}`}>
-                                <div className="flex items-center gap-2">
-                                    <SlpLogo className="mr-2 h-4 w-4" style={{ color: slpParty.color }}/>
-                                    SLP
-                                </div>
-                            </Link>
-                        </Button>
-                    </CollapsibleTrigger>
-                     <CollapsibleContent>
-                        <SidebarMenuSub>
-                             {loadingSlpCandidates ? <p className="p-2 text-xs text-muted-foreground">Loading...</p> : 
-                             slpCandidates && slpCandidates.length > 0 ?
-                             slpCandidates.map(c => (
-                                 <SidebarMenuItem key={c.id}>
-                                     <SidebarMenuSubButton asChild isActive={pathname === `/candidates/${c.id}`}>
-                                         <Link href={`/candidates/${c.id}`}>
-                                             {c.firstName} {c.lastName}
-                                         </Link>
-                                     </SidebarMenuSubButton>
-                                 </SidebarMenuItem>
-                             )) : <p className="p-2 text-xs text-muted-foreground">No candidates found.</p>
-                             }
-                        </SidebarMenuSub>
-                    </CollapsibleContent>
-                </Collapsible>
+                 <Button asChild variant={pathname.startsWith(`/parties/${slpParty.id}`) ? 'secondary' : 'ghost'} className="w-full justify-start">
+                    <Link href={`/parties/${slpParty.id}`}>
+                        <div className="flex items-center gap-2">
+                            <SlpLogo className="mr-2 h-4 w-4" style={{ color: slpParty.color }}/>
+                            SLP
+                        </div>
+                    </Link>
+                </Button>
             </SidebarMenuItem>
         )}
 
@@ -303,5 +252,3 @@ export function SidebarNav() {
     </Sidebar>
   );
 }
-
-    
