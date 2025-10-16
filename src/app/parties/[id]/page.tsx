@@ -45,7 +45,7 @@ function EventCard({ event }: { event: Event }) {
             <div className="text-sm text-muted-foreground flex items-center gap-4 mt-1">
                 <div className="flex items-center gap-1.5">
                     <CalendarIcon className="w-4 h-4" />
-                    <span>{format(event.date instanceof Date ? event.date : (event.date as any).toDate(), "PPP")}</span>
+                    <span>{format((event.date as any).toDate(), "PPP")}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                     <MapPin className="w-4 h-4" />
