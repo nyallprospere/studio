@@ -34,6 +34,7 @@ const adminNavItems = [
     { href: '/admin/results', icon: Landmark, label: 'Manage Election Results' },
     { href: '/admin/constituencies', icon: FilePlus, label: 'Manage Constituencies' },
     { href: '/admin/map', icon: Map, label: 'Manage Map' },
+    { href: '/admin/settings', icon: Settings, label: 'Manage Settings' },
 ];
 
 
@@ -142,7 +143,7 @@ export function SidebarNav() {
                             <SidebarMenuItem key={item.href}>
                                 <Button
                                 asChild
-                                variant={pathname === item.href ? 'secondary' : 'ghost'}
+                                variant={pathname.startsWith(item.href) ? 'secondary' : 'ghost'}
                                 className="w-full justify-start"
                                 >
                                 <Link href={item.href}>

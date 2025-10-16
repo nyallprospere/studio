@@ -76,6 +76,7 @@ const adminSections = [
     { id: 'admin-results', title: 'Manage Election Results', href: '/admin/results', icon: Landmark },
     { id: 'admin-constituencies', title: 'Manage Constituencies', href: '/admin/constituencies', icon: FilePlus },
     { id: 'admin-map', title: 'Manage Map', href: '/admin/map', icon: Map },
+    { id: 'admin-settings', title: 'Manage Settings', href: '/admin/settings', icon: Settings },
 ];
 
 
