@@ -94,7 +94,7 @@ export default function AdminPartiesPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-start mb-8">
         <PageHeader
           title="Manage Parties"
           description="Add, edit, or remove political parties."
