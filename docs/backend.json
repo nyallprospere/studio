@@ -66,6 +66,11 @@
         "description": {
           "type": "string",
           "description": "A description of the party's platform and ideology."
+        },
+        "website": {
+          "type": "string",
+          "format": "uri",
+          "description": "The party's official website."
         }
       },
       "required": [

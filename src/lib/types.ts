@@ -1,5 +1,6 @@
 
 
+
 export interface Party {
   id: string;
   name: string;
@@ -12,6 +13,7 @@ export interface Party {
   description?: string;
   manifestoUrl?: string; // URL to PDF in storage
   manifestoSummary?: string;
+  website?: string;
 }
 
 export interface Candidate {

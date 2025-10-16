@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { PartyForm } from './party-form';
 import Image from 'next/image';
-import { Shield, Pencil, Trash2 } from 'lucide-react';
+import { Shield, Pencil, Trash2, Link as LinkIcon } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { uploadFile, deleteFile } from '@/firebase/storage';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 export default function AdminPartiesPage() {
   const { firestore } = useFirebase();
@@ -139,7 +140,18 @@ export default function AdminPartiesPage() {
                       )}
                       <div>
                         <p className="font-semibold" style={{ color: party.color }}>{party.name} ({party.acronym})</p>
-                        <p className="text-sm text-muted-foreground">Leader: {party.leader}</p>
+                        <div className="text-sm text-muted-foreground flex items-center gap-2">
+                          <span>Leader: {party.leader}</span>
+                          {party.website && (
+                            <>
+                              <span>&bull;</span>
+                              <Link href={party.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline">
+                                <LinkIcon className="h-3 w-3" />
+                                Website
+                              </Link>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">

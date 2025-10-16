@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { useEffect } from 'react';
 import type { Party } from '@/lib/types';
-import { Chrome, Palette } from 'lucide-react';
+import { Chrome, Palette, Link } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 const partySchema = z.object({
@@ -18,6 +18,7 @@ const partySchema = z.object({
   leader: z.string().min(1, "Leader's name is required"),
   founded: z.coerce.number().min(1900, "Invalid year").max(new Date().getFullYear(), "Invalid year"),
   color: z.string().regex(/^#([0-9a-f]{3}){1,2}$/i, "Invalid hex color"),
+  website: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
   description: z.string().optional(),
   manifestoSummary: z.string().optional(),
   logoFile: z.any().optional(),
@@ -48,6 +49,7 @@ export function PartyForm({ onSubmit, initialData, onCancel }: PartyFormProps) {
       leader: '',
       founded: new Date().getFullYear(),
       color: '#000000',
+      website: '',
       description: '',
       manifestoSummary: '',
       logoUrl: '',
@@ -68,6 +70,7 @@ export function PartyForm({ onSubmit, initialData, onCancel }: PartyFormProps) {
             leader: '',
             founded: new Date().getFullYear(),
             color: '#6D4C41',
+            website: '',
             description: '',
             manifestoSummary: '',
             logoUrl: '',
@@ -177,6 +180,23 @@ export function PartyForm({ onSubmit, initialData, onCancel }: PartyFormProps) {
                 />
             </div>
         </div>
+        
+        <FormField
+            control={form.control}
+            name="website"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Website</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                     <Link className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="https://example.com" {...field} className="pl-9" />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+        />
 
         <FormField
           control={form.control}

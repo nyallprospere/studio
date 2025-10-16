@@ -2,13 +2,14 @@
 
 import type { Party } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { Shield } from 'lucide-react';
+import { Shield, Link as LinkIcon } from 'lucide-react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
+import Link from 'next/link';
 
 function PartyCardSkeleton() {
   return (
@@ -23,11 +24,11 @@ function PartyCardSkeleton() {
       <CardContent className="space-y-4">
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-2/3" />
-        <div className="flex gap-2 pt-2">
-            <Skeleton className="h-6 w-20" />
-            <Skeleton className="h-6 w-20" />
-        </div>
       </CardContent>
+      <CardFooter className="flex-wrap gap-2">
+         <Skeleton className="h-6 w-28" />
+         <Skeleton className="h-6 w-24" />
+      </CardFooter>
     </Card>
   );
 }
@@ -48,7 +49,7 @@ export default function PartiesPage() {
           Array.from({ length: 2 }).map((_, i) => <PartyCardSkeleton key={i} />)
         ) : (
           parties?.map((party) => (
-            <Card key={party.id} className="overflow-hidden hover:shadow-lg transition-shadow" style={{ borderTop: `4px solid ${party.color}` }}>
+            <Card key={party.id} className="flex flex-col overflow-hidden hover:shadow-lg transition-shadow" style={{ borderTop: `4px solid ${party.color}` }}>
               <CardHeader className="flex flex-row items-start gap-4">
                 {party.logoUrl ? (
                     <div className="relative h-16 w-16 flex-shrink-0">
@@ -64,7 +65,7 @@ export default function PartiesPage() {
                   <CardDescription>Led by {party.leader} &bull; Founded in {party.founded}</CardDescription>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="flex-grow space-y-4">
                 <div>
                     <h4 className="font-semibold text-sm mb-1">About the Party</h4>
                     <p className="text-sm text-muted-foreground">{party.description || 'No description available.'}</p>
@@ -73,14 +74,22 @@ export default function PartiesPage() {
                     <h4 className="font-semibold text-sm mb-1">Manifesto Summary</h4>
                     <p className="text-sm text-muted-foreground">{party.manifestoSummary || 'No summary available.'}</p>
                 </div>
-                 {party.manifestoUrl && (
-                    <div>
-                        <a href={party.manifestoUrl} target="_blank" rel="noopener noreferrer">
-                            <Badge variant="outline">View Full Manifesto (PDF)</Badge>
-                        </a>
-                    </div>
-                )}
               </CardContent>
+              <CardFooter className="flex-wrap gap-2">
+                 {party.manifestoUrl && (
+                    <Link href={party.manifestoUrl} target="_blank" rel="noopener noreferrer">
+                        <Badge variant="outline">View Full Manifesto (PDF)</Badge>
+                    </Link>
+                )}
+                {party.website && (
+                    <Link href={party.website} target="_blank" rel="noopener noreferrer">
+                         <Badge variant="outline" className="flex items-center gap-1">
+                            <LinkIcon className="h-3 w-3" />
+                            Visit Website
+                        </Badge>
+                    </Link>
+                )}
+              </CardFooter>
             </Card>
           ))
         )}
