@@ -204,17 +204,21 @@ export default function AdminCandidatesPage() {
             <DialogTrigger asChild>
                 <Button onClick={() => { setEditingCandidate(null); setIsFormOpen(true)}}>Add New Candidate</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-3xl">
+            <DialogContent className="sm:max-w-3xl h-[90vh]">
                 <DialogHeader>
                 <DialogTitle>{editingCandidate ? 'Edit Candidate' : 'Add New Candidate'}</DialogTitle>
                 </DialogHeader>
-                <CandidateForm
-                onSubmit={handleFormSubmit}
-                initialData={editingCandidate}
-                onCancel={() => setIsFormOpen(false)}
-                parties={parties || []}
-                constituencies={constituencies || []}
-                />
+                <ScrollArea className="h-full">
+                  <div className="pr-6">
+                    <CandidateForm
+                    onSubmit={handleFormSubmit}
+                    initialData={editingCandidate}
+                    onCancel={() => setIsFormOpen(false)}
+                    parties={parties || []}
+                    constituencies={constituencies || []}
+                    />
+                  </div>
+                </ScrollArea>
             </DialogContent>
             </Dialog>
         </div>
