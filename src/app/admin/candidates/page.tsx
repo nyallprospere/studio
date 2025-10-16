@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -237,6 +238,7 @@ export default function AdminCandidatesPage() {
                         <p className="font-semibold">{candidate.firstName} {candidate.lastName}</p>
                         <p className="text-sm text-muted-foreground">
                           {getPartyName(candidate.partyId)} &bull; {getConstituencyName(candidate.constituencyId)}
+                          {candidate.isIncumbent && <span className="font-bold text-primary"> (Inc.)</span>}
                         </p>
                       </div>
                     </div>
