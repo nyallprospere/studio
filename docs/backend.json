@@ -306,6 +306,44 @@
           "description": "URL of the main constituency map image."
         }
       }
+    },
+    "UserActivity": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User Activity",
+      "type": "object",
+      "description": "Represents a user activity event.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The ID of the authenticated user, if available."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp of the activity."
+        },
+        "ipAddress": {
+          "type": "string",
+          "description": "The IP address of the user."
+        },
+        "geolocation": {
+          "type": "object",
+          "properties": {
+            "latitude": {
+              "type": "number"
+            },
+            "longitude": {
+              "type": "number"
+            }
+          },
+          "description": "The geolocation of the user."
+        },
+        "pageVisited": {
+          "type": "string",
+          "description": "The path of the page visited."
+        }
+      },
+      "required": ["timestamp", "pageVisited"]
     }
   },
   "auth": {
@@ -445,6 +483,22 @@
             "$ref": "#/backend/entities/SiteSettings"
           },
           "description": "Stores global site settings. This is a single document."
+        }
+      },
+      {
+        "path": "/user_activity/{activityId}",
+        "definition": {
+          "entityName": "UserActivity",
+          "schema": {
+            "$ref": "#/backend/entities/UserActivity"
+          },
+          "description": "Stores user activity events, such as page visits. The `activityId` is used as the document ID.",
+          "params": [
+            {
+              "name": "activityId",
+              "description": "The unique identifier for the activity log."
+            }
+          ]
         }
       }
     ],
