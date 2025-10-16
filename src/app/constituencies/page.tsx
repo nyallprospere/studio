@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -138,9 +139,10 @@ export default function ConstituenciesPage() {
     );
 
     useEffect(() => {
+        if (!user) return; // Only save layout if a user is logged in.
         const layoutState = { pageTitle, pageDescription, seatCountTitle, seatCountDescription, sections, sectionSpans };
         debouncedSaveLayout(layoutState);
-    }, [pageTitle, pageDescription, seatCountTitle, seatCountDescription, sections, sectionSpans, debouncedSaveLayout]);
+    }, [pageTitle, pageDescription, seatCountTitle, seatCountDescription, sections, sectionSpans, debouncedSaveLayout, user]);
 
 
     useEffect(() => {
@@ -338,3 +340,5 @@ export default function ConstituenciesPage() {
     </div>
   );
 }
+
+    
