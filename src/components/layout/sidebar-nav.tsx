@@ -32,6 +32,7 @@ import { ScrollArea } from '../ui/scroll-area';
 const mainNavItems = [
   { href: '/', icon: Home, label: 'Dashboard' },
   { href: '/candidates', icon: Users, label: 'Candidates' },
+  { href: '/candidates', icon: Users, label: 'Candidates 2' },
   { href: '/polls', icon: BarChart3, label: 'Polls' },
   { href: '/predictions', icon: TrendingUp, label: 'Predictions' },
   { href: '/constituencies', icon: Map, label: 'Constituencies' },
