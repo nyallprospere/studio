@@ -1,8 +1,9 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, writeBatch, query, where } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, writeBatch, query, where, orderBy } from 'firebase/firestore';
 import type { Election, ElectionResult, Party, Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -35,7 +36,7 @@ export default function AdminResultsPage() {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingResult, setEditingResult] = useState<ElectionResult | null>(null);
 
-  const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections')) : null, [firestore]);
+  const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
   const resultsQuery = useMemoFirebase(() => firestore && selectedElectionId ? query(collection(firestore, 'election_results'), where('electionId', '==', selectedElectionId)) : null, [firestore, selectedElectionId]);
   const partiesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const constituenciesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
@@ -47,7 +48,12 @@ export default function AdminResultsPage() {
 
   const sortedElections = useMemo(() => {
     if (!elections) return [];
-    return [...elections].sort((a, b) => b.year - a.year);
+    return [...elections].sort((a, b) => {
+        if (a.year !== b.year) {
+            return b.year - a.year;
+        }
+        return b.name.localeCompare(a.name);
+    });
   }, [elections]);
 
   const getParty = (partyId: string) => parties?.find(p => p.id === partyId);
@@ -295,3 +301,5 @@ export default function AdminResultsPage() {
     </div>
   );
 }
+
+    
