@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -107,7 +108,6 @@ function AuthSection() {
 
 export function SidebarNav() {
   const pathname = usePathname();
-  const searchParams = usePathname();
   const { user } = useUser();
   const { firestore } = useFirebase();
   const [isResultsOpen, setIsResultsOpen] = useState(pathname.startsWith('/results'));
@@ -136,7 +136,9 @@ export function SidebarNav() {
 
   useEffect(() => {
     setIsResultsOpen(pathname.startsWith('/results'));
-  }, [pathname]);
+    if (uwp) setIsUwpOpen(pathname.startsWith(`/parties/${uwp.id}`));
+    if (slp) setIsSlpOpen(pathname.startsWith(`/parties/${slp.id}`));
+  }, [pathname, uwp, slp]);
   
   return (
     <Sidebar>
@@ -152,31 +154,35 @@ export function SidebarNav() {
         </Link>
       </SidebarHeader>
       <SidebarMenu>
-        {mainNavItems.map((item) => (
-          <SidebarMenuItem key={item.href}>
-            <Button
-              asChild
-              variant={pathname === item.href ? 'secondary' : 'ghost'}
-              className="w-full justify-start"
-            >
-              <Link href={item.href}>
-                <item.icon className="mr-2 h-4 w-4" />
-                {item.label}
-              </Link>
-            </Button>
-          </SidebarMenuItem>
-        ))}
+        {mainNavItems.map((item) => {
+            if(item.href === '/parties') {
+                return null;
+            }
+            return (
+            <SidebarMenuItem key={item.href}>
+                <Button
+                asChild
+                variant={pathname === item.href ? 'secondary' : 'ghost'}
+                className="w-full justify-start"
+                >
+                <Link href={item.href}>
+                    <item.icon className="mr-2 h-4 w-4" />
+                    {item.label}
+                </Link>
+                </Button>
+            </SidebarMenuItem>
+            )
+        })}
 
         {slp && (
             <SidebarMenuItem>
                  <Collapsible open={isSlpOpen} onOpenChange={setIsSlpOpen}>
                     <CollapsibleTrigger asChild>
-                        <Button variant={pathname.startsWith(`/parties/${slp.id}`) ? 'secondary' : 'ghost'} className="w-full justify-between">
-                            <div className="flex items-center gap-2">
-                                <SlpLogo className="mr-2 h-4 w-4" style={{ color: slp.color }} />
+                         <Button variant={pathname.startsWith(`/parties/${slp.id}`) ? 'secondary' : 'ghost'} className="w-full justify-start" asChild>
+                            <Link href={`/parties/${slp.id}`}>
+                                <SlpLogo className="mr-2 h-4 w-4" />
                                 {slp.name}
-                            </div>
-                            <ChevronRight className={`h-4 w-4 transition-transform ${isSlpOpen ? 'rotate-90' : ''}`} />
+                            </Link>
                         </Button>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
@@ -192,12 +198,11 @@ export function SidebarNav() {
             <SidebarMenuItem>
                  <Collapsible open={isUwpOpen} onOpenChange={setIsUwpOpen}>
                     <CollapsibleTrigger asChild>
-                        <Button variant={pathname.startsWith(`/parties/${uwp.id}`) ? 'secondary' : 'ghost'} className="w-full justify-between">
-                            <div className="flex items-center gap-2">
-                                <UwpLogo className="mr-2 h-4 w-4" style={{ color: uwp.color }} />
+                        <Button variant={pathname.startsWith(`/parties/${uwp.id}`) ? 'secondary' : 'ghost'} className="w-full justify-start" asChild>
+                            <Link href={`/parties/${uwp.id}`}>
+                                <UwpLogo className="mr-2 h-4 w-4" />
                                 {uwp.name}
-                            </div>
-                            <ChevronRight className={`h-4 w-4 transition-transform ${isUwpOpen ? 'rotate-90' : ''}`} />
+                            </Link>
                         </Button>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
@@ -224,7 +229,7 @@ export function SidebarNav() {
                     <SidebarMenuSub>
                         {loadingElections ? <p className="p-2 text-xs text-muted-foreground">Loading years...</p> : sortedElections.map(election => (
                             <SidebarMenuItem key={election.id}>
-                                <SidebarMenuSubButton asChild isActive={searchParams.includes(`year=${election.id}`)}>
+                                <SidebarMenuSubButton asChild isActive={pathname.includes(`year=${election.id}`)}>
                                     <Link href={`/results?year=${election.id}`}>
                                         {election.name}
                                     </Link>

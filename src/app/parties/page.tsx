@@ -5,12 +5,12 @@ import type { Party } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { Shield, Link as LinkIcon } from 'lucide-react';
+import { Shield, ArrowRight } from 'lucide-react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 function PartyCardSkeleton() {
   return (
@@ -26,9 +26,8 @@ function PartyCardSkeleton() {
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-2/3" />
       </CardContent>
-      <CardFooter className="flex-wrap gap-2">
-         <Skeleton className="h-6 w-28" />
-         <Skeleton className="h-6 w-24" />
+       <CardFooter>
+        <Skeleton className="h-10 w-32" />
       </CardFooter>
     </Card>
   );
@@ -45,7 +44,7 @@ export default function PartiesPage() {
         title="Political Parties"
         description="Learn more about the political parties in St. Lucia."
       />
-      <div className="grid gap-8 md:grid-cols-1">
+      <div className="grid gap-8 md:grid-cols-1 lg:grid-cols-2">
         {isLoading ? (
           Array.from({ length: 2 }).map((_, i) => <PartyCardSkeleton key={i} />)
         ) : (
@@ -66,36 +65,15 @@ export default function PartiesPage() {
                   <CardDescription>Led by {party.leader} &bull; Founded in {party.founded}</CardDescription>
                 </div>
               </CardHeader>
-              <CardContent className="flex-grow space-y-4">
-                <div>
-                    <h4 className="font-semibold text-sm mb-1">About the Party</h4>
-                    <p className="text-sm text-muted-foreground whitespace-pre-line">{party.description || 'No description available.'}</p>
-                </div>
-                 {party.history && (
-                  <div>
-                      <h4 className="font-semibold text-sm mb-1">Party History</h4>
-                      <p className="text-sm text-muted-foreground whitespace-pre-line">{party.history}</p>
-                  </div>
-                 )}
-                <div>
-                    <h4 className="font-semibold text-sm mb-1">Manifesto Summary</h4>
-                    <p className="text-sm text-muted-foreground whitespace-pre-line">{party.manifestoSummary || 'No summary available.'}</p>
-                </div>
+              <CardContent className="flex-grow">
+                 <p className="text-sm text-muted-foreground line-clamp-3">{party.description || 'No description available.'}</p>
               </CardContent>
-              <CardFooter className="flex-wrap gap-2">
-                 {party.manifestoUrl && (
-                    <Link href={party.manifestoUrl} target="_blank" rel="noopener noreferrer">
-                        <Badge variant="outline">View Full Manifesto (PDF)</Badge>
+              <CardFooter>
+                <Button asChild variant="secondary">
+                    <Link href={`/parties/${party.id}`}>
+                        View Details <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
-                )}
-                {party.website && (
-                    <Link href={party.website} target="_blank" rel="noopener noreferrer">
-                         <Badge variant="outline" className="flex items-center gap-1">
-                            <LinkIcon className="h-3 w-3" />
-                            Visit Website
-                        </Badge>
-                    </Link>
-                )}
+                </Button>
               </CardFooter>
             </Card>
           ))
