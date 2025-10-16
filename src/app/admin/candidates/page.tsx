@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc, writeBatch } from 'firebase/firestore';
 import type { Candidate, Party, Constituency } from '@/lib/types';
@@ -44,8 +44,10 @@ export default function AdminCandidatesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(null);
+  const [partyFilter, setPartyFilter] = useState<string | null>(null);
 
   const handleFormSubmit = async (values: any) => {
+    if (!firestore) return;
     try {
       let imageUrl = values.imageUrl;
       if (values.photoFile) {
@@ -76,6 +78,7 @@ export default function AdminCandidatesPage() {
   };
 
   const handleDelete = async (candidate: Candidate) => {
+    if (!firestore) return;
     try {
       if (candidate.imageUrl) await deleteFile(candidate.imageUrl);
       
@@ -162,6 +165,20 @@ export default function AdminCandidatesPage() {
   const getConstituencyName = (constituencyId: string) => constituencies?.find(c => c.id === constituencyId)?.name || 'N/A';
   const isLoading = loadingCandidates || loadingParties || loadingConstituencies;
 
+  const partyDetails = useMemo(() => {
+    if (!parties) return { slp: null, uwp: null };
+    return {
+      slp: parties.find(p => p.acronym === 'SLP'),
+      uwp: parties.find(p => p.acronym === 'UWP'),
+    };
+  }, [parties]);
+  
+  const filteredCandidates = useMemo(() => {
+    if (!candidates) return [];
+    if (!partyFilter) return candidates;
+    return candidates.filter(candidate => candidate.partyId === partyFilter);
+  }, [candidates, partyFilter]);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-start mb-8">
@@ -209,8 +226,17 @@ export default function AdminCandidatesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Existing Candidates</CardTitle>
-          <CardDescription>A list of all candidates currently in the system.</CardDescription>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>Existing Candidates</CardTitle>
+              <CardDescription>A list of all candidates currently in the system.</CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+                <Button variant={!partyFilter ? "secondary" : "outline"} size="sm" onClick={() => setPartyFilter(null)}>All</Button>
+                {partyDetails.slp && <Button variant={partyFilter === partyDetails.slp.id ? "secondary" : "outline"} size="sm" onClick={() => setPartyFilter(partyDetails.slp!.id)}>SLP</Button>}
+                {partyDetails.uwp && <Button variant={partyFilter === partyDetails.uwp.id ? "secondary" : "outline"} size="sm" onClick={() => setPartyFilter(partyDetails.uwp!.id)}>UWP</Button>}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -223,8 +249,8 @@ export default function AdminCandidatesPage() {
              </div>
           ) : (
             <div className="space-y-4">
-              {candidates && candidates.length > 0 ? (
-                candidates.map((candidate) => (
+              {filteredCandidates && filteredCandidates.length > 0 ? (
+                filteredCandidates.map((candidate) => (
                   <div key={candidate.id} className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50">
                     <div className="flex items-center gap-4">
                       {candidate.imageUrl ? (
@@ -269,7 +295,7 @@ export default function AdminCandidatesPage() {
                   </div>
                 ))
               ) : (
-                <p className="text-center text-muted-foreground py-8">No candidates have been added yet.</p>
+                <p className="text-center text-muted-foreground py-8">No candidates match the current filter.</p>
               )}
             </div>
           )}
