@@ -73,6 +73,8 @@ export function ImportDialog({ isOpen, onClose, onImport, elections, constituenc
                 initialMapping[header] = matchingField;
             } else if (normalizedHeader === 'other' || normalizedHeader === 'othervotes') {
                 initialMapping[header] = 'otherVotes';
+            } else if (normalizedHeader.includes('registered')) {
+                 initialMapping[header] = 'registeredVoters';
             }
         });
         setMapping(initialMapping);
@@ -143,7 +145,7 @@ export function ImportDialog({ isOpen, onClose, onImport, elections, constituenc
                     className="w-full max-w-xs"
                 />
                  <p className="text-sm text-muted-foreground mt-4">Required columns: {REQUIRED_HEADERS.join(', ')}.</p>
-                 <p className="text-sm text-muted-foreground mt-2">Optional column: `otherVotes`.</p>
+                 <p className="text-sm text-muted-foreground mt-2">Optional columns: `otherVotes`, `registeredVoters`.</p>
             </div>
         ) : (
             <div className="flex-grow flex flex-col min-h-0">
@@ -176,6 +178,7 @@ export function ImportDialog({ isOpen, onClose, onImport, elections, constituenc
                                                 <SelectItem value="slpVotes">SLP Votes</SelectItem>
                                                 <SelectItem value="uwpVotes">UWP Votes</SelectItem>
                                                 <SelectItem value="otherVotes">Other Votes</SelectItem>
+                                                <SelectItem value="registeredVoters">Registered Voters</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </TableCell>

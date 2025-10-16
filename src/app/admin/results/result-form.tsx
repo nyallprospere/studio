@@ -18,6 +18,7 @@ const resultSchema = z.object({
   uwpVotes: z.coerce.number().min(0, "Votes must be a positive number"),
   slpVotes: z.coerce.number().min(0, "Votes must be a positive number"),
   otherVotes: z.coerce.number().min(0, "Votes must be a positive number"),
+  registeredVoters: z.coerce.number().min(0, "Registered voters must be a positive number"),
 });
 
 type ResultFormProps = {
@@ -37,6 +38,7 @@ export function ResultForm({ onSubmit, initialData, onCancel, elections, constit
       uwpVotes: 0,
       slpVotes: 0,
       otherVotes: 0,
+      registeredVoters: 0,
     },
   });
 
@@ -46,13 +48,17 @@ export function ResultForm({ onSubmit, initialData, onCancel, elections, constit
     return constituencies.find(c => c.id === watchAllFields.constituencyId);
   }, [watchAllFields.constituencyId, constituencies]);
 
+  useEffect(() => {
+    if (selectedConstituency && !form.getValues('registeredVoters')) {
+        form.setValue('registeredVoters', selectedConstituency.demographics.registeredVoters || 0);
+    }
+  }, [selectedConstituency, form]);
+
   const totalVotes = useMemo(() => {
     return (watchAllFields.slpVotes || 0) + (watchAllFields.uwpVotes || 0) + (watchAllFields.otherVotes || 0);
   }, [watchAllFields.slpVotes, watchAllFields.uwpVotes, watchAllFields.otherVotes]);
 
-  const registeredVoters = useMemo(() => {
-    return selectedConstituency?.demographics.registeredVoters || 0;
-  }, [selectedConstituency]);
+  const registeredVoters = watchAllFields.registeredVoters;
 
   const turnout = useMemo(() => {
     if (registeredVoters > 0) {
@@ -63,17 +69,25 @@ export function ResultForm({ onSubmit, initialData, onCancel, elections, constit
 
   useEffect(() => {
     if (initialData) {
-      form.reset(initialData);
-    } else {
       form.reset({
-        electionId: '',
-        constituencyId: '',
+        ...initialData,
+        registeredVoters: initialData.registeredVoters || selectedConstituency?.demographics.registeredVoters || 0,
+      });
+    } else {
+      const defaultRegisteredVoters = selectedConstituency?.demographics.registeredVoters || 0;
+      form.reset({
+        electionId: watchAllFields.electionId,
+        constituencyId: watchAllFields.constituencyId,
         uwpVotes: 0,
         slpVotes: 0,
         otherVotes: 0,
+        registeredVoters: defaultRegisteredVoters,
       });
+       if(watchAllFields.constituencyId) {
+           form.setValue('registeredVoters', defaultRegisteredVoters);
+       }
     }
-  }, [initialData, form]);
+  }, [initialData, form, selectedConstituency, watchAllFields.electionId, watchAllFields.constituencyId]);
 
   return (
     <Form {...form}>
@@ -168,16 +182,25 @@ export function ResultForm({ onSubmit, initialData, onCancel, elections, constit
         </div>
 
         <Card className="bg-muted/50">
-            <CardContent className="p-4 grid grid-cols-3 gap-4 text-center">
-                <div>
-                    <p className="text-sm text-muted-foreground">Registered Voters</p>
-                    <p className="text-lg font-bold">{registeredVoters.toLocaleString()}</p>
-                </div>
-                 <div>
+            <CardContent className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                    control={form.control}
+                    name="registeredVoters"
+                    render={({ field }) => (
+                        <FormItem className="text-center">
+                            <FormLabel className="text-sm text-muted-foreground">Registered Voters</FormLabel>
+                            <FormControl>
+                                <Input type="number" {...field} className="text-lg font-bold text-center bg-transparent border-0 border-b-2 rounded-none h-auto p-1 focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-primary" />
+                            </FormControl>
+                             <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <div className="text-center">
                     <p className="text-sm text-muted-foreground">Total Votes</p>
                     <p className="text-lg font-bold">{totalVotes.toLocaleString()}</p>
                 </div>
-                 <div>
+                 <div className="text-center">
                     <p className="text-sm text-muted-foreground">Turnout</p>
                     <p className="text-lg font-bold">{turnout}%</p>
                 </div>

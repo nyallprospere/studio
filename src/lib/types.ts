@@ -67,6 +67,7 @@ export interface ElectionResult {
   slpVotes: number;
   otherVotes: number;
   totalVotes: number;
+  registeredVoters: number;
   turnout: number;
 }
 

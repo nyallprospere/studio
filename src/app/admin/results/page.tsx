@@ -59,12 +59,9 @@ export default function AdminResultsPage() {
 
   const handleFormSubmit = async (values: any) => {
     try {
-      const constituency = getConstituency(values.constituencyId);
-      if (!constituency) throw new Error("Constituency not found");
-
       const totalVotes = values.slpVotes + values.uwpVotes + values.otherVotes;
-      const turnout = constituency.demographics.registeredVoters > 0 
-        ? (totalVotes / constituency.demographics.registeredVoters) * 100 
+      const turnout = values.registeredVoters > 0 
+        ? (totalVotes / values.registeredVoters) * 100 
         : 0;
       
       const resultData = { 
@@ -114,7 +111,7 @@ export default function AdminResultsPage() {
         'Year': election?.year,
         'Election Name': election?.name,
         'Constituency': constituency?.name,
-        'Registered Voters': constituency?.demographics.registeredVoters || 0,
+        'Registered Voters': r.registeredVoters || constituency?.demographics.registeredVoters || 0,
         'SLP Votes': r.slpVotes,
         'UWP Votes': r.uwpVotes,
         'Other Votes': r.otherVotes,
@@ -152,8 +149,9 @@ export default function AdminResultsPage() {
             const uwpVotes = Number(row.uwpVotes) || 0;
             const otherVotes = Number(row.otherVotes) || 0;
             const totalVotes = slpVotes + uwpVotes + otherVotes;
-            const turnout = constituency.demographics.registeredVoters > 0 
-                ? (totalVotes / constituency.demographics.registeredVoters) * 100 
+            const registeredVoters = Number(row.registeredVoters) || constituency.demographics.registeredVoters || 0;
+            const turnout = registeredVoters > 0 
+                ? (totalVotes / registeredVoters) * 100 
                 : 0;
 
             const newResult: Omit<ElectionResult, 'id'> = {
@@ -163,6 +161,7 @@ export default function AdminResultsPage() {
                 uwpVotes,
                 otherVotes,
                 totalVotes,
+                registeredVoters,
                 turnout: parseFloat(turnout.toFixed(2)),
             };
             
@@ -278,7 +277,7 @@ export default function AdminResultsPage() {
                         return (
                             <TableRow key={result.id}>
                                 <TableCell className="font-medium" style={{ color: winner === 'SLP' ? 'red': 'orange'}}>{constituency?.name}</TableCell>
-                                <TableCell>{constituency?.demographics.registeredVoters.toLocaleString()}</TableCell>
+                                <TableCell>{(result.registeredVoters || constituency?.demographics.registeredVoters || 0).toLocaleString()}</TableCell>
                                 <TableCell>{result.slpVotes.toLocaleString()}</TableCell>
                                 <TableCell>{result.uwpVotes.toLocaleString()}</TableCell>
                                 <TableCell>{result.otherVotes.toLocaleString()}</TableCell>
