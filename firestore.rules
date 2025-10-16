@@ -1,148 +1,138 @@
-/**
- * @fileoverview Firestore Security Rules for the St. Lucia Elections Hub application.
- *
- * Core Philosophy:
- * This ruleset provides open read access to all collections and restricts write access.
- * Write access is denied for all users.
- *
- * Data Structure:
- * The database consists of top-level collections for parties, candidates, elections, polling data,
- * constituencies, and election results. A single document stores page layouts.
- *
- * Key Security Decisions:
- * - Open read access to facilitate data consumption.
- * - Write access is restricted to prevent unauthorized data modification.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Rules for the 'parties' collection. Allows read, denies all writes.
+     * @description Grants read access to all parties and denies all write operations.
      * @path /parties/{partyId}
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Allows public read access, denies all write access.
+     * @allow get, list: if isSignedIn();
+     * @deny create, update, delete: if true;
+     * @principle Allows any authenticated user to read party information; write operations are not permitted.
      */
     match /parties/{partyId} {
-      allow get, list: if true;
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       allow create: if false;
       allow update: if false;
       allow delete: if false;
     }
 
     /**
-     * @description Rules for the 'candidates' collection. Allows read, denies all writes.
+     * @description Grants read access to all candidates and denies all write operations.
      * @path /candidates/{candidateId}
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Allows public read access, denies all write access.
+     * @allow get, list: if isSignedIn();
+     * @deny create, update, delete: if true;
+     * @principle Allows any authenticated user to read candidate information; write operations are not permitted.
      */
     match /candidates/{candidateId} {
-      allow get, list: if true;
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       allow create: if false;
       allow update: if false;
       allow delete: if false;
     }
 
     /**
-     * @description Rules for the 'elections' collection. Allows read, denies all writes.
+     * @description Grants read access to all elections and denies all write operations.
      * @path /elections/{electionId}
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Allows public read access, denies all write access.
+     * @allow get, list: if isSignedIn();
+     * @deny create, update, delete: if true;
+     * @principle Allows any authenticated user to read election information; write operations are not permitted.
      */
     match /elections/{electionId} {
-      allow get, list: if true;
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       allow create: if false;
       allow update: if false;
       allow delete: if false;
     }
 
     /**
-     * @description Rules for the 'polling_data' collection. Allows read, denies all writes.
+     * @description Grants read access to all polling data and denies all write operations.
      * @path /polling_data/{pollingDataId}
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Allows public read access, denies all write access.
+     * @allow get, list: if isSignedIn();
+     * @deny create, update, delete: if true;
+     * @principle Allows any authenticated user to read polling data; write operations are not permitted.
      */
     match /polling_data/{pollingDataId} {
-      allow get, list: if true;
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       allow create: if false;
       allow update: if false;
       allow delete: if false;
     }
 
     /**
-     * @description Rules for the 'constituencies' collection. Allows read, denies all writes.
+     * @description Grants read access to all constituencies and denies all write operations.
      * @path /constituencies/{constituencyId}
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Allows public read access, denies all write access.
+     * @allow get, list: if isSignedIn();
+     * @deny create, update, delete: if true;
+     * @principle Allows any authenticated user to read constituency information; write operations are not permitted.
      */
     match /constituencies/{constituencyId} {
-      allow get, list: if true;
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       allow create: if false;
       allow update: if false;
       allow delete: if false;
     }
 
     /**
-     * @description Rules for the 'election_results' collection. Allows read, denies all writes.
+     * @description Grants read access to all election results and denies all write operations.
      * @path /election_results/{electionResultId}
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Allows public read access, denies all write access.
+     * @allow get, list: if isSignedIn();
+     * @deny create, update, delete: if true;
+     * @principle Allows any authenticated user to read election results; write operations are not permitted.
      */
     match /election_results/{electionResultId} {
-      allow get, list: if true;
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       allow create: if false;
       allow update: if false;
       allow delete: if false;
     }
 
-    /**
-     * @description Rules for the 'pageLayouts' document. Allows read, denies all writes.
-     * @path /settings/pageLayouts
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Allows public read access, denies all write access.
-     */
-    match /settings/pageLayouts {
-      allow get, list: if true;
+     /**
+      * @description Grants read access to page layout settings and denies all write operations.
+      * @path /settings/pageLayouts
+      * @allow get: if isSignedIn();
+      * @deny create, update, delete: if true;
+      * @principle Allows any authenticated user to read page layout settings; write operations are not permitted.
+      */
+    match /settings/{document=**} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       allow create: if false;
       allow update: if false;
       allow delete: if false;
     }
-    
+
+    //------------------- Helper functions -------------------
+
     /**
-     * @description Rules for the 'site' document. Allows read, denies all writes.
-     * @path /settings/site
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Allows public read access, denies all write access.
+     * @description Checks if the user is signed in.
+     * @return {bool} True if the user is signed in, false otherwise.
      */
-    match /settings/site {
-      allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the user ID matches the requested user ID.
+     * @param {string} userId The user ID to check against.
+     * @return {bool} True if the user ID matches, false otherwise.
+     */
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the user ID matches the existing document's owner ID.
+     * @param {string} userId The user ID to check against.
+     * @return {bool} True if the user ID matches and the document exists, false otherwise.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource.data != null;
     }
   }
 }

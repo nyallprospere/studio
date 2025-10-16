@@ -6,6 +6,7 @@ export interface Party {
   leader: string;
   founded: number;
   color: string;
+  seats?: number;
   logoUrl?: string; // URL to logo in storage
   description?: string;
   manifestoUrl?: string; // URL to PDF in storage
