@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { EventForm } from './event-form';
-import { Pencil, Trash2, Calendar } from 'lucide-react';
+import { Pencil, Trash2, Calendar, MapPin, Shield } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,7 +41,7 @@ export default function AdminEventsPage() {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [preselectedPartyId, setPreselectedPartyId] = useState<string | undefined>(undefined);
   
-  const getPartyName = (partyId: string) => parties?.find(p => p.id === partyId)?.name || 'N/A';
+  const getParty = (partyId: string) => parties?.find(p => p.id === partyId);
   const isLoading = loadingEvents || loadingParties;
 
   const { uwpEvents, slpEvents, uwpParty, slpParty } = useMemo(() => {
@@ -167,6 +167,7 @@ export default function AdminEventsPage() {
               {uwpEvents && uwpEvents.length > 0 ? (
                 uwpEvents.map((event) => {
                   const eventDate = (event.date as unknown as Timestamp)?.toDate ? (event.date as unknown as Timestamp).toDate() : new Date(event.date);
+                  const party = getParty(event.partyId);
                   return (
                   <div key={event.id} className="flex items-start justify-between p-4 border rounded-md hover:bg-muted/50 gap-4">
                      {event.imageUrl ? (
@@ -178,9 +179,11 @@ export default function AdminEventsPage() {
                       )}
                     <div className="flex-grow">
                       <p className="font-semibold">{event.title}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {getPartyName(event.partyId)} &bull; {format(eventDate, "PPP")} &bull; {event.location}
-                      </p>
+                       <div className="text-sm text-muted-foreground mt-1 space-y-1">
+                          {party && <p className="flex items-center gap-2"><Shield className="h-4 w-4" /> {party.name}</p>}
+                          <p className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {format(eventDate, "PPP")}</p>
+                          <p className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {event.location}</p>
+                       </div>
                     </div>
                     <div className="flex flex-col gap-2">
                        <Button variant="ghost" size="icon" onClick={() => openForm(undefined, event)}>
@@ -240,6 +243,7 @@ export default function AdminEventsPage() {
               {slpEvents && slpEvents.length > 0 ? (
                 slpEvents.map((event) => {
                   const eventDate = (event.date as unknown as Timestamp)?.toDate ? (event.date as unknown as Timestamp).toDate() : new Date(event.date);
+                  const party = getParty(event.partyId);
                   return (
                   <div key={event.id} className="flex items-start justify-between p-4 border rounded-md hover:bg-muted/50 gap-4">
                     {event.imageUrl ? (
@@ -251,9 +255,11 @@ export default function AdminEventsPage() {
                       )}
                     <div className="flex-grow">
                       <p className="font-semibold">{event.title}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {getPartyName(event.partyId)} &bull; {format(eventDate, "PPP")} &bull; {event.location}
-                      </p>
+                      <div className="text-sm text-muted-foreground mt-1 space-y-1">
+                          {party && <p className="flex items-center gap-2"><Shield className="h-4 w-4" /> {party.name}</p>}
+                          <p className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {format(eventDate, "PPP")}</p>
+                          <p className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {event.location}</p>
+                       </div>
                     </div>
                     <div className="flex flex-col gap-2">
                        <Button variant="ghost" size="icon" onClick={() => openForm(undefined, event)}>

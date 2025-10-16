@@ -9,7 +9,7 @@ import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { format } from 'date-fns';
 import Image from 'next/image';
-import { Calendar } from 'lucide-react';
+import { Calendar, MapPin, Shield } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 function EventCard({ event, partyName }: { event: Event, partyName: string }) {
@@ -25,9 +25,11 @@ function EventCard({ event, partyName }: { event: Event, partyName: string }) {
             )}
             <div className="flex-grow">
                 <p className="font-semibold">{event.title}</p>
-                <p className="text-sm text-muted-foreground">
-                    {partyName} &bull; {format(eventDate, "PPP")} &bull; {event.location}
-                </p>
+                <div className="text-sm text-muted-foreground mt-1 space-y-1">
+                    <p className="flex items-center gap-2"><Shield className="h-4 w-4" /> {partyName}</p>
+                    <p className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {format(eventDate, "PPP")}</p>
+                    <p className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {event.location}</p>
+                </div>
                 {event.description && <p className="text-sm mt-2">{event.description}</p>}
             </div>
         </div>
