@@ -70,9 +70,9 @@ const initialKeyFeatures = [
 ];
 
 const adminSections = [
+    { id: 'admin-elections', title: 'Manage Elections', href: '/admin/elections', icon: Vote },
     { id: 'admin-parties', title: 'Manage Parties', href: '/admin/parties', icon: Shield },
     { id: 'admin-candidates', title: 'Manage Candidates', href: '/admin/candidates', icon: Users },
-    { id: 'admin-polls', title: 'Manage Polling Data', href: '/admin/polls', icon: BarChart3 },
     { id: 'admin-results', title: 'Manage Election Results', href: '/admin/results', icon: Landmark },
     { id: 'admin-constituencies', title: 'Manage Constituencies', href: '/admin/constituencies', icon: FilePlus },
     { id: 'admin-map', title: 'Manage Map', href: '/admin/map', icon: Map },

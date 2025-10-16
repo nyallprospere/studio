@@ -50,14 +50,25 @@ export interface Poll {
   }[];
 }
 
-export interface ConstituencyResult {
+export interface Election {
+    id: string;
+    name: string;
+    year: number;
+    description?: string;
+}
+
+export interface ElectionResult {
+  id: string;
+  electionId: string;
   constituencyId: string;
-  candidateName: string;
   partyId: string;
+  candidateName: string;
   votes: number;
   isWinner: boolean;
 }
 
+
+// This type is used for displaying aggregated results, not for data entry.
 export interface ElectionYearResult {
   id: string;
   year: number;
@@ -66,5 +77,11 @@ export interface ElectionYearResult {
     seats: number;
     totalVotes: number;
   }[];
-  constituencyResults: ConstituencyResult[];
+  constituencyResults: {
+      constituencyId: string;
+      candidateName: string;
+      partyId: string;
+      votes: number;
+      isWinner: boolean;
+  }[];
 }

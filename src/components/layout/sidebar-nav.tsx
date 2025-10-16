@@ -28,9 +28,9 @@ const mainNavItems = [
 ];
 
 const adminNavItems = [
+    { href: '/admin/elections', icon: Vote, label: 'Manage Elections' },
     { href: '/admin/parties', icon: Shield, label: 'Manage Parties' },
     { href: '/admin/candidates', icon: Users, label: 'Manage Candidates' },
-    { href: '/admin/polls', icon: BarChart3, label: 'Manage Polling Data' },
     { href: '/admin/results', icon: Landmark, label: 'Manage Election Results' },
     { href: '/admin/constituencies', icon: FilePlus, label: 'Manage Constituencies' },
     { href: '/admin/map', icon: Map, label: 'Manage Map' },
