@@ -1,16 +1,16 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy, CollectionReference } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy, CollectionReference, writeBatch, getDocs } from 'firebase/firestore';
 import type { Election } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ElectionForm } from './election-form';
-import { Pencil, Trash2 } from 'lucide-react';
+import { ImportDialog } from './import-dialog';
+import { Pencil, Trash2, Upload, Download } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
+import * as XLSX from 'xlsx';
 
 export default function AdminElectionsPage() {
   const { firestore } = useFirebase();
@@ -32,6 +33,7 @@ export default function AdminElectionsPage() {
   const { data: elections, isLoading } = useCollection<Election>(electionsQuery);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingElection, setEditingElection] = useState<Election | null>(null);
 
   const sortedElections = useMemo(() => {
@@ -104,6 +106,73 @@ export default function AdminElectionsPage() {
       });
   };
 
+  const handleExport = () => {
+    if (!elections) {
+      toast({ variant: "destructive", title: "Error", description: "Data not loaded yet." });
+      return;
+    }
+    const dataToExport = sortedElections.map(e => ({
+      'Year': e.year,
+      'Name': e.name,
+      'Description': e.description,
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Elections");
+    XLSX.writeFile(workbook, "elections.xlsx");
+    toast({ title: "Export Successful", description: "Elections have been exported." });
+  }
+
+  const handleImport = async (data: any[]) => {
+    if (!firestore) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Database is not ready.' });
+      return;
+    }
+
+    try {
+        const batch = writeBatch(firestore);
+        let count = 0;
+
+        // Check for existing elections to prevent duplicates
+        const electionsCollection = collection(firestore, 'elections');
+        const existingElectionsSnap = await getDocs(electionsCollection);
+        const existingElectionYears = new Set(existingElectionsSnap.docs.map(doc => doc.data().year));
+
+        for (const row of data) {
+            const year = Number(row.year);
+            if (!year || !row.name) {
+                console.warn('Skipping row due to missing year or name:', row);
+                continue;
+            }
+
+            if (existingElectionYears.has(year)) {
+                console.warn(`Skipping duplicate year ${year}:`, row);
+                continue;
+            }
+
+            const newElection = {
+                year: year,
+                name: row.name,
+                description: row.description || '',
+            };
+            
+            const electionRef = doc(electionsCollection);
+            batch.set(electionRef, newElection);
+            existingElectionYears.add(year); // Add to set to prevent duplicates within the same import
+            count++;
+        }
+
+        await batch.commit();
+        toast({ title: 'Import Successful', description: `${count} elections imported successfully.` });
+
+    } catch(e) {
+        console.error("Error importing elections:", e);
+        toast({ variant: 'destructive', title: 'Import Failed', description: 'An error occurred during import. Check console for details.' });
+    } finally {
+        setIsImportOpen(false);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-start mb-8">
@@ -111,22 +180,36 @@ export default function AdminElectionsPage() {
           title="Manage Elections"
           description="Add, edit, or remove election years."
         />
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => { setEditingElection(null); setIsFormOpen(true)}}>Add New Election</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>{editingElection ? 'Edit Election' : 'Add New Election'}</DialogTitle>
-            </DialogHeader>
-            <ElectionForm
-              onSubmit={handleFormSubmit}
-              initialData={editingElection}
-              onCancel={() => setIsFormOpen(false)}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+                <Upload className="mr-2 h-4 w-4" /> Import
+            </Button>
+            <Button variant="outline" onClick={handleExport} disabled={!elections || elections.length === 0}>
+                <Download className="mr-2 h-4 w-4" /> Export
+            </Button>
+            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogTrigger asChild>
+                <Button onClick={() => { setEditingElection(null); setIsFormOpen(true)}}>Add New Election</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                <DialogTitle>{editingElection ? 'Edit Election' : 'Add New Election'}</DialogTitle>
+                </DialogHeader>
+                <ElectionForm
+                onSubmit={handleFormSubmit}
+                initialData={editingElection}
+                onCancel={() => setIsFormOpen(false)}
+                />
+            </DialogContent>
+            </Dialog>
+        </div>
       </div>
+
+       <ImportDialog
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        onImport={handleImport}
+      />
 
       <Card>
         <CardHeader>
