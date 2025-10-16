@@ -71,6 +71,10 @@
           "type": "string",
           "format": "uri",
           "description": "The party's official website."
+        },
+        "history": {
+          "type": "string",
+          "description": "A detailed history of the party."
         }
       },
       "required": [

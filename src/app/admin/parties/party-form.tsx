@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -20,6 +21,7 @@ const partySchema = z.object({
   color: z.string().regex(/^#([0-9a-f]{3}){1,2}$/i, "Invalid hex color"),
   website: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
   description: z.string().optional(),
+  history: z.string().optional(),
   manifestoSummary: z.string().optional(),
   logoFile: z.any().optional(),
   manifestoFile: z.any().optional(),
@@ -51,6 +53,7 @@ export function PartyForm({ onSubmit, initialData, onCancel }: PartyFormProps) {
       color: '#000000',
       website: '',
       description: '',
+      history: '',
       manifestoSummary: '',
       logoUrl: '',
       manifestoUrl: '',
@@ -72,6 +75,7 @@ export function PartyForm({ onSubmit, initialData, onCancel }: PartyFormProps) {
             color: '#6D4C41',
             website: '',
             description: '',
+            history: '',
             manifestoSummary: '',
             logoUrl: '',
             manifestoUrl: '',
@@ -212,6 +216,20 @@ export function PartyForm({ onSubmit, initialData, onCancel }: PartyFormProps) {
           )}
         />
         
+        <FormField
+          control={form.control}
+          name="history"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Party History</FormLabel>
+              <FormControl>
+                <Textarea placeholder="A detailed history of the party..." {...field} rows={8} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="manifestoSummary"

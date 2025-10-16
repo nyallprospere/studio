@@ -1,6 +1,7 @@
 
 
 
+
 export interface Party {
   id: string;
   name: string;
@@ -11,6 +12,7 @@ export interface Party {
   seats?: number;
   logoUrl?: string; // URL to logo in storage
   description?: string;
+  history?: string;
   manifestoUrl?: string; // URL to PDF in storage
   manifestoSummary?: string;
   website?: string;

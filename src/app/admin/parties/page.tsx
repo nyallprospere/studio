@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -25,6 +26,7 @@ import {
 import { uploadFile, deleteFile } from '@/firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function AdminPartiesPage() {
   const { firestore } = useFirebase();
@@ -104,15 +106,19 @@ export default function AdminPartiesPage() {
           <DialogTrigger asChild>
             <Button onClick={() => { setEditingParty(null); setIsFormOpen(true)}}>Add New Party</Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-2xl">
+          <DialogContent className="sm:max-w-2xl h-[90vh]">
             <DialogHeader>
               <DialogTitle>{editingParty ? 'Edit Party' : 'Add New Party'}</DialogTitle>
             </DialogHeader>
-            <PartyForm
-              onSubmit={handleFormSubmit}
-              initialData={editingParty}
-              onCancel={() => setIsFormOpen(false)}
-            />
+            <ScrollArea className="h-full">
+              <div className="pr-6">
+                <PartyForm
+                  onSubmit={handleFormSubmit}
+                  initialData={editingParty}
+                  onCancel={() => setIsFormOpen(false)}
+                />
+              </div>
+            </ScrollArea>
           </DialogContent>
         </Dialog>
       </div>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Party } from '@/lib/types';
@@ -44,7 +45,7 @@ export default function PartiesPage() {
         title="Political Parties"
         description="Learn more about the political parties in St. Lucia."
       />
-      <div className="grid gap-8 md:grid-cols-2">
+      <div className="grid gap-8 md:grid-cols-1">
         {isLoading ? (
           Array.from({ length: 2 }).map((_, i) => <PartyCardSkeleton key={i} />)
         ) : (
@@ -70,6 +71,12 @@ export default function PartiesPage() {
                     <h4 className="font-semibold text-sm mb-1">About the Party</h4>
                     <p className="text-sm text-muted-foreground">{party.description || 'No description available.'}</p>
                 </div>
+                 {party.history && (
+                  <div>
+                      <h4 className="font-semibold text-sm mb-1">Party History</h4>
+                      <p className="text-sm text-muted-foreground whitespace-pre-line">{party.history}</p>
+                  </div>
+                 )}
                 <div>
                     <h4 className="font-semibold text-sm mb-1">Manifesto Summary</h4>
                     <p className="text-sm text-muted-foreground">{party.manifestoSummary || 'No summary available.'}</p>
