@@ -167,6 +167,68 @@ export default function AdminEventsPage() {
           )}
         </CardContent>
       </Card>
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Existing Events</CardTitle>
+          <CardDescription>A list of all party events currently in the system.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <p>Loading events...</p>
+          ) : errorEvents ? (
+            <div className="text-red-600 bg-red-100 p-4 rounded-md">
+                <h3 className="font-bold">Error loading events</h3>
+                <p>{errorEvents.message}</p>
+                <p className="text-sm mt-2">Please check the Firestore security rules and console for more details.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {events && events.length > 0 ? (
+                events.map((event) => {
+                  // Firestore timestamps need to be converted to JS Dates
+                  const eventDate = (event.date as unknown as Timestamp)?.toDate ? (event.date as unknown as Timestamp).toDate() : new Date(event.date);
+                  return (
+                  <div key={event.id} className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50">
+                    <div>
+                      <p className="font-semibold">{event.title}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {getPartyName(event.partyId)} &bull; {format(eventDate, "PPP")} &bull; {event.location}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                       <Button variant="ghost" size="icon" onClick={() => { setEditingEvent(event); setIsFormOpen(true);}}>
+                           <Pencil className="h-4 w-4" />
+                       </Button>
+                       <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete the event "{event.title}". This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(event)}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                    </div>
+                  </div>
+                  );
+                })
+              ) : (
+                <p className="text-center text-muted-foreground py-8">No events have been added yet.</p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
