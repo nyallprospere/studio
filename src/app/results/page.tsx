@@ -8,9 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, orderBy, query } from 'firebase/firestore';
+import { useSearchParams } from 'next/navigation';
 
 export default function ResultsPage() {
   const { firestore } = useFirebase();
+  const searchParams = useSearchParams();
+  const yearFromQuery = searchParams.get('year');
 
   const resultsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'election_results'), orderBy('year', 'desc')) : null, [firestore]);
   const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
@@ -23,6 +26,17 @@ export default function ResultsPage() {
   const getPartyById = (id: string) => parties?.find(p => p.id === id);
   const getConstituencyById = (id: string) => constituencies?.find(c => c.id === id);
   
+  const [activeTab, setActiveTab] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (yearFromQuery) {
+      setActiveTab(yearFromQuery);
+    } else if (historicalResults && historicalResults.length > 0) {
+      setActiveTab(historicalResults[0].year.toString());
+    }
+  }, [yearFromQuery, historicalResults]);
+
+
   const loading = loadingResults || loadingParties || loadingConstituencies;
 
   if (loading) {
@@ -45,7 +59,7 @@ export default function ResultsPage() {
       />
       <Card>
         <CardContent className="p-6">
-          <Tabs defaultValue={historicalResults?.[0]?.year.toString()}>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
               {historicalResults?.map((result) => (
                 <TabsTrigger key={result.year} value={result.year.toString()}>
