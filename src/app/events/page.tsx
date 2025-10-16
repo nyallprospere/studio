@@ -56,8 +56,15 @@ function EventCard({ event, partyName }: { event: Event, partyName: string }) {
 
 function EventsPageSkeleton() {
     return (
-         <div className="grid md:grid-cols-2 gap-8">
+         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             <Card>
+                <CardHeader><Skeleton className="h-8 w-1/3" /></CardHeader>
+                <CardContent className="space-y-4">
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                </CardContent>
+            </Card>
+             <Card>
                 <CardHeader><Skeleton className="h-8 w-1/3" /></CardHeader>
                 <CardContent className="space-y-4">
                     <Skeleton className="h-24 w-full" />
@@ -79,6 +86,7 @@ export default function EventsPage() {
   const { firestore } = useFirebase();
   const [uwpViewMode, setUwpViewMode] = useState<'upcoming' | 'past'>('upcoming');
   const [slpViewMode, setSlpViewMode] = useState<'upcoming' | 'past'>('upcoming');
+  const [allEventsViewMode, setAllEventsViewMode] = useState<'upcoming' | 'past'>('upcoming');
   
   const eventsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'events'), orderBy('date', 'desc')) : null, [firestore]);
   const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
@@ -102,6 +110,8 @@ export default function EventsPage() {
     return { uwpEvents, slpEvents };
   }, [events, parties]);
 
+  const allEvents = useMemo(() => [...uwpEvents, ...slpEvents], [uwpEvents, slpEvents]);
+
   const filterAndSortEvents = (events: Event[], mode: 'upcoming' | 'past') => {
       const now = new Date();
       now.setHours(0, 0, 0, 0); // Set to start of today
@@ -112,20 +122,20 @@ export default function EventsPage() {
       });
 
       // Upcoming events should be sorted ascending (soonest first)
-      if (mode === 'upcoming') {
-          return filtered.sort((a, b) => {
-              const dateA = (a.date as unknown as Timestamp)?.toDate ? (a.date as unknown as Timestamp).toDate() : new Date(a.date);
-              const dateB = (b.date as unknown as Timestamp)?.toDate ? (b.date as unknown as Timestamp).toDate() : new Date(b.date);
-              return dateA.getTime() - dateB.getTime();
-          });
-      }
+      const sorted = filtered.sort((a, b) => {
+          const dateA = (a.date as unknown as Timestamp)?.toDate ? (a.date as unknown as Timestamp).toDate() : new Date(a.date);
+          const dateB = (b.date as unknown as Timestamp)?.toDate ? (b.date as unknown as Timestamp).toDate() : new Date(b.date);
+          return mode === 'upcoming' 
+            ? dateA.getTime() - dateB.getTime() 
+            : dateB.getTime() - dateA.getTime();
+      });
       
-      // Past events are already sorted descending by the initial query
-      return filtered;
+      return sorted;
   }
 
   const visibleUwpEvents = useMemo(() => filterAndSortEvents(uwpEvents, uwpViewMode), [uwpEvents, uwpViewMode]);
   const visibleSlpEvents = useMemo(() => filterAndSortEvents(slpEvents, slpViewMode), [slpEvents, slpViewMode]);
+  const visibleAllEvents = useMemo(() => filterAndSortEvents(allEvents, allEventsViewMode), [allEvents, allEventsViewMode]);
 
 
   return (
@@ -136,7 +146,32 @@ export default function EventsPage() {
       />
       
       {isLoading ? <EventsPageSkeleton /> : (
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <Card>
+                <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <CardTitle>All Events</CardTitle>
+                            <CardDescription>All political events.</CardDescription>
+                        </div>
+                         <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
+                            <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'secondary' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')}>Upcoming</Button>
+                            <Button size="sm" variant={allEventsViewMode === 'past' ? 'secondary' : 'ghost'} onClick={() => setAllEventsViewMode('past')}>Past</Button>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                    {visibleAllEvents.length > 0 ? (
+                        visibleAllEvents.map((event) => (
+                           <EventCard key={event.id} event={event} partyName={getPartyName(event.partyId)} />
+                        ))
+                    ) : (
+                        <p className="text-center text-muted-foreground py-8">No {allEventsViewMode} events found.</p>
+                    )}
+                    </div>
+                </CardContent>
+            </Card>
             <Card>
                 <CardHeader>
                     <div className="flex justify-between items-center">
