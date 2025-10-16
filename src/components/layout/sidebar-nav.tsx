@@ -23,7 +23,7 @@ import { ChevronRight } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import type { Election, Party } from '@/lib/types';
 import { collection, query, orderBy, where } from 'firebase/firestore';
-import { SlpLogo } from '../icons';
+import { SlpLogo, UwpLogo } from '../icons';
 
 
 const mainNavItems = [
@@ -194,7 +194,7 @@ export function SidebarNav() {
                     <CollapsibleTrigger asChild>
                         <Button variant={pathname.startsWith(`/parties/${uwp.id}`) ? 'secondary' : 'ghost'} className="w-full justify-between">
                             <div className="flex items-center gap-2">
-                                <Shield className="mr-2 h-4 w-4" style={{ color: uwp.color }} />
+                                <UwpLogo className="mr-2 h-4 w-4" style={{ color: uwp.color }} />
                                 {uwp.name}
                             </div>
                             <ChevronRight className={`h-4 w-4 transition-transform ${isUwpOpen ? 'rotate-90' : ''}`} />
