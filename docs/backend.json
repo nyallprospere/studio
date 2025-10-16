@@ -82,6 +82,46 @@
         "name"
       ]
     },
+    "Event": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Event",
+      "type": "object",
+      "description": "Represents a political event.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the event."
+        },
+        "partyId": {
+          "type": "string",
+          "description": "Reference to the political party hosting the event."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the event."
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date and time of the event."
+        },
+        "location": {
+          "type": "string",
+          "description": "The location of the event."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the event."
+        }
+      },
+      "required": [
+        "id",
+        "partyId",
+        "title",
+        "date",
+        "location"
+      ]
+    },
     "Election": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Election",
@@ -292,6 +332,22 @@
         }
       },
       {
+        "path": "/events/{eventId}",
+        "definition": {
+          "entityName": "Event",
+          "schema": {
+            "$ref": "#/backend/entities/Event"
+          },
+          "description": "Stores information about political events. The `eventId` is used as the document ID.",
+          "params": [
+            {
+              "name": "eventId",
+              "description": "The unique identifier of the event."
+            }
+          ]
+        }
+      },
+      {
         "path": "/candidates/{candidateId}",
         "definition": {
           "entityName": "Candidate",
@@ -395,3 +451,5 @@
     "reasoning": "The Firestore structure is designed to support the St. Lucia Elections Hub application, focusing on tracking candidates, parties, elections, polling data, constituencies, and election results. The structure prioritizes Authorization Independence by avoiding hierarchical authorization dependencies and denormalizing data where necessary. Structural Segregation is applied by keeping data with similar access needs in separate collections. Access Modeling employs path-based ownership and membership maps where appropriate. Data Clarity and Predictability are achieved through explicit state modeling and consistent naming conventions.\n\nAuthorization Independence is achieved primarily through structural choices that avoid the need for `get()` calls in security rules.  For instance, access to candidate information does not require reading party or constituency data.\n\nThe structure supports the required QAPs (Rules are not Filters) by:\n\n*   Segregating data into collections with homogeneous security needs.\n*   Avoiding overly complex rule logic that could lead to inefficient queries.\n* Added documents to store page layout and site settings."
   }
 }
+
+    

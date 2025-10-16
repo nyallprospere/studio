@@ -1,16 +1,19 @@
+
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useMemo } from 'react';
-import type { Party, Candidate, Constituency } from '@/lib/types';
+import { useMemo, useState } from 'react';
+import type { Party, Candidate, Constituency, Event } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { Shield, Link as LinkIcon, UserSquare } from 'lucide-react';
+import { Shield, Link as LinkIcon, UserSquare, CalendarIcon, MapPin } from 'lucide-react';
 import { useDoc, useFirebase, useMemoFirebase, useCollection } from '@/firebase';
-import { doc, collection, query, where, limit } from 'firebase/firestore';
+import { doc, collection, query, where, limit, orderBy } from 'firebase/firestore';
 import Link from 'next/link';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { format } from 'date-fns';
 
 function PartyPageSkeleton() {
   return (
@@ -35,11 +38,31 @@ function PartyPageSkeleton() {
   );
 }
 
+function EventCard({ event }: { event: Event }) {
+    return (
+        <div className="border-l-2 pl-4 py-2">
+            <p className="font-semibold">{event.title}</p>
+            <div className="text-sm text-muted-foreground flex items-center gap-4 mt-1">
+                <div className="flex items-center gap-1.5">
+                    <CalendarIcon className="w-4 h-4" />
+                    <span>{format(new Date(event.date), "PPP")}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4" />
+                    <span>{event.location}</span>
+                </div>
+            </div>
+            {event.description && <p className="text-sm mt-2">{event.description}</p>}
+        </div>
+    );
+}
 
 export default function PartyDetailPage() {
   const { id } = useParams();
   const { firestore } = useFirebase();
   const partyId = Array.isArray(id) ? id[0] : id;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   const partyRef = useMemoFirebase(() => (firestore && partyId ? doc(firestore, 'parties', partyId) : null), [firestore, partyId]);
   const { data: party, isLoading: loadingParty } = useDoc<Party>(partyRef);
@@ -51,6 +74,17 @@ export default function PartyDetailPage() {
   const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
 
+  const eventsQuery = useMemoFirebase(() => (firestore && partyId ? query(collection(firestore, 'events'), where('partyId', '==', partyId), orderBy('date', 'desc')) : null), [firestore, partyId]);
+  const { data: events, isLoading: loadingEvents } = useCollection<Event>(eventsQuery);
+
+  const { upcomingEvents, pastEvents } = useMemo(() => {
+    if (!events) return { upcomingEvents: [], pastEvents: [] };
+    const upcoming = events.filter(e => new Date(e.date) >= today);
+    const past = events.filter(e => new Date(e.date) < today);
+    return { upcomingEvents: upcoming.reverse(), pastEvents: past }; // Show nearest upcoming event first
+  }, [events, today]);
+  
+
   const leaderConstituency = useMemo(() => {
     if (leader && constituencies) {
         return constituencies.find(c => c.id === leader.constituencyId);
@@ -58,7 +92,7 @@ export default function PartyDetailPage() {
     return null;
   }, [leader, constituencies]);
 
-  const isLoading = loadingParty || loadingLeader || loadingConstituencies;
+  const isLoading = loadingParty || loadingLeader || loadingConstituencies || loadingEvents;
 
   if (isLoading || !party) {
     return (
@@ -71,7 +105,7 @@ export default function PartyDetailPage() {
   return (
     <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 space-y-8">
                 <Card className="flex flex-col overflow-hidden h-full" style={{ borderTop: `4px solid ${party.color}` }}>
                     <CardHeader className="flex flex-row items-start gap-4">
                         {party.logoUrl ? (
@@ -120,6 +154,37 @@ export default function PartyDetailPage() {
                         )}
                     </CardFooter>
                 </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Events</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                         <Tabs defaultValue="upcoming">
+                            <TabsList>
+                                <TabsTrigger value="upcoming">Upcoming ({upcomingEvents.length})</TabsTrigger>
+                                <TabsTrigger value="past">Past ({pastEvents.length})</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="upcoming" className="pt-4">
+                                {upcomingEvents.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {upcomingEvents.map(event => <EventCard key={event.id} event={event} />)}
+                                    </div>
+                                ) : (
+                                    <p className="text-muted-foreground text-sm">No upcoming events scheduled.</p>
+                                )}
+                            </TabsContent>
+                            <TabsContent value="past" className="pt-4">
+                               {pastEvents.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {pastEvents.map(event => <EventCard key={event.id} event={event} />)}
+                                    </div>
+                                ) : (
+                                    <p className="text-muted-foreground text-sm">No past events found.</p>
+                                )}
+                            </TabsContent>
+                        </Tabs>
+                    </CardContent>
+                </Card>
             </div>
              <div className="space-y-8">
                 {leader && (
@@ -151,3 +216,5 @@ export default function PartyDetailPage() {
     </div>
   );
 }
+
+    

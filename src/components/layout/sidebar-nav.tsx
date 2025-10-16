@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, LogIn, LogOut, UserPlus, FilePlus } from 'lucide-react';
+import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, LogIn, LogOut, UserPlus, FilePlus, Calendar } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useUser, useAuth, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -24,7 +24,6 @@ import { ChevronRight } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import type { Election, Party } from '@/lib/types';
 import { collection, query, orderBy, where } from 'firebase/firestore';
-import { SlpLogo, UwpLogo } from '../icons';
 
 
 const mainNavItems = [
@@ -40,6 +39,7 @@ const adminNavItems = [
     { href: '/admin/elections', icon: Vote, label: 'Manage Elections' },
     { href: '/admin/parties', icon: Shield, label: 'Manage Parties' },
     { href: '/admin/candidates', icon: Users, label: 'Manage Candidates' },
+    { href: '/admin/events', icon: Calendar, label: 'Manage Events'},
     { href: '/admin/results', icon: Landmark, label: 'Manage Election Results' },
     { href: '/admin/constituencies', icon: FilePlus, label: 'Manage Constituencies' },
     { href: '/admin/map', icon: Map, label: 'Manage Map' },
@@ -111,18 +111,9 @@ export function SidebarNav() {
   const { user } = useUser();
   const { firestore } = useFirebase();
   const [isResultsOpen, setIsResultsOpen] = useState(pathname.startsWith('/results'));
-  const [isUwpOpen, setIsUwpOpen] = useState(false);
-  const [isSlpOpen, setIsSlpOpen] = useState(false);
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
-
-  const { data: parties, isLoading: loadingParties } = useCollection<Party>(
-    useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore])
-  );
-
-  const uwp = useMemo(() => parties?.find(p => p.acronym === 'UWP'), [parties]);
-  const slp = useMemo(() => parties?.find(p => p.acronym === 'SLP'), [parties]);
 
   const sortedElections = useMemo(() => {
     if (!elections) return [];
@@ -136,9 +127,7 @@ export function SidebarNav() {
 
   useEffect(() => {
     setIsResultsOpen(pathname.startsWith('/results'));
-    if (uwp) setIsUwpOpen(pathname.startsWith(`/parties/${uwp.id}`));
-    if (slp) setIsSlpOpen(pathname.startsWith(`/parties/${slp.id}`));
-  }, [pathname, uwp, slp]);
+  }, [pathname]);
   
   return (
     <Sidebar>
@@ -154,65 +143,20 @@ export function SidebarNav() {
         </Link>
       </SidebarHeader>
       <SidebarMenu>
-        {mainNavItems.map((item) => {
-            if(item.href === '/parties') {
-                return null;
-            }
-            return (
-            <SidebarMenuItem key={item.href}>
-                <Button
-                asChild
-                variant={pathname === item.href ? 'secondary' : 'ghost'}
-                className="w-full justify-start"
-                >
-                <Link href={item.href}>
-                    <item.icon className="mr-2 h-4 w-4" />
-                    {item.label}
-                </Link>
-                </Button>
-            </SidebarMenuItem>
-            )
-        })}
-
-        {slp && (
-            <SidebarMenuItem>
-                 <Collapsible open={isSlpOpen} onOpenChange={setIsSlpOpen}>
-                    <CollapsibleTrigger asChild>
-                         <Button variant={pathname.startsWith(`/parties/${slp.id}`) ? 'secondary' : 'ghost'} className="w-full justify-start" asChild>
-                            <Link href={`/parties/${slp.id}`}>
-                                <SlpLogo className="mr-2 h-4 w-4" />
-                                {slp.name}
-                            </Link>
-                        </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                        <SidebarMenuSub>
-                            {/* Future party-specific links can go here */}
-                        </SidebarMenuSub>
-                    </CollapsibleContent>
-                </Collapsible>
-            </SidebarMenuItem>
-        )}
-
-        {uwp && (
-            <SidebarMenuItem>
-                 <Collapsible open={isUwpOpen} onOpenChange={setIsUwpOpen}>
-                    <CollapsibleTrigger asChild>
-                        <Button variant={pathname.startsWith(`/parties/${uwp.id}`) ? 'secondary' : 'ghost'} className="w-full justify-start" asChild>
-                            <Link href={`/parties/${uwp.id}`}>
-                                <UwpLogo className="mr-2 h-4 w-4" />
-                                {uwp.name}
-                            </Link>
-                        </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                        <SidebarMenuSub>
-                            {/* Future party-specific links can go here */}
-                        </SidebarMenuSub>
-                    </CollapsibleContent>
-                </Collapsible>
-            </SidebarMenuItem>
-        )}
+        {mainNavItems.map((item) => (
+          <SidebarMenuItem key={item.href}>
+            <Button
+              asChild
+              variant={pathname === item.href ? 'secondary' : 'ghost'}
+              className="w-full justify-start"
+            >
+              <Link href={item.href}>
+                <item.icon className="mr-2 h-4 w-4" />
+                {item.label}
+              </Link>
+            </Button>
+          </SidebarMenuItem>
+        ))}
 
         <SidebarMenuItem>
             <Collapsible open={isResultsOpen} onOpenChange={setIsResultsOpen}>
@@ -276,3 +220,5 @@ export function SidebarNav() {
     </Sidebar>
   );
 }
+
+    

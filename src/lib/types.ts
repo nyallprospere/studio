@@ -1,8 +1,4 @@
 
-
-
-
-
 export interface Party {
   id: string;
   name: string;
@@ -57,6 +53,15 @@ export interface Poll {
   }[];
 }
 
+export interface Event {
+  id: string;
+  partyId: string;
+  title: string;
+  date: string; // Stored as ISO string or Firestore Timestamp
+  location: string;
+  description?: string;
+}
+
 export interface Election {
     id: string;
     name: string;
@@ -98,3 +103,5 @@ export interface ElectionYearResult {
 export interface SiteSettings {
     mapUrl?: string;
 }
+
+    
