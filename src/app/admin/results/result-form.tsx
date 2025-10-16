@@ -97,7 +97,7 @@ export function ResultForm({ onSubmit, initialData, onCancel, elections, constit
            form.setValue('registeredVoters', defaultRegisteredVoters);
        }
     }
-  }, [initialData, form, selectedConstituency, watchAllFields.electionId, watchAllFields.constituencyId, votersNotAvailable]);
+  }, [initialData, form, selectedConstituency, watchAllFields.electionId, watchAllFields.constituencyId]);
 
   return (
     <Form {...form}>
