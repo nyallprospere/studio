@@ -1,171 +1,127 @@
 /**
- * @fileoverview Firestore Security Rules for St. Lucia Elections Hub application.
+ * @fileoverview Firestore Security Rules for the St. Lucia Elections Hub application.
  *
  * Core Philosophy:
- * This ruleset provides admin access to all logged-in users. This is suitable for
- * prototyping and internal testing. In a production environment, a more refined
- * role-based access control should be implemented.
+ * This ruleset provides public read access to most data collections, while restricting write access to prevent unauthorized modifications.
  *
  * Data Structure:
- * The Firestore database consists of several top-level collections: 'parties',
- * 'events', 'candidates', 'elections', 'polling_data', 'constituencies',
- * 'election_results', and 'settings'. Each collection stores data related to
- * its respective entity. The 'settings' collection contains single documents
- * for 'pageLayouts' and 'site'.
+ * The database consists of several top-level collections, including `parties`, `events`, `candidates`, `elections`, `polling_data`, `constituencies`, and `election_results`.
+ * There are also singleton documents at `/settings/pageLayouts` and `/settings/site` for global configuration.
  *
  * Key Security Decisions:
- * - All authenticated users are treated as admins and have full read and write
- *   access to all collections. This simplifies development but is not suitable
- *   for production.
- * - List operations are generally allowed to facilitate data retrieval by the
- *   application.
- * - Data validation is minimal, focusing on authorization rather than schema
- *   enforcement, to enable rapid prototyping.
- *
- * Denormalization for Authorization: N/A (Admin access granted to all logged-in users)
- * Structural Segregation: Data is separated into collections based on entity type.
+ * - Public read access is granted for most collections to allow open data consumption.
+ * - Write access is generally denied to prevent unauthorized data modification.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the user is signed in.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Verified Identity.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Grants all logged-in users admin access.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Admin Access for Prototyping.
-     */
-    function isAdmin() {
-      return isSignedIn();
-    }
-
-    /**
-     * @description Rules for the 'parties' collection.
+     * @description Allows public read access to party data and restricts write access.
      * @path /parties/{partyId}
-     * @allow (create) - Any logged-in user can create a party.
-     * @allow (get, list) - Any user can read party data.
-     * @deny (create) - Non logged-in user tries to create a party.
-     * @principle Admin access to all logged-in users.
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Allows public reads, restricts all writes.
      */
     match /parties/{partyId} {
       allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for the 'events' collection.
+     * @description Allows public read access to event data and restricts write access.
      * @path /events/{eventId}
-     * @allow (create) - Any logged-in user can create an event.
-     * @allow (get, list) - Any user can read event data.
-     * @deny (create) - Non logged-in user tries to create an event.
-     * @principle Admin access to all logged-in users.
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Allows public reads, restricts all writes.
      */
     match /events/{eventId} {
       allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for the 'candidates' collection.
+     * @description Allows public read access to candidate data and restricts write access.
      * @path /candidates/{candidateId}
-     * @allow (create) - Any logged-in user can create a candidate.
-     * @allow (get, list) - Any user can read candidate data.
-     * @deny (create) - Non logged-in user tries to create a candidate.
-     * @principle Admin access to all logged-in users.
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Allows public reads, restricts all writes.
      */
     match /candidates/{candidateId} {
       allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for the 'elections' collection.
+     * @description Allows public read access to election data and restricts write access.
      * @path /elections/{electionId}
-     * @allow (create) - Any logged-in user can create an election.
-     * @allow (get, list) - Any user can read election data.
-     * @deny (create) - Non logged-in user tries to create an election.
-     * @principle Admin access to all logged-in users.
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Allows public reads, restricts all writes.
      */
     match /elections/{electionId} {
       allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for the 'polling_data' collection.
+     * @description Allows public read access to polling data and restricts write access.
      * @path /polling_data/{pollingDataId}
-     * @allow (create) - Any logged-in user can create polling data.
-     * @allow (get, list) - Any user can read polling data.
-     * @deny (create) - Non logged-in user tries to create polling data.
-     * @principle Admin access to all logged-in users.
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Allows public reads, restricts all writes.
      */
     match /polling_data/{pollingDataId} {
       allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for the 'constituencies' collection.
+     * @description Allows public read access to constituency data and restricts write access.
      * @path /constituencies/{constituencyId}
-     * @allow (create) - Any logged-in user can create a constituency.
-     * @allow (get, list) - Any user can read constituency data.
-     * @deny (create) - Non logged-in user tries to create a constituency.
-     * @principle Admin access to all logged-in users.
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Allows public reads, restricts all writes.
      */
     match /constituencies/{constituencyId} {
       allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for the 'election_results' collection.
+     * @description Allows public read access to election result data and restricts write access.
      * @path /election_results/{electionResultId}
-     * @allow (create) - Any logged-in user can create election results.
-     * @allow (get, list) - Any user can read election results data.
-     * @deny (create) - Non logged-in user tries to create election results.
-     * @principle Admin access to all logged-in users.
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Allows public reads, restricts all writes.
      */
     match /election_results/{electionResultId} {
       allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if false;
     }
 
-    /**
-     * @description Rules for the 'pageLayouts' document in the 'settings' collection.
+     /**
+     * @description Allows public read access to page layouts data and restricts write access.
      * @path /settings/pageLayouts
-     * @allow (get) - Any user can read page layout settings.
-     * @allow (update) - Only logged-in admins can update page layout settings.
-     * @deny (create, delete) - No one can create or delete the pageLayouts document.
-     * @principle Admin access to all logged-in users.
+     * @allow get: if true;
+     * @deny list, create, update, delete: if false;
+     * @principle Allows public reads, restricts all writes.
      */
     match /settings/pageLayouts {
       allow get: if true;
-      allow create, update, delete: if isAdmin();
+      allow list, create, update, delete: if false;
     }
 
     /**
-     * @description Rules for the 'site' document in the 'settings' collection.
+     * @description Allows public read access to site settings data and restricts write access.
      * @path /settings/site
-     * @allow (get) - Any user can read site settings.
-     * @allow (update) - Only logged-in admins can update site settings.
-     * @deny (create, delete) - No one can create or delete the site document.
-     * @principle Admin access to all logged-in users.
+     * @allow get: if true;
+     * @deny list, create, update, delete: if false;
+     * @principle Allows public reads, restricts all writes.
      */
     match /settings/site {
       allow get: if true;
-      allow create, update, delete: if isAdmin();
+      allow list, create, update, delete: if false;
     }
   }
 }
