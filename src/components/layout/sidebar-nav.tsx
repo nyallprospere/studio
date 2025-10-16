@@ -223,7 +223,13 @@ export function SidebarNav() {
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <SidebarMenuSub>
-                            {/* Blank sub-category */}
+                           <SidebarMenuItem>
+                                <SidebarMenuSubButton asChild isActive={pathname.startsWith('/candidates')}>
+                                    <Link href="/candidates#uwp-candidates">
+                                        Candidates
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuItem>
                         </SidebarMenuSub>
                     </CollapsibleContent>
                   </Collapsible>
@@ -248,7 +254,13 @@ export function SidebarNav() {
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <SidebarMenuSub>
-                            {/* Blank sub-category */}
+                            <SidebarMenuItem>
+                                <SidebarMenuSubButton asChild isActive={pathname.startsWith('/candidates')}>
+                                    <Link href="/candidates#slp-candidates">
+                                        Candidates
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuItem>
                         </SidebarMenuSub>
                     </CollapsibleContent>
                   </Collapsible>

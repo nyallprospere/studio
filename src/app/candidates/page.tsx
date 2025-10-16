@@ -165,7 +165,7 @@ export default function CandidatesPage() {
       />
 
       <div className="space-y-12">
-        <section>
+        <section id="uwp-candidates">
           <h2 className="text-2xl font-headline font-bold text-primary mb-6">UWP Candidates</h2>
           {loading ? (
             <CandidateCardSkeleton />
@@ -200,7 +200,7 @@ export default function CandidatesPage() {
           </div>
         </section>
 
-        <section>
+        <section id="slp-candidates">
           <h2 className="text-2xl font-headline font-bold text-primary mb-6">SLP Candidates</h2>
           {loading ? (
             <CandidateCardSkeleton />
