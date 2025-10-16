@@ -75,14 +75,12 @@ function SortableSection({ id, children, span, onResize }: { id: SectionId, chil
       transition,
     };
   
-    const gridSpanClass = `md:col-span-${span}`;
-
     if (!user) {
-        return <div className={cn("w-full", gridSpanClass)}>{children}</div>;
+        return <div className={cn("w-full", `md:col-span-${span}`)}>{children}</div>;
     }
   
     return (
-      <div ref={setNodeRef} style={style} className={cn("relative group/section w-full", gridSpanClass)}>
+      <div ref={setNodeRef} style={style} className={cn("relative group/section w-full", `md:col-span-${span}`)}>
         <div className="absolute top-2 right-2 z-10 opacity-0 group-hover/section:opacity-100 transition-opacity flex items-center gap-1">
             <Button size="icon" variant="secondary" className="h-7 w-7" onClick={() => onResize(id, 'compress')}><Minus className="h-4 w-4" /></Button>
             <Button size="icon" variant="secondary" className="h-7 w-7" onClick={() => onResize(id, 'expand')}><Plus className="h-4 w-4" /></Button>
@@ -168,10 +166,10 @@ export default function ConstituenciesPage() {
             
             if (direction === 'expand' && currentSpan < 2) {
                 newSpans[id] = currentSpan + 1;
-                newSpans[otherId] = newSpans[otherId] - 1;
+                newSpans[otherId] = Math.max(1, newSpans[otherId] - 1);
             } else if (direction === 'compress' && currentSpan > 1) {
                 newSpans[id] = currentSpan - 1;
-                newSpans[otherId] = newSpans[otherId] + 1;
+                newSpans[otherId] = Math.min(2, newSpans[otherId] + 1);
             }
             
             return newSpans;
@@ -329,5 +327,3 @@ export default function ConstituenciesPage() {
     </div>
   );
 }
-
-    
