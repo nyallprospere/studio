@@ -1,18 +1,35 @@
 /**
- * @fileOverview Firestore Security Rules for the St. Lucia Elections Hub application.
+ * @fileoverview Firestore Security Rules for the St. Lucia Elections Hub application.
  *
  * Core Philosophy:
- * This ruleset provides public read access to all data while restricting write access to prevent unauthorized modifications.
- * This approach prioritizes ease of data access for all users while ensuring data integrity.
+ * This ruleset prioritizes public read access for most data while restricting write access to authorized users.
+ * It emphasizes simplicity and avoids complex data validation in favor of rapid prototyping.
  *
  * Data Structure:
- * The Firestore database consists of several top-level collections: `parties`, `events`, `candidates`, `elections`, `polling_data`, `constituencies`, and `election_results`.
- * There are also two singleton documents under the `/settings` collection, `pageLayouts` and `site`.
+ * The Firestore database consists of several top-level collections:
+ * - /parties/{partyId}: Stores information about political parties.
+ * - /events/{eventId}: Stores information about political events.
+ * - /candidates/{candidateId}: Stores information about candidates.
+ * - /elections/{electionId}: Stores information about elections.
+ * - /polling_data/{pollingDataId}: Stores polling data for elections.
+ * - /constituencies/{constituencyId}: Stores information about constituencies.
+ * - /election_results/{electionResultId}: Stores election results.
+ * - /settings/pageLayouts: Stores user-defined layouts for various pages.
+ * - /settings/site: Stores global site settings.
  *
  * Key Security Decisions:
- * - Public Read Access: All `get` and `list` operations are allowed for all collections. This simplifies data retrieval for the application.
- * - Restricted Write Access: All `create`, `update`, and `delete` operations are denied. This prevents unauthorized users from modifying the data.
- * - Singleton Documents: The `pageLayouts` and `site` documents under the `/settings` collection follow the same public read and restricted write access pattern.
+ * - Public read access is granted to all collections to facilitate open data access.
+ * - Write access is denied to all users unless specific authorization logic is added later.
+ * - Data validation is minimal to allow for flexible data shapes during prototyping.
+ * - Listing of collections is generally allowed for all users.
+ *
+ * Denormalization for Authorization:
+ * This ruleset avoids `get()` calls by assuming that any necessary authorization data (e.g., ownership, roles)
+ * will be denormalized directly onto the documents being secured.
+ *
+ * Structural Segregation:
+ * Publicly readable data (e.g., candidate profiles, election results) is stored in top-level collections
+ * to avoid the need for complex filtering based on public/private flags.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -21,109 +38,154 @@ service cloud.firestore {
     /**
      * @description Grants public read access to party data and restricts write access.
      * @path /parties/{partyId}
-     * @allow (get, list) Anyone can read party data.
-     * @deny (create, update, delete) No one can modify party data.
-     * @principle Allows public read access while restricting write access.
+     * @allow get, list: if true;
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @principle Allows public read access while restricting all write access to parties.
      */
     match /parties/{partyId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
      * @description Grants public read access to event data and restricts write access.
      * @path /events/{eventId}
-     * @allow (get, list) Anyone can read event data.
-     * @deny (create, update, delete) No one can modify event data.
-     * @principle Allows public read access while restricting write access.
+     * @allow get, list: if true;
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @principle Allows public read access while restricting all write access to events.
      */
     match /events/{eventId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
      * @description Grants public read access to candidate data and restricts write access.
      * @path /candidates/{candidateId}
-     * @allow (get, list) Anyone can read candidate data.
-     * @deny (create, update, delete) No one can modify candidate data.
-     * @principle Allows public read access while restricting write access.
+     * @allow get, list: if true;
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @principle Allows public read access while restricting all write access to candidates.
      */
     match /candidates/{candidateId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
      * @description Grants public read access to election data and restricts write access.
      * @path /elections/{electionId}
-     * @allow (get, list) Anyone can read election data.
-     * @deny (create, update, delete) No one can modify election data.
-     * @principle Allows public read access while restricting write access.
+     * @allow get, list: if true;
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @principle Allows public read access while restricting all write access to elections.
      */
     match /elections/{electionId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
      * @description Grants public read access to polling data and restricts write access.
      * @path /polling_data/{pollingDataId}
-     * @allow (get, list) Anyone can read polling data.
-     * @deny (create, update, delete) No one can modify polling data.
-     * @principle Allows public read access while restricting write access.
+     * @allow get, list: if true;
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @principle Allows public read access while restricting all write access to polling data.
      */
     match /polling_data/{pollingDataId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
      * @description Grants public read access to constituency data and restricts write access.
      * @path /constituencies/{constituencyId}
-     * @allow (get, list) Anyone can read constituency data.
-     * @deny (create, update, delete) No one can modify constituency data.
-     * @principle Allows public read access while restricting write access.
+     * @allow get, list: if true;
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @principle Allows public read access while restricting all write access to constituencies.
      */
     match /constituencies/{constituencyId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
      * @description Grants public read access to election result data and restricts write access.
      * @path /election_results/{electionResultId}
-     * @allow (get, list) Anyone can read election result data.
-     * @deny (create, update, delete) No one can modify election result data.
-     * @principle Allows public read access while restricting write access.
+     * @allow get, list: if true;
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @principle Allows public read access while restricting all write access to election results.
      */
     match /election_results/{electionResultId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
-    }
-
-     /**
-      * @description Grants public read access to page layouts settings and restricts write access.
-      * @path /settings/pageLayouts
-      * @allow (get, list) Anyone can read page layouts settings.
-      * @deny (create, update, delete) No one can modify page layouts settings.
-      * @principle Allows public read access while restricting write access.
-      */
-    match /settings/pageLayouts {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Grants public read access to site settings and restricts write access.
+     * @description Grants public read access to page layouts data and restricts write access.
+     * @path /settings/pageLayouts
+     * @allow get, list: if true;
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @principle Allows public read access while restricting all write access to page layouts.
+     */
+    match /settings/pageLayouts {
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Grants public read access to site settings data and restricts write access.
      * @path /settings/site
-     * @allow (get, list) Anyone can read site settings.
-     * @deny (create, update, delete) No one can modify site settings.
-     * @principle Allows public read access while restricting write access.
+     * @allow get, list: if true;
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @principle Allows public read access while restricting all write access to site settings.
      */
     match /settings/site {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
   }
 }
