@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -175,7 +174,7 @@ export default function CandidatesPage() {
           {featuredUwpCandidates.length > 0 && (
             <div className="mb-8">
                 <h3 className="text-center text-lg font-semibold text-muted-foreground uppercase tracking-wider mb-2">Deputy Leaders</h3>
-                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                 <div className="grid gap-6 md:grid-cols-2 justify-center max-w-4xl mx-auto">
                     {loading ? (
                     Array.from({ length: 2 }).map((_, i) => <CandidateCardSkeleton key={i} />)
                     ) : featuredUwpCandidates.length > 0 ? (
@@ -210,7 +209,7 @@ export default function CandidatesPage() {
           {featuredSlpCandidates.length > 0 && (
             <div className="mb-8">
                 <h3 className="text-center text-lg font-semibold text-muted-foreground uppercase tracking-wider mb-2">Deputy Leaders</h3>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid gap-6 md:grid-cols-2 justify-center max-w-4xl mx-auto">
                     {loading ? (
                     Array.from({ length: 2 }).map((_, i) => <CandidateCardSkeleton key={i} />)
                     ) : featuredSlpCandidates.length > 0 ? (
