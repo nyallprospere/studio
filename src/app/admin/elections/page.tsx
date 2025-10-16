@@ -1,8 +1,9 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
+import { useCollection, useFirebase, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy, CollectionReference } from 'firebase/firestore';
 import type { Election } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -39,42 +40,68 @@ export default function AdminElectionsPage() {
         if (a.year !== b.year) {
             return b.year - a.year;
         }
-        // For elections in the same year, sort by name descending to get "April 30" before "April 6"
         return b.name.localeCompare(a.name);
     });
   }, [elections]);
 
   const handleFormSubmit = async (values: any) => {
-    try {
-      const electionData = { ...values };
-
-      if (editingElection) {
-        const electionDoc = doc(firestore, 'elections', editingElection.id);
-        await updateDoc(electionDoc, electionData);
-        toast({ title: "Election Updated", description: `The ${electionData.name} has been successfully updated.` });
-      } else {
-        const electionsCollection = collection(firestore, 'elections');
-        await addDoc(electionsCollection, electionData);
-        toast({ title: "Election Added", description: `The ${electionData.name} has been successfully added.` });
-      }
-    } catch (error) {
-      console.error("Error saving election: ", error);
-      toast({ variant: "destructive", title: "Error", description: "Failed to save election. Check console for details." });
-    } finally {
-      setIsFormOpen(false);
-      setEditingElection(null);
+    if (!firestore) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available.' });
+      return;
     }
+    const electionData = { ...values };
+
+    if (editingElection) {
+      const electionDoc = doc(firestore, 'elections', editingElection.id);
+      updateDoc(electionDoc, electionData)
+        .then(() => {
+          toast({ title: "Election Updated", description: `The ${electionData.name} has been successfully updated.` });
+        })
+        .catch(error => {
+          const contextualError = new FirestorePermissionError({
+            path: electionDoc.path,
+            operation: 'update',
+            requestResourceData: electionData,
+          });
+          errorEmitter.emit('permission-error', contextualError);
+        });
+    } else {
+      const electionsCollection = collection(firestore, 'elections');
+      addDoc(electionsCollection, electionData)
+        .then(() => {
+          toast({ title: "Election Added", description: `The ${electionData.name} has been successfully added.` });
+        })
+        .catch(error => {
+          const contextualError = new FirestorePermissionError({
+            path: (electionsCollection as CollectionReference).path,
+            operation: 'create',
+            requestResourceData: electionData,
+          });
+          errorEmitter.emit('permission-error', contextualError);
+        });
+    }
+    
+    setIsFormOpen(false);
+    setEditingElection(null);
   };
 
   const handleDelete = async (election: Election) => {
-    try {
-      const electionDoc = doc(firestore, 'elections', election.id);
-      await deleteDoc(electionDoc);
-      toast({ title: "Election Deleted", description: `The ${election.name} has been deleted.` });
-    } catch (error) {
-        console.error("Error deleting election: ", error);
-        toast({ variant: "destructive", title: "Error", description: "Failed to delete election." });
+    if (!firestore) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available.' });
+      return;
     }
+    const electionDoc = doc(firestore, 'elections', election.id);
+    deleteDoc(electionDoc)
+      .then(() => {
+        toast({ title: "Election Deleted", description: `The ${election.name} has been deleted.` });
+      })
+      .catch(error => {
+        const contextualError = new FirestorePermissionError({
+          path: electionDoc.path,
+          operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', contextualError);
+      });
   };
 
   return (
