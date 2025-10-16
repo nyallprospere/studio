@@ -27,6 +27,7 @@ import {
 import { uploadFile, deleteFile } from '@/firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 export default function AdminCandidatesPage() {
@@ -248,59 +249,63 @@ export default function AdminCandidatesPage() {
                 <p className="text-sm mt-2">Please check the Firestore security rules and console for more details.</p>
              </div>
           ) : (
-            <div className="space-y-4">
-              {filteredCandidates && filteredCandidates.length > 0 ? (
-                filteredCandidates.map((candidate) => (
-                  <div key={candidate.id} className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50">
-                    <div className="flex items-center gap-4">
-                      {candidate.imageUrl ? (
-                        <Image src={candidate.imageUrl} alt={`${candidate.firstName} ${candidate.lastName}`} width={48} height={48} className="rounded-full object-cover" />
-                      ) : (
-                        <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                            <UserSquare className="h-6 w-6 text-muted-foreground" />
+            <ScrollArea className="h-[640px] pr-4">
+                <div className="space-y-4">
+                {filteredCandidates && filteredCandidates.length > 0 ? (
+                    filteredCandidates.map((candidate) => (
+                    <div key={candidate.id} className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50">
+                        <div className="flex items-center gap-4">
+                        {candidate.imageUrl ? (
+                            <Image src={candidate.imageUrl} alt={`${candidate.firstName} ${candidate.lastName}`} width={48} height={48} className="rounded-full object-cover" />
+                        ) : (
+                            <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                                <UserSquare className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                        )}
+                        <div>
+                            <p className="font-semibold">{candidate.firstName} {candidate.lastName}</p>
+                            <p className="text-sm text-muted-foreground">
+                            {getPartyName(candidate.partyId)} &bull; {getConstituencyName(candidate.constituencyId)}
+                            {candidate.isIncumbent && <span className="font-bold text-primary"> (Inc.)</span>}
+                            </p>
                         </div>
-                      )}
-                      <div>
-                        <p className="font-semibold">{candidate.firstName} {candidate.lastName}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {getPartyName(candidate.partyId)} &bull; {getConstituencyName(candidate.constituencyId)}
-                          {candidate.isIncumbent && <span className="font-bold text-primary"> (Inc.)</span>}
-                        </p>
-                      </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => { setEditingCandidate(candidate); setIsFormOpen(true);}}>
+                            <Pencil className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will permanently delete the candidate "{candidate.firstName} {candidate.lastName}" and all associated data. This action cannot be undone.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(candidate)}>Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                       <Button variant="ghost" size="icon" onClick={() => { setEditingCandidate(candidate); setIsFormOpen(true);}}>
-                           <Pencil className="h-4 w-4" />
-                       </Button>
-                       <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will permanently delete the candidate "{candidate.firstName} {candidate.lastName}" and all associated data. This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(candidate)}>Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-center text-muted-foreground py-8">No candidates match the current filter.</p>
-              )}
-            </div>
+                    ))
+                ) : (
+                    <p className="text-center text-muted-foreground py-8">No candidates match the current filter.</p>
+                )}
+                </div>
+            </ScrollArea>
           )}
         </CardContent>
       </Card>
     </div>
   );
 }
+
+    
