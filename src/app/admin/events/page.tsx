@@ -122,12 +122,15 @@ export default function AdminEventsPage() {
           ) : (
             <div className="space-y-4">
               {events && events.length > 0 ? (
-                events.map((event) => (
+                events.map((event) => {
+                  // Firestore timestamps need to be converted to JS Dates
+                  const eventDate = (event.date as unknown as Timestamp)?.toDate ? (event.date as unknown as Timestamp).toDate() : new Date(event.date);
+                  return (
                   <div key={event.id} className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50">
                     <div>
                       <p className="font-semibold">{event.title}</p>
                       <p className="text-sm text-muted-foreground">
-                        {getPartyName(event.partyId)} &bull; {format(new Date(event.date), "PPP")} &bull; {event.location}
+                        {getPartyName(event.partyId)} &bull; {format(eventDate, "PPP")} &bull; {event.location}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -155,7 +158,8 @@ export default function AdminEventsPage() {
                         </AlertDialog>
                     </div>
                   </div>
-                ))
+                  );
+                })
               ) : (
                 <p className="text-center text-muted-foreground py-8">No events have been added yet.</p>
               )}
@@ -166,5 +170,3 @@ export default function AdminEventsPage() {
     </div>
   );
 }
-
-    
