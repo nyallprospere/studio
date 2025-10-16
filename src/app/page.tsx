@@ -1,10 +1,11 @@
+
 'use client';
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { useState, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Users, BarChart3, TrendingUp, Landmark, Shield, Vote, Map, GripVertical, FilePlus, Settings } from 'lucide-react';
+import { Users, BarChart3, TrendingUp, Landmark, Shield, Vote, Map, GripVertical, FilePlus, Settings, Calendar } from 'lucide-react';
 import Countdown from '@/components/countdown';
 import { PageHeader } from '@/components/page-header';
 import {
@@ -18,11 +19,13 @@ import {
 import {
   arrayMove,
   SortableContext,
-  useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { useUser } from '@/firebase';
+import { useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, Timestamp } from 'firebase/firestore';
+import type { Event, Party } from '@/lib/types';
+import { EventCard } from '@/components/event-card';
+import { SortableFeatureCard } from '@/components/sortable-feature-card';
 
 const initialKeyFeatures = [
     {
@@ -73,59 +76,51 @@ const adminSections = [
     { id: 'admin-elections', title: 'Manage Elections', href: '/admin/elections', icon: Vote },
     { id: 'admin-parties', title: 'Manage Parties', href: '/admin/parties', icon: Shield },
     { id: 'admin-candidates', title: 'Manage Candidates', href: '/admin/candidates', icon: Users },
+    { id: 'admin-events', title: 'Manage Events', href: '/admin/events', icon: Calendar },
     { id: 'admin-results', title: 'Manage Election Results', href: '/admin/results', icon: Landmark },
     { id: 'admin-constituencies', title: 'Manage Constituencies', href: '/admin/constituencies', icon: FilePlus },
     { id: 'admin-map', title: 'Manage Map', href: '/admin/map', icon: Map },
     { id: 'admin-settings', title: 'Manage Settings', href: '/admin/settings', icon: Settings },
 ];
 
-
-function SortableFeatureCard({ feature }: { feature: typeof initialKeyFeatures[0] }) {
-  const {
-      attributes,
-      listeners,
-      setNodeRef,
-      transform,
-      transition,
-  } = useSortable({ id: feature.id });
-
-  const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-  };
-
-  return (
-      <div ref={setNodeRef} style={style} {...attributes}>
-        <Card className="flex flex-col hover:shadow-xl transition-shadow duration-300 h-full">
-            <CardHeader className="flex flex-row items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <div {...listeners} className="cursor-grab p-2">
-                        <GripVertical className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                     <div className="flex items-center gap-4">
-                        <feature.icon className="w-8 h-8 text-primary" />
-                        <CardTitle className="font-headline text-xl">{feature.title}</CardTitle>
-                    </div>
-                </div>
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <p className="text-muted-foreground">{feature.description}</p>
-            </CardContent>
-            <CardFooter>
-              <Button asChild className="w-full bg-primary hover:bg-primary/90">
-                <Link href={feature.href}>View Details</Link>
-              </Button>
-            </CardFooter>
-          </Card>
-      </div>
-  );
-}
-
-
 export default function Home() {
   const { user } = useUser();
   const electionDate = new Date('2026-07-26T00:00:00');
   const [keyFeatures, setKeyFeatures] = useState(initialKeyFeatures);
+  
+  const { firestore } = useFirebase();
+  const [allEventsViewMode, setAllEventsViewMode] = useState<'upcoming' | 'past'>('upcoming');
+  
+  const eventsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'events'), orderBy('date', 'desc')) : null, [firestore]);
+  const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
+  
+  const { data: events, isLoading: loadingEvents } = useCollection<Event>(eventsQuery);
+  const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
+  
+  const getPartyName = (partyId: string) => parties?.find(p => p.id === partyId)?.name || 'N/A';
+
+  const filterAndSortEvents = (events: Event[], mode: 'upcoming' | 'past') => {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0); // Set to start of today
+
+      const filtered = events.filter(event => {
+          const eventDate = (event.date as unknown as Timestamp)?.toDate ? (event.date as unknown as Timestamp).toDate() : new Date(event.date);
+          return mode === 'upcoming' ? eventDate >= now : eventDate < now;
+      });
+
+      // Upcoming events should be sorted ascending (soonest first)
+      const sorted = filtered.sort((a, b) => {
+          const dateA = (a.date as unknown as Timestamp)?.toDate ? (a.date as unknown as Timestamp).toDate() : new Date(a.date);
+          const dateB = (b.date as unknown as Timestamp)?.toDate ? (b.date as unknown as Timestamp).toDate() : new Date(b.date);
+          return mode === 'upcoming' 
+            ? dateA.getTime() - dateB.getTime() 
+            : dateB.getTime() - dateA.getTime();
+      });
+      
+      return sorted;
+  }
+
+  const visibleAllEvents = useMemo(() => filterAndSortEvents(events || [], allEventsViewMode), [events, allEventsViewMode]);
 
   const sensors = useSensors(
     useSensor(PointerSensor)
@@ -178,6 +173,35 @@ export default function Home() {
             </div>
         </SortableContext>
       </DndContext>
+      
+       <div className="mt-12">
+            <Card>
+                <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <CardTitle>All Events</CardTitle>
+                            <CardDescription>All political events.</CardDescription>
+                        </div>
+                         <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
+                            <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'secondary' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')}>Upcoming</Button>
+                            <Button size="sm" variant={allEventsViewMode === 'past' ? 'secondary' : 'ghost'} onClick={() => setAllEventsViewMode('past')}>Past</Button>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                    {loadingEvents || loadingParties ? <p>Loading events...</p> : visibleAllEvents.length > 0 ? (
+                        visibleAllEvents.map((event) => (
+                           <EventCard key={event.id} event={event} partyName={getPartyName(event.partyId)} />
+                        ))
+                    ) : (
+                        <p className="text-center text-muted-foreground py-8">No {allEventsViewMode} events found.</p>
+                    )}
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+
 
       {user && (
           <div className="mt-12">
@@ -228,3 +252,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
