@@ -22,7 +22,7 @@ import { useRouter } from 'next/navigation';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronRight } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
-import type { Election, Party } from '@/lib/types';
+import type { Election, Party, Candidate } from '@/lib/types';
 import { collection, query, orderBy, where } from 'firebase/firestore';
 import { SlpLogo, UwpLogo } from '../icons';
 
@@ -123,6 +123,13 @@ export function SidebarNav() {
   const uwpParty = useMemo(() => parties?.find(p => p.acronym === 'UWP'), [parties]);
   const slpParty = useMemo(() => parties?.find(p => p.acronym === 'SLP'), [parties]);
 
+  const uwpCandidatesQuery = useMemoFirebase(() => uwpParty ? query(collection(firestore, 'candidates'), where('partyId', '==', uwpParty.id)) : null, [uwpParty]);
+  const { data: uwpCandidates, isLoading: loadingUwpCandidates } = useCollection<Candidate>(uwpCandidatesQuery);
+
+  const slpCandidatesQuery = useMemoFirebase(() => slpParty ? query(collection(firestore, 'candidates'), where('partyId', '==', slpParty.id)) : null, [slpParty]);
+  const { data: slpCandidates, isLoading: loadingSlpCandidates } = useCollection<Candidate>(slpCandidatesQuery);
+
+
   const sortedElections = useMemo(() => {
     if (!elections) return [];
     return [...elections].sort((a, b) => {
@@ -135,9 +142,9 @@ export function SidebarNav() {
 
   useEffect(() => {
     setIsResultsOpen(pathname.startsWith('/results'));
-    if (uwpParty) setIsUwpOpen(pathname.includes(uwpParty.id));
-    if (slpParty) setIsSlpOpen(pathname.includes(slpParty.id));
-  }, [pathname, uwpParty, slpParty]);
+    if (uwpParty) setIsUwpOpen(pathname.startsWith(`/parties/${uwpParty.id}`) || uwpCandidates?.some(c => pathname.startsWith(`/candidates/${c.id}`)) || false);
+    if (slpParty) setIsSlpOpen(pathname.startsWith(`/parties/${slpParty.id}`) || slpCandidates?.some(c => pathname.startsWith(`/candidates/${c.id}`)) || false);
+  }, [pathname, uwpParty, slpParty, uwpCandidates, slpCandidates]);
   
   return (
     <Sidebar>
@@ -209,7 +216,20 @@ export function SidebarNav() {
                         </Button>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                        {/* Sub-menu items for UWP can go here */}
+                        <SidebarMenuSub>
+                             {loadingUwpCandidates ? <p className="p-2 text-xs text-muted-foreground">Loading...</p> : 
+                             uwpCandidates && uwpCandidates.length > 0 ?
+                             uwpCandidates.map(c => (
+                                 <SidebarMenuItem key={c.id}>
+                                     <SidebarMenuSubButton asChild isActive={pathname === `/candidates/${c.id}`}>
+                                         <Link href={`/candidates/${c.id}`}>
+                                             {c.firstName} {c.lastName}
+                                         </Link>
+                                     </SidebarMenuSubButton>
+                                 </SidebarMenuItem>
+                             )) : <p className="p-2 text-xs text-muted-foreground">No candidates found.</p>
+                             }
+                        </SidebarMenuSub>
                     </CollapsibleContent>
                 </Collapsible>
             </SidebarMenuItem>
@@ -229,7 +249,20 @@ export function SidebarNav() {
                         </Button>
                     </CollapsibleTrigger>
                      <CollapsibleContent>
-                        {/* Sub-menu items for SLP can go here */}
+                        <SidebarMenuSub>
+                             {loadingSlpCandidates ? <p className="p-2 text-xs text-muted-foreground">Loading...</p> : 
+                             slpCandidates && slpCandidates.length > 0 ?
+                             slpCandidates.map(c => (
+                                 <SidebarMenuItem key={c.id}>
+                                     <SidebarMenuSubButton asChild isActive={pathname === `/candidates/${c.id}`}>
+                                         <Link href={`/candidates/${c.id}`}>
+                                             {c.firstName} {c.lastName}
+                                         </Link>
+                                     </SidebarMenuSubButton>
+                                 </SidebarMenuItem>
+                             )) : <p className="p-2 text-xs text-muted-foreground">No candidates found.</p>
+                             }
+                        </SidebarMenuSub>
                     </CollapsibleContent>
                 </Collapsible>
             </SidebarMenuItem>
@@ -270,3 +303,5 @@ export function SidebarNav() {
     </Sidebar>
   );
 }
+
+    
