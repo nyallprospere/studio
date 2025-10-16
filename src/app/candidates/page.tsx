@@ -172,13 +172,18 @@ export default function CandidatesPage() {
               </div>
             </div>
           ) : null}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 max-w-4xl mx-auto mb-8">
-            {loading ? (
-              Array.from({ length: 2 }).map((_, i) => <CandidateCardSkeleton key={i} />)
-            ) : featuredUwpCandidates.length > 0 ? (
-              featuredUwpCandidates.map((candidate) => <CandidateCard key={candidate.id} candidate={candidate} />)
-            ) : null}
-          </div>
+          {featuredUwpCandidates.length > 0 && (
+            <div className="mb-8">
+                <h3 className="text-center text-lg font-semibold text-muted-foreground uppercase tracking-wider mb-2">Deputy Leaders</h3>
+                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {loading ? (
+                    Array.from({ length: 2 }).map((_, i) => <CandidateCardSkeleton key={i} />)
+                    ) : featuredUwpCandidates.length > 0 ? (
+                    featuredUwpCandidates.map((candidate) => <CandidateCard key={candidate.id} candidate={candidate} />)
+                    ) : null}
+                </div>
+            </div>
+          )}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => <CandidateCardSkeleton key={i} />)
@@ -202,13 +207,18 @@ export default function CandidatesPage() {
               </div>
             </div>
           ) : null}
-           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 max-w-4xl mx-auto mb-8">
-            {loading ? (
-              Array.from({ length: 2 }).map((_, i) => <CandidateCardSkeleton key={i} />)
-            ) : featuredSlpCandidates.length > 0 ? (
-              featuredSlpCandidates.map((candidate) => <CandidateCard key={candidate.id} candidate={candidate} />)
-            ) : null}
-          </div>
+          {featuredSlpCandidates.length > 0 && (
+            <div className="mb-8">
+                <h3 className="text-center text-lg font-semibold text-muted-foreground uppercase tracking-wider mb-2">Deputy Leaders</h3>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {loading ? (
+                    Array.from({ length: 2 }).map((_, i) => <CandidateCardSkeleton key={i} />)
+                    ) : featuredSlpCandidates.length > 0 ? (
+                    featuredSlpCandidates.map((candidate) => <CandidateCard key={candidate.id} candidate={candidate} />)
+                    ) : null}
+                </div>
+            </div>
+          )}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => <CandidateCardSkeleton key={i} />)
@@ -223,4 +233,3 @@ export default function CandidatesPage() {
     </div>
   );
 }
-
