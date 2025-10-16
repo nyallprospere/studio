@@ -1,4 +1,5 @@
 
+
 export interface Party {
   id: string;
   name: string;
@@ -17,6 +18,7 @@ export interface Candidate {
   id: string;
   firstName: string;
   lastName: string;
+  name: string; // Combined for simplicity
   partyId: string;
   constituencyId: string;
   bio: string;
@@ -58,7 +60,7 @@ export interface Election {
 }
 
 export interface ElectionResult {
-  id: string;
+  id:string;
   electionId: string;
   constituencyId: string;
   partyId: string;
@@ -84,4 +86,8 @@ export interface ElectionYearResult {
       votes: number;
       isWinner: boolean;
   }[];
+}
+
+export interface SiteSettings {
+    mapUrl?: string;
 }
