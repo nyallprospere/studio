@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -103,9 +102,28 @@ export default function CandidatesPage() {
     const uwp = parties.find(p => p.acronym === 'UWP');
     const slp = parties.find(p => p.acronym === 'SLP');
     
+    const getSortOrder = (candidate: Candidate, partyAcronym: 'UWP' | 'SLP') => {
+      const name = `${candidate.firstName} ${candidate.lastName}`;
+      if (candidate.isPartyLeader) return 0;
+
+      if (partyAcronym === 'UWP') {
+        if (name === 'Guy Joseph') return 1;
+        if (name === 'Dominic Fedee') return 2;
+      }
+      if (partyAcronym === 'SLP') {
+        if (name === 'Ernest Hilaire') return 1;
+        if (name === 'Shawn Edward') return 2;
+      }
+      return 3;
+    };
+    
     return {
-      uwpCandidates: candidates.filter(c => c.partyId === uwp?.id),
-      slpCandidates: candidates.filter(c => c.partyId === slp?.id),
+      uwpCandidates: candidates
+        .filter(c => c.partyId === uwp?.id)
+        .sort((a,b) => getSortOrder(a, 'UWP') - getSortOrder(b, 'UWP')),
+      slpCandidates: candidates
+        .filter(c => c.partyId === slp?.id)
+        .sort((a,b) => getSortOrder(a, 'SLP') - getSortOrder(b, 'SLP')),
     };
   }, [candidates, parties]);
 
