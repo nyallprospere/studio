@@ -94,7 +94,9 @@ export default function ConstituenciesPage() {
     const [seatCountDescription, setSeatCountDescription] = useState('Current political leaning of the 17 constituencies.');
     
     const [isEditingPageTitle, setIsEditingPageTitle] = useState(false);
+    const [isEditingPageDescription, setIsEditingPageDescription] = useState(false);
     const [isEditingSeatCountTitle, setIsEditingSeatCountTitle] = useState(false);
+    const [isEditingSeatCountDescription, setIsEditingSeatCountDescription] = useState(false);
 
     const [sections, setSections] = useState<SectionId[]>(['map', 'seatCount']);
     const [sectionLayout, setSectionLayout] = useState<SectionLayout>({
@@ -180,7 +182,14 @@ export default function ConstituenciesPage() {
                             {seatCountTitle}
                         </CardTitle>
                     )}
-                    <CardDescription>{seatCountDescription}</CardDescription>
+                    {isEditingSeatCountDescription && user ? (
+                        <div className="flex items-center gap-2">
+                           <Input value={seatCountDescription} onChange={(e) => setSeatCountDescription(e.target.value)} />
+                           <Button size="sm" onClick={() => setIsEditingSeatCountDescription(false)}>Save</Button>
+                        </div>
+                    ) : (
+                        <CardDescription onClick={() => user && setIsEditingSeatCountDescription(true)}>{seatCountDescription}</CardDescription>
+                    )}
                   </CardHeader>
                   <CardContent className="flex flex-col items-center">
                      <ChartContainer config={chartConfig} className="h-64 w-full">
@@ -230,18 +239,29 @@ export default function ConstituenciesPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-        <div className="mb-8" onClick={() => user && setIsEditingPageTitle(true)}>
-            {isEditingPageTitle && user ? (
-                 <div className="flex items-center gap-2 max-w-lg">
-                    <Input value={pageTitle} onChange={e => setPageTitle(e.target.value)} className="text-3xl md:text-4xl font-bold tracking-tight font-headline" />
-                    <Button onClick={(e) => {e.stopPropagation(); setIsEditingPageTitle(false);}}>Save</Button>
-                </div>
-            ) : (
-                <h1 className="text-3xl font-bold tracking-tight font-headline text-primary md:text-4xl">
-                    {pageTitle}
-                </h1>
-            )}
-            <p className="mt-2 text-lg text-muted-foreground">{pageDescription}</p>
+        <div className="mb-8">
+            <div onClick={() => user && setIsEditingPageTitle(true)}>
+                {isEditingPageTitle && user ? (
+                     <div className="flex items-center gap-2 max-w-lg">
+                        <Input value={pageTitle} onChange={e => setPageTitle(e.target.value)} className="text-3xl md:text-4xl font-bold tracking-tight font-headline" />
+                        <Button onClick={(e) => {e.stopPropagation(); setIsEditingPageTitle(false);}}>Save</Button>
+                    </div>
+                ) : (
+                    <h1 className="text-3xl font-bold tracking-tight font-headline text-primary md:text-4xl">
+                        {pageTitle}
+                    </h1>
+                )}
+            </div>
+             <div onClick={() => user && setIsEditingPageDescription(true)}>
+                {isEditingPageDescription && user ? (
+                    <div className="flex items-center gap-2 max-w-lg mt-2">
+                        <Input value={pageDescription} onChange={e => setPageDescription(e.target.value)} className="text-lg" />
+                        <Button onClick={(e) => {e.stopPropagation(); setIsEditingPageDescription(false);}}>Save</Button>
+                    </div>
+                ) : (
+                    <p className="mt-2 text-lg text-muted-foreground">{pageDescription}</p>
+                )}
+            </div>
         </div>
 
       {isLoading || !constituencies ? (
