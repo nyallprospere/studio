@@ -2,110 +2,125 @@
  * @fileoverview Firestore Security Rules for the St. Lucia Elections Hub application.
  *
  * Core Philosophy:
- * This ruleset provides open read access to all collections while restricting write access. Write access is generally denied, as the application is intended for data consumption. However, in the `/settings/pageLayouts` path, it allows authenticated users to modify settings, supporting user-defined layouts.
+ * This ruleset grants full access to all authenticated users ("admin-like functionality").
+ * While this is insecure for a production environment, it enables rapid prototyping
+ * and development by removing authorization barriers.  It is CRITICAL to replace
+ * these permissive rules with a more restrictive model before launch.
  *
  * Data Structure:
- * The database contains top-level collections for parties, candidates, elections, polling data, constituencies, and election results. A single document at `/settings/pageLayouts` stores page layout configurations.
+ * The database consists of several top-level collections: 'parties', 'candidates',
+ * 'elections', 'polling_data', 'constituencies', 'election_results', and 'settings'.
+ * Each collection stores documents related to its respective entity.  The 'settings'
+ * collection contains a single document 'pageLayouts' storing user-defined page layouts.
  *
  * Key Security Decisions:
- * - Public read access to all election-related data (parties, candidates, elections, etc.) to facilitate open data access.
- * - Restricted write access to prevent unauthorized data modification.
- * - Authenticated users can modify settings at `/settings/pageLayouts` to allow customization of the application's look and feel.
+ * - All authenticated users have full read and write access to all collections.
+ * - This is a deliberate choice for prototyping and MUST be revisited for production.
+ * - No data validation is performed in this initial ruleset to allow for flexible
+ *   data shapes during development.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read Parties; denies all writes.
+     * @description Grants all authenticated users full access to party data.
      * @path /parties/{partyId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Public read access, no write access.
+     * @allow (create, update, delete) Signed-in user can create/update/delete a party.
+     * @allow (get, list) Signed-in user can read a party.
+     * @deny (create, update, delete) Unauthenticated user cannot create/update/delete a party.
+     * @deny (get, list) Unauthenticated user cannot read a party.
+     * @principle Grants admin-like access to authenticated users for prototyping.
      */
     match /parties/{partyId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read Candidates; denies all writes.
+     * @description Grants all authenticated users full access to candidate data.
      * @path /candidates/{candidateId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Public read access, no write access.
+     * @allow (create, update, delete) Signed-in user can create/update/delete a candidate.
+     * @allow (get, list) Signed-in user can read a candidate.
+     * @deny (create, update, delete) Unauthenticated user cannot create/update/delete a candidate.
+     * @deny (get, list) Unauthenticated user cannot read a candidate.
+     * @principle Grants admin-like access to authenticated users for prototyping.
      */
     match /candidates/{candidateId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read Elections; denies all writes.
+     * @description Grants all authenticated users full access to election data.
      * @path /elections/{electionId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Public read access, no write access.
+     * @allow (create, update, delete) Signed-in user can create/update/delete an election.
+     * @allow (get, list) Signed-in user can read an election.
+     * @deny (create, update, delete) Unauthenticated user cannot create/update/delete an election.
+     * @deny (get, list) Unauthenticated user cannot read an election.
+     * @principle Grants admin-like access to authenticated users for prototyping.
      */
     match /elections/{electionId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read PollingData; denies all writes.
+     * @description Grants all authenticated users full access to polling data.
      * @path /polling_data/{pollingDataId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Public read access, no write access.
+     * @allow (create, update, delete) Signed-in user can create/update/delete polling data.
+     * @allow (get, list) Signed-in user can read polling data.
+     * @deny (create, update, delete) Unauthenticated user cannot create/update/delete polling data.
+     * @deny (get, list) Unauthenticated user cannot read polling data.
+     * @principle Grants admin-like access to authenticated users for prototyping.
      */
     match /polling_data/{pollingDataId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read Constituencies; denies all writes.
+     * @description Grants all authenticated users full access to constituency data.
      * @path /constituencies/{constituencyId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Public read access, no write access.
+     * @allow (create, update, delete) Signed-in user can create/update/delete a constituency.
+     * @allow (get, list) Signed-in user can read a constituency.
+     * @deny (create, update, delete) Unauthenticated user cannot create/update/delete a constituency.
+     * @deny (get, list) Unauthenticated user cannot read a constituency.
+     * @principle Grants admin-like access to authenticated users for prototyping.
      */
     match /constituencies/{constituencyId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read ElectionResults; denies all writes.
+     * @description Grants all authenticated users full access to election result data.
      * @path /election_results/{electionResultId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Public read access, no write access.
+     * @allow (create, update, delete) Signed-in user can create/update/delete election results.
+     * @allow (get, list) Signed-in user can read election results.
+     * @deny (create, update, delete) Unauthenticated user cannot create/update/delete election results.
+     * @deny (get, list) Unauthenticated user cannot read election results.
+     * @principle Grants admin-like access to authenticated users for prototyping.
      */
     match /election_results/{electionResultId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows authenticated users to read and modify page layouts.
+     * @description Grants all authenticated users full access to page layout settings.
      * @path /settings/pageLayouts
-     * @allow (get): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (list): if false
-     * @principle Authenticated users can customize page layouts.
+     * @allow (create, update, delete) Signed-in user can create/update/delete page layouts.
+     * @allow (get, list) Signed-in user can read page layouts.
+     * @deny (create, update, delete) Unauthenticated user cannot create/update/delete page layouts.
+     * @deny (get, list) Unauthenticated user cannot read page layouts.
+     * @principle Grants admin-like access to authenticated users for prototyping.
      */
     match /settings/pageLayouts {
-      allow get: if true;
+      allow get, list: if isSignedIn();
       allow create, update, delete: if isSignedIn();
-      allow list: if false;
     }
 
-    /**
-     * @description Checks if the user is signed in.
-     * @return {bool} True if the user is signed in, false otherwise.
-     */
     function isSignedIn() {
       return request.auth != null;
     }

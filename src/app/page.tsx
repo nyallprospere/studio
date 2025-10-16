@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Users, BarChart3, TrendingUp, Landmark, Shield, Vote, Map, GripVertical } from 'lucide-react';
+import { Users, BarChart3, TrendingUp, Landmark, Shield, Vote, Map, GripVertical, FilePlus, Settings } from 'lucide-react';
 import Countdown from '@/components/countdown';
 import { PageHeader } from '@/components/page-header';
 import {
@@ -22,6 +22,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useUser } from '@/firebase';
 
 const initialKeyFeatures = [
     {
@@ -68,6 +69,16 @@ const initialKeyFeatures = [
     },
 ];
 
+const adminSections = [
+    { id: 'admin-parties', title: 'Manage Parties', href: '/admin/parties', icon: Shield },
+    { id: 'admin-candidates', title: 'Manage Candidates', href: '/admin/candidates', icon: Users },
+    { id: 'admin-polls', title: 'Manage Polling Data', href: '/admin/polls', icon: BarChart3 },
+    { id: 'admin-results', title: 'Manage Election Results', href: '/admin/results', icon: Landmark },
+    { id: 'admin-constituencies', title: 'Manage Constituencies', href: '/admin/constituencies', icon: FilePlus },
+    { id: 'admin-map', title: 'Manage Map', href: '/admin/map', icon: Map },
+];
+
+
 function SortableFeatureCard({ feature }: { feature: typeof initialKeyFeatures[0] }) {
   const {
       attributes,
@@ -111,6 +122,7 @@ function SortableFeatureCard({ feature }: { feature: typeof initialKeyFeatures[0
 
 
 export default function Home() {
+  const { user } = useUser();
   const electionDate = new Date('2026-07-26T00:00:00');
   const [keyFeatures, setKeyFeatures] = useState(initialKeyFeatures);
 
@@ -165,6 +177,31 @@ export default function Home() {
             </div>
         </SortableContext>
       </DndContext>
+
+      {user && (
+          <div className="mt-12">
+            <PageHeader
+                title="Admin Dashboard"
+                description="Manage the content for LucianVotes."
+            />
+             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {adminSections.map((section) => (
+                    <Card key={section.id}>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle className="font-headline">{section.title}</CardTitle>
+                            <section.icon className="w-6 h-6 text-muted-foreground"/>
+                        </CardHeader>
+                        <CardContent>
+                            <Button asChild className="w-full">
+                                <Link href={section.href}>Go to section</Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+          </div>
+      )}
+
 
        <Card className="mt-8">
         <CardHeader>
