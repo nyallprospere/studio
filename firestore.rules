@@ -1,127 +1,142 @@
 /**
- * @fileoverview Firestore Security Rules for the St. Lucia Elections Hub application.
+ * @fileOverview Firestore Security Rules for the St. Lucia Elections Hub application.
  *
  * Core Philosophy:
- * This ruleset prioritizes security by enforcing strict, path-based access control for each top-level collection.
- * It avoids complex, hierarchical dependencies to ensure that each rule can be evaluated independently.
- * This design emphasizes "Authorization Independence" by denormalizing authorization data to avoid costly `get()` calls.
+ * This ruleset prioritizes security by enforcing strict separation of concerns and explicit authorization checks.
+ * It defaults to a deny-all policy and selectively grants access based on clearly defined conditions.
+ * All write operations require authentication and are restricted to prevent unauthorized data modification or deletion.
  *
  * Data Structure:
- * - /parties/{partyId}: Stores political party information.
- * - /candidates/{candidateId}: Stores candidate information.
- * - /elections/{electionId}: Stores election event information.
- * - /polling_data/{pollingDataId}: Stores polling data for elections.
- * - /constituencies/{constituencyId}: Stores constituency information.
- * - /election_results/{electionResultId}: Stores election results.
- * - /settings/pageLayouts: Stores user-defined layouts for various pages. (Single document)
- * - /settings/site: Stores global site settings. (Single document)
+ * The database consists of several top-level collections: `/parties`, `/candidates`, `/elections`, `/polling_data`, `/constituencies`, `/election_results`, `/settings/pageLayouts`, and `/settings/site`.
+ * Each collection stores data related to its respective entity (e.g., `/parties` stores political party information).
+ * Documents within each collection are identified by unique IDs. The two documents under `/settings` are singletons.
  *
  * Key Security Decisions:
- * - No user-specific data or private user profiles are stored, so there is no user-based ownership model.
- * - There are no roles defined for the application, all write access will be denied.
- * - Listing of documents is denied for all collections, because there is no clear use case and it reduces attack surface.
- * - Structural segregation is used, where data with similar access requirements are kept in separate collections.
+ * - No user-specific data is stored, so ownership-based rules are not applicable.
+ * - The ruleset does not grant list permissions to any collection, preventing unauthorized data scraping.
+ * - All write operations are denied by default and require explicit granting.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Manages access to political party information. Only read access allowed
+     * @description Manages access to political party data.
      * @path /parties/{partyId}
-     * @allow get, list: if true;
-     * @deny create, update, delete: if false;
-     * @principle Public read-only access to party data.
+     * @allow get: if true;
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @deny list: Always deny listing parties
+     * @principle Public read, no write access.
      */
     match /parties/{partyId} {
       allow get: if true;
-      allow list: if true;
+      allow list: if false;
       allow create: if false;
       allow update: if false;
       allow delete: if false;
     }
 
     /**
-     * @description Manages access to candidate information. Only read access allowed
+     * @description Manages access to candidate data.
      * @path /candidates/{candidateId}
-     * @allow get, list: if true;
-     * @deny create, update, delete: if false;
-     * @principle Public read-only access to candidate data.
+     * @allow get: if true;
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @deny list: Always deny listing candidates
+     * @principle Public read, no write access.
      */
     match /candidates/{candidateId} {
       allow get: if true;
-      allow list: if true;
+      allow list: if false;
       allow create: if false;
       allow update: if false;
       allow delete: if false;
     }
 
     /**
-     * @description Manages access to election information. Only read access allowed
+     * @description Manages access to election data.
      * @path /elections/{electionId}
-     * @allow get, list: if true;
-     * @deny create, update, delete: if false;
-     * @principle Public read-only access to election data.
+     * @allow get: if true;
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @deny list: Always deny listing elections
+     * @principle Public read, no write access.
      */
     match /elections/{electionId} {
       allow get: if true;
-      allow list: if true;
+      allow list: if false;
       allow create: if false;
       allow update: if false;
       allow delete: if false;
     }
 
     /**
-     * @description Manages access to polling data. Only read access allowed
+     * @description Manages access to polling data.
      * @path /polling_data/{pollingDataId}
-     * @allow get, list: if true;
-     * @deny create, update, delete: if false;
-     * @principle Public read-only access to polling data.
+     * @allow get: if true;
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @deny list: Always deny listing polling data
+     * @principle Public read, no write access.
      */
     match /polling_data/{pollingDataId} {
       allow get: if true;
-      allow list: if true;
+      allow list: if false;
       allow create: if false;
       allow update: if false;
       allow delete: if false;
     }
 
     /**
-     * @description Manages access to constituency information. Only read access allowed
+     * @description Manages access to constituency data.
      * @path /constituencies/{constituencyId}
-     * @allow get, list: if true;
-     * @deny create, update, delete: if false;
-     * @principle Public read-only access to constituency data.
+     * @allow get: if true;
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @deny list: Always deny listing constituencies
+     * @principle Public read, no write access.
      */
     match /constituencies/{constituencyId} {
       allow get: if true;
-      allow list: if true;
+      allow list: if false;
       allow create: if false;
       allow update: if false;
       allow delete: if false;
     }
 
     /**
-     * @description Manages access to election results. Only read access allowed
+     * @description Manages access to election result data.
      * @path /election_results/{electionResultId}
-     * @allow get, list: if true;
-     * @deny create, update, delete: if false;
-     * @principle Public read-only access to election results.
+     * @allow get: if true;
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @deny list: Always deny listing election results
+     * @principle Public read, no write access.
      */
     match /election_results/{electionResultId} {
       allow get: if true;
-      allow list: if true;
+      allow list: if false;
       allow create: if false;
       allow update: if false;
       allow delete: if false;
     }
 
     /**
-     * @description Manages access to page layouts. Only read access allowed
+     * @description Manages access to page layouts settings.
      * @path /settings/pageLayouts
      * @allow get: if true;
-     * @deny create, update, delete, list: if false;
-     * @principle Public read-only access to page layouts.
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @deny list:  Listing on a document returns nothing, deny it.
+     * @principle Public read, no write access.
      */
     match /settings/pageLayouts {
       allow get: if true;
@@ -132,11 +147,14 @@ service cloud.firestore {
     }
 
     /**
-     * @description Manages access to site settings. Only read access allowed
+     * @description Manages access to site settings.
      * @path /settings/site
      * @allow get: if true;
-     * @deny create, update, delete, list: if false;
-     * @principle Public read-only access to site settings.
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @deny list: Listing on a document returns nothing, deny it.
+     * @principle Public read, no write access.
      */
     match /settings/site {
       allow get: if true;
