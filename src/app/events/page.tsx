@@ -1,0 +1,130 @@
+
+'use client';
+
+import { useState, useMemo } from 'react';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, Timestamp } from 'firebase/firestore';
+import type { Event, Party } from '@/lib/types';
+import { PageHeader } from '@/components/page-header';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { format } from 'date-fns';
+import Image from 'next/image';
+import { Calendar } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+
+function EventCard({ event, partyName }: { event: Event, partyName: string }) {
+    const eventDate = (event.date as unknown as Timestamp)?.toDate ? (event.date as unknown as Timestamp).toDate() : new Date(event.date);
+    return (
+        <div className="flex items-start justify-between p-4 border rounded-md hover:bg-muted/50 gap-4">
+            {event.imageUrl ? (
+                <Image src={event.imageUrl} alt={event.title} width={80} height={80} className="rounded-md object-cover aspect-square" />
+            ) : (
+                <div className="h-20 w-20 flex-shrink-0 rounded-md bg-muted flex items-center justify-center">
+                    <Calendar className="h-8 w-8 text-muted-foreground" />
+                </div>
+            )}
+            <div className="flex-grow">
+                <p className="font-semibold">{event.title}</p>
+                <p className="text-sm text-muted-foreground">
+                    {partyName} &bull; {format(eventDate, "PPP")} &bull; {event.location}
+                </p>
+                {event.description && <p className="text-sm mt-2">{event.description}</p>}
+            </div>
+        </div>
+    );
+}
+
+function EventsPageSkeleton() {
+    return (
+         <div className="grid md:grid-cols-2 gap-8">
+            <Card>
+                <CardHeader><Skeleton className="h-8 w-1/3" /></CardHeader>
+                <CardContent className="space-y-4">
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader><Skeleton className="h-8 w-1/3" /></CardHeader>
+                <CardContent className="space-y-4">
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                </CardContent>
+            </Card>
+        </div>
+    )
+}
+
+export default function EventsPage() {
+  const { firestore } = useFirebase();
+  
+  const eventsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'events'), orderBy('date', 'desc')) : null, [firestore]);
+  const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
+  
+  const { data: events, isLoading: loadingEvents, error: errorEvents } = useCollection<Event>(eventsQuery);
+  const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
+  
+  const getPartyName = (partyId: string) => parties?.find(p => p.id === partyId)?.name || 'N/A';
+  const isLoading = loadingEvents || loadingParties;
+
+  const { uwpEvents, slpEvents } = useMemo(() => {
+    if (!events || !parties) {
+      return { uwpEvents: [], slpEvents: [] };
+    }
+    const uwp = parties.find(p => p.acronym === 'UWP');
+    const slp = parties.find(p => p.acronym === 'SLP');
+    
+    const uwpEvents = uwp ? events.filter(e => e.partyId === uwp.id) : [];
+    const slpEvents = slp ? events.filter(e => e.partyId === slp.id) : [];
+
+    return { uwpEvents, slpEvents };
+  }, [events, parties]);
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <PageHeader
+        title="Upcoming Events"
+        description="Find out about rallies, town halls, and other events from the political parties."
+      />
+      
+      {isLoading ? <EventsPageSkeleton /> : (
+          <div className="grid md:grid-cols-2 gap-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle>UWP Events</CardTitle>
+                    <CardDescription>Events hosted by the United Workers Party.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                    {uwpEvents && uwpEvents.length > 0 ? (
+                        uwpEvents.map((event) => (
+                           <EventCard key={event.id} event={event} partyName={getPartyName(event.partyId)} />
+                        ))
+                    ) : (
+                        <p className="text-center text-muted-foreground py-8">No UWP events have been added yet.</p>
+                    )}
+                    </div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>SLP Events</CardTitle>
+                    <CardDescription>Events hosted by the Saint Lucia Labour Party.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                    {slpEvents && slpEvents.length > 0 ? (
+                        slpEvents.map((event) => (
+                           <EventCard key={event.id} event={event} partyName={getPartyName(event.partyId)} />
+                        ))
+                    ) : (
+                        <p className="text-center text-muted-foreground py-8">No SLP events have been added yet.</p>
+                    )}
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+      )}
+    </div>
+  );
+}
