@@ -24,15 +24,6 @@ const mainNavItems = [
   { href: '/constituencies', icon: Map, label: 'Constituencies' },
 ];
 
-const adminNavItems = [
-    { href: '/admin/parties', icon: Shield, label: 'Manage Parties' },
-    { href: '/admin/candidates', icon: Users, label: 'Manage Candidates' },
-    { href: '/admin/polls', icon: BarChart3, label: 'Manage Polling Data' },
-    { href: '/admin/results', icon: Landmark, label: 'Manage Election Results' },
-    { href: '/admin/constituencies', icon: FilePlus, label: 'Manage Constituencies' },
-    { href: '/admin/map', icon: Map, label: 'Manage Map' },
-];
-
 function AuthSection() {
     const { user, isUserLoading } = useUser();
     const auth = useAuth();
@@ -95,10 +86,8 @@ function AuthSection() {
 
 export function SidebarNav() {
   const pathname = usePathname();
-  const { user } = useUser();
-  const isAdminPath = pathname.startsWith('/admin');
   
-  const itemsToDisplay = isAdminPath ? adminNavItems : mainNavItems;
+  const itemsToDisplay = mainNavItems;
 
   return (
     <Sidebar>
@@ -114,20 +103,6 @@ export function SidebarNav() {
         </Link>
       </SidebarHeader>
       <SidebarMenu>
-        {isAdminPath && (
-            <SidebarMenuItem>
-                <Button
-                asChild
-                variant={pathname === '/' ? 'secondary' : 'ghost'}
-                className="w-full justify-start"
-                >
-                <Link href="/">
-                    <Home className="mr-2 h-4 w-4" />
-                    Exit Admin
-                </Link>
-                </Button>
-            </SidebarMenuItem>
-        )}
         {itemsToDisplay.map((item) => (
           <SidebarMenuItem key={item.href}>
             <Button

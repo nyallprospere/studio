@@ -56,7 +56,7 @@ export default function LoginPage() {
         title: 'Login Successful',
         description: "You've been successfully logged in.",
       });
-      router.push('/admin');
+      router.push('/');
     } catch (error: any) {
       console.error('Login Error:', error);
       toast({
