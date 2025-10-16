@@ -2,15 +2,16 @@
 
 import { useState } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, writeBatch } from 'firebase/firestore';
 import type { Candidate, Party, Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { CandidateForm } from './candidate-form';
+import { ImportDialog } from './import-dialog';
 import Image from 'next/image';
-import { UserSquare, Pencil, Trash2 } from 'lucide-react';
+import { UserSquare, Pencil, Trash2, Upload, Download } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +25,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { uploadFile, deleteFile } from '@/firebase/storage';
 import { useToast } from '@/hooks/use-toast';
+import * as XLSX from 'xlsx';
+
 
 export default function AdminCandidatesPage() {
   const { firestore } = useFirebase();
@@ -33,11 +36,12 @@ export default function AdminCandidatesPage() {
   const partiesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const constituenciesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
   
-  const { data: candidates, isLoading: loadingCandidates } = useCollection<Candidate>(candidatesCollection);
+  const { data: candidates, isLoading: loadingCandidates, error: errorCandidates } = useCollection<Candidate>(candidatesCollection);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesCollection);
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesCollection);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(null);
 
   const handleFormSubmit = async (values: any) => {
@@ -82,6 +86,76 @@ export default function AdminCandidatesPage() {
         toast({ variant: "destructive", title: "Error", description: "Failed to delete candidate." });
     }
   };
+  
+  const handleExport = () => {
+    if (!candidates || !parties || !constituencies) {
+      toast({ variant: "destructive", title: "Error", description: "Data not loaded yet." });
+      return;
+    }
+    const dataToExport = candidates.map(c => ({
+      'First Name': c.firstName,
+      'Last Name': c.lastName,
+      'Party': getPartyName(c.partyId),
+      'Constituency': getConstituencyName(c.constituencyId),
+      'Bio': c.bio,
+      'Is Incumbent': c.isIncumbent ? 'Yes' : 'No',
+      'Is Party Leader': c.isPartyLeader ? 'Yes' : 'No',
+      'Image URL': c.imageUrl
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Candidates");
+    XLSX.writeFile(workbook, "candidates.xlsx");
+     toast({ title: "Export Successful", description: "Candidates have been exported to candidates.xlsx" });
+  }
+
+  const handleImport = async (data: any[]) => {
+    if (!firestore || !parties || !constituencies) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Database or party data not ready.' });
+      return;
+    }
+
+    try {
+        const batch = writeBatch(firestore);
+        let count = 0;
+
+        for (const row of data) {
+            const party = parties.find(p => p.name === row.party || p.acronym === row.party);
+            const constituency = constituencies.find(c => c.name === row.constituency);
+
+            if (!party || !constituency) {
+                console.warn(`Skipping row due to missing party or constituency:`, row);
+                continue;
+            }
+
+            const newCandidate = {
+                firstName: row.firstName || '',
+                lastName: row.lastName || '',
+                partyId: party.id,
+                constituencyId: constituency.id,
+                bio: row.bio || '',
+                isIncumbent: row.isIncumbent === 'Yes' || row.isIncumbent === true,
+                isPartyLeader: row.isPartyLeader === 'Yes' || row.isPartyLeader === true,
+                imageUrl: row.imageUrl || '',
+                policyPositions: [],
+            };
+            
+            const candidateRef = doc(collection(firestore, 'candidates'));
+            batch.set(candidateRef, newCandidate);
+            count++;
+        }
+
+        await batch.commit();
+        toast({ title: 'Import Successful', description: `${count} candidates imported successfully.` });
+
+    } catch(e) {
+        console.error("Error importing candidates:", e);
+        toast({ variant: 'destructive', title: 'Import Failed', description: 'An error occurred during import. Check console for details.' });
+    } finally {
+        setIsImportOpen(false);
+    }
+  };
+
 
   const getPartyName = (partyId: string) => parties?.find(p => p.id === partyId)?.name || 'N/A';
   const getConstituencyName = (constituencyId: string) => constituencies?.find(c => c.id === constituencyId)?.name || 'N/A';
@@ -94,24 +168,43 @@ export default function AdminCandidatesPage() {
           title="Manage Candidates"
           description="Add, edit, or remove election candidates."
         />
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => { setEditingCandidate(null); setIsFormOpen(true)}}>Add New Candidate</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>{editingCandidate ? 'Edit Candidate' : 'Add New Candidate'}</DialogTitle>
-            </DialogHeader>
-            <CandidateForm
-              onSubmit={handleFormSubmit}
-              initialData={editingCandidate}
-              onCancel={() => setIsFormOpen(false)}
-              parties={parties || []}
-              constituencies={constituencies || []}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+                <Upload className="mr-2 h-4 w-4" />
+                Import
+            </Button>
+            <Button variant="outline" onClick={handleExport}>
+                <Download className="mr-2 h-4 w-4" />
+                Export
+            </Button>
+            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogTrigger asChild>
+                <Button onClick={() => { setEditingCandidate(null); setIsFormOpen(true)}}>Add New Candidate</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-3xl">
+                <DialogHeader>
+                <DialogTitle>{editingCandidate ? 'Edit Candidate' : 'Add New Candidate'}</DialogTitle>
+                </DialogHeader>
+                <CandidateForm
+                onSubmit={handleFormSubmit}
+                initialData={editingCandidate}
+                onCancel={() => setIsFormOpen(false)}
+                parties={parties || []}
+                constituencies={constituencies || []}
+                />
+            </DialogContent>
+            </Dialog>
+        </div>
       </div>
+      
+       <ImportDialog
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        onImport={handleImport}
+        parties={parties || []}
+        constituencies={constituencies || []}
+      />
+
 
       <Card>
         <CardHeader>
@@ -121,6 +214,12 @@ export default function AdminCandidatesPage() {
         <CardContent>
           {isLoading ? (
             <p>Loading candidates...</p>
+          ) : errorCandidates ? (
+             <div className="text-red-600 bg-red-100 p-4 rounded-md">
+                <h3 className="font-bold">Error loading candidates</h3>
+                <p>{errorCandidates.message}</p>
+                <p className="text-sm mt-2">Please check the Firestore security rules and console for more details.</p>
+             </div>
           ) : (
             <div className="space-y-4">
               {candidates && candidates.length > 0 ? (
