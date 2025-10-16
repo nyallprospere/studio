@@ -114,43 +114,26 @@ export default function CandidatesPage() {
   };
 
   const {
-    uwpLeader,
-    featuredUwpCandidates,
-    otherUwpCandidates,
     slpLeader,
     featuredSlpCandidates,
     otherSlpCandidates,
   } = useMemo(() => {
     if (!candidates || !parties) {
       return {
-        uwpLeader: null,
-        featuredUwpCandidates: [],
-        otherUwpCandidates: [],
         slpLeader: null,
         featuredSlpCandidates: [],
         otherSlpCandidates: [],
       };
     }
-    const uwp = parties.find(p => p.acronym === 'UWP');
     const slp = parties.find(p => p.acronym === 'SLP');
     
-    const uwpCandidates = candidates.filter(c => c.partyId === uwp?.id).sort(sortCandidates);
     const slpCandidates = candidates.filter(c => c.partyId === slp?.id).sort(sortCandidates);
 
-    const uwpLeader = uwpCandidates.find(c => c.isPartyLeader);
     const slpLeader = slpCandidates.find(c => c.isPartyLeader);
-
-    const featuredUwpCandidates = uwpCandidates.filter(c => c.isDeputyLeader);
-    const otherUwpCandidates = uwpCandidates.filter(c => !c.isPartyLeader && !c.isDeputyLeader);
-
     const featuredSlpCandidates = slpCandidates.filter(c => c.isDeputyLeader);
     const otherSlpCandidates = slpCandidates.filter(c => !c.isPartyLeader && !c.isDeputyLeader);
 
-
     return {
-      uwpLeader,
-      featuredUwpCandidates,
-      otherUwpCandidates,
       slpLeader,
       featuredSlpCandidates,
       otherSlpCandidates,
@@ -165,41 +148,6 @@ export default function CandidatesPage() {
       />
 
       <div className="space-y-12">
-        <section id="uwp-candidates">
-          <h2 className="text-2xl font-headline font-bold text-primary mb-6">UWP Candidates</h2>
-          {loading ? (
-            <CandidateCardSkeleton />
-          ) : uwpLeader ? (
-            <div className="mb-8">
-              <h3 className="text-center text-lg font-semibold text-muted-foreground uppercase tracking-wider mb-2">Party Leader</h3>
-              <div className="max-w-sm mx-auto">
-                <CandidateCard candidate={uwpLeader} />
-              </div>
-            </div>
-          ) : null}
-          {featuredUwpCandidates.length > 0 && (
-            <div className="mb-8">
-                <h3 className="text-center text-lg font-semibold text-muted-foreground uppercase tracking-wider mb-2">Deputy Leaders</h3>
-                 <div className="grid gap-6 md:grid-cols-2 justify-center max-w-4xl mx-auto">
-                    {loading ? (
-                    Array.from({ length: 2 }).map((_, i) => <CandidateCardSkeleton key={i} />)
-                    ) : featuredUwpCandidates.length > 0 ? (
-                    featuredUwpCandidates.map((candidate) => <CandidateCard key={candidate.id} candidate={candidate} />)
-                    ) : null}
-                </div>
-            </div>
-          )}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {loading ? (
-              Array.from({ length: 4 }).map((_, i) => <CandidateCardSkeleton key={i} />)
-            ) : otherUwpCandidates.length > 0 ? (
-              otherUwpCandidates.map((candidate) => <CandidateCard key={candidate.id} candidate={candidate} />)
-            ) : !uwpLeader && featuredUwpCandidates.length === 0 ? (
-              <p className="text-muted-foreground col-span-full">No UWP candidates have been added yet.</p>
-            ) : null}
-          </div>
-        </section>
-
         <section id="slp-candidates">
           <h2 className="text-2xl font-headline font-bold text-primary mb-6">SLP Candidates</h2>
           {loading ? (
