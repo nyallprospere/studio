@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import type { Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useCollection, useFirebase, useMemoFirebase, useUser, useDoc } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase, useUser, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, doc, setDoc } from 'firebase/firestore';
 import { InteractiveMap } from '@/components/interactive-map';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -73,14 +73,15 @@ function SortableSection({ id, children, span, onResize }: { id: SectionId, chil
     const style = {
       transform: CSS.Transform.toString(transform),
       transition,
+      gridColumn: `span ${span} / span ${span}`
     };
   
     if (!user) {
-        return <div className={cn("w-full", `md:col-span-${span}`)}>{children}</div>;
+        return <div style={{ gridColumn: `span ${span} / span ${span}`}} className="w-full">{children}</div>;
     }
   
     return (
-      <div ref={setNodeRef} style={style} className={cn("relative group/section w-full", `md:col-span-${span}`)}>
+      <div ref={setNodeRef} style={style} className="relative group/section w-full">
         <div className="absolute top-2 right-2 z-10 opacity-0 group-hover/section:opacity-100 transition-opacity flex items-center gap-1">
             <Button size="icon" variant="secondary" className="h-7 w-7" onClick={() => onResize(id, 'compress')}><Minus className="h-4 w-4" /></Button>
             <Button size="icon" variant="secondary" className="h-7 w-7" onClick={() => onResize(id, 'expand')}><Plus className="h-4 w-4" /></Button>
@@ -122,7 +123,16 @@ export default function ConstituenciesPage() {
         debounce((layout: LayoutConfiguration) => {
             if (firestore && user) {
                 const docRef = doc(firestore, 'settings', 'pageLayouts');
-                setDoc(docRef, { constituenciesPage: layout }, { merge: true });
+                const layoutData = { constituenciesPage: layout };
+                setDoc(docRef, layoutData, { merge: true })
+                  .catch((error) => {
+                    const contextualError = new FirestorePermissionError({
+                      path: docRef.path,
+                      operation: 'update',
+                      requestResourceData: layoutData,
+                    });
+                    errorEmitter.emit('permission-error', contextualError);
+                  });
             }
         }, 1000), [firestore, user]
     );
@@ -163,13 +173,14 @@ export default function ConstituenciesPage() {
             if (!otherId) return prevSpans; // Should not happen in a 2-item layout
             
             const currentSpan = newSpans[id];
+            const totalSpan = 3;
             
-            if (direction === 'expand' && currentSpan < 2) {
+            if (direction === 'expand' && currentSpan < (totalSpan - 1)) {
                 newSpans[id] = currentSpan + 1;
                 newSpans[otherId] = Math.max(1, newSpans[otherId] - 1);
             } else if (direction === 'compress' && currentSpan > 1) {
                 newSpans[id] = currentSpan - 1;
-                newSpans[otherId] = Math.min(2, newSpans[otherId] + 1);
+                newSpans[otherId] = Math.min((totalSpan-1), newSpans[otherId] + 1);
             }
             
             return newSpans;
