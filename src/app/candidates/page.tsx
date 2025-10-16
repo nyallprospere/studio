@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo } from 'react';
@@ -25,7 +26,7 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
   const candidateName = `${candidate.firstName} ${candidate.lastName}`;
 
   return (
-    <Card className="flex flex-col overflow-hidden hover:shadow-lg transition-shadow">
+    <Card className="flex flex-col overflow-hidden hover:shadow-lg transition-shadow h-full">
       <CardHeader className="p-0">
         {candidate.imageUrl && (
           <div className="relative h-56 w-full">
@@ -95,35 +96,39 @@ export default function CandidatesPage() {
 
   const loading = loadingCandidates || loadingParties;
 
-  const { uwpCandidates, slpCandidates } = useMemo(() => {
+  const { uwpLeader, uwpCandidates, slpLeader, slpCandidates } = useMemo(() => {
     if (!candidates || !parties) {
-      return { uwpCandidates: [], slpCandidates: [] };
+      return { uwpLeader: null, uwpCandidates: [], slpLeader: null, slpCandidates: [] };
     }
     const uwp = parties.find(p => p.acronym === 'UWP');
     const slp = parties.find(p => p.acronym === 'SLP');
     
-    const getSortOrder = (candidate: Candidate, partyAcronym: 'UWP' | 'SLP') => {
+    const getUwpSortOrder = (candidate: Candidate) => {
       const name = `${candidate.firstName} ${candidate.lastName}`;
-      if (candidate.isPartyLeader) return 0;
-
-      if (partyAcronym === 'UWP') {
-        if (name === 'Guy Joseph') return 1;
-        if (name === 'Dominic Fedee') return 2;
-      }
-      if (partyAcronym === 'SLP') {
-        if (name === 'Ernest Hilaire') return 1;
-        if (name === 'Shawn Edward') return 2;
-      }
+      if (name === 'Guy Joseph') return 1;
+      if (name === 'Dominic Fedee') return 2;
       return 3;
     };
     
+    const getSlpSortOrder = (candidate: Candidate) => {
+      const name = `${candidate.firstName} ${candidate.lastName}`;
+      if (name === 'Ernest Hilaire') return 1;
+      if (name === 'Shawn Edward') return 2;
+      return 3;
+    };
+
+    const uwpLeader = candidates.find(c => c.partyId === uwp?.id && c.isPartyLeader);
+    const slpLeader = candidates.find(c => c.partyId === slp?.id && c.isPartyLeader);
+    
     return {
+      uwpLeader,
       uwpCandidates: candidates
-        .filter(c => c.partyId === uwp?.id)
-        .sort((a,b) => getSortOrder(a, 'UWP') - getSortOrder(b, 'UWP')),
+        .filter(c => c.partyId === uwp?.id && !c.isPartyLeader)
+        .sort((a,b) => getUwpSortOrder(a) - getUwpSortOrder(b)),
+      slpLeader,
       slpCandidates: candidates
-        .filter(c => c.partyId === slp?.id)
-        .sort((a,b) => getSortOrder(a, 'SLP') - getSortOrder(b, 'SLP')),
+        .filter(c => c.partyId === slp?.id && !c.isPartyLeader)
+        .sort((a,b) => getSlpSortOrder(a) - getSlpSortOrder(b)),
     };
   }, [candidates, parties]);
 
@@ -137,27 +142,47 @@ export default function CandidatesPage() {
       <div className="space-y-12">
         <section>
           <h2 className="text-2xl font-headline font-bold text-primary mb-6">UWP Candidates</h2>
+          {loading ? (
+            <CandidateCardSkeleton />
+          ) : uwpLeader ? (
+            <div className="mb-8">
+                <h3 className="text-lg font-semibold text-muted-foreground uppercase tracking-wider mb-2">Party Leader</h3>
+                <div className="max-w-sm">
+                 <CandidateCard candidate={uwpLeader} />
+                </div>
+            </div>
+          ) : null}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {loading ? (
-              Array.from({ length: 4 }).map((_, i) => <CandidateCardSkeleton key={i} />)
+              Array.from({ length: 3 }).map((_, i) => <CandidateCardSkeleton key={i} />)
             ) : uwpCandidates.length > 0 ? (
               uwpCandidates.map((candidate) => <CandidateCard key={candidate.id} candidate={candidate} />)
-            ) : (
+            ) : !uwpLeader ? (
               <p className="text-muted-foreground col-span-full">No UWP candidates have been added yet.</p>
-            )}
+            ) : null}
           </div>
         </section>
 
         <section>
           <h2 className="text-2xl font-headline font-bold text-primary mb-6">SLP Candidates</h2>
+            {loading ? (
+                <CandidateCardSkeleton />
+            ) : slpLeader ? (
+                <div className="mb-8">
+                    <h3 className="text-lg font-semibold text-muted-foreground uppercase tracking-wider mb-2">Party Leader</h3>
+                    <div className="max-w-sm">
+                    <CandidateCard candidate={slpLeader} />
+                    </div>
+                </div>
+            ) : null}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
              {loading ? (
-              Array.from({ length: 4 }).map((_, i) => <CandidateCardSkeleton key={i} />)
+              Array.from({ length: 3 }).map((_, i) => <CandidateCardSkeleton key={i} />)
             ) : slpCandidates.length > 0 ? (
               slpCandidates.map((candidate) => <CandidateCard key={candidate.id} candidate={candidate} />)
-            ) : (
+            ) : !slpLeader ? (
               <p className="text-muted-foreground col-span-full">No SLP candidates have been added yet.</p>
-            )}
+            ) : null}
           </div>
         </section>
       </div>
