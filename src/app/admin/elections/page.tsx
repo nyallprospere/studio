@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
 import type { Election } from '@/lib/types';
@@ -32,6 +32,17 @@ export default function AdminElectionsPage() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingElection, setEditingElection] = useState<Election | null>(null);
+
+  const sortedElections = useMemo(() => {
+    if (!elections) return [];
+    return [...elections].sort((a, b) => {
+        if (a.year !== b.year) {
+            return b.year - a.year;
+        }
+        // For elections in the same year, sort by name descending to get "April 30" before "April 6"
+        return b.name.localeCompare(a.name);
+    });
+  }, [elections]);
 
   const handleFormSubmit = async (values: any) => {
     try {
@@ -100,8 +111,8 @@ export default function AdminElectionsPage() {
             <p>Loading elections...</p>
           ) : (
             <div className="space-y-4">
-              {elections && elections.length > 0 ? (
-                elections.map((election) => (
+              {sortedElections && sortedElections.length > 0 ? (
+                sortedElections.map((election) => (
                   <div key={election.id} className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50">
                     <div>
                       <p className="font-semibold">{election.name}</p>

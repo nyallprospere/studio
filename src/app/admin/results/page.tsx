@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, writeBatch, query, orderBy } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, writeBatch, query, where } from 'firebase/firestore';
 import type { Election, ElectionResult, Party, Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -30,39 +30,40 @@ export default function AdminResultsPage() {
   const { firestore } = useFirebase();
   const { toast } = useToast();
 
-  const [selectedYear, setSelectedYear] = useState<string>('');
+  const [selectedElectionId, setSelectedElectionId] = useState<string>('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingResult, setEditingResult] = useState<ElectionResult | null>(null);
 
-  const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
-  const resultsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'election_results') : null, [firestore]);
+  const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections')) : null, [firestore]);
+  const resultsQuery = useMemoFirebase(() => firestore && selectedElectionId ? query(collection(firestore, 'election_results'), where('electionId', '==', selectedElectionId)) : null, [firestore, selectedElectionId]);
   const partiesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const constituenciesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
   
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
-  const { data: results, isLoading: loadingResults } = useCollection<ElectionResult>(resultsCollection);
+  const { data: results, isLoading: loadingResults } = useCollection<ElectionResult>(resultsQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesCollection);
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesCollection);
+
+  const sortedElections = useMemo(() => {
+    if (!elections) return [];
+    return [...elections].sort((a, b) => b.year - a.year);
+  }, [elections]);
 
   const getParty = (partyId: string) => parties?.find(p => p.id === partyId);
   const getConstituency = (constituencyId: string) => constituencies?.find(c => c.id === constituencyId);
   const getElection = (electionId: string) => elections?.find(e => e.id === electionId);
 
-  const resultsForYear = useMemo(() => {
-    if (!results || !selectedYear) return [];
-    return results.filter(r => r.electionId === selectedYear);
-  }, [results, selectedYear]);
-
   const handleFormSubmit = async (values: any) => {
     try {
-      const resultData = { ...values };
+      const resultData = { ...values, votes: Number(values.votes) };
 
       if (editingResult) {
         const resultDoc = doc(firestore, 'election_results', editingResult.id);
         await updateDoc(resultDoc, resultData);
         toast({ title: "Result Updated", description: `The result has been successfully updated.` });
       } else {
+        const resultsCollection = collection(firestore, 'election_results');
         await addDoc(resultsCollection, resultData);
         toast({ title: "Result Added", description: `The result has been successfully added.` });
       }
@@ -157,7 +158,8 @@ export default function AdminResultsPage() {
     }
   };
   
-  const isLoading = loadingElections || loadingResults || loadingParties || loadingConstituencies;
+  const isLoading = loadingElections || loadingParties || loadingConstituencies;
+  const isLoadingTable = isLoading || (selectedElectionId && loadingResults);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -187,7 +189,7 @@ export default function AdminResultsPage() {
                         onSubmit={handleFormSubmit}
                         initialData={editingResult}
                         onCancel={() => setIsFormOpen(false)}
-                        elections={elections || []}
+                        elections={sortedElections || []}
                         parties={parties || []}
                         constituencies={constituencies || []}
                     />
@@ -200,7 +202,7 @@ export default function AdminResultsPage() {
         isOpen={isImportOpen}
         onClose={() => setIsImportOpen(false)}
         onImport={handleImport}
-        elections={elections || []}
+        elections={sortedElections || []}
         constituencies={constituencies || []}
         parties={parties || []}
       />
@@ -213,12 +215,12 @@ export default function AdminResultsPage() {
               <CardDescription>Browse results by election year.</CardDescription>
             </div>
             <div className="w-1/4">
-                <Select onValueChange={setSelectedYear} value={selectedYear} disabled={isLoading}>
+                <Select onValueChange={setSelectedElectionId} value={selectedElectionId} disabled={isLoading}>
                     <SelectTrigger>
                         <SelectValue placeholder="Select Election Year" />
                     </SelectTrigger>
                     <SelectContent>
-                        {elections?.map(e => (
+                        {sortedElections?.map(e => (
                             <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
                         ))}
                     </SelectContent>
@@ -228,9 +230,11 @@ export default function AdminResultsPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <p>Loading results...</p>
-          ) : !selectedYear ? (
+            <p>Loading elections...</p>
+          ) : !selectedElectionId ? (
              <div className="text-center text-muted-foreground py-8">Please select an election year to view results.</div>
+          ) : isLoadingTable ? (
+            <p>Loading results...</p>
           ) : (
             <Table>
                 <TableHeader>
@@ -244,7 +248,7 @@ export default function AdminResultsPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {resultsForYear.length > 0 ? resultsForYear.map(result => {
+                    {results && results.length > 0 ? results.map(result => {
                         const constituency = getConstituency(result.constituencyId);
                         const party = getParty(result.partyId);
                         return (

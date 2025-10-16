@@ -1,43 +1,126 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import type { ElectionYearResult, Party, Constituency } from '@/lib/types';
+import { useState, useEffect, useMemo } from 'react';
+import type { Election, ElectionResult, Party, Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, orderBy, query } from 'firebase/firestore';
+import { collection, orderBy, query, where, getDocs } from 'firebase/firestore';
 import { useSearchParams } from 'next/navigation';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import type { ChartConfig } from '@/components/ui/chart';
+
 
 export default function ResultsPage() {
   const { firestore } = useFirebase();
   const searchParams = useSearchParams();
   const yearFromQuery = searchParams.get('year');
 
-  const resultsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'election_results'), orderBy('year', 'desc')) : null, [firestore]);
+  const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
   const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
   
-  const { data: historicalResults, isLoading: loadingResults } = useCollection<ElectionYearResult>(resultsQuery);
+  const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
-  const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Omit<Constituency, 'mapImageUrl'>>(constituenciesQuery);
+  const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
+  
+  const [activeTab, setActiveTab] = useState<string | undefined>(undefined);
+  const [resultsByYear, setResultsByYear] = useState<Record<string, ElectionResult[]>>({});
+  const [loadingResults, setLoadingResults] = useState(true);
+
+  const sortedElections = useMemo(() => {
+    if (!elections) return [];
+    return [...elections].sort((a, b) => {
+        if (a.year !== b.year) {
+            return b.year - a.year;
+        }
+        return b.name.localeCompare(a.name);
+    });
+  }, [elections]);
+
+  useEffect(() => {
+    if (yearFromQuery) {
+      const foundElection = sortedElections.find(e => e.id === yearFromQuery);
+      if(foundElection) setActiveTab(foundElection.id);
+    } else if (sortedElections && sortedElections.length > 0) {
+      setActiveTab(sortedElections[0].id);
+    }
+  }, [yearFromQuery, sortedElections]);
+
+  useEffect(() => {
+    async function fetchAllResults() {
+      if (!firestore) return;
+      setLoadingResults(true);
+      const resultsRef = collection(firestore, 'election_results');
+      const resultsSnap = await getDocs(resultsRef);
+      const allResults = resultsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as ElectionResult));
+      
+      const groupedResults = allResults.reduce((acc, result) => {
+        const electionId = result.electionId;
+        if (!acc[electionId]) {
+          acc[electionId] = [];
+        }
+        acc[electionId].push(result);
+        return acc;
+      }, {} as Record<string, ElectionResult[]>);
+
+      setResultsByYear(groupedResults);
+      setLoadingResults(false);
+    }
+    fetchAllResults();
+  }, [firestore]);
+
 
   const getPartyById = (id: string) => parties?.find(p => p.id === id);
   const getConstituencyById = (id: string) => constituencies?.find(c => c.id === id);
   
-  const [activeTab, setActiveTab] = useState<string | undefined>(undefined);
+  const loading = loadingElections || loadingParties || loadingConstituencies;
 
-  useEffect(() => {
-    if (yearFromQuery) {
-      setActiveTab(yearFromQuery);
-    } else if (historicalResults && historicalResults.length > 0) {
-      setActiveTab(historicalResults[0].year.toString());
+  const currentElectionResults = activeTab ? resultsByYear[activeTab] : [];
+
+  const summaryData = useMemo(() => {
+    if (!currentElectionResults || !parties) return [];
+
+    const seatsByParty = currentElectionResults.reduce((acc, result) => {
+        if(result.isWinner) {
+            acc[result.partyId] = (acc[result.partyId] || 0) + 1;
+        }
+        return acc;
+    }, {} as Record<string, number>);
+
+    const votesByParty = currentElectionResults.reduce((acc, result) => {
+        acc[result.partyId] = (acc[result.partyId] || 0) + result.votes;
+        return acc;
+    }, {} as Record<string, number>);
+    
+    return parties.map(party => ({
+      partyId: party.id,
+      acronym: party.acronym,
+      name: party.name,
+      seats: seatsByParty[party.id] || 0,
+      totalVotes: votesByParty[party.id] || 0,
+      color: party.color,
+    })).filter(p => p.seats > 0 || p.totalVotes > 0)
+     .sort((a,b) => b.seats - a.seats || b.totalVotes - a.totalVotes);
+  }, [currentElectionResults, parties]);
+
+
+  const chartConfig = useMemo(() => {
+    const config: ChartConfig = {};
+    if (summaryData) {
+        summaryData.forEach(item => {
+            config[item.acronym] = {
+                label: item.acronym,
+                color: item.color,
+            }
+        });
     }
-  }, [yearFromQuery, historicalResults]);
+    return config;
+  }, [summaryData]);
 
-
-  const loading = loadingResults || loadingParties || loadingConstituencies;
 
   if (loading) {
     return (
@@ -46,7 +129,7 @@ export default function ResultsPage() {
           title="Past Election Results"
           description="A historical overview of St. Lucia's general elections."
         />
-        <p>Loading results...</p>
+        <p>Loading...</p>
       </div>
     );
   }
@@ -60,70 +143,106 @@ export default function ResultsPage() {
       <Card>
         <CardContent className="p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
-              {historicalResults?.map((result) => (
-                <TabsTrigger key={result.year} value={result.year.toString()}>
-                  {result.year}
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+              {sortedElections?.map((election) => (
+                <TabsTrigger key={election.id} value={election.id}>
+                  {election.name}
                 </TabsTrigger>
               ))}
             </TabsList>
 
-            {historicalResults?.map((result) => (
-              <TabsContent key={result.year} value={result.year.toString()}>
+            {sortedElections?.map((election) => (
+              <TabsContent key={election.id} value={election.id}>
                 <div className="mt-6">
                   <h3 className="text-2xl font-headline mb-4">
-                    {result.year} Election Summary
+                    {election.name} Election Summary
                   </h3>
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    {result.summary.map((summaryItem) => {
-                      const party = getPartyById(summaryItem.partyId);
-                      return (
-                        <Card key={summaryItem.partyId} style={{ borderLeftColor: party?.color, borderLeftWidth: '4px' }}>
-                          <CardHeader>
-                            <CardTitle className="text-lg">{party?.name}</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="text-3xl font-bold">{summaryItem.seats} Seats</div>
-                            <p className="text-sm text-muted-foreground">
-                              {summaryItem.totalVotes.toLocaleString()} votes
-                            </p>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
+
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+                    {summaryData.map((summaryItem) => (
+                      <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
+                        <CardHeader>
+                          <CardTitle className="text-lg">{summaryItem.name}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-3xl font-bold">{summaryItem.seats} Seats</div>
+                          <p className="text-sm text-muted-foreground">
+                            {summaryItem.totalVotes.toLocaleString()} votes
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
 
+                  {summaryData.length > 0 && (
+                    <Card className="mb-8">
+                        <CardHeader>
+                            <CardTitle>Seat Distribution</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <ChartContainer config={chartConfig} className="h-40 w-full">
+                                <ResponsiveContainer>
+                                    <BarChart data={summaryData} layout="vertical" margin={{left: 20}}>
+                                        <XAxis type="number" hide />
+                                        <YAxis dataKey="acronym" type="category" hide/>
+                                        <ChartTooltip 
+                                            cursor={false}
+                                            content={<ChartTooltipContent 
+                                                formatter={(value, name) => [`${value} seats`, name]}
+                                                indicator="dot" 
+                                            />}
+                                        />
+                                        <Bar dataKey="seats" stackId="a" fill="var(--color)" radius={[0, 4, 4, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </ChartContainer>
+                             <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-xs">
+                                {summaryData.map((item) => (
+                                     <div key={item.partyId} className="flex items-center gap-1.5">
+                                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></span>
+                                        <span>{item.name}</span>
+                                        <span className="font-bold">({item.seats})</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                  )}
+
+
                   <h3 className="text-2xl font-headline my-6">Constituency Breakdown</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Constituency</TableHead>
-                        <TableHead>Winning Candidate</TableHead>
-                        <TableHead>Party</TableHead>
-                        <TableHead className="text-right">Votes</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {result.constituencyResults.length > 0 ? result.constituencyResults.map((cr, index) => {
-                        const constituency = getConstituencyById(cr.constituencyId);
-                        const party = getPartyById(cr.partyId);
-                        return (
-                          <TableRow key={index}>
-                            <TableCell className="font-medium">{constituency?.name || cr.constituencyId}</TableCell>
-                            <TableCell>{cr.candidateName}</TableCell>
-                            <TableCell>
-                                <span className="font-semibold" style={{ color: party?.color }}>{party?.acronym}</span>
-                            </TableCell>
-                            <TableCell className="text-right">{cr.votes.toLocaleString()}</TableCell>
-                          </TableRow>
-                        );
-                      }) : (
-                        <TableRow>
-                            <TableCell colSpan={4} className="text-center text-muted-foreground">Detailed constituency data not available for this year.</TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                   {loadingResults ? <p>Loading results...</p> : (
+                        <Table>
+                            <TableHeader>
+                            <TableRow>
+                                <TableHead>Constituency</TableHead>
+                                <TableHead>Winning Candidate</TableHead>
+                                <TableHead>Party</TableHead>
+                                <TableHead className="text-right">Votes</TableHead>
+                            </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                            {currentElectionResults && currentElectionResults.filter(r => r.isWinner).length > 0 ? currentElectionResults.filter(r => r.isWinner).map((cr) => {
+                                const constituency = getConstituencyById(cr.constituencyId);
+                                const party = getPartyById(cr.partyId);
+                                return (
+                                <TableRow key={cr.id}>
+                                    <TableCell className="font-medium">{constituency?.name || cr.constituencyId}</TableCell>
+                                    <TableCell>{cr.candidateName}</TableCell>
+                                    <TableCell>
+                                        <span className="font-semibold" style={{ color: party?.color }}>{party?.acronym}</span>
+                                    </TableCell>
+                                    <TableCell className="text-right">{cr.votes.toLocaleString()}</TableCell>
+                                </TableRow>
+                                );
+                            }) : (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center text-muted-foreground h-24">Detailed constituency data not available for this year.</TableCell>
+                                </TableRow>
+                            )}
+                            </TableBody>
+                        </Table>
+                   )}
                 </div>
               </TabsContent>
             ))}

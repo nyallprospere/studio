@@ -15,12 +15,15 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, LogIn, LogOut, UserPlus, FilePlus } from 'lucide-react';
 import { Button } from '../ui/button';
-import { useUser, useAuth } from '@/firebase';
+import { useUser, useAuth, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronRight } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import type { Election } from '@/lib/types';
+import { collection, query, orderBy } from 'firebase/firestore';
+
 
 const mainNavItems = [
   { href: '/', icon: Home, label: 'Dashboard' },
@@ -28,7 +31,6 @@ const mainNavItems = [
   { href: '/candidates', icon: Users, label: 'Candidates' },
   { href: '/polls', icon: BarChart3, label: 'Polls' },
   { href: '/predictions', icon: TrendingUp, label: 'Predictions' },
-  // { href: '/results', icon: Landmark, label: 'Past Results' },
   { href: '/constituencies', icon: Map, label: 'Constituencies' },
 ];
 
@@ -41,22 +43,6 @@ const adminNavItems = [
     { href: '/admin/map', icon: Map, label: 'Manage Map' },
     { href: '/admin/settings', icon: Settings, label: 'Manage Settings' },
 ];
-
-const electionYears: { label: string; value: string }[] = [
-  { label: '2021', value: '2021' },
-  { label: '2016', value: '2016' },
-  { label: '2011', value: '2011' },
-  { label: '2006', value: '2006' },
-  { label: '2001', value: '2001' },
-  { label: '1997', value: '1997' },
-  { label: '1992', value: '1992' },
-  { label: '1987 (Apr 30)', value: '1987-04-30' },
-  { label: '1987 (Apr 6)', value: '1987-04-06' },
-  { label: '1982', value: '1982' },
-  { label: '1979', value: '1979' },
-  { label: '1974', value: '1974' },
-];
-
 
 function AuthSection() {
     const { user, isUserLoading } = useUser();
@@ -120,15 +106,28 @@ function AuthSection() {
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const searchParams = usePathname();
   const { user } = useUser();
+  const { firestore } = useFirebase();
   const [isResultsOpen, setIsResultsOpen] = useState(pathname.startsWith('/results'));
+
+  const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
+  const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
+
+  const sortedElections = useMemo(() => {
+    if (!elections) return [];
+    return [...elections].sort((a, b) => {
+        if (a.year !== b.year) {
+            return b.year - a.year;
+        }
+        return b.name.localeCompare(a.name);
+    });
+  }, [elections]);
 
   useEffect(() => {
     setIsResultsOpen(pathname.startsWith('/results'));
   }, [pathname]);
   
-  const itemsToDisplay = mainNavItems;
-
   return (
     <Sidebar>
       <SidebarHeader>
@@ -143,7 +142,7 @@ export function SidebarNav() {
         </Link>
       </SidebarHeader>
       <SidebarMenu>
-        {itemsToDisplay.map((item) => (
+        {mainNavItems.map((item) => (
           <SidebarMenuItem key={item.href}>
             <Button
               asChild
@@ -171,11 +170,11 @@ export function SidebarNav() {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                     <SidebarMenuSub>
-                        {electionYears.map(year => (
-                            <SidebarMenuItem key={year.value}>
-                                <SidebarMenuSubButton asChild isActive={pathname === `/results?year=${year.value}`}>
-                                    <Link href={`/results?year=${year.value}`}>
-                                        {year.label}
+                        {loadingElections ? <p className="p-2 text-xs text-muted-foreground">Loading years...</p> : sortedElections.map(election => (
+                            <SidebarMenuItem key={election.id}>
+                                <SidebarMenuSubButton asChild isActive={searchParams.includes(`year=${election.id}`)}>
+                                    <Link href={`/results?year=${election.id}`}>
+                                        {election.name}
                                     </Link>
                                 </SidebarMenuSubButton>
                             </SidebarMenuItem>
