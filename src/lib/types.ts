@@ -63,6 +63,7 @@ export interface Event {
   date: string; // Stored as ISO string or Firestore Timestamp
   location: string;
   description?: string;
+  imageUrl?: string;
 }
 
 export interface Election {

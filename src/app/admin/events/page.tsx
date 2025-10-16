@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { EventForm } from './event-form';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Calendar } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { uploadFile, deleteFile } from '@/firebase/storage';
+import Image from 'next/image';
 
 export default function AdminEventsPage() {
   const { firestore } = useFirebase();
@@ -37,6 +39,7 @@ export default function AdminEventsPage() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [preselectedPartyId, setPreselectedPartyId] = useState<string | undefined>(undefined);
   
   const getPartyName = (partyId: string) => parties?.find(p => p.id === partyId)?.name || 'N/A';
   const isLoading = loadingEvents || loadingParties;
@@ -57,11 +60,20 @@ export default function AdminEventsPage() {
   const handleFormSubmit = async (values: any) => {
     if (!firestore) return;
     try {
-      // Convert JS Date to Firestore Timestamp
+      let imageUrl = values.imageUrl;
+      if (values.photoFile) {
+          if (editingEvent?.imageUrl) {
+              await deleteFile(editingEvent.imageUrl);
+          }
+          imageUrl = await uploadFile(values.photoFile, `events/${values.photoFile.name}`);
+      }
+
       const eventData = { 
         ...values, 
-        date: Timestamp.fromDate(values.date)
+        date: Timestamp.fromDate(values.date),
+        imageUrl,
       };
+      delete eventData.photoFile;
 
       if (editingEvent) {
         const eventDoc = doc(firestore, 'events', editingEvent.id);
@@ -78,12 +90,14 @@ export default function AdminEventsPage() {
     } finally {
       setIsFormOpen(false);
       setEditingEvent(null);
+      setPreselectedPartyId(undefined);
     }
   };
 
   const handleDelete = async (event: Event) => {
     if (!firestore) return;
     try {
+      if (event.imageUrl) await deleteFile(event.imageUrl);
       const eventDoc = doc(firestore, 'events', event.id);
       await deleteDoc(eventDoc);
       toast({ title: "Event Deleted", description: `The event "${event.title}" has been deleted.` });
@@ -93,6 +107,12 @@ export default function AdminEventsPage() {
     }
   };
 
+  const openForm = (partyId?: string, event: Event | null = null) => {
+    setPreselectedPartyId(partyId);
+    setEditingEvent(event);
+    setIsFormOpen(true);
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-start mb-8">
@@ -100,10 +120,13 @@ export default function AdminEventsPage() {
           title="Manage Events"
           description="Add, edit, or remove party events."
         />
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => { setEditingEvent(null); setIsFormOpen(true)}}>Add New Event</Button>
-          </DialogTrigger>
+        <Dialog open={isFormOpen} onOpenChange={(isOpen) => {
+            if (!isOpen) {
+              setEditingEvent(null);
+              setPreselectedPartyId(undefined);
+            }
+            setIsFormOpen(isOpen);
+          }}>
           <DialogContent className="sm:max-w-xl">
             <DialogHeader>
               <DialogTitle>{editingEvent ? 'Edit Event' : 'Add New Event'}</DialogTitle>
@@ -113,6 +136,7 @@ export default function AdminEventsPage() {
               initialData={editingEvent}
               onCancel={() => setIsFormOpen(false)}
               parties={parties || []}
+              preselectedPartyId={preselectedPartyId}
             />
           </DialogContent>
         </Dialog>
@@ -121,8 +145,13 @@ export default function AdminEventsPage() {
       <div className="grid md:grid-cols-2 gap-8">
       <Card>
         <CardHeader>
-          <CardTitle>UWP Events</CardTitle>
-          <CardDescription>A list of all UWP events currently in the system.</CardDescription>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>UWP Events</CardTitle>
+              <CardDescription>A list of all UWP events currently in the system.</CardDescription>
+            </div>
+            {uwpParty && <Button onClick={() => openForm(uwpParty.id)}>Add UWP Event</Button>}
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -139,15 +168,22 @@ export default function AdminEventsPage() {
                 uwpEvents.map((event) => {
                   const eventDate = (event.date as unknown as Timestamp)?.toDate ? (event.date as unknown as Timestamp).toDate() : new Date(event.date);
                   return (
-                  <div key={event.id} className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50">
-                    <div>
+                  <div key={event.id} className="flex items-start justify-between p-4 border rounded-md hover:bg-muted/50 gap-4">
+                     {event.imageUrl ? (
+                        <Image src={event.imageUrl} alt={event.title} width={80} height={80} className="rounded-md object-cover aspect-square" />
+                      ) : (
+                        <div className="h-20 w-20 flex-shrink-0 rounded-md bg-muted flex items-center justify-center">
+                          <Calendar className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                      )}
+                    <div className="flex-grow">
                       <p className="font-semibold">{event.title}</p>
                       <p className="text-sm text-muted-foreground">
                         {getPartyName(event.partyId)} &bull; {format(eventDate, "PPP")} &bull; {event.location}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                       <Button variant="ghost" size="icon" onClick={() => { setEditingEvent(event); setIsFormOpen(true);}}>
+                    <div className="flex flex-col gap-2">
+                       <Button variant="ghost" size="icon" onClick={() => openForm(undefined, event)}>
                            <Pencil className="h-4 w-4" />
                        </Button>
                        <AlertDialog>
@@ -182,8 +218,13 @@ export default function AdminEventsPage() {
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>SLP Events</CardTitle>
-          <CardDescription>A list of all SLP events currently in the system.</CardDescription>
+            <div className="flex justify-between items-center">
+                <div>
+                    <CardTitle>SLP Events</CardTitle>
+                    <CardDescription>A list of all SLP events currently in the system.</CardDescription>
+                </div>
+                {slpParty && <Button onClick={() => openForm(slpParty.id)}>Add SLP Event</Button>}
+            </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -200,15 +241,22 @@ export default function AdminEventsPage() {
                 slpEvents.map((event) => {
                   const eventDate = (event.date as unknown as Timestamp)?.toDate ? (event.date as unknown as Timestamp).toDate() : new Date(event.date);
                   return (
-                  <div key={event.id} className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50">
-                    <div>
+                  <div key={event.id} className="flex items-start justify-between p-4 border rounded-md hover:bg-muted/50 gap-4">
+                    {event.imageUrl ? (
+                        <Image src={event.imageUrl} alt={event.title} width={80} height={80} className="rounded-md object-cover aspect-square" />
+                      ) : (
+                        <div className="h-20 w-20 flex-shrink-0 rounded-md bg-muted flex items-center justify-center">
+                          <Calendar className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                      )}
+                    <div className="flex-grow">
                       <p className="font-semibold">{event.title}</p>
                       <p className="text-sm text-muted-foreground">
                         {getPartyName(event.partyId)} &bull; {format(eventDate, "PPP")} &bull; {event.location}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                       <Button variant="ghost" size="icon" onClick={() => { setEditingEvent(event); setIsFormOpen(true);}}>
+                    <div className="flex flex-col gap-2">
+                       <Button variant="ghost" size="icon" onClick={() => openForm(undefined, event)}>
                            <Pencil className="h-4 w-4" />
                        </Button>
                        <AlertDialog>

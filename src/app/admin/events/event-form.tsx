@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -26,6 +26,8 @@ const eventSchema = z.object({
   }),
   location: z.string().min(1, "Location is required"),
   description: z.string().optional(),
+  photoFile: z.any().optional(),
+  imageUrl: z.string().url().optional().or(z.literal('')),
 });
 
 type EventFormProps = {
@@ -33,16 +35,18 @@ type EventFormProps = {
   initialData?: Event | null;
   onCancel: () => void;
   parties: Party[];
+  preselectedPartyId?: string;
 };
 
-export function EventForm({ onSubmit, initialData, onCancel, parties }: EventFormProps) {
+export function EventForm({ onSubmit, initialData, onCancel, parties, preselectedPartyId }: EventFormProps) {
   const form = useForm<z.infer<typeof eventSchema>>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
       title: '',
-      partyId: '',
+      partyId: preselectedPartyId || '',
       location: '',
       description: '',
+      imageUrl: '',
     },
   });
 
@@ -52,17 +56,19 @@ export function EventForm({ onSubmit, initialData, onCancel, parties }: EventFor
       form.reset({
         ...initialData,
         date: eventDate,
+        partyId: initialData.partyId,
       });
     } else {
       form.reset({
         title: '',
-        partyId: '',
+        partyId: preselectedPartyId || '',
         location: '',
         description: '',
         date: undefined,
+        imageUrl: '',
       });
     }
-  }, [initialData, form]);
+  }, [initialData, form, preselectedPartyId]);
 
   return (
     <Form {...form}>
@@ -152,6 +158,22 @@ export function EventForm({ onSubmit, initialData, onCancel, parties }: EventFor
               <FormControl>
                 <Input placeholder="e.g., Castries Market Steps" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+         <FormField
+          control={form.control}
+          name="photoFile"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Event Image</FormLabel>
+              <FormControl>
+                  <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
+              </FormControl>
+              <FormDescription>Upload a PNG or JPG file. A landscape image works best.</FormDescription>
+              {initialData?.imageUrl && <a href={initialData.imageUrl} target="_blank" className="text-sm text-blue-500 hover:underline">View current image</a>}
               <FormMessage />
             </FormItem>
           )}
