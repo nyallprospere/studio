@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { Candidate, Party, Constituency } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import Image from 'next/image';
 import { PageHeader } from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
 
 function CandidateCardSkeleton() {
   return (
@@ -70,7 +70,7 @@ export default function CandidatesPage() {
                     <div className="relative h-56 w-full">
                       <Image
                         src={candidate.imageUrl}
-                        alt={`Photo of ${candidate.name}`}
+                        alt={`Photo of ${candidate.firstName} ${candidate.lastName}`}
                         fill
                         className="object-cover"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -78,7 +78,7 @@ export default function CandidatesPage() {
                     </div>
                   )}
                   <div className="p-6">
-                      <CardTitle className="font-headline text-xl">{candidate.name}</CardTitle>
+                      <CardTitle className="font-headline text-xl">{candidate.firstName} {candidate.lastName}</CardTitle>
                       {party && (
                         <CardDescription style={{ color: party.color }}>
                           {party.name} ({party.acronym})
