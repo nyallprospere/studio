@@ -21,8 +21,8 @@ import { useRouter } from 'next/navigation';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronRight } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
-import type { Election } from '@/lib/types';
-import { collection, query, orderBy } from 'firebase/firestore';
+import type { Election, Party } from '@/lib/types';
+import { collection, query, orderBy, where } from 'firebase/firestore';
 
 
 const mainNavItems = [
@@ -110,9 +110,18 @@ export function SidebarNav() {
   const { user } = useUser();
   const { firestore } = useFirebase();
   const [isResultsOpen, setIsResultsOpen] = useState(pathname.startsWith('/results'));
+  const [isUwpOpen, setIsUwpOpen] = useState(false);
+  const [isSlpOpen, setIsSlpOpen] = useState(false);
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
+
+  const { data: parties, isLoading: loadingParties } = useCollection<Party>(
+    useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore])
+  );
+
+  const uwp = useMemo(() => parties?.find(p => p.acronym === 'UWP'), [parties]);
+  const slp = useMemo(() => parties?.find(p => p.acronym === 'SLP'), [parties]);
 
   const sortedElections = useMemo(() => {
     if (!elections) return [];
@@ -156,6 +165,48 @@ export function SidebarNav() {
             </Button>
           </SidebarMenuItem>
         ))}
+
+        {slp && (
+            <SidebarMenuItem>
+                 <Collapsible open={isSlpOpen} onOpenChange={setIsSlpOpen}>
+                    <CollapsibleTrigger asChild>
+                        <Button variant={pathname.startsWith(`/parties/${slp.id}`) ? 'secondary' : 'ghost'} className="w-full justify-between">
+                            <div className="flex items-center gap-2">
+                                <Shield className="mr-2 h-4 w-4" style={{ color: slp.color }} />
+                                {slp.name}
+                            </div>
+                            <ChevronRight className={`h-4 w-4 transition-transform ${isSlpOpen ? 'rotate-90' : ''}`} />
+                        </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <SidebarMenuSub>
+                            {/* Future party-specific links can go here */}
+                        </SidebarMenuSub>
+                    </CollapsibleContent>
+                </Collapsible>
+            </SidebarMenuItem>
+        )}
+
+        {uwp && (
+            <SidebarMenuItem>
+                 <Collapsible open={isUwpOpen} onOpenChange={setIsUwpOpen}>
+                    <CollapsibleTrigger asChild>
+                        <Button variant={pathname.startsWith(`/parties/${uwp.id}`) ? 'secondary' : 'ghost'} className="w-full justify-between">
+                            <div className="flex items-center gap-2">
+                                <Shield className="mr-2 h-4 w-4" style={{ color: uwp.color }} />
+                                {uwp.name}
+                            </div>
+                            <ChevronRight className={`h-4 w-4 transition-transform ${isUwpOpen ? 'rotate-90' : ''}`} />
+                        </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <SidebarMenuSub>
+                            {/* Future party-specific links can go here */}
+                        </SidebarMenuSub>
+                    </CollapsibleContent>
+                </Collapsible>
+            </SidebarMenuItem>
+        )}
 
         <SidebarMenuItem>
             <Collapsible open={isResultsOpen} onOpenChange={setIsResultsOpen}>
