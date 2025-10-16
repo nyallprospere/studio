@@ -209,7 +209,7 @@ export function SidebarNav() {
               <SidebarMenuItem>
                   <Collapsible open={isUwpOpen} onOpenChange={setIsUwpOpen}>
                       <CollapsibleTrigger asChild>
-                          <Button asChild variant={pathname.startsWith(`/parties/${uwpParty.id}`) || pathname === '/candidates' ? 'secondary' : 'ghost'} className="w-full justify-between">
+                          <Button asChild variant={pathname.startsWith(`/parties/${uwpParty.id}`) || (pathname === '/candidates' && !isSlpOpen) ? 'secondary' : 'ghost'} className="w-full justify-between">
                               <div className='w-full'>
                                   <Link href={`/parties/${uwpParty.id}`} className='flex items-center justify-between'>
                                       <div className="flex items-center gap-2">
@@ -240,7 +240,7 @@ export function SidebarNav() {
               <SidebarMenuItem>
                   <Collapsible open={isSlpOpen} onOpenChange={setIsSlpOpen}>
                       <CollapsibleTrigger asChild>
-                           <Button asChild variant={pathname.startsWith(`/parties/${slpParty.id}`) || pathname === '/candidates' ? 'secondary' : 'ghost'} className="w-full justify-between">
+                           <Button asChild variant={pathname.startsWith(`/parties/${slpParty.id}`) || (pathname === '/candidates' && !isUwpOpen) ? 'secondary' : 'ghost'} className="w-full justify-between">
                               <div className='w-full'>
                                 <Link href={`/parties/${slpParty.id}`} className='flex items-center justify-between'>
                                   <div className="flex items-center gap-2">
