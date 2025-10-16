@@ -329,11 +329,10 @@ export default function AdminResultsPage() {
                     {results && results.length > 0 ? results.map(result => {
                         const constituency = getConstituency(result.constituencyId);
                         const winner = result.slpVotes > result.uwpVotes ? 'SLP' : 'UWP';
-                        const registeredVoters = result.registeredVoters || constituency?.demographics.registeredVoters || 0;
                         return (
                             <TableRow key={result.id}>
                                 <TableCell className="font-medium" style={{ color: winner === 'SLP' ? 'red': 'orange'}}>{constituency?.name}</TableCell>
-                                <TableCell>{registeredVoters === 0 ? 'N/A' : registeredVoters.toLocaleString()}</TableCell>
+                                <TableCell>{result.registeredVoters === 0 ? 'N/A' : result.registeredVoters.toLocaleString()}</TableCell>
                                 <TableCell>{result.slpVotes.toLocaleString()}</TableCell>
                                 <TableCell>{result.uwpVotes.toLocaleString()}</TableCell>
                                 <TableCell>{result.otherVotes.toLocaleString()}</TableCell>
@@ -376,5 +375,3 @@ export default function AdminResultsPage() {
     </div>
   );
 }
-
-    
