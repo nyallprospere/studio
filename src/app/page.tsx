@@ -179,8 +179,8 @@ export default function Home() {
                 <CardHeader>
                     <div className="flex justify-between items-center">
                         <div>
-                            <CardTitle>All Events</CardTitle>
-                            <CardDescription>All political events.</CardDescription>
+                            <CardTitle>Events</CardTitle>
+                            <CardDescription>Upcoming and past political events.</CardDescription>
                         </div>
                          <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
                             <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'secondary' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')}>Upcoming</Button>
