@@ -174,6 +174,7 @@ export function ImportDialog({ isOpen, onClose, onImport, parties, constituencie
                                                 <SelectItem value="bio">Bio</SelectItem>
                                                 <SelectItem value="isIncumbent">Is Incumbent (Yes/No)</SelectItem>
                                                 <SelectItem value="isPartyLeader">Is Party Leader (Yes/No)</SelectItem>
+                                                <SelectItem value="isDeputyLeader">Is Deputy Leader (Yes/No)</SelectItem>
                                                 <SelectItem value="imageUrl">Image URL</SelectItem>
                                             </SelectContent>
                                         </Select>

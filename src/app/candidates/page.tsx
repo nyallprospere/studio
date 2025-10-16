@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo } from 'react';
@@ -116,38 +117,30 @@ export default function CandidatesPage() {
     const uwp = parties.find(p => p.acronym === 'UWP');
     const slp = parties.find(p => p.acronym === 'SLP');
 
-    const getUwpSortOrder = (candidate: Candidate) => {
-      const name = `${candidate.firstName} ${candidate.lastName}`;
-      if (name === 'Guy Joseph') return 1;
-      if (name === 'Dominic Fedee') return 2;
-      return 3;
-    };
-
-    const getSlpSortOrder = (candidate: Candidate) => {
-      const name = `${candidate.firstName} ${candidate.lastName}`;
-      if (name === 'Ernest Hilaire') return 1;
-      if (name === 'Shawn Edward') return 2;
-      return 3;
-    };
-
     const uwpLeader = candidates.find(c => c.partyId === uwp?.id && c.isPartyLeader);
     const slpLeader = candidates.find(c => c.partyId === slp?.id && c.isPartyLeader);
 
-    const uwpCandidates = candidates
-      .filter(c => c.partyId === uwp?.id && !c.isPartyLeader)
-      .sort((a, b) => getUwpSortOrder(a) - getUwpSortOrder(b));
+    const featuredUwpCandidates = candidates.filter(
+      c => c.partyId === uwp?.id && c.isDeputyLeader
+    );
+    const otherUwpCandidates = candidates.filter(
+      c => c.partyId === uwp?.id && !c.isPartyLeader && !c.isDeputyLeader
+    );
 
-    const slpCandidates = candidates
-      .filter(c => c.partyId === slp?.id && !c.isPartyLeader)
-      .sort((a, b) => getSlpSortOrder(a) - getSlpSortOrder(b));
+    const featuredSlpCandidates = candidates.filter(
+      c => c.partyId === slp?.id && c.isDeputyLeader
+    );
+    const otherSlpCandidates = candidates.filter(
+      c => c.partyId === slp?.id && !c.isPartyLeader && !c.isDeputyLeader
+    );
 
     return {
       uwpLeader,
-      featuredUwpCandidates: uwpCandidates.slice(0, 2),
-      otherUwpCandidates: uwpCandidates.slice(2),
+      featuredUwpCandidates,
+      otherUwpCandidates,
       slpLeader,
-      featuredSlpCandidates: slpCandidates.slice(0, 2),
-      otherSlpCandidates: slpCandidates.slice(2),
+      featuredSlpCandidates,
+      otherSlpCandidates,
     };
   }, [candidates, parties]);
 

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -22,6 +23,7 @@ const candidateSchema = z.object({
   imageUrl: z.string().url().optional().or(z.literal('')),
   isIncumbent: z.boolean().default(false),
   isPartyLeader: z.boolean().default(false),
+  isDeputyLeader: z.boolean().default(false),
 });
 
 type CandidateFormProps = {
@@ -44,6 +46,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
       imageUrl: '',
       isIncumbent: false,
       isPartyLeader: false,
+      isDeputyLeader: false,
     },
   });
 
@@ -53,6 +56,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
         ...initialData,
         isIncumbent: initialData.isIncumbent ?? false,
         isPartyLeader: initialData.isPartyLeader ?? false,
+        isDeputyLeader: initialData.isDeputyLeader ?? false,
       });
     } else {
         form.reset({
@@ -64,6 +68,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
           imageUrl: '',
           isIncumbent: false,
           isPartyLeader: false,
+          isDeputyLeader: false,
         });
     }
   }, [initialData, form]);
@@ -219,6 +224,28 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
                   </FormLabel>
                   <FormDescription>
                     Is this candidate the leader of their party?
+                  </FormDescription>
+                </div>
+              </FormItem>
+            )}
+          />
+           <FormField
+            control={form.control}
+            name="isDeputyLeader"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>
+                    Deputy Leader
+                  </FormLabel>
+                  <FormDescription>
+                    Is this candidate a deputy leader of their party?
                   </FormDescription>
                 </div>
               </FormItem>

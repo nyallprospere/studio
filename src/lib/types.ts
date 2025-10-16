@@ -27,6 +27,7 @@ export interface Candidate {
   policyPositions: { title: string; description: string }[];
   isIncumbent?: boolean;
   isPartyLeader?: boolean;
+  isDeputyLeader?: boolean;
 }
 
 export interface Constituency {

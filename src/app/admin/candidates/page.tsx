@@ -105,6 +105,7 @@ export default function AdminCandidatesPage() {
       'Bio': c.bio,
       'Is Incumbent': c.isIncumbent ? 'Yes' : 'No',
       'Is Party Leader': c.isPartyLeader ? 'Yes' : 'No',
+      'Is Deputy Leader': c.isDeputyLeader ? 'Yes' : 'No',
       'Image URL': c.imageUrl
     }));
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -141,6 +142,7 @@ export default function AdminCandidatesPage() {
                 bio: row.bio || '',
                 isIncumbent: row.isIncumbent === 'Yes' || row.isIncumbent === true,
                 isPartyLeader: row.isPartyLeader === 'Yes' || row.isPartyLeader === true,
+                isDeputyLeader: row.isDeputyLeader === 'Yes' || row.isDeputyLeader === true,
                 imageUrl: row.imageUrl || '',
                 policyPositions: [],
             };
@@ -307,5 +309,3 @@ export default function AdminCandidatesPage() {
     </div>
   );
 }
-
-    
