@@ -70,6 +70,10 @@ export function EventForm({ onSubmit, initialData, onCancel, parties, preselecte
     }
   }, [initialData, form, preselectedPartyId]);
 
+  const partiesToShow = preselectedPartyId && !initialData
+    ? parties.filter(p => p.id === preselectedPartyId)
+    : parties;
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -100,7 +104,7 @@ export function EventForm({ onSubmit, initialData, onCancel, parties, preselecte
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {parties.map(party => (
+                    {partiesToShow.map(party => (
                       <SelectItem key={party.id} value={party.id}>{party.name}</SelectItem>
                     ))}
                   </SelectContent>
