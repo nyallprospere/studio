@@ -26,6 +26,7 @@ import { useState, useEffect, useMemo } from 'react';
 import type { Election, Party, Candidate } from '@/lib/types';
 import { collection, query, orderBy, where } from 'firebase/firestore';
 import { SlpLogo, UwpLogo } from '../icons';
+import { ScrollArea } from '../ui/scroll-area';
 
 
 const mainNavItems = [
@@ -187,17 +188,19 @@ export function SidebarNav() {
                       </Button>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
+                    <ScrollArea className="h-64">
                       <SidebarMenuSub>
                           {loadingElections ? <p className="p-2 text-xs text-muted-foreground">Loading years...</p> : sortedElections.map(election => (
                               <SidebarMenuItem key={election.id}>
                                   <SidebarMenuSubButton asChild isActive={pathname.includes(`year=${election.id}`)}>
                                       <Link href={`/results?year=${election.id}`}>
-                                          {election.name}
+                                          {election.name.replace('General ', '')}
                                       </Link>
                                   </SidebarMenuSubButton>
                               </SidebarMenuItem>
                           ))}
                       </SidebarMenuSub>
+                    </ScrollArea>
                   </CollapsibleContent>
               </Collapsible>
           </SidebarMenuItem>
@@ -273,3 +276,4 @@ export function SidebarNav() {
     </Sidebar>
   );
 }
+
