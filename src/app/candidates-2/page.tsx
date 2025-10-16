@@ -88,11 +88,11 @@ function CandidateCardSkeleton() {
 export default function CandidatesPage() {
   const { firestore } = useFirebase();
 
-  const partiesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'parties'), where('acronym', '==', 'UWP')) : null, [firestore]);
-  const { data: uwpParties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
-  const uwpParty = uwpParties?.[0];
+  const partiesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'parties'), where('acronym', '==', 'SLP')) : null, [firestore]);
+  const { data: slpParties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
+  const slpParty = slpParties?.[0];
 
-  const candidatesQuery = useMemoFirebase(() => firestore && uwpParty ? query(collection(firestore, 'candidates'), where('partyId', '==', uwpParty.id)) : null, [firestore, uwpParty]);
+  const candidatesQuery = useMemoFirebase(() => firestore && slpParty ? query(collection(firestore, 'candidates'), where('partyId', '==', slpParty.id)) : null, [firestore, slpParty]);
   const { data: candidates, isLoading: loadingCandidates } = useCollection<Candidate>(candidatesQuery);
 
   const loading = loadingCandidates || loadingParties;
@@ -115,40 +115,40 @@ export default function CandidatesPage() {
   };
 
   const {
-    uwpLeader,
-    featuredUwpCandidates,
-    otherUwpCandidates,
+    slpLeader,
+    featuredSlpCandidates,
+    otherSlpCandidates,
   } = useMemo(() => {
-    if (!candidates || !uwpParty) {
+    if (!candidates || !slpParty) {
       return {
-        uwpLeader: null,
-        featuredUwpCandidates: [],
-        otherUwpCandidates: [],
+        slpLeader: null,
+        featuredSlpCandidates: [],
+        otherSlpCandidates: [],
       };
     }
     
-    const uwpCandidates = candidates.filter(c => c.partyId === uwpParty?.id).sort(sortCandidates);
+    const slpCandidates = candidates.filter(c => c.partyId === slpParty?.id).sort(sortCandidates);
 
-    const uwpLeader = uwpCandidates.find(c => c.isPartyLeader);
-    const featuredUwpCandidates = uwpCandidates.filter(c => c.isDeputyLeader);
-    const otherUwpCandidates = uwpCandidates.filter(c => !c.isPartyLeader && !c.isDeputyLeader);
+    const slpLeader = slpCandidates.find(c => c.isPartyLeader);
+    const featuredSlpCandidates = slpCandidates.filter(c => c.isDeputyLeader);
+    const otherSlpCandidates = slpCandidates.filter(c => !c.isPartyLeader && !c.isDeputyLeader);
 
     return {
-      uwpLeader,
-      featuredUwpCandidates,
-      otherUwpCandidates,
+      slpLeader,
+      featuredSlpCandidates,
+      otherSlpCandidates,
     };
-  }, [candidates, uwpParty]);
+  }, [candidates, slpParty]);
 
   return (
     <div className="container mx-auto px-4 py-8">
       <PageHeader
-        title="UWP Candidates"
-        description="Meet the individuals contesting for the United Workers Party."
+        title="SLP Candidates"
+        description="Meet the individuals contesting for the Saint Lucia Labour Party."
       />
 
       <div className="space-y-12">
-        <section id="uwp-candidates">
+        <section id="slp-candidates">
           {loading ? (
             <div className="space-y-8">
               <div className="max-w-sm mx-auto"><CandidateCardSkeleton /></div>
@@ -160,33 +160,33 @@ export default function CandidatesPage() {
                 {Array.from({ length: 8 }).map((_, i) => <CandidateCardSkeleton key={i} />)}
               </div>
             </div>
-          ) : uwpParty ? (
+          ) : slpParty ? (
            <>
-            {uwpLeader && (
+            {slpLeader && (
               <div className="mb-8">
                 <h3 className="text-center text-lg font-semibold text-muted-foreground uppercase tracking-wider mb-2">Party Leader</h3>
                 <div className="max-w-sm mx-auto">
-                  <CandidateCard candidate={uwpLeader} />
+                  <CandidateCard candidate={slpLeader} />
                 </div>
               </div>
             )}
-            {featuredUwpCandidates.length > 0 && (
+            {featuredSlpCandidates.length > 0 && (
               <div className="mb-8">
                   <h3 className="text-center text-lg font-semibold text-muted-foreground uppercase tracking-wider mb-4">Deputy Leaders</h3>
                   <div className="grid gap-6 md:grid-cols-2 justify-center max-w-4xl mx-auto">
-                      {featuredUwpCandidates.map((candidate) => <CandidateCard key={candidate.id} candidate={candidate} />)}
+                      {featuredSlpCandidates.map((candidate) => <CandidateCard key={candidate.id} candidate={candidate} />)}
                   </div>
               </div>
             )}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {otherUwpCandidates.map((candidate) => <CandidateCard key={candidate.id} candidate={candidate} />)}
+              {otherSlpCandidates.map((candidate) => <CandidateCard key={candidate.id} candidate={candidate} />)}
             </div>
             {candidates?.length === 0 && (
-                 <p className="text-muted-foreground col-span-full text-center">No UWP candidates have been added yet.</p>
+                 <p className="text-muted-foreground col-span-full text-center">No SLP candidates have been added yet.</p>
             )}
            </>
           ) : (
-             <p className="text-muted-foreground col-span-full text-center">United Workers Party not found.</p>
+             <p className="text-muted-foreground col-span-full text-center">Saint Lucia Labour Party not found.</p>
           )}
         </section>
       </div>

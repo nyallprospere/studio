@@ -31,8 +31,8 @@ import { ScrollArea } from '../ui/scroll-area';
 
 const mainNavItems = [
   { href: '/', icon: Home, label: 'Dashboard' },
-  { href: '/candidates', icon: Users, label: 'Candidates' },
-  { href: '/candidates', icon: Users, label: 'Candidates 2' },
+  { href: '/candidates', icon: Users, label: 'UWP Candidates' },
+  { href: '/candidates-2', icon: Users, label: 'SLP Candidates' },
   { href: '/polls', icon: BarChart3, label: 'Polls' },
   { href: '/predictions', icon: TrendingUp, label: 'Predictions' },
   { href: '/constituencies', icon: Map, label: 'Constituencies' },
@@ -210,7 +210,7 @@ export function SidebarNav() {
               <SidebarMenuItem>
                   <Collapsible open={isUwpOpen} onOpenChange={setIsUwpOpen}>
                       <CollapsibleTrigger asChild>
-                          <Button asChild variant={pathname.startsWith(`/parties/${uwpParty.id}`) || (pathname === '/candidates' && !isSlpOpen) ? 'secondary' : 'ghost'} className="w-full justify-between">
+                          <Button asChild variant={pathname.startsWith(`/parties/${uwpParty.id}`) || pathname === '/candidates' ? 'secondary' : 'ghost'} className="w-full justify-between">
                               <div className='w-full'>
                                   <Link href={`/parties/${uwpParty.id}`} className='flex items-center justify-between'>
                                       <div className="flex items-center gap-2">
@@ -226,7 +226,7 @@ export function SidebarNav() {
                         <SidebarMenuSub>
                            <SidebarMenuItem>
                                 <SidebarMenuSubButton asChild isActive={pathname.startsWith('/candidates')}>
-                                    <Link href="/candidates#uwp-candidates">
+                                    <Link href="/candidates">
                                         Candidates
                                     </Link>
                                 </SidebarMenuSubButton>
@@ -241,7 +241,7 @@ export function SidebarNav() {
               <SidebarMenuItem>
                   <Collapsible open={isSlpOpen} onOpenChange={setIsSlpOpen}>
                       <CollapsibleTrigger asChild>
-                           <Button asChild variant={pathname.startsWith(`/parties/${slpParty.id}`) || (pathname === '/candidates' && !isUwpOpen) ? 'secondary' : 'ghost'} className="w-full justify-between">
+                           <Button asChild variant={pathname.startsWith(`/parties/${slpParty.id}`) || pathname === '/candidates-2' ? 'secondary' : 'ghost'} className="w-full justify-between">
                               <div className='w-full'>
                                 <Link href={`/parties/${slpParty.id}`} className='flex items-center justify-between'>
                                   <div className="flex items-center gap-2">
@@ -256,8 +256,8 @@ export function SidebarNav() {
                       <CollapsibleContent>
                         <SidebarMenuSub>
                             <SidebarMenuItem>
-                                <SidebarMenuSubButton asChild isActive={pathname.startsWith('/candidates')}>
-                                    <Link href="/candidates#slp-candidates">
+                                <SidebarMenuSubButton asChild isActive={pathname.startsWith('/candidates-2')}>
+                                    <Link href="/candidates-2">
                                         Candidates
                                     </Link>
                                 </SidebarMenuSubButton>
