@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { ElectionResult, Election, Constituency } from '@/lib/types';
+import { Card, CardContent } from '@/components/ui/card';
 
 const resultSchema = z.object({
   electionId: z.string().min(1, "Election is required"),
@@ -38,6 +39,27 @@ export function ResultForm({ onSubmit, initialData, onCancel, elections, constit
       otherVotes: 0,
     },
   });
+
+  const watchAllFields = form.watch();
+
+  const selectedConstituency = useMemo(() => {
+    return constituencies.find(c => c.id === watchAllFields.constituencyId);
+  }, [watchAllFields.constituencyId, constituencies]);
+
+  const totalVotes = useMemo(() => {
+    return (watchAllFields.slpVotes || 0) + (watchAllFields.uwpVotes || 0) + (watchAllFields.otherVotes || 0);
+  }, [watchAllFields.slpVotes, watchAllFields.uwpVotes, watchAllFields.otherVotes]);
+
+  const registeredVoters = useMemo(() => {
+    return selectedConstituency?.demographics.registeredVoters || 0;
+  }, [selectedConstituency]);
+
+  const turnout = useMemo(() => {
+    if (registeredVoters > 0) {
+      return ((totalVotes / registeredVoters) * 100).toFixed(2);
+    }
+    return '0.00';
+  }, [totalVotes, registeredVoters]);
 
   useEffect(() => {
     if (initialData) {
@@ -144,6 +166,23 @@ export function ResultForm({ onSubmit, initialData, onCancel, elections, constit
                 )}
             />
         </div>
+
+        <Card className="bg-muted/50">
+            <CardContent className="p-4 grid grid-cols-3 gap-4 text-center">
+                <div>
+                    <p className="text-sm text-muted-foreground">Registered Voters</p>
+                    <p className="text-lg font-bold">{registeredVoters.toLocaleString()}</p>
+                </div>
+                 <div>
+                    <p className="text-sm text-muted-foreground">Total Votes</p>
+                    <p className="text-lg font-bold">{totalVotes.toLocaleString()}</p>
+                </div>
+                 <div>
+                    <p className="text-sm text-muted-foreground">Turnout</p>
+                    <p className="text-lg font-bold">{turnout}%</p>
+                </div>
+            </CardContent>
+        </Card>
 
         <div className="flex justify-end gap-4 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>
