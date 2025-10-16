@@ -69,7 +69,7 @@ export default function PartiesPage() {
               <CardContent className="flex-grow space-y-4">
                 <div>
                     <h4 className="font-semibold text-sm mb-1">About the Party</h4>
-                    <p className="text-sm text-muted-foreground">{party.description || 'No description available.'}</p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-line">{party.description || 'No description available.'}</p>
                 </div>
                  {party.history && (
                   <div>
@@ -79,7 +79,7 @@ export default function PartiesPage() {
                  )}
                 <div>
                     <h4 className="font-semibold text-sm mb-1">Manifesto Summary</h4>
-                    <p className="text-sm text-muted-foreground">{party.manifestoSummary || 'No summary available.'}</p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-line">{party.manifestoSummary || 'No summary available.'}</p>
                 </div>
               </CardContent>
               <CardFooter className="flex-wrap gap-2">
