@@ -1,201 +1,150 @@
-
 'use client';
 
-import { useMemo, useState } from 'react';
-import type { Candidate, Party, Constituency } from '@/lib/types';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import Image from 'next/image';
-import { PageHeader } from '@/components/page-header';
+import { useMemo } from 'react';
+import type { Party, Candidate, Constituency } from '@/lib/types';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
-import { CandidateProfileDialog } from '@/components/candidate-profile-dialog';
+import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
+import { Shield, Link as LinkIcon, UserSquare } from 'lucide-react';
+import { useDoc, useFirebase, useMemoFirebase, useCollection } from '@/firebase';
+import { doc, collection, query, where, limit } from 'firebase/firestore';
+import Link from 'next/link';
 
-function CandidateCard({ candidate }: { candidate: Candidate }) {
-  const { firestore } = useFirebase();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
-  const { data: constituencies } = useCollection<Constituency>(constituenciesQuery);
-
-  const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
-  const { data: parties } = useCollection<Party>(partiesQuery);
-
-  const party = parties?.find(p => p.id === candidate.partyId);
-  const constituency = constituencies?.find(c => c.id === candidate.constituencyId);
-  const candidateName = `${candidate.firstName} ${candidate.lastName}`;
-
+function PartyPageSkeleton() {
   return (
-    <>
-      <Card className="flex flex-col overflow-hidden hover:shadow-lg transition-shadow h-full">
-        <CardHeader className="p-0">
-          {candidate.imageUrl && (
-            <div className="relative h-56 w-full">
-              <Image
-                src={candidate.imageUrl}
-                alt={`Photo of ${candidateName}`}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
-            </div>
-          )}
-          <div className="p-6">
-              <CardTitle className="font-headline text-xl">{candidateName}</CardTitle>
-              {party && (
-                <CardDescription style={{ color: party.color }}>
-                  {party.acronym}
-                  {candidate.isPartyLeader && <span className="font-semibold">, Party Leader</span>}
-                </CardDescription>
-              )}
-          </div>
-        </CardHeader>
-        <CardContent className="flex-grow">
-          <p className="text-sm text-muted-foreground">
-            Running in: <span className="font-semibold text-foreground">{constituency?.name}</span>
-            {candidate.isIncumbent && <span className="font-bold text-primary"> (Inc.)</span>}
-          </p>
-          <p className="mt-2 text-sm line-clamp-3">{candidate.bio}</p>
-        </CardContent>
-        <CardFooter>
-          <Button onClick={() => setIsDialogOpen(true)} className="w-full bg-primary hover:bg-primary/90">
-              View Full Profile
-          </Button>
-        </CardFooter>
-      </Card>
-      <CandidateProfileDialog candidate={candidate} isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)} />
-    </>
-  );
-}
-
-function CandidateCardSkeleton() {
-  return (
-    <Card className="flex flex-col overflow-hidden">
-      <CardHeader className="p-0">
-        <Skeleton className="h-56 w-full" />
-        <div className="p-6 space-y-2">
-          <Skeleton className="h-6 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
+    <Card>
+      <CardHeader className="flex flex-row items-center gap-4">
+        <Skeleton className="h-16 w-16 rounded-full" />
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-4 w-32" />
         </div>
       </CardHeader>
-      <CardContent className="flex-grow space-y-2">
+      <CardContent className="space-y-4">
         <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-24 w-full" />
       </CardContent>
-      <CardFooter>
-        <Skeleton className="h-10 w-full" />
+      <CardFooter className="flex-wrap gap-2">
+         <Skeleton className="h-6 w-28" />
+         <Skeleton className="h-6 w-24" />
       </CardFooter>
     </Card>
   );
 }
 
-export default function CandidatesPage() {
+export default function PartyDetailPage() {
   const { firestore } = useFirebase();
+  const partyId = '5D8qXvMoV06pPGdSyotD'; // Hardcoded UWP ID
 
-  const partiesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'parties'), where('acronym', '==', 'UWP')) : null, [firestore]);
-  const { data: uwpParties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
-  const uwpParty = uwpParties?.[0];
+  const partyRef = useMemoFirebase(() => (firestore && partyId ? doc(firestore, 'parties', partyId) : null), [firestore, partyId]);
+  const { data: party, isLoading: loadingParty } = useDoc<Party>(partyRef);
 
-  const candidatesQuery = useMemoFirebase(() => firestore && uwpParty ? query(collection(firestore, 'candidates'), where('partyId', '==', uwpParty.id)) : null, [firestore, uwpParty]);
-  const { data: candidates, isLoading: loadingCandidates } = useCollection<Candidate>(candidatesQuery);
+  const leaderQuery = useMemoFirebase(() => (firestore && partyId ? query(collection(firestore, 'candidates'), where('partyId', '==', partyId), where('isPartyLeader', '==', true), limit(1)) : null), [firestore, partyId]);
+  const { data: leaderData, isLoading: loadingLeader } = useCollection<Candidate>(leaderQuery);
+  const leader = leaderData?.[0];
 
-  const loading = loadingCandidates || loadingParties;
+  const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
+  const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
 
-  const sortCandidates = (a: Candidate, b: Candidate) => {
-    // Party Leader first
-    if (a.isPartyLeader) return -1;
-    if (b.isPartyLeader) return 1;
-    
-    // Deputy Leader next
-    if (a.isDeputyLeader && !b.isDeputyLeader) return -1;
-    if (!a.isDeputyLeader && b.isDeputyLeader) return 1;
-
-    // Higher partyLevel next
-    if (a.partyLevel === 'higher' && b.partyLevel !== 'higher') return -1;
-    if (a.partyLevel !== 'higher' && b.partyLevel === 'higher') return 1;
-    
-    // Then alphabetically by last name
-    return (a.lastName || '').localeCompare(b.lastName || '');
-  };
-
-  const {
-    uwpLeader,
-    featuredUwpCandidates,
-    otherUwpCandidates,
-  } = useMemo(() => {
-    if (!candidates || !uwpParty) {
-      return {
-        uwpLeader: null,
-        featuredUwpCandidates: [],
-        otherUwpCandidates: [],
-      };
+  const leaderConstituency = useMemo(() => {
+    if (leader && constituencies) {
+        return constituencies.find(c => c.id === leader.constituencyId);
     }
-    
-    const uwpCandidates = candidates.filter(c => c.partyId === uwpParty?.id).sort(sortCandidates);
+    return null;
+  }, [leader, constituencies]);
 
-    const uwpLeader = uwpCandidates.find(c => c.isPartyLeader);
-    const featuredUwpCandidates = uwpCandidates.filter(c => c.isDeputyLeader);
-    const otherUwpCandidates = uwpCandidates.filter(c => !c.isPartyLeader && !c.isDeputyLeader);
+  const isLoading = loadingParty || loadingLeader || loadingConstituencies;
 
-    return {
-      uwpLeader,
-      featuredUwpCandidates,
-      otherUwpCandidates,
-    };
-  }, [candidates, uwpParty]);
+  if (isLoading || !party) {
+    return (
+        <div className="container mx-auto px-4 py-8">
+            <PartyPageSkeleton />
+        </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="UWP Candidates"
-        description="Meet the individuals contesting for the United Workers Party."
-      />
-
-      <div className="space-y-12">
-        <section id="uwp-candidates">
-          {loading ? (
-            <div className="space-y-8">
-              <div className="max-w-sm mx-auto"><CandidateCardSkeleton /></div>
-              <div className="grid gap-6 md:grid-cols-2 justify-center max-w-4xl mx-auto">
-                 <CandidateCardSkeleton />
-                 <CandidateCardSkeleton />
-              </div>
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {Array.from({ length: 8 }).map((_, i) => <CandidateCardSkeleton key={i} />)}
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-8">
+                <Card className="flex flex-col overflow-hidden h-full" style={{ borderTop: `4px solid ${party.color}` }}>
+                    <CardHeader className="flex flex-row items-start gap-4">
+                        {party.logoUrl ? (
+                            <div className="relative h-16 w-16 flex-shrink-0">
+                                <Image src={party.logoUrl} alt={`${party.name} logo`} fill className="rounded-full object-contain" />
+                            </div>
+                        ) : (
+                            <div className="h-16 w-16 flex-shrink-0 rounded-full bg-muted flex items-center justify-center">
+                                <Shield className="w-8 h-8 text-muted-foreground" />
+                            </div>
+                        )}
+                        <div>
+                        <CardTitle className="font-headline text-2xl">{party.name} ({party.acronym})</CardTitle>
+                        <CardDescription>Founded in {party.founded}</CardDescription>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="flex-grow space-y-6">
+                        <div>
+                            <h4 className="font-semibold text-sm mb-1 uppercase tracking-wider text-muted-foreground">About the Party</h4>
+                            <p className="text-sm text-foreground whitespace-pre-line">{party.description || 'No description available.'}</p>
+                        </div>
+                        {party.history && (
+                        <div>
+                            <h4 className="font-semibold text-sm mb-1 uppercase tracking-wider text-muted-foreground">Party History</h4>
+                            <p className="text-sm text-foreground whitespace-pre-line">{party.history}</p>
+                        </div>
+                        )}
+                        <div>
+                            <h4 className="font-semibold text-sm mb-1 uppercase tracking-wider text-muted-foreground">Manifesto Summary</h4>
+                            <p className="text-sm text-foreground whitespace-pre-line">{party.manifestoSummary || 'No summary available.'}</p>
+                        </div>
+                    </CardContent>
+                    <CardFooter className="flex-wrap gap-2 bg-muted/50 p-4">
+                        {party.manifestoUrl && (
+                            <Link href={party.manifestoUrl} target="_blank" rel="noopener noreferrer">
+                                <Badge variant="outline">View Full Manifesto (PDF)</Badge>
+                            </Link>
+                        )}
+                        {party.website && (
+                            <Link href={party.website} target="_blank" rel="noopener noreferrer">
+                                <Badge variant="outline" className="flex items-center gap-1">
+                                    <LinkIcon className="h-3 w-3" />
+                                    Visit Website
+                                </Badge>
+                            </Link>
+                        )}
+                    </CardFooter>
+                </Card>
             </div>
-          ) : uwpParty ? (
-           <>
-            {uwpLeader && (
-              <div className="mb-8">
-                <h3 className="text-center text-lg font-semibold text-muted-foreground uppercase tracking-wider mb-2">Party Leader</h3>
-                <div className="max-w-sm mx-auto">
-                  <CandidateCard candidate={uwpLeader} />
-                </div>
-              </div>
-            )}
-            {featuredUwpCandidates.length > 0 && (
-              <div className="mb-8">
-                  <h3 className="text-center text-lg font-semibold text-muted-foreground uppercase tracking-wider mb-4">Deputy Leaders</h3>
-                  <div className="grid gap-6 md:grid-cols-2 justify-center max-w-4xl mx-auto">
-                      {featuredUwpCandidates.map((candidate) => <CandidateCard key={candidate.id} candidate={candidate} />)}
-                  </div>
-              </div>
-            )}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {otherUwpCandidates.map((candidate) => <CandidateCard key={candidate.id} candidate={candidate} />)}
-            </div>
-            {candidates?.length === 0 && (
-                 <p className="text-muted-foreground col-span-full text-center">No UWP candidates have been added yet.</p>
-            )}
-           </>
-          ) : (
-             <p className="text-muted-foreground col-span-full text-center">United Workers Party not found.</p>
-          )}
-        </section>
-      </div>
+             <div className="space-y-8">
+                {leader && (
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Party Leader</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <Link href={`/candidates/${leader.id}`} className="flex flex-col items-center text-center gap-4 group">
+                                <div className="relative h-32 w-32 rounded-full overflow-hidden bg-muted">
+                                {leader.imageUrl ? (
+                                    <Image src={leader.imageUrl} alt={`Photo of ${leader.firstName} ${leader.lastName}`} fill className="object-cover group-hover:scale-105 transition-transform" />
+                                ) : (
+                                    <UserSquare className="h-full w-full text-muted-foreground" />
+                                )}
+                                </div>
+                                <div>
+                                    <p className="font-bold text-lg group-hover:text-primary transition-colors">{leader.firstName} {leader.lastName}</p>
+                                    {leaderConstituency && (
+                                        <p className="text-sm text-muted-foreground">Candidate for {leaderConstituency.name}</p>
+                                    )}
+                                </div>
+                            </Link>
+                        </CardContent>
+                    </Card>
+                )}
+             </div>
+        </div>
     </div>
   );
 }
