@@ -147,8 +147,31 @@ export function SidebarNav() {
     });
   }, [elections]);
 
-  const sortedUwpCandidates = useMemo(() => uwpCandidates ? [...uwpCandidates].sort((a,b) => a.lastName.localeCompare(b.lastName)) : [], [uwpCandidates]);
-  const sortedSlpCandidates = useMemo(() => slpCandidates ? [...slpCandidates].sort((a,b) => a.lastName.localeCompare(b.lastName)) : [], [slpCandidates]);
+  const candidateSorter = (a: Candidate, b: Candidate) => {
+    // Party Leader first
+    if (a.isPartyLeader) return -1;
+    if (b.isPartyLeader) return 1;
+
+    // Deputy Leaders next
+    if (a.isDeputyLeader && !b.isDeputyLeader) return -1;
+    if (!a.isDeputyLeader && b.isDeputyLeader) return 1;
+    if (a.isDeputyLeader && b.isDeputyLeader) {
+      return a.lastName.localeCompare(b.lastName);
+    }
+
+    // 'higher' level next
+    if (a.partyLevel === 'higher' && b.partyLevel !== 'higher') return -1;
+    if (a.partyLevel !== 'higher' && b.partyLevel === 'higher') return 1;
+    if (a.partyLevel === 'higher' && b.partyLevel === 'higher') {
+      return a.lastName.localeCompare(b.lastName);
+    }
+    
+    // finally alphabetical
+    return a.lastName.localeCompare(b.lastName);
+  };
+
+  const sortedUwpCandidates = useMemo(() => uwpCandidates ? [...uwpCandidates].sort(candidateSorter) : [], [uwpCandidates]);
+  const sortedSlpCandidates = useMemo(() => slpCandidates ? [...slpCandidates].sort(candidateSorter) : [], [slpCandidates]);
 
   useEffect(() => {
     setIsResultsOpen(pathname.startsWith('/results'));
@@ -247,25 +270,23 @@ export function SidebarNav() {
                       <CollapsibleContent>
                         <SidebarMenuSub>
                             <SidebarMenuItem>
-                                <SidebarMenuSubButton asChild isActive={pathname.startsWith('/events')}>
-                                    <Link href="/events">
-                                        <Calendar className="mr-2 h-4 w-4" />
-                                        Events
-                                    </Link>
-                                </SidebarMenuSubButton>
+                                  <SidebarMenuSubButton asChild isActive={pathname.startsWith('/events')}>
+                                      <Link href="/events">
+                                          <Calendar className="mr-2 h-4 w-4" />
+                                          Events
+                                      </Link>
+                                  </SidebarMenuSubButton>
                             </SidebarMenuItem>
                             <SidebarMenuItem>
                                 <Collapsible open={isUwpCandidatesOpen} onOpenChange={setIsUwpCandidatesOpen}>
                                     <CollapsibleTrigger asChild>
-                                        <SidebarMenuSubButton asChild>
-                                           <div className="w-full justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    <Users className="mr-2 h-4 w-4" />
-                                                    Candidates
-                                                </div>
-                                                <ChevronRight className={`h-4 w-4 transition-transform ${isUwpCandidatesOpen ? 'rotate-90' : ''}`} />
-                                            </div>
-                                        </SidebarMenuSubButton>
+                                      <Button variant="ghost" className="w-full justify-between h-7 text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <Users className="mr-2 h-4 w-4" />
+                                            Candidates
+                                        </div>
+                                        <ChevronRight className={`h-4 w-4 transition-transform ${isUwpCandidatesOpen ? 'rotate-90' : ''}`} />
+                                      </Button>
                                     </CollapsibleTrigger>
                                     <CollapsibleContent>
                                         <ScrollArea className="h-48">
@@ -304,7 +325,7 @@ export function SidebarNav() {
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <SidebarMenuSub>
-                            <SidebarMenuItem>
+                           <SidebarMenuItem>
                                 <SidebarMenuSubButton asChild isActive={pathname.startsWith('/events-2')}>
                                     <Link href="/events-2">
                                         <Calendar className="mr-2 h-4 w-4" />
@@ -315,15 +336,13 @@ export function SidebarNav() {
                              <SidebarMenuItem>
                                 <Collapsible open={isSlpCandidatesOpen} onOpenChange={setIsSlpCandidatesOpen}>
                                     <CollapsibleTrigger asChild>
-                                        <SidebarMenuSubButton asChild>
-                                           <div className="w-full justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    <Users className="mr-2 h-4 w-4" />
-                                                    Candidates
-                                                </div>
-                                                <ChevronRight className={`h-4 w-4 transition-transform ${isSlpCandidatesOpen ? 'rotate-90' : ''}`} />
-                                            </div>
-                                        </SidebarMenuSubButton>
+                                      <Button variant="ghost" className="w-full justify-between h-7 text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <Users className="mr-2 h-4 w-4" />
+                                            Candidates
+                                        </div>
+                                        <ChevronRight className={`h-4 w-4 transition-transform ${isSlpCandidatesOpen ? 'rotate-90' : ''}`} />
+                                      </Button>
                                     </CollapsibleTrigger>
                                     <CollapsibleContent>
                                         <ScrollArea className="h-48">
