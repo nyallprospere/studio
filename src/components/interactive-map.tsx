@@ -65,7 +65,7 @@ function DraggableConstituency({ constituency, onCoordinatesChange, isDraggable 
                     {...attributes}
                 >
                     <button 
-                        className={cn("p-2 rounded-md text-sm font-bold text-white whitespace-nowrap", leaningClassName, !isDraggable && "hover:scale-110 transition-transform")}
+                        className={cn("p-1 rounded text-xs font-semibold text-white whitespace-nowrap", leaningClassName, !isDraggable && "hover:scale-110 transition-transform")}
                         aria-label={`Info for ${constituency.name}`}
                         // Disable button functionality when dragging
                         onClick={(e) => { if(transform) e.preventDefault()}}
