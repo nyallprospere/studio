@@ -22,20 +22,12 @@ function EventsPageSkeleton() {
                     <Skeleton className="h-24 w-full" />
                 </CardContent>
             </Card>
-             <Card>
-                <CardHeader><Skeleton className="h-8 w-1/3" /></CardHeader>
-                <CardContent className="space-y-4">
-                    <Skeleton className="h-24 w-full" />
-                    <Skeleton className="h-24 w-full" />
-                </CardContent>
-            </Card>
         </div>
     )
 }
 
 export default function EventsPage() {
   const { firestore } = useFirebase();
-  const [uwpViewMode, setUwpViewMode] = useState<'upcoming' | 'past'>('upcoming');
   const [slpViewMode, setSlpViewMode] = useState<'upcoming' | 'past'>('upcoming');
   
   const eventsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'events'), orderBy('date', 'desc')) : null, [firestore]);
@@ -47,17 +39,15 @@ export default function EventsPage() {
   const getPartyName = (partyId: string) => parties?.find(p => p.id === partyId)?.name || 'N/A';
   const isLoading = loadingEvents || loadingParties;
 
-  const { uwpEvents, slpEvents } = useMemo(() => {
+  const { slpEvents } = useMemo(() => {
     if (!events || !parties) {
-      return { uwpEvents: [], slpEvents: [] };
+      return { slpEvents: [] };
     }
-    const uwp = parties.find(p => p.acronym === 'UWP');
     const slp = parties.find(p => p.acronym === 'SLP');
     
-    const uwpEvents = uwp ? events.filter(e => e.partyId === uwp.id) : [];
     const slpEvents = slp ? events.filter(e => e.partyId === slp.id) : [];
 
-    return { uwpEvents, slpEvents };
+    return { slpEvents };
   }, [events, parties]);
 
 
@@ -82,44 +72,18 @@ export default function EventsPage() {
       return sorted;
   }
 
-  const visibleUwpEvents = useMemo(() => filterAndSortEvents(uwpEvents, uwpViewMode), [uwpEvents, uwpViewMode]);
   const visibleSlpEvents = useMemo(() => filterAndSortEvents(slpEvents, slpViewMode), [slpEvents, slpViewMode]);
 
 
   return (
     <div className="container mx-auto px-4 py-8">
       <PageHeader
-        title="Party Events 2"
-        description="Find out about rallies, town halls, and other events from the political parties."
+        title="SLP Events"
+        description="Find out about rallies, town halls, and other events from the Saint Lucia Labour Party."
       />
       
       {isLoading ? <EventsPageSkeleton /> : (
-          <div className="grid md:grid-cols-2 gap-8">
-            <Card>
-                <CardHeader>
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <CardTitle>UWP Events</CardTitle>
-                            <CardDescription>Events hosted by the United Workers Party.</CardDescription>
-                        </div>
-                        <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
-                            <Button size="sm" variant={uwpViewMode === 'upcoming' ? 'secondary' : 'ghost'} onClick={() => setUwpViewMode('upcoming')}>Upcoming</Button>
-                            <Button size="sm" variant={uwpViewMode === 'past' ? 'secondary' : 'ghost'} onClick={() => setUwpViewMode('past')}>Past</Button>
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                    {visibleUwpEvents.length > 0 ? (
-                        visibleUwpEvents.map((event) => (
-                           <EventCard key={event.id} event={event} partyName={getPartyName(event.partyId)} />
-                        ))
-                    ) : (
-                        <p className="text-center text-muted-foreground py-8">No {uwpViewMode} UWP events found.</p>
-                    )}
-                    </div>
-                </CardContent>
-            </Card>
+          <div className="grid md:grid-cols-1 gap-8">
             <Card>
                 <CardHeader>
                     <div className="flex justify-between items-center">

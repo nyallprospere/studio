@@ -32,7 +32,7 @@ import { ScrollArea } from '../ui/scroll-area';
 const mainNavItems = [
   { href: '/', icon: Home, label: 'Dashboard' },
   { href: '/events', icon: Calendar, label: 'UWP Events' },
-  { href: '/events-2', icon: Calendar, label: 'Events 2' },
+  { href: '/events-2', icon: Calendar, label: 'SLP Events' },
   { href: '/polls', icon: BarChart3, label: 'Polls' },
   { href: '/predictions', icon: TrendingUp, label: 'Predictions' },
   { href: '/constituencies', icon: Map, label: 'Constituencies' },
