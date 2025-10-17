@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -34,6 +35,9 @@ const mainNavItems = [
   { href: '/polls', icon: BarChart3, label: 'Polls' },
   { href: '/predictions', icon: TrendingUp, label: 'Predictions' },
   { href: '/constituencies', icon: Map, label: 'Constituencies' },
+  { href: '/districts', icon: Map, label: 'Districts' },
+  { href: '/events', icon: Calendar, label: 'Events' },
+  { href: '/events-2', icon: Calendar, label: 'Events 2' },
 ];
 
 const adminNavItems = [
