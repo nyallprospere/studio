@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Lock, Unlock } from 'lucide-react';
 import { InteractiveMap } from '@/components/interactive-map';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { isEqual } from 'lodash';
@@ -56,6 +56,7 @@ export default function AdminConstituenciesPage() {
     const [editableConstituencies, setEditableConstituencies] = useState<Constituency[]>([]);
     const [isSeeding, setIsSeeding] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isMapDraggable, setIsMapDraggable] = useState(false);
 
     const hasUnsavedChanges = useMemo(() => {
         if (!constituencies || !editableConstituencies) return false;
@@ -160,6 +161,9 @@ export default function AdminConstituenciesPage() {
                             Seed Constituencies
                         </Button>
                     )}
+                     <Button variant="outline" size="icon" onClick={() => setIsMapDraggable(!isMapDraggable)} title={isMapDraggable ? "Lock map movement" : "Unlock map movement"}>
+                        {isMapDraggable ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                    </Button>
                     <Button onClick={handleSaveAll} disabled={isSaving || !hasUnsavedChanges}>
                         {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                         Save Changes
@@ -171,13 +175,13 @@ export default function AdminConstituenciesPage() {
                  <Card>
                     <CardHeader>
                         <CardTitle>Map Preview</CardTitle>
-                        <CardDescription>Drag the labels to adjust their positions on the map.</CardDescription>
+                        <CardDescription>Drag the labels to adjust their positions. Remember to save your changes.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <InteractiveMap 
                             constituencies={editableConstituencies} 
                             onCoordinatesChange={handleCoordinatesChange}
-                            isDraggable
+                            isDraggable={isMapDraggable}
                         />
                     </CardContent>
                 </Card>

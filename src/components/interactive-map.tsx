@@ -93,7 +93,7 @@ function DraggableConstituency({ constituency, onCoordinatesChange, isDraggable 
     );
 }
 
-export function InteractiveMap({ constituencies, onCoordinatesChange, isDraggable }: InteractiveMapProps) {
+export function InteractiveMap({ constituencies, onCoordinatesChange, isDraggable = false }: InteractiveMapProps) {
   const { firestore } = useFirebase();
   const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'site') : null, [firestore]);
   const { data: siteSettings, isLoading: loadingSettings } = useDoc(settingsRef);
