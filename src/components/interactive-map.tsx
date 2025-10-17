@@ -5,9 +5,7 @@
 import { useRef, useState, useMemo } from 'react';
 import type { Constituency } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Users, ArrowRight, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
@@ -17,6 +15,8 @@ import { DndContext, useDraggable, DragEndEvent } from '@dnd-kit/core';
 import { Input } from './ui/input';
 import { PieChart, Pie, Cell } from 'recharts';
 import { Label } from './ui/label';
+import { MapPin } from 'lucide-react';
+import { ConstituencyPopoverContent } from './constituency-popover-content';
 
 interface InteractiveMapProps {
   constituencies: Constituency[];
@@ -24,7 +24,7 @@ interface InteractiveMapProps {
   onLeaningChange?: (id: string, newLeaning: string) => void;
   onPredictionChange?: (id: string, slp: number, uwp: number) => void;
   isDraggable?: boolean;
-  isClickable?: boolean; // New prop to control click behavior
+  isClickable?: boolean;
 }
 
 const politicalLeaningOptions = [
@@ -43,18 +43,16 @@ const getLeaningInfo = (leaning: string | undefined) => {
 
 function DraggableConstituency({ 
     constituency, 
-    onCoordinatesChange, 
+    isDraggable,
+    isClickable,
     onLeaningChange,
     onPredictionChange,
-    isDraggable,
-    isClickable 
 }: { 
     constituency: Constituency; 
-    onCoordinatesChange?: InteractiveMapProps['onCoordinatesChange'],
-    onLeaningChange?: InteractiveMapProps['onLeaningChange'],
-    onPredictionChange?: InteractiveMapProps['onPredictionChange'],
     isDraggable?: boolean,
     isClickable?: boolean,
+    onLeaningChange?: InteractiveMapProps['onLeaningChange'],
+    onPredictionChange?: InteractiveMapProps['onPredictionChange'],
 }) {
     const { attributes, listeners, setNodeRef, transform } = useDraggable({
         id: constituency.id,
@@ -193,20 +191,8 @@ function DraggableConstituency({
             <PopoverTrigger asChild>
                 {OverlayButton}
             </PopoverTrigger>
-            <PopoverContent className="w-64">
-                <div className="space-y-4">
-                    <h4 className="font-semibold leading-none">{constituency.name}</h4>
-                    <div className="flex items-center text-sm">
-                        <Users className="w-4 h-4 mr-2 text-muted-foreground" />
-                        <span>{constituency.demographics?.registeredVoters?.toLocaleString() || 'N/A'} Voters</span>
-                    </div>
-                    <Button asChild size="sm" className="w-full">
-                        <Link href={`/constituencies/${constituency.id}`}>
-                            View Details
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                        </Link>
-                    </Button>
-                </div>
+            <PopoverContent className="w-80">
+                <ConstituencyPopoverContent constituency={constituency} />
             </PopoverContent>
         </Popover>
     );
