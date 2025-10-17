@@ -31,7 +31,7 @@ function CandidateBox({ candidate, party }: { candidate: Candidate | null, party
                 </div>
                 <div className="text-xs">
                     <p className="font-semibold text-muted-foreground">Candidate TBD</p>
-                    <p style={{ color: party?.color }}>{party?.name || 'N/A'}</p>
+                    <p style={{ color: party?.color }}>{party?.acronym || 'N/A'}</p>
                 </div>
             </div>
         );
@@ -41,14 +41,18 @@ function CandidateBox({ candidate, party }: { candidate: Candidate | null, party
         <div className="flex items-center gap-2 p-2 rounded-md bg-muted flex-1">
             <div className="relative h-10 w-10 rounded-full overflow-hidden bg-background">
                 {candidate.imageUrl ? (
-                    <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" />
+                    <Image src={candidate.imageUrl} alt={`${candidate.firstName} ${candidate.lastName}`} fill className="object-cover" />
                 ) : (
                     <UserSquare className="h-full w-full text-muted-foreground" />
                 )}
             </div>
             <div className="text-xs">
                 <p className="font-semibold">{candidate.firstName} {candidate.lastName}</p>
-                <p style={{ color: party.color }}>{party.name}</p>
+                <div style={{ color: party.color }}>
+                    <span>{party.acronym}</span>
+                    {candidate.isPartyLeader && <span className="font-bold">, Leader</span>}
+                    {candidate.isIncumbent && !candidate.isPartyLeader && <span className="font-bold"> (Inc.)</span>}
+                </div>
             </div>
         </div>
     );

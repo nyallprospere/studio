@@ -45,7 +45,8 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
               <CardTitle className="font-headline text-xl">{candidateName}</CardTitle>
               {party && (
                 <CardDescription style={{ color: party.color }}>
-                  {party.name} ({party.acronym})
+                  {party.acronym}
+                  {candidate.isPartyLeader && <span className="font-semibold">, Party Leader</span>}
                 </CardDescription>
               )}
           </div>
@@ -53,6 +54,7 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
         <CardContent className="flex-grow">
           <p className="text-sm text-muted-foreground">
             Running in: <span className="font-semibold text-foreground">{constituency?.name}</span>
+            {candidate.isIncumbent && <span className="font-bold text-primary"> (Inc.)</span>}
           </p>
           <p className="mt-2 text-sm line-clamp-3">{candidate.bio}</p>
         </CardContent>

@@ -100,7 +100,7 @@ export default function AdminCandidatesPage() {
     const dataToExport = candidates.map(c => ({
       'First Name': c.firstName,
       'Last Name': c.lastName,
-      'Party': getPartyName(c.partyId),
+      'Party': getPartyAcronym(c.partyId),
       'Constituency': getConstituencyName(c.constituencyId),
       'Bio': c.bio,
       'Is Incumbent': c.isIncumbent ? 'Yes' : 'No',
@@ -166,7 +166,7 @@ export default function AdminCandidatesPage() {
   };
 
 
-  const getPartyName = (partyId: string) => parties?.find(p => p.id === partyId)?.name || 'N/A';
+  const getPartyAcronym = (partyId: string) => parties?.find(p => p.id === partyId)?.acronym || 'N/A';
   const getConstituencyName = (constituencyId: string) => constituencies?.find(c => c.id === constituencyId)?.name || 'N/A';
   const isLoading = loadingCandidates || loadingParties || loadingConstituencies;
 
@@ -273,8 +273,9 @@ export default function AdminCandidatesPage() {
                         <div>
                             <p className="font-semibold">{candidate.firstName} {candidate.lastName}</p>
                             <p className="text-sm text-muted-foreground">
-                            {getPartyName(candidate.partyId)} &bull; {getConstituencyName(candidate.constituencyId)}
-                            {candidate.isIncumbent && <span className="font-bold text-primary"> (Inc.)</span>}
+                            {getPartyAcronym(candidate.partyId)} &bull; {getConstituencyName(candidate.constituencyId)}
+                            {candidate.isPartyLeader && <span className="font-bold text-primary"> (Party Leader)</span>}
+                            {candidate.isIncumbent && !candidate.isPartyLeader && <span className="font-bold text-primary"> (Inc.)</span>}
                             </p>
                         </div>
                         </div>
