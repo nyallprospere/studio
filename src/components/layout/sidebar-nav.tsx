@@ -31,7 +31,6 @@ import { ScrollArea } from '../ui/scroll-area';
 
 const mainNavItems = [
   { href: '/', icon: Home, label: 'Dashboard' },
-  { href: '/events-2', icon: Calendar, label: 'SLP Events' },
   { href: '/polls', icon: BarChart3, label: 'Polls' },
   { href: '/predictions', icon: TrendingUp, label: 'Predictions' },
   { href: '/constituencies', icon: Map, label: 'Constituencies' },
@@ -114,7 +113,7 @@ export function SidebarNav() {
   const { firestore } = useFirebase();
   const [isResultsOpen, setIsResultsOpen] = useState(pathname.startsWith('/results'));
   const [isUwpOpen, setIsUwpOpen] = useState(pathname.startsWith('/parties/5D8qXvMoV06pPGdSyotD') || pathname.startsWith('/candidates') || pathname.startsWith('/events'));
-  const [isSlpOpen, setIsSlpOpen] = useState(pathname.startsWith('/parties/C0L5o2t9g3b1J4K7m8N9') || pathname.startsWith('/candidates-2'));
+  const [isSlpOpen, setIsSlpOpen] = useState(pathname.startsWith('/parties/C0L5o2t9g3b1J4K7m8N9') || pathname.startsWith('/candidates-2') || pathname.startsWith('/events-2'));
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
@@ -145,7 +144,7 @@ export function SidebarNav() {
   useEffect(() => {
     setIsResultsOpen(pathname.startsWith('/results'));
     setIsUwpOpen(pathname.startsWith('/parties/5D8qXvMoV06pPGdSyotD') || pathname.startsWith('/candidates') || pathname.startsWith('/events'));
-    setIsSlpOpen(pathname.startsWith('/parties/C0L5o2t9g3b1J4K7m8N9') || pathname.startsWith('/candidates-2'));
+    setIsSlpOpen(pathname.startsWith('/parties/C0L5o2t9g3b1J4K7m8N9') || pathname.startsWith('/candidates-2') || pathname.startsWith('/events-2'));
   }, [pathname]);
   
   return (
@@ -245,7 +244,7 @@ export function SidebarNav() {
               <SidebarMenuItem>
                   <Collapsible open={isSlpOpen} onOpenChange={setIsSlpOpen}>
                       <CollapsibleTrigger asChild>
-                           <Button variant={pathname.startsWith(`/parties/${slpParty.id}`) || pathname === '/candidates-2' ? 'secondary' : 'ghost'} className="w-full justify-between">
+                           <Button variant={pathname.startsWith(`/parties/${slpParty.id}`) || pathname === '/candidates-2' || pathname === '/events-2' ? 'secondary' : 'ghost'} className="w-full justify-between">
                               <div className="flex items-center gap-2">
                                   <SlpLogo className="mr-2 h-4 w-4" />
                                   <Link href={`/parties/${slpParty.id}`} className="flex-grow text-left">SLP</Link>
@@ -259,6 +258,13 @@ export function SidebarNav() {
                                 <SidebarMenuSubButton asChild isActive={pathname.startsWith('/candidates-2')}>
                                     <Link href="/candidates-2">
                                         Candidates
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuItem>
+                             <SidebarMenuItem>
+                                <SidebarMenuSubButton asChild isActive={pathname.startsWith('/events-2')}>
+                                    <Link href="/events-2">
+                                        Events
                                     </Link>
                                 </SidebarMenuSubButton>
                             </SidebarMenuItem>
