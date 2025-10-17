@@ -46,12 +46,12 @@ function CandidateBox({ candidate, party }: { candidate: Candidate | null, party
                     <UserSquare className="h-full w-full text-muted-foreground" />
                 )}
             </div>
-            <div className="text-xs">
+             <div className="text-xs">
+                {candidate.isPartyLeader && <p className="font-bold text-foreground">Party Leader</p>}
+                {candidate.isIncumbent && <p className="font-bold text-foreground">Incumbent</p>}
                 <p className="font-semibold">{candidate.firstName} {candidate.lastName}</p>
                 <div style={{ color: party.color }}>
                     <span>{party.acronym}</span>
-                    {candidate.isPartyLeader && <span className="font-bold">, Leader</span>}
-                    {candidate.isIncumbent && !candidate.isPartyLeader && <span className="font-bold"> (Inc.)</span>}
                 </div>
             </div>
         </div>
