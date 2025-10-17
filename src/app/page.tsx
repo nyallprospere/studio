@@ -177,45 +177,41 @@ export default function Home() {
         </SortableContext>
       </DndContext>
 
-      <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-            <Card>
-                <CardHeader>
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <CardTitle>Events</CardTitle>
-                            <CardDescription>Upcoming and past political events.</CardDescription>
-                        </div>
-                         <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
-                            <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'secondary' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')}>Upcoming</Button>
-                            <Button size="sm" variant={allEventsViewMode === 'past' ? 'secondary' : 'ghost'} onClick={() => setAllEventsViewMode('past')}>Past</Button>
-                        </div>
+      <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card>
+            <CardHeader>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle>Events</CardTitle>
+                        <CardDescription>Upcoming and past political events.</CardDescription>
                     </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                    {loadingEvents || loadingParties ? <p>Loading events...</p> : visibleAllEvents.length > 0 ? (
-                        visibleAllEvents.map((event) => (
-                           <EventCard key={event.id} event={event} partyName={getPartyName(event.partyId)} />
-                        ))
-                    ) : (
-                        <p className="text-center text-muted-foreground py-8">No {allEventsViewMode} events found.</p>
-                    )}
+                     <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
+                        <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'secondary' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')}>Upcoming</Button>
+                        <Button size="sm" variant={allEventsViewMode === 'past' ? 'secondary' : 'ghost'} onClick={() => setAllEventsViewMode('past')}>Past</Button>
                     </div>
-                </CardContent>
-            </Card>
-        </div>
-        <div className="lg:col-span-1">
-             <Card>
-                <CardHeader>
-                    <CardTitle>Interactive Map</CardTitle>
-                    <CardDescription>Click on a constituency to learn more.</CardDescription>
-                </CardHeader>
-                <CardContent className="p-2">
-                     <InteractiveMap constituencies={constituencies ?? []} />
-                </CardContent>
-            </Card>
-        </div>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-4">
+                {loadingEvents || loadingParties ? <p>Loading events...</p> : visibleAllEvents.length > 0 ? (
+                    visibleAllEvents.map((event) => (
+                       <EventCard key={event.id} event={event} partyName={getPartyName(event.partyId)} />
+                    ))
+                ) : (
+                    <p className="text-center text-muted-foreground py-8">No {allEventsViewMode} events found.</p>
+                )}
+                </div>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader>
+                <CardTitle>Interactive Map</CardTitle>
+                <CardDescription>Click on a constituency to learn more.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-2">
+                 <InteractiveMap constituencies={constituencies ?? []} />
+            </CardContent>
+        </Card>
       </div>
 
 
