@@ -12,9 +12,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Save } from 'lucide-react';
 import { InteractiveMap } from '@/components/interactive-map';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { isEqual } from 'lodash';
 
 const initialConstituencies = [
     { name: "Castries Central", registeredVoters: 0 },
@@ -54,10 +55,20 @@ export default function AdminConstituenciesPage() {
     
     const [editableConstituencies, setEditableConstituencies] = useState<Constituency[]>([]);
     const [isSeeding, setIsSeeding] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const hasUnsavedChanges = useMemo(() => {
+        if (!constituencies || !editableConstituencies) return false;
+        // Sort both arrays by ID to ensure correct comparison
+        const sortedOriginal = [...constituencies].sort((a, b) => a.id.localeCompare(b.id));
+        const sortedEditable = [...editableConstituencies].sort((a, b) => a.id.localeCompare(b.id));
+        return !isEqual(sortedOriginal, sortedEditable);
+    }, [constituencies, editableConstituencies]);
+
     
     useEffect(() => {
         if(constituencies) {
-            setEditableConstituencies(constituencies);
+            setEditableConstituencies(JSON.parse(JSON.stringify(constituencies)));
         }
     }, [constituencies]);
 
@@ -115,18 +126,25 @@ export default function AdminConstituenciesPage() {
         );
     };
 
-    const handleSave = async (constituency: Constituency) => {
+    const handleSaveAll = async () => {
         if (!firestore) return;
+        setIsSaving(true);
         try {
-            const { id, ...dataToSave } = constituency;
-            const docRef = doc(firestore, 'constituencies', id);
-            await updateDoc(docRef, dataToSave);
-            toast({ title: 'Saved', description: `${constituency.name} has been updated.` });
+            const batch = writeBatch(firestore);
+            editableConstituencies.forEach(c => {
+                const { id, ...dataToSave } = c;
+                const docRef = doc(firestore, 'constituencies', id);
+                batch.update(docRef, dataToSave);
+            });
+            await batch.commit();
+            toast({ title: 'Success', description: 'All changes have been saved.' });
         } catch (e) {
             console.error(e);
-            toast({ variant: 'destructive', title: 'Error', description: `Could not save ${constituency.name}.` });
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not save changes.' });
+        } finally {
+            setIsSaving(false);
         }
-    };
+    }
     
     return (
         <div className="container mx-auto px-4 py-8">
@@ -135,19 +153,25 @@ export default function AdminConstituenciesPage() {
                 title="Manage Constituencies"
                 description="Update details for each electoral district."
                 />
-                 {(constituencies === null || constituencies?.length === 0) && (
-                     <Button onClick={handleSeedConstituencies} disabled={isSeeding}>
-                        {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Seed Constituencies
+                 <div className="flex items-center gap-2">
+                    {(constituencies === null || constituencies?.length === 0) && (
+                        <Button onClick={handleSeedConstituencies} disabled={isSeeding}>
+                            {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Seed Constituencies
+                        </Button>
+                    )}
+                    <Button onClick={handleSaveAll} disabled={isSaving || !hasUnsavedChanges}>
+                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        Save Changes
                     </Button>
-                 )}
+                </div>
             </div>
             
             <div className="grid grid-cols-1 gap-8">
                  <Card>
                     <CardHeader>
                         <CardTitle>Map Preview</CardTitle>
-                            <CardDescription>Drag the labels to adjust their positions.</CardDescription>
+                        <CardDescription>Drag the labels to adjust their positions on the map.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <InteractiveMap 
@@ -175,7 +199,6 @@ export default function AdminConstituenciesPage() {
                                         <TableHead>Political Leaning</TableHead>
                                         <TableHead>Map Top %</TableHead>
                                         <TableHead>Map Left %</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -220,9 +243,6 @@ export default function AdminConstituenciesPage() {
                                                     onChange={(e) => handleFieldChange(c.id, 'left', e.target.value)}
                                                     className="w-20"
                                                 />
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <Button size="sm" onClick={() => handleSave(c)}>Save</Button>
                                             </TableCell>
                                         </TableRow>
                                     ))}
