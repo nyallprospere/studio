@@ -23,9 +23,10 @@ import {
 } from '@dnd-kit/sortable';
 import { useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, Timestamp } from 'firebase/firestore';
-import type { Event, Party } from '@/lib/types';
+import type { Event, Party, Constituency } from '@/lib/types';
 import { EventCard } from '@/components/event-card';
 import { SortableFeatureCard } from '@/components/sortable-feature-card';
+import { InteractiveMap } from '@/components/interactive-map';
 
 const initialKeyFeatures = [
     {
@@ -93,9 +94,11 @@ export default function Home() {
   
   const eventsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'events'), orderBy('date', 'desc')) : null, [firestore]);
   const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
+  const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
   
   const { data: events, isLoading: loadingEvents } = useCollection<Event>(eventsQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
+  const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
   
   const getPartyName = (partyId: string) => parties?.find(p => p.id === partyId)?.name || 'N/A';
 
@@ -173,8 +176,9 @@ export default function Home() {
             </div>
         </SortableContext>
       </DndContext>
-      
-       <div className="mt-12">
+
+      <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
             <Card>
                 <CardHeader>
                     <div className="flex justify-between items-center">
@@ -201,6 +205,18 @@ export default function Home() {
                 </CardContent>
             </Card>
         </div>
+        <div className="lg:col-span-1">
+             <Card>
+                <CardHeader>
+                    <CardTitle>Interactive Map</CardTitle>
+                    <CardDescription>Click on a constituency to learn more.</CardDescription>
+                </CardHeader>
+                <CardContent className="p-2">
+                     <InteractiveMap constituencies={constituencies ?? []} />
+                </CardContent>
+            </Card>
+        </div>
+      </div>
 
 
       {user && (
@@ -252,5 +268,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
