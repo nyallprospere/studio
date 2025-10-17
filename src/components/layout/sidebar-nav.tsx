@@ -246,42 +246,42 @@ export function SidebarNav() {
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <SidebarMenuSub>
-                             <SidebarMenuItem>
-                                <SidebarMenuSubButton asChild isActive={pathname.startsWith('/events')}>
-                                    <Link href="/events">
-                                        <Calendar className="mr-2 h-4 w-4" />
-                                        Events
-                                    </Link>
-                                </SidebarMenuSubButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <Collapsible open={isUwpCandidatesOpen} onOpenChange={setIsUwpCandidatesOpen}>
-                                    <CollapsibleTrigger asChild>
-                                        <Button variant='ghost' className="w-full justify-between h-8 text-xs">
-                                            <div className="flex items-center gap-2">
-                                                <Users className="mr-2 h-4 w-4" />
-                                                Candidates
-                                            </div>
-                                            <ChevronRight className={`h-4 w-4 transition-transform ${isUwpCandidatesOpen ? 'rotate-90' : ''}`} />
-                                        </Button>
-                                    </CollapsibleTrigger>
-                                    <CollapsibleContent>
-                                        <ScrollArea className="h-48">
-                                            <SidebarMenuSub>
-                                                {loadingUwpCandidates ? <p className="p-2 text-xs text-muted-foreground">Loading...</p> : sortedUwpCandidates.map(candidate => (
-                                                    <SidebarMenuItem key={candidate.id}>
-                                                        <SidebarMenuSubButton asChild isActive={pathname === `/candidates/${candidate.id}`} size="sm">
-                                                            <Link href={`/candidates/${candidate.id}`}>
-                                                                {candidate.firstName} {candidate.lastName}
-                                                            </Link>
-                                                        </SidebarMenuSubButton>
-                                                    </SidebarMenuItem>
-                                                ))}
-                                            </SidebarMenuSub>
-                                        </ScrollArea>
-                                    </CollapsibleContent>
-                                </Collapsible>
-                            </SidebarMenuItem>
+                           <SidebarMenuItem>
+                              <SidebarMenuSubButton asChild isActive={pathname.startsWith('/events')}>
+                                  <Link href="/events">
+                                      <Calendar className="mr-2 h-4 w-4" />
+                                      Events
+                                  </Link>
+                              </SidebarMenuSubButton>
+                          </SidebarMenuItem>
+                          <SidebarMenuItem>
+                              <Collapsible open={isUwpCandidatesOpen} onOpenChange={setIsUwpCandidatesOpen}>
+                                  <CollapsibleTrigger asChild>
+                                      <Button variant='ghost' className="w-full justify-between h-8 text-xs">
+                                          <div className="flex items-center gap-2">
+                                              <Users className="mr-2 h-4 w-4" />
+                                              Candidates
+                                          </div>
+                                          <ChevronRight className={`h-4 w-4 transition-transform ${isUwpCandidatesOpen ? 'rotate-90' : ''}`} />
+                                      </Button>
+                                  </CollapsibleTrigger>
+                                  <CollapsibleContent>
+                                      <ScrollArea className="h-48">
+                                          <SidebarMenuSub>
+                                              {loadingUwpCandidates ? <p className="p-2 text-xs text-muted-foreground">Loading...</p> : sortedUwpCandidates.map(candidate => (
+                                                  <SidebarMenuItem key={candidate.id}>
+                                                      <SidebarMenuSubButton asChild isActive={pathname === `/candidates/${candidate.id}`} size="sm">
+                                                          <Link href={`/candidates/${candidate.id}`}>
+                                                              {candidate.firstName} {candidate.lastName}
+                                                          </Link>
+                                                      </SidebarMenuSubButton>
+                                                  </SidebarMenuItem>
+                                              ))}
+                                          </SidebarMenuSub>
+                                      </ScrollArea>
+                                  </CollapsibleContent>
+                              </Collapsible>
+                          </SidebarMenuItem>
                         </SidebarMenuSub>
                     </CollapsibleContent>
                   </Collapsible>
