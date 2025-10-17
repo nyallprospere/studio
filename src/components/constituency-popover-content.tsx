@@ -53,7 +53,7 @@ function CandidateBox({ candidate, party }: { candidate: Candidate | null, party
              <div className="text-xs text-center">
                 <p className="font-semibold">{candidateName}</p>
                 <div style={{ color: party.color }}>
-                    <span>{partyText}</span>
+                    <span className="font-bold text-[10px]">{partyText}</span>
                 </div>
             </div>
         </div>
