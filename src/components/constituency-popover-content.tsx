@@ -23,35 +23,37 @@ const getLeaningLabel = (leaningValue?: string) => {
 };
 
 function CandidateBox({ candidate, party }: { candidate: Candidate | null, party: Party | null }) {
-    if (!candidate || !party) {
-        return (
+    const isIncumbent = candidate?.isIncumbent;
+    const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}${isIncumbent ? '*' : ''}` : 'Candidate TBD';
+
+    if (!party) {
+         return (
             <div className="flex items-center gap-2 p-2 rounded-md bg-muted flex-1">
                 <div className="h-10 w-10 rounded-full bg-background flex items-center justify-center">
                     <UserSquare className="h-6 w-6 text-muted-foreground" />
                 </div>
-                <div className="text-xs">
-                    <p className="font-semibold text-muted-foreground">Candidate TBD</p>
-                    <p style={{ color: party?.color }}>{party?.acronym || 'N/A'}</p>
+                <div className="text-xs text-center">
+                    <p className="font-semibold text-muted-foreground">{candidateName}</p>
                 </div>
             </div>
         );
     }
+    
+    const partyText = `${party.acronym} Candidate`;
 
     return (
         <div className="flex items-center gap-2 p-2 rounded-md bg-muted flex-1">
             <div className="relative h-10 w-10 rounded-full overflow-hidden bg-background">
-                {candidate.imageUrl ? (
-                    <Image src={candidate.imageUrl} alt={`${candidate.firstName} ${candidate.lastName}`} fill className="object-cover" />
+                {candidate?.imageUrl ? (
+                    <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
                 ) : (
                     <UserSquare className="h-full w-full text-muted-foreground" />
                 )}
             </div>
-             <div className="text-xs">
-                {candidate.isPartyLeader && <p className="font-bold text-foreground">Party Leader</p>}
-                {candidate.isIncumbent && <p className="font-bold text-foreground">Incumbent</p>}
-                <p className="font-semibold">{candidate.firstName} {candidate.lastName}</p>
+             <div className="text-xs text-center">
+                <p className="font-semibold">{candidateName}</p>
                 <div style={{ color: party.color }}>
-                    <span>{party.acronym}</span>
+                    <span>{partyText}</span>
                 </div>
             </div>
         </div>
