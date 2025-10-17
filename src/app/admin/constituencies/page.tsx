@@ -108,6 +108,14 @@ export default function AdminConstituenciesPage() {
             )
         );
     }, []);
+    
+    const handleLeaningChange = useCallback((id: string, newLeaning: string) => {
+        setEditableConstituencies(prev =>
+            prev.map(c =>
+                c.id === id ? { ...c, politicalLeaning: newLeaning as Constituency['politicalLeaning'] } : c
+            )
+        );
+    }, []);
 
 
     const handleFieldChange = (id: string, field: keyof Constituency | 'registeredVoters' | 'top' | 'left', value: any) => {
@@ -175,12 +183,18 @@ export default function AdminConstituenciesPage() {
                  <Card>
                     <CardHeader>
                         <CardTitle>Map Preview</CardTitle>
-                        <CardDescription>Drag the labels to adjust their positions. Remember to save your changes.</CardDescription>
+                        <CardDescription>
+                            {isMapDraggable 
+                                ? "Drag the labels to adjust their positions. Remember to save your changes."
+                                : "Click a label to cycle its political leaning. Unlock to move labels."
+                            }
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <InteractiveMap 
                             constituencies={editableConstituencies} 
                             onCoordinatesChange={handleCoordinatesChange}
+                            onLeaningChange={handleLeaningChange}
                             isDraggable={isMapDraggable}
                         />
                     </CardContent>

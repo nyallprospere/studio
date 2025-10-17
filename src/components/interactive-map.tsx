@@ -17,23 +17,38 @@ import { DndContext, useDraggable, DragEndEvent } from '@dnd-kit/core';
 interface InteractiveMapProps {
   constituencies: Constituency[];
   onCoordinatesChange?: (id: string, coords: {top: string, left: string}) => void;
+  onLeaningChange?: (id: string, newLeaning: string) => void;
   isDraggable?: boolean;
+  isClickable?: boolean; // New prop to control click behavior
 }
 
 const politicalLeaningOptions = [
-  { value: 'solid-slp', label: 'Solid SLP', color: 'bg-red-700' },
-  { value: 'lean-slp', label: 'Lean SLP', color: 'bg-red-400' },
-  { value: 'tossup', label: 'Tossup', color: 'bg-purple-500' },
-  { value: 'lean-uwp', label: 'Lean UWP', color: 'bg-yellow-300' },
   { value: 'solid-uwp', label: 'Solid UWP', color: 'bg-yellow-500' },
+  { value: 'lean-uwp', label: 'Lean UWP', color: 'bg-yellow-300' },
+  { value: 'tossup', label: 'Tossup', color: 'bg-purple-500' },
+  { value: 'lean-slp', label: 'Lean SLP', color: 'bg-red-400' },
+  { value: 'solid-slp', label: 'Solid SLP', color: 'bg-red-700' },
 ];
 
 const getLeaningInfo = (leaning: string | undefined) => {
-    const colorClass = politicalLeaningOptions.find(o => o.value === leaning)?.color || 'bg-gray-500';
-    return { className: colorClass };
+    const defaultLeaning = politicalLeaningOptions.find(o => o.value === 'tossup')!;
+    const leaningInfo = politicalLeaningOptions.find(o => o.value === leaning) || defaultLeaning;
+    return { className: leaningInfo.color };
 }
 
-function DraggableConstituency({ constituency, onCoordinatesChange, isDraggable }: { constituency: Constituency; onCoordinatesChange?: InteractiveMapProps['onCoordinatesChange'], isDraggable?: boolean }) {
+function DraggableConstituency({ 
+    constituency, 
+    onCoordinatesChange, 
+    onLeaningChange,
+    isDraggable,
+    isClickable 
+}: { 
+    constituency: Constituency; 
+    onCoordinatesChange?: InteractiveMapProps['onCoordinatesChange'],
+    onLeaningChange?: InteractiveMapProps['onLeaningChange'],
+    isDraggable?: boolean,
+    isClickable?: boolean,
+}) {
     const { attributes, listeners, setNodeRef, transform } = useDraggable({
         id: constituency.id,
         disabled: !isDraggable,
@@ -51,28 +66,55 @@ function DraggableConstituency({ constituency, onCoordinatesChange, isDraggable 
     
     const { className: leaningClassName } = getLeaningInfo(constituency.politicalLeaning);
 
+    const handleInteraction = (e: React.MouseEvent | React.KeyboardEvent) => {
+        if (isDraggable) {
+            // Prevent popover from opening while dragging
+            if(transform) e.preventDefault();
+            return;
+        }
+        if (isClickable && onLeaningChange) {
+            e.preventDefault();
+            const currentLeaningIndex = politicalLeaningOptions.findIndex(o => o.value === constituency.politicalLeaning);
+            const nextLeaningIndex = (currentLeaningIndex + 1) % politicalLeaningOptions.length;
+            const nextLeaning = politicalLeaningOptions[nextLeaningIndex].value;
+            onLeaningChange(constituency.id, nextLeaning);
+        }
+    };
+
+
+    const OverlayButton = (
+        <div 
+            ref={setNodeRef}
+            style={{ top: `${coords.top}%`, left: `${coords.left}%`, ...style }}
+            className={cn(
+                "absolute -translate-x-1/2 -translate-y-1/2",
+                isDraggable && 'cursor-grab active:cursor-grabbing',
+                isClickable && 'cursor-pointer'
+            )}
+            {...listeners} 
+            {...attributes}
+            onClick={handleInteraction}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleInteraction(e) }}
+            role="button"
+            tabIndex={isClickable ? 0 : -1}
+        >
+            <div 
+                className={cn("p-1 rounded text-xs font-semibold text-white whitespace-nowrap", leaningClassName, !isDraggable && "hover:scale-110 transition-transform")}
+                aria-label={`Info for ${constituency.name}`}
+            >
+                {constituency.name}
+            </div>
+        </div>
+    );
+
+    if (isClickable) {
+        return OverlayButton;
+    }
+
     return (
         <Popover>
             <PopoverTrigger asChild>
-                <div 
-                    ref={setNodeRef}
-                    style={{ top: `${coords.top}%`, left: `${coords.left}%`, ...style }}
-                    className={cn(
-                        "absolute -translate-x-1/2 -translate-y-1/2",
-                        isDraggable && 'cursor-grab active:cursor-grabbing'
-                    )}
-                    {...listeners} 
-                    {...attributes}
-                >
-                    <button 
-                        className={cn("p-1 rounded text-xs font-semibold text-white whitespace-nowrap", leaningClassName, !isDraggable && "hover:scale-110 transition-transform")}
-                        aria-label={`Info for ${constituency.name}`}
-                        // Disable button functionality when dragging
-                        onClick={(e) => { if(transform) e.preventDefault()}}
-                    >
-                        {constituency.name}
-                    </button>
-                </div>
+                {OverlayButton}
             </PopoverTrigger>
             <PopoverContent className="w-64">
                 <div className="space-y-4">
@@ -93,11 +135,13 @@ function DraggableConstituency({ constituency, onCoordinatesChange, isDraggable 
     );
 }
 
-export function InteractiveMap({ constituencies, onCoordinatesChange, isDraggable = false }: InteractiveMapProps) {
+export function InteractiveMap({ constituencies, onCoordinatesChange, onLeaningChange, isDraggable = false }: InteractiveMapProps) {
   const { firestore } = useFirebase();
   const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'site') : null, [firestore]);
   const { data: siteSettings, isLoading: loadingSettings } = useDoc(settingsRef);
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  
+  const isClickable = !isDraggable && !!onLeaningChange;
 
   const handleDragEnd = (event: DragEndEvent) => {
     if (!onCoordinatesChange || !mapContainerRef.current) return;
@@ -151,7 +195,9 @@ export function InteractiveMap({ constituencies, onCoordinatesChange, isDraggabl
                     key={c.id}
                     constituency={c}
                     onCoordinatesChange={onCoordinatesChange}
+                    onLeaningChange={onLeaningChange}
                     isDraggable={isDraggable}
+                    isClickable={isClickable}
                 />
             ))}
         </div>
