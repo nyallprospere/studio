@@ -31,7 +31,6 @@ import { ScrollArea } from '../ui/scroll-area';
 
 const mainNavItems = [
   { href: '/', icon: Home, label: 'Dashboard' },
-  { href: '/events', icon: Calendar, label: 'UWP Events' },
   { href: '/events-2', icon: Calendar, label: 'SLP Events' },
   { href: '/polls', icon: BarChart3, label: 'Polls' },
   { href: '/predictions', icon: TrendingUp, label: 'Predictions' },
@@ -114,7 +113,7 @@ export function SidebarNav() {
   const { user } = useUser();
   const { firestore } = useFirebase();
   const [isResultsOpen, setIsResultsOpen] = useState(pathname.startsWith('/results'));
-  const [isUwpOpen, setIsUwpOpen] = useState(pathname.startsWith('/parties/5D8qXvMoV06pPGdSyotD') || pathname.startsWith('/candidates'));
+  const [isUwpOpen, setIsUwpOpen] = useState(pathname.startsWith('/parties/5D8qXvMoV06pPGdSyotD') || pathname.startsWith('/candidates') || pathname.startsWith('/events'));
   const [isSlpOpen, setIsSlpOpen] = useState(pathname.startsWith('/parties/C0L5o2t9g3b1J4K7m8N9') || pathname.startsWith('/candidates-2'));
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
@@ -145,7 +144,7 @@ export function SidebarNav() {
 
   useEffect(() => {
     setIsResultsOpen(pathname.startsWith('/results'));
-    setIsUwpOpen(pathname.startsWith('/parties/5D8qXvMoV06pPGdSyotD') || pathname.startsWith('/candidates'));
+    setIsUwpOpen(pathname.startsWith('/parties/5D8qXvMoV06pPGdSyotD') || pathname.startsWith('/candidates') || pathname.startsWith('/events'));
     setIsSlpOpen(pathname.startsWith('/parties/C0L5o2t9g3b1J4K7m8N9') || pathname.startsWith('/candidates-2'));
   }, [pathname]);
   
@@ -212,7 +211,7 @@ export function SidebarNav() {
               <SidebarMenuItem>
                   <Collapsible open={isUwpOpen} onOpenChange={setIsUwpOpen}>
                       <CollapsibleTrigger asChild>
-                          <Button variant={pathname.startsWith(`/parties/${uwpParty.id}`) || pathname === '/candidates' ? 'secondary' : 'ghost'} className="w-full justify-between">
+                          <Button variant={pathname.startsWith(`/parties/${uwpParty.id}`) || pathname === '/candidates' || pathname === '/events' ? 'secondary' : 'ghost'} className="w-full justify-between">
                               <div className="flex items-center gap-2">
                                   <UwpLogo className="mr-2 h-4 w-4" />
                                   <Link href={`/parties/${uwpParty.id}`} className="flex-grow text-left">UWP</Link>
@@ -226,6 +225,13 @@ export function SidebarNav() {
                                 <SidebarMenuSubButton asChild isActive={pathname.startsWith('/candidates')}>
                                     <Link href="/candidates">
                                         Candidates
+                                    </Link>
+                                </SidebarMenuSubButton>
+                            </SidebarMenuItem>
+                             <SidebarMenuItem>
+                                <SidebarMenuSubButton asChild isActive={pathname.startsWith('/events')}>
+                                    <Link href="/events">
+                                        Events
                                     </Link>
                                 </SidebarMenuSubButton>
                             </SidebarMenuItem>
