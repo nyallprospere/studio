@@ -13,6 +13,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
+import { InteractiveMap } from '@/components/interactive-map';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const initialConstituencies = [
     { name: "Castries Central", registeredVoters: 0 },
@@ -132,86 +134,104 @@ export default function AdminConstituenciesPage() {
                     </Button>
                  )}
             </div>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Constituency Data</CardTitle>
-                    <CardDescription>Edit voter numbers, map positions, and political leanings.</CardDescription>
-                </CardHeader>
-                 <CardContent>
-                    {loadingConstituencies ? <p>Loading...</p> : 
-                     error ? <p className="text-destructive">Error: {error.message}</p> :
-                     editableConstituencies && editableConstituencies.length > 0 ? (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead>Registered Voters</TableHead>
-                                    <TableHead>Political Leaning</TableHead>
-                                    <TableHead>Map Top %</TableHead>
-                                    <TableHead>Map Left %</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {editableConstituencies.sort((a,b) => a.name.localeCompare(b.name)).map(c => (
-                                    <TableRow key={c.id}>
-                                        <TableCell className="font-medium">{c.name}</TableCell>
-                                        <TableCell>
-                                            <Input
-                                                type="number"
-                                                value={c.demographics?.registeredVoters || 0}
-                                                onChange={(e) => handleFieldChange(c.id, 'registeredVoters', e.target.value)}
-                                                className="w-28"
-                                            />
-                                        </TableCell>
-                                        <TableCell>
-                                             <Select 
-                                                value={c.politicalLeaning} 
-                                                onValueChange={(value) => handleFieldChange(c.id, 'politicalLeaning', value)}
-                                             >
-                                                <SelectTrigger className="w-40">
-                                                    <SelectValue placeholder="Select leaning" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {politicalLeaningOptions.map(opt => (
-                                                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </TableCell>
-                                        <TableCell>
-                                             <Input
-                                                type="text"
-                                                value={c.mapCoordinates?.top || ''}
-                                                onChange={(e) => handleFieldChange(c.id, 'top', e.target.value)}
-                                                className="w-20"
-                                            />
-                                        </TableCell>
-                                         <TableCell>
-                                             <Input
-                                                type="text"
-                                                value={c.mapCoordinates?.left || ''}
-                                                onChange={(e) => handleFieldChange(c.id, 'left', e.target.value)}
-                                                className="w-20"
-                                            />
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button size="sm" onClick={() => handleSave(c)}>Save</Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    ) : (
-                         <div className="text-center py-12">
-                            <p className="text-muted-foreground">No constituencies found.</p>
-                            <p className="text-sm text-muted-foreground">You can seed the initial 17 constituencies.</p>
-                        </div>
-                    )}
-                 </CardContent>
-            </Card>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Constituency Data</CardTitle>
+                            <CardDescription>Edit voter numbers, map positions, and political leanings.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {loadingConstituencies ? <p>Loading...</p> : 
+                            error ? <p className="text-destructive">Error: {error.message}</p> :
+                            editableConstituencies && editableConstituencies.length > 0 ? (
+                                <ScrollArea className="h-[70vh]">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Name</TableHead>
+                                            <TableHead>Registered Voters</TableHead>
+                                            <TableHead>Political Leaning</TableHead>
+                                            <TableHead>Map Top %</TableHead>
+                                            <TableHead>Map Left %</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {editableConstituencies.sort((a,b) => a.name.localeCompare(b.name)).map(c => (
+                                            <TableRow key={c.id}>
+                                                <TableCell className="font-medium">{c.name}</TableCell>
+                                                <TableCell>
+                                                    <Input
+                                                        type="number"
+                                                        value={c.demographics?.registeredVoters || 0}
+                                                        onChange={(e) => handleFieldChange(c.id, 'registeredVoters', e.target.value)}
+                                                        className="w-28"
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Select 
+                                                        value={c.politicalLeaning} 
+                                                        onValueChange={(value) => handleFieldChange(c.id, 'politicalLeaning', value)}
+                                                    >
+                                                        <SelectTrigger className="w-40">
+                                                            <SelectValue placeholder="Select leaning" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {politicalLeaningOptions.map(opt => (
+                                                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Input
+                                                        type="text"
+                                                        value={c.mapCoordinates?.top || ''}
+                                                        onChange={(e) => handleFieldChange(c.id, 'top', e.target.value)}
+                                                        className="w-20"
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Input
+                                                        type="text"
+                                                        value={c.mapCoordinates?.left || ''}
+                                                        onChange={(e) => handleFieldChange(c.id, 'left', e.target.value)}
+                                                        className="w-20"
+                                                    />
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button size="sm" onClick={() => handleSave(c)}>Save</Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                                </ScrollArea>
+                            ) : (
+                                <div className="text-center py-12">
+                                    <p className="text-muted-foreground">No constituencies found.</p>
+                                    <p className="text-sm text-muted-foreground">You can seed the initial 17 constituencies.</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+                <div>
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Map Preview</CardTitle>
+                             <CardDescription>Visual feedback for map coordinates.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="sticky top-4">
+                                <InteractiveMap constituencies={editableConstituencies} />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
         </div>
     );
 }
-
