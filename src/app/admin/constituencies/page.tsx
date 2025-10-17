@@ -144,6 +144,23 @@ export default function AdminConstituenciesPage() {
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                 <div>
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Map Preview</CardTitle>
+                             <CardDescription>Drag the labels to adjust their positions.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="sticky top-4">
+                                <InteractiveMap 
+                                    constituencies={editableConstituencies} 
+                                    onCoordinatesChange={handleCoordinatesChange}
+                                    isDraggable
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
                 <div className="lg:col-span-2">
                     <Card>
                         <CardHeader>
@@ -223,23 +240,6 @@ export default function AdminConstituenciesPage() {
                                     <p className="text-sm text-muted-foreground">You can seed the initial 17 constituencies.</p>
                                 </div>
                             )}
-                        </CardContent>
-                    </Card>
-                </div>
-                <div>
-                     <Card>
-                        <CardHeader>
-                            <CardTitle>Map Preview</CardTitle>
-                             <CardDescription>Drag the labels to adjust their positions.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="sticky top-4">
-                                <InteractiveMap 
-                                    constituencies={editableConstituencies} 
-                                    onCoordinatesChange={handleCoordinatesChange}
-                                    isDraggable
-                                />
-                            </div>
                         </CardContent>
                     </Card>
                 </div>
