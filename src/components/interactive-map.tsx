@@ -1,5 +1,7 @@
+
 'use client';
 
+import { useRef } from 'react';
 import type { Constituency } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Users, ArrowRight, MapPin } from 'lucide-react';
@@ -10,9 +12,12 @@ import { doc } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { DndContext, useDraggable, DragEndEvent } from '@dnd-kit/core';
 
 interface InteractiveMapProps {
   constituencies: Constituency[];
+  onCoordinatesChange?: (id: string, coords: {top: string, left: string}) => void;
+  isDraggable?: boolean;
 }
 
 const politicalLeaningOptions = [
@@ -23,23 +28,99 @@ const politicalLeaningOptions = [
   { value: 'solid-uwp', label: 'Solid UWP', color: 'bg-yellow-500' },
 ];
 
-const getLeaningInfo = (leaning: string | undefined, constituencyName: string) => {
-    if (constituencyName === 'Castries North' && (leaning === 'solid-slp' || leaning === 'lean-slp')) {
-        return {
-            className: '',
-            style: {
-                background: 'repeating-linear-gradient(45deg, #4299e1, #4299e1 10px, #e53e3e 10px, #e53e3e 20px)'
-            }
-        };
-    }
+const getLeaningInfo = (leaning: string | undefined) => {
     const colorClass = politicalLeaningOptions.find(o => o.value === leaning)?.color || 'bg-gray-500';
-    return { className: colorClass, style: {} };
+    return { className: colorClass };
 }
 
-export function InteractiveMap({ constituencies }: InteractiveMapProps) {
+function DraggableConstituency({ constituency, onCoordinatesChange, isDraggable }: { constituency: Constituency; onCoordinatesChange?: InteractiveMapProps['onCoordinatesChange'], isDraggable?: boolean }) {
+    const { attributes, listeners, setNodeRef, transform } = useDraggable({
+        id: constituency.id,
+        disabled: !isDraggable,
+    });
+
+    const style = transform ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        zIndex: 10,
+    } : undefined;
+
+    const coords = constituency.mapCoordinates;
+    if (!coords || !coords.top || !coords.left) {
+        return null;
+    }
+    
+    const { className: leaningClassName } = getLeaningInfo(constituency.politicalLeaning);
+
+    return (
+        <Popover>
+            <PopoverTrigger asChild>
+                <div 
+                    ref={setNodeRef}
+                    style={{ top: `${coords.top}%`, left: `${coords.left}%`, ...style }}
+                    className={cn(
+                        "absolute -translate-x-1/2 -translate-y-1/2",
+                        isDraggable && 'cursor-grab active:cursor-grabbing'
+                    )}
+                    {...listeners} 
+                    {...attributes}
+                >
+                    <button 
+                        className={cn("p-2 rounded-md text-sm font-bold text-white whitespace-nowrap", leaningClassName, !isDraggable && "hover:scale-110 transition-transform")}
+                        aria-label={`Info for ${constituency.name}`}
+                        // Disable button functionality when dragging
+                        onClick={(e) => { if(transform) e.preventDefault()}}
+                    >
+                        {constituency.name}
+                    </button>
+                </div>
+            </PopoverTrigger>
+            <PopoverContent className="w-64">
+                <div className="space-y-4">
+                    <h4 className="font-semibold leading-none">{constituency.name}</h4>
+                    <div className="flex items-center text-sm">
+                        <Users className="w-4 h-4 mr-2 text-muted-foreground" />
+                        <span>{constituency.demographics?.registeredVoters?.toLocaleString() || 'N/A'} Voters</span>
+                    </div>
+                    <Button asChild size="sm" className="w-full">
+                        <Link href={`/constituencies/${constituency.id}`}>
+                            View Details
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                    </Button>
+                </div>
+            </PopoverContent>
+        </Popover>
+    );
+}
+
+export function InteractiveMap({ constituencies, onCoordinatesChange, isDraggable }: InteractiveMapProps) {
   const { firestore } = useFirebase();
   const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'site') : null, [firestore]);
   const { data: siteSettings, isLoading: loadingSettings } = useDoc(settingsRef);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    if (!onCoordinatesChange || !mapContainerRef.current) return;
+    
+    const { active, delta } = event;
+    const constituencyId = active.id as string;
+    
+    const constituency = constituencies.find(c => c.id === constituencyId);
+    if (!constituency || !constituency.mapCoordinates) return;
+    
+    const mapRect = mapContainerRef.current.getBoundingClientRect();
+    
+    const currentTop = parseFloat(constituency.mapCoordinates.top);
+    const currentLeft = parseFloat(constituency.mapCoordinates.left);
+    
+    const newTop = currentTop + (delta.y / mapRect.height) * 100;
+    const newLeft = currentLeft + (delta.x / mapRect.width) * 100;
+
+    onCoordinatesChange(constituencyId, {
+      top: newTop.toFixed(2),
+      left: newLeft.toFixed(2),
+    });
+  };
 
   if (loadingSettings) {
     return <Skeleton className="w-full h-[70vh]" />;
@@ -56,51 +137,24 @@ export function InteractiveMap({ constituencies }: InteractiveMapProps) {
   }
 
   return (
-    <div className="w-full relative aspect-[4/5]">
-        <Image 
-            src={siteSettings.mapUrl} 
-            alt="Constituency Map of St. Lucia" 
-            fill
-            className="object-contain"
-            priority
-        />
-        {constituencies.map(c => {
-            const coords = c.mapCoordinates;
-            if (!coords || !coords.top || !coords.left) {
-                return null;
-            }
-
-            const { className: leaningClassName, style: leaningStyle } = getLeaningInfo(c.politicalLeaning, c.name);
-
-            return (
-                <Popover key={c.id}>
-                    <PopoverTrigger asChild>
-                        <button 
-                            className={cn("absolute p-2 rounded-md text-sm font-bold text-white hover:scale-110 transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-200", leaningClassName)}
-                            style={{ top: `${coords.top}%`, left: `${coords.left}%`, ...leaningStyle }}
-                            aria-label={`Info for ${c.name}`}
-                        >
-                            {c.name}
-                        </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-64">
-                        <div className="space-y-4">
-                            <h4 className="font-semibold leading-none">{c.name}</h4>
-                            <div className="flex items-center text-sm">
-                                <Users className="w-4 h-4 mr-2 text-muted-foreground" />
-                                <span>{c.demographics?.registeredVoters?.toLocaleString() || 'N/A'} Voters</span>
-                            </div>
-                             <Button asChild size="sm" className="w-full">
-                                <Link href={`/constituencies/${c.id}`}>
-                                    View Details
-                                    <ArrowRight className="ml-2 h-4 w-4" />
-                                </Link>
-                            </Button>
-                        </div>
-                    </PopoverContent>
-                </Popover>
-            )
-        })}
-    </div>
+    <DndContext onDragEnd={handleDragEnd}>
+        <div ref={mapContainerRef} className="w-full relative aspect-[4/5]">
+            <Image 
+                src={siteSettings.mapUrl} 
+                alt="Constituency Map of St. Lucia" 
+                fill
+                className="object-contain"
+                priority
+            />
+            {constituencies.map(c => (
+                <DraggableConstituency
+                    key={c.id}
+                    constituency={c}
+                    onCoordinatesChange={onCoordinatesChange}
+                    isDraggable={isDraggable}
+                />
+            ))}
+        </div>
+    </DndContext>
   );
 }

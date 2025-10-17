@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, doc, updateDoc, writeBatch } from 'firebase/firestore';
 import type { Constituency } from '@/lib/types';
@@ -88,6 +88,14 @@ export default function AdminConstituenciesPage() {
             setIsSeeding(false);
         }
     }
+
+    const handleCoordinatesChange = useCallback((id: string, newCoords: { top: string; left: string }) => {
+        setEditableConstituencies(prev =>
+            prev.map(c => 
+                c.id === id ? { ...c, mapCoordinates: { top: newCoords.top, left: newCoords.left } } : c
+            )
+        );
+    }, []);
 
 
     const handleFieldChange = (id: string, field: keyof Constituency | 'registeredVoters' | 'top' | 'left', value: any) => {
@@ -222,11 +230,15 @@ export default function AdminConstituenciesPage() {
                      <Card>
                         <CardHeader>
                             <CardTitle>Map Preview</CardTitle>
-                             <CardDescription>Visual feedback for map coordinates.</CardDescription>
+                             <CardDescription>Drag the labels to adjust their positions.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="sticky top-4">
-                                <InteractiveMap constituencies={editableConstituencies} />
+                                <InteractiveMap 
+                                    constituencies={editableConstituencies} 
+                                    onCoordinatesChange={handleCoordinatesChange}
+                                    isDraggable
+                                />
                             </div>
                         </CardContent>
                     </Card>
