@@ -111,7 +111,7 @@ export default function CandidateDetailPage() {
           <CardContent className="space-y-6 text-sm">
             {candidate.bio && (
                 <div>
-                    <h4 className="font-semibold text-base mb-1 uppercase tracking-wider text-muted-foreground">About the Candidate</h4>
+                    <h4 className="font-semibold text-base mb-1 uppercase tracking-wider text-muted-foreground">Meet the Candidate</h4>
                     <p className="whitespace-pre-line text-foreground">{candidate.bio}</p>
                 </div>
             )}
