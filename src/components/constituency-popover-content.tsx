@@ -1,14 +1,16 @@
 
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Constituency, Candidate, Party } from '@/lib/types';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import Image from 'next/image';
-import { UserSquare } from 'lucide-react';
+import { UserSquare, User } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { Button } from './ui/button';
+import { CandidateProfileDialog } from './candidate-profile-dialog';
 
 const politicalLeaningOptions = [
     { value: 'solid-uwp', label: 'Solid UWP' },
@@ -23,12 +25,13 @@ const getLeaningLabel = (leaningValue?: string) => {
 };
 
 function CandidateBox({ candidate, party }: { candidate: Candidate | null, party: Party | null }) {
+    const [isProfileOpen, setProfileOpen] = useState(false);
     const isIncumbent = candidate?.isIncumbent;
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}${isIncumbent ? '*' : ''}` : 'Candidate TBD';
 
     if (!party) {
          return (
-            <div className="flex items-center gap-2 p-2 rounded-md bg-muted flex-1">
+            <div className="flex flex-col items-center gap-2 p-2 rounded-md bg-muted flex-1">
                 <div className="h-10 w-10 rounded-full bg-background flex items-center justify-center">
                     <UserSquare className="h-6 w-6 text-muted-foreground" />
                 </div>
@@ -42,21 +45,27 @@ function CandidateBox({ candidate, party }: { candidate: Candidate | null, party
     const partyText = `${party.acronym} Candidate`;
 
     return (
-        <div className="flex items-center gap-2 p-2 rounded-md bg-muted flex-1">
-            <div className="relative h-10 w-10 rounded-full overflow-hidden bg-background">
-                {candidate?.imageUrl ? (
-                    <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
-                ) : (
-                    <UserSquare className="h-full w-full text-muted-foreground" />
-                )}
-            </div>
-             <div className="text-xs text-center">
-                <p className="font-semibold">{candidateName}</p>
-                <div style={{ color: party.color }}>
-                    <span className="font-bold text-[10px]">{partyText}</span>
+        <>
+            <div className="flex flex-col items-center gap-2 p-2 rounded-md bg-muted flex-1">
+                <div className="relative h-10 w-10 rounded-full overflow-hidden bg-background">
+                    {candidate?.imageUrl ? (
+                        <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
+                    ) : (
+                        <UserSquare className="h-full w-full text-muted-foreground" />
+                    )}
                 </div>
+                <div className="text-center">
+                    <p className="font-semibold text-xs">{candidateName}</p>
+                    <div style={{ color: party.color }}>
+                        <span className="font-bold text-[10px]">{partyText}</span>
+                    </div>
+                </div>
+                <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                    View Profile
+                </Button>
             </div>
-        </div>
+            <CandidateProfileDialog candidate={candidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />
+        </>
     );
 }
 
