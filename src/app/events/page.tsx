@@ -22,13 +22,6 @@ function EventsPageSkeleton() {
                     <Skeleton className="h-24 w-full" />
                 </CardContent>
             </Card>
-             <Card>
-                <CardHeader><Skeleton className="h-8 w-1/3" /></CardHeader>
-                <CardContent className="space-y-4">
-                    <Skeleton className="h-24 w-full" />
-                    <Skeleton className="h-24 w-full" />
-                </CardContent>
-            </Card>
         </div>
     )
 }
@@ -36,7 +29,6 @@ function EventsPageSkeleton() {
 export default function EventsPage() {
   const { firestore } = useFirebase();
   const [uwpViewMode, setUwpViewMode] = useState<'upcoming' | 'past'>('upcoming');
-  const [slpViewMode, setSlpViewMode] = useState<'upcoming' | 'past'>('upcoming');
   
   const eventsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'events'), orderBy('date', 'desc')) : null, [firestore]);
   const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
@@ -47,17 +39,15 @@ export default function EventsPage() {
   const getPartyName = (partyId: string) => parties?.find(p => p.id === partyId)?.name || 'N/A';
   const isLoading = loadingEvents || loadingParties;
 
-  const { uwpEvents, slpEvents } = useMemo(() => {
+  const { uwpEvents } = useMemo(() => {
     if (!events || !parties) {
-      return { uwpEvents: [], slpEvents: [] };
+      return { uwpEvents: [] };
     }
     const uwp = parties.find(p => p.acronym === 'UWP');
-    const slp = parties.find(p => p.acronym === 'SLP');
     
     const uwpEvents = uwp ? events.filter(e => e.partyId === uwp.id) : [];
-    const slpEvents = slp ? events.filter(e => e.partyId === slp.id) : [];
 
-    return { uwpEvents, slpEvents };
+    return { uwpEvents };
   }, [events, parties]);
 
 
@@ -83,18 +73,17 @@ export default function EventsPage() {
   }
 
   const visibleUwpEvents = useMemo(() => filterAndSortEvents(uwpEvents, uwpViewMode), [uwpEvents, uwpViewMode]);
-  const visibleSlpEvents = useMemo(() => filterAndSortEvents(slpEvents, slpViewMode), [slpEvents, slpViewMode]);
 
 
   return (
     <div className="container mx-auto px-4 py-8">
       <PageHeader
-        title="Party Events"
-        description="Find out about rallies, town halls, and other events from the political parties."
+        title="UWP Events"
+        description="Find out about rallies, town halls, and other events from the United Workers Party."
       />
       
       {isLoading ? <EventsPageSkeleton /> : (
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-1 gap-8">
             <Card>
                 <CardHeader>
                     <div className="flex justify-between items-center">
@@ -120,35 +109,8 @@ export default function EventsPage() {
                     </div>
                 </CardContent>
             </Card>
-            <Card>
-                <CardHeader>
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <CardTitle>SLP Events</CardTitle>
-                            <CardDescription>Events hosted by the Saint Lucia Labour Party.</CardDescription>
-                        </div>
-                         <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
-                            <Button size="sm" variant={slpViewMode === 'upcoming' ? 'secondary' : 'ghost'} onClick={() => setSlpViewMode('upcoming')}>Upcoming</Button>
-                            <Button size="sm" variant={slpViewMode === 'past' ? 'secondary' : 'ghost'} onClick={() => setSlpViewMode('past')}>Past</Button>
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                    {visibleSlpEvents.length > 0 ? (
-                        visibleSlpEvents.map((event) => (
-                           <EventCard key={event.id} event={event} partyName={getPartyName(event.partyId)} />
-                        ))
-                    ) : (
-                        <p className="text-center text-muted-foreground py-8">No {slpViewMode} SLP events found.</p>
-                    )}
-                    </div>
-                </CardContent>
-            </Card>
         </div>
       )}
     </div>
   );
 }
-
-    
