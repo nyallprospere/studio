@@ -2,8 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useDoc, useFirebase } from '@/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { useDoc, useFirebase, useCollection } from '@/firebase';
+import { doc, setDoc, collection } from 'firebase/firestore';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -12,8 +12,9 @@ import { useToast } from '@/hooks/use-toast';
 import { uploadFile, deleteFile } from '@/firebase/storage';
 import Image from 'next/image';
 import { Loader2, UploadCloud } from 'lucide-react';
-import type { SiteSettings } from '@/lib/types';
+import type { SiteSettings, Constituency } from '@/lib/types';
 import { useMemoFirebase } from '@/firebase';
+import { InteractiveMap } from '@/components/interactive-map';
 
 export default function AdminMapPage() {
   const { firestore } = useFirebase();
@@ -22,6 +23,9 @@ export default function AdminMapPage() {
   const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'site') : null, [firestore]);
   const { data: siteSettings, isLoading: loadingSettings } = useDoc<SiteSettings>(settingsRef);
   
+  const constituenciesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
+  const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesCollection);
+
   const [mapFile, setMapFile] = useState<File | null>(null);
   const [currentMapUrl, setCurrentMapUrl] = useState<string | undefined>(undefined);
   const [isUploading, setIsUploading] = useState(false);
@@ -39,7 +43,7 @@ export default function AdminMapPage() {
   };
 
   const handleUpload = async () => {
-    if (!mapFile || !firestore) {
+    if (!mapFile || !firestore || !settingsRef) {
       toast({ variant: 'destructive', title: 'Error', description: 'Please select a file to upload.' });
       return;
     }
@@ -48,7 +52,11 @@ export default function AdminMapPage() {
     try {
       // If a map already exists, delete the old one first
       if (currentMapUrl) {
-        await deleteFile(currentMapUrl);
+        try {
+            await deleteFile(currentMapUrl);
+        } catch (e) {
+            console.warn("Could not delete old map, it may have already been removed.", e)
+        }
       }
       
       const newMapUrl = await uploadFile(mapFile, `maps/constituency_map_${Date.now()}`);
@@ -65,6 +73,8 @@ export default function AdminMapPage() {
       setIsUploading(false);
     }
   };
+  
+  const isLoading = loadingSettings || loadingConstituencies;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -73,48 +83,51 @@ export default function AdminMapPage() {
         description="Upload and update the main map image used on the constituencies page."
       />
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Map Uploader</CardTitle>
-          <CardDescription>Upload an image (e.g., SVG, PNG) for the interactive map background.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Input type="file" accept="image/*" onChange={handleFileChange} disabled={isUploading} />
-            <p className="text-xs text-muted-foreground">For best results, use an SVG with a clear background.</p>
-          </div>
-          <Button onClick={handleUpload} disabled={!mapFile || isUploading}>
-            {isUploading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Uploading...
-              </>
-            ) : (
-                <>
-                 <UploadCloud className="mr-2 h-4 w-4" />
-                 Upload & Save Map
-                </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
-      
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Current Map Preview</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loadingSettings ? (
-            <p>Loading map preview...</p>
-          ) : currentMapUrl ? (
-            <div className="relative w-full max-w-2xl mx-auto aspect-square bg-muted rounded-md p-4">
-              <Image src={currentMapUrl} alt="Current Constituency Map" fill className="object-contain" />
-            </div>
-          ) : (
-            <p className="text-muted-foreground">No map has been uploaded yet.</p>
-          )}
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="space-y-8">
+            <Card>
+                <CardHeader>
+                <CardTitle>Map Uploader</CardTitle>
+                <CardDescription>Upload an image (e.g., SVG, PNG) for the interactive map background.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                <div className="space-y-2">
+                    <Input type="file" accept="image/*" onChange={handleFileChange} disabled={isUploading} />
+                    <p className="text-xs text-muted-foreground">For best results, use an SVG with a clear background.</p>
+                </div>
+                <Button onClick={handleUpload} disabled={!mapFile || isUploading}>
+                    {isUploading ? (
+                    <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Uploading...
+                    </>
+                    ) : (
+                        <>
+                        <UploadCloud className="mr-2 h-4 w-4" />
+                        Upload & Save Map
+                        </>
+                    )}
+                </Button>
+                </CardContent>
+            </Card>
+        </div>
+
+        <div>
+            <Card>
+                <CardHeader>
+                <CardTitle>Current Map Preview</CardTitle>
+                <CardDescription>This is a preview of the currently active map.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                {isLoading ? (
+                    <p>Loading map preview...</p>
+                ) : (
+                    <InteractiveMap constituencies={constituencies ?? []} />
+                )}
+                </CardContent>
+            </Card>
+        </div>
+      </div>
     </div>
   );
 }
