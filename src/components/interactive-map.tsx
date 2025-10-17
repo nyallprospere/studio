@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import type { Constituency } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Users, ArrowRight, MapPin } from 'lucide-react';
@@ -54,6 +54,8 @@ function DraggableConstituency({
         disabled: !isDraggable,
     });
 
+    const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
     const style = transform ? {
         transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
         zIndex: 10,
@@ -66,22 +68,13 @@ function DraggableConstituency({
     
     const { className: leaningClassName } = getLeaningInfo(constituency.politicalLeaning);
 
-    const handleInteraction = (e: React.MouseEvent | React.KeyboardEvent) => {
-        if (isDraggable) {
-            // Prevent popover from opening while dragging
-            if(transform) e.preventDefault();
-            return;
-        }
-        if (isClickable && onLeaningChange) {
-            e.preventDefault();
-            const currentLeaningIndex = politicalLeaningOptions.findIndex(o => o.value === constituency.politicalLeaning);
-            const nextLeaningIndex = (currentLeaningIndex + 1) % politicalLeaningOptions.length;
-            const nextLeaning = politicalLeaningOptions[nextLeaningIndex].value;
-            onLeaningChange(constituency.id, nextLeaning);
-        }
-    };
-
-
+    const handleLeaningSelect = (newLeaning: string) => {
+      if (onLeaningChange) {
+        onLeaningChange(constituency.id, newLeaning);
+      }
+      setIsPopoverOpen(false);
+    }
+    
     const OverlayButton = (
         <div 
             ref={setNodeRef}
@@ -89,17 +82,12 @@ function DraggableConstituency({
             className={cn(
                 "absolute -translate-x-1/2 -translate-y-1/2",
                 isDraggable && 'cursor-grab active:cursor-grabbing',
-                isClickable && 'cursor-pointer'
             )}
-            {...listeners} 
-            {...attributes}
-            onClick={handleInteraction}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleInteraction(e) }}
-            role="button"
-            tabIndex={isClickable ? 0 : -1}
+            {...(isDraggable ? listeners : {})} 
+            {...(isDraggable ? attributes : {})}
         >
             <div 
-                className={cn("p-1 rounded text-xs font-semibold text-white whitespace-nowrap", leaningClassName, !isDraggable && "hover:scale-110 transition-transform")}
+                className={cn("p-1 rounded text-xs font-semibold text-white whitespace-nowrap", leaningClassName, !isDraggable && "hover:scale-110 transition-transform", isClickable && 'cursor-pointer')}
                 aria-label={`Info for ${constituency.name}`}
             >
                 {constituency.name}
@@ -107,10 +95,34 @@ function DraggableConstituency({
         </div>
     );
 
+    // Clickable behavior for admin: shows a popover to select leaning
     if (isClickable) {
-        return OverlayButton;
+      return (
+         <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+            <PopoverTrigger asChild>
+              {OverlayButton}
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-1">
+              <div className="flex flex-col gap-1">
+                {politicalLeaningOptions.map(opt => (
+                  <Button 
+                    key={opt.value}
+                    variant="ghost"
+                    size="sm"
+                    className="justify-start"
+                    onClick={() => handleLeaningSelect(opt.value)}
+                  >
+                     <span className={cn("w-3 h-3 rounded-full mr-2", opt.color)}></span>
+                     {opt.label}
+                  </Button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+      )
     }
 
+    // Default behavior for public pages: shows an info popover
     return (
         <Popover>
             <PopoverTrigger asChild>
