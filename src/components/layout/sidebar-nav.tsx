@@ -249,6 +249,7 @@ export function SidebarNav() {
                              <SidebarMenuItem>
                                 <SidebarMenuSubButton asChild isActive={pathname.startsWith('/events')}>
                                     <Link href="/events">
+                                        <Calendar className="mr-2 h-4 w-4" />
                                         Events
                                     </Link>
                                 </SidebarMenuSubButton>
@@ -304,6 +305,7 @@ export function SidebarNav() {
                              <SidebarMenuItem>
                                 <SidebarMenuSubButton asChild isActive={pathname.startsWith('/events-2')}>
                                     <Link href="/events-2">
+                                        <Calendar className="mr-2 h-4 w-4" />
                                         Events
                                     </Link>
                                 </SidebarMenuSubButton>
