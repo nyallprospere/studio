@@ -17,7 +17,7 @@ export interface Party {
 }
 
 export interface Candidate {
-  id: string;
+  id:string;
   firstName: string;
   lastName: string;
   name: string; // Combined for simplicity
@@ -44,6 +44,8 @@ export interface Constituency {
     left: string;
   };
   politicalLeaning?: 'solid-slp' | 'lean-slp' | 'tossup' | 'lean-uwp' | 'solid-uwp';
+  predictedSlpPercentage?: number;
+  predictedUwpPercentage?: number;
 }
 
 export interface Poll {

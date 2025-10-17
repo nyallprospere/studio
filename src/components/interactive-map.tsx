@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import type { Constituency } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Users, ArrowRight, MapPin } from 'lucide-react';
@@ -13,11 +14,15 @@ import { Skeleton } from './ui/skeleton';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { DndContext, useDraggable, DragEndEvent } from '@dnd-kit/core';
+import { Input } from './ui/input';
+import { PieChart, Pie, Cell } from 'recharts';
+import { Label } from './ui/label';
 
 interface InteractiveMapProps {
   constituencies: Constituency[];
   onCoordinatesChange?: (id: string, coords: {top: string, left: string}) => void;
   onLeaningChange?: (id: string, newLeaning: string) => void;
+  onPredictionChange?: (id: string, slp: number, uwp: number) => void;
   isDraggable?: boolean;
   isClickable?: boolean; // New prop to control click behavior
 }
@@ -40,12 +45,14 @@ function DraggableConstituency({
     constituency, 
     onCoordinatesChange, 
     onLeaningChange,
+    onPredictionChange,
     isDraggable,
     isClickable 
 }: { 
     constituency: Constituency; 
     onCoordinatesChange?: InteractiveMapProps['onCoordinatesChange'],
     onLeaningChange?: InteractiveMapProps['onLeaningChange'],
+    onPredictionChange?: InteractiveMapProps['onPredictionChange'],
     isDraggable?: boolean,
     isClickable?: boolean,
 }) {
@@ -55,6 +62,14 @@ function DraggableConstituency({
     });
 
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+    
+    const [slpPercentage, setSlpPercentage] = useState(constituency.predictedSlpPercentage || 50);
+    const [uwpPercentage, setUwpPercentage] = useState(constituency.predictedUwpPercentage || 50);
+    
+    const chartData = useMemo(() => [
+      { name: 'SLP', value: slpPercentage, color: '#E74C3C' },
+      { name: 'UWP', value: uwpPercentage, color: '#F1C40F' },
+    ], [slpPercentage, uwpPercentage]);
 
     const style = transform ? {
         transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
@@ -72,8 +87,24 @@ function DraggableConstituency({
       if (onLeaningChange) {
         onLeaningChange(constituency.id, newLeaning);
       }
-      setIsPopoverOpen(false);
     }
+
+    const handlePredictionChange = (party: 'slp' | 'uwp', value: string) => {
+      const numValue = parseInt(value, 10);
+      if (isNaN(numValue) || numValue < 0 || numValue > 100) return;
+
+      if (party === 'slp') {
+        setSlpPercentage(numValue);
+      } else {
+        setUwpPercentage(numValue);
+      }
+
+      if (onPredictionChange) {
+        const newSlp = party === 'slp' ? numValue : slpPercentage;
+        const newUwp = party === 'uwp' ? numValue : uwpPercentage;
+        onPredictionChange(constituency.id, newSlp, newUwp);
+      }
+    };
     
     const OverlayButton = (
         <div 
@@ -87,7 +118,7 @@ function DraggableConstituency({
             {...(isDraggable ? attributes : {})}
         >
             <div 
-                className={cn("p-1 rounded text-xs font-semibold text-white whitespace-nowrap", leaningClassName, !isDraggable && "hover:scale-110 transition-transform", isClickable && 'cursor-pointer')}
+                className={cn("p-1 rounded-sm text-[10px] font-semibold text-white whitespace-nowrap", leaningClassName, !isDraggable && "hover:scale-110 transition-transform", isClickable && 'cursor-pointer')}
                 aria-label={`Info for ${constituency.name}`}
             >
                 {constituency.name}
@@ -102,8 +133,9 @@ function DraggableConstituency({
             <PopoverTrigger asChild>
               {OverlayButton}
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-1">
-              <div className="flex flex-col gap-1">
+            <PopoverContent className="w-auto p-2">
+              <div className="flex flex-col gap-2">
+                <h4 className="font-medium text-sm px-2 pt-1">{constituency.name}</h4>
                 {politicalLeaningOptions.map(opt => (
                   <Button 
                     key={opt.value}
@@ -116,6 +148,39 @@ function DraggableConstituency({
                      {opt.label}
                   </Button>
                 ))}
+                 <div className="border-t my-2"></div>
+
+                  <div className="w-48 mx-auto relative h-24">
+                      <PieChart width={192} height={96}>
+                          <Pie
+                              data={chartData}
+                              cx="50%"
+                              cy="100%"
+                              startAngle={180}
+                              endAngle={0}
+                              innerRadius="60%"
+                              outerRadius="100%"
+                              dataKey="value"
+                              paddingAngle={2}
+                          >
+                              {chartData.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                          </Pie>
+                      </PieChart>
+                  </div>
+                 
+                 <div className="space-y-2">
+                    <div>
+                      <Label htmlFor="slp-pred">Predicted SLP %</Label>
+                      <Input id="slp-pred" type="number" value={slpPercentage} onChange={e => handlePredictionChange('slp', e.target.value)} />
+                    </div>
+                    <div>
+                      <Label htmlFor="uwp-pred">Predicted UWP %</Label>
+                      <Input id="uwp-pred" type="number" value={uwpPercentage} onChange={e => handlePredictionChange('uwp', e.target.value)} />
+                    </div>
+                  </div>
+
               </div>
             </PopoverContent>
           </Popover>
@@ -147,13 +212,13 @@ function DraggableConstituency({
     );
 }
 
-export function InteractiveMap({ constituencies, onCoordinatesChange, onLeaningChange, isDraggable = false }: InteractiveMapProps) {
+export function InteractiveMap({ constituencies, onCoordinatesChange, onLeaningChange, onPredictionChange, isDraggable = false }: InteractiveMapProps) {
   const { firestore } = useFirebase();
   const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'site') : null, [firestore]);
   const { data: siteSettings, isLoading: loadingSettings } = useDoc(settingsRef);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   
-  const isClickable = !isDraggable && !!onLeaningChange;
+  const isClickable = !isDraggable && (!!onLeaningChange || !!onPredictionChange);
 
   const handleDragEnd = (event: DragEndEvent) => {
     if (!onCoordinatesChange || !mapContainerRef.current) return;
@@ -208,6 +273,7 @@ export function InteractiveMap({ constituencies, onCoordinatesChange, onLeaningC
                     constituency={c}
                     onCoordinatesChange={onCoordinatesChange}
                     onLeaningChange={onLeaningChange}
+                    onPredictionChange={onPredictionChange}
                     isDraggable={isDraggable}
                     isClickable={isClickable}
                 />

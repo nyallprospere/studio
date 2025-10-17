@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
@@ -88,7 +89,9 @@ export default function AdminConstituenciesPage() {
                     name: c.name, 
                     demographics: { registeredVoters: c.registeredVoters },
                     mapCoordinates: { top: "50", left: "50"}, // Default coordinates
-                    politicalLeaning: "tossup"
+                    politicalLeaning: "tossup",
+                    predictedSlpPercentage: 50,
+                    predictedUwpPercentage: 50,
                 });
             });
             await batch.commit();
@@ -117,8 +120,16 @@ export default function AdminConstituenciesPage() {
         );
     }, []);
 
+    const handlePredictionChange = useCallback((id: string, slp: number, uwp: number) => {
+        setEditableConstituencies(prev =>
+            prev.map(c =>
+                c.id === id ? { ...c, predictedSlpPercentage: slp, predictedUwpPercentage: uwp } : c
+            )
+        );
+    }, []);
 
-    const handleFieldChange = (id: string, field: keyof Constituency | 'registeredVoters' | 'top' | 'left', value: any) => {
+
+    const handleFieldChange = (id: string, field: keyof Constituency | 'registeredVoters' | 'top' | 'left' | 'predictedSlpPercentage' | 'predictedUwpPercentage', value: any) => {
         setEditableConstituencies(prev => 
             prev.map(c => {
                 if (c.id === id) {
@@ -127,6 +138,9 @@ export default function AdminConstituenciesPage() {
                     }
                      if (field === 'top' || field === 'left') {
                         return { ...c, mapCoordinates: { ...c.mapCoordinates, [field]: value } };
+                    }
+                    if (field === 'predictedSlpPercentage' || field === 'predictedUwpPercentage') {
+                        return { ...c, [field]: Number(value) };
                     }
                     return { ...c, [field]: value };
                 }
@@ -186,7 +200,7 @@ export default function AdminConstituenciesPage() {
                         <CardDescription>
                             {isMapDraggable 
                                 ? "Drag the labels to adjust their positions. Remember to save your changes."
-                                : "Click a label to cycle its political leaning. Unlock to move labels."
+                                : "Click a label to edit leanings and predictions. Unlock to move labels."
                             }
                         </CardDescription>
                     </CardHeader>
@@ -195,6 +209,7 @@ export default function AdminConstituenciesPage() {
                             constituencies={editableConstituencies} 
                             onCoordinatesChange={handleCoordinatesChange}
                             onLeaningChange={handleLeaningChange}
+                            onPredictionChange={handlePredictionChange}
                             isDraggable={isMapDraggable}
                         />
                     </CardContent>
@@ -202,7 +217,7 @@ export default function AdminConstituenciesPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Constituency Data</CardTitle>
-                        <CardDescription>Edit voter numbers, map positions, and political leanings.</CardDescription>
+                        <CardDescription>Edit voter numbers, map positions, leanings, and predictions.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         {loadingConstituencies ? <p>Loading...</p> : 
@@ -215,6 +230,8 @@ export default function AdminConstituenciesPage() {
                                         <TableHead>Name</TableHead>
                                         <TableHead>Registered Voters</TableHead>
                                         <TableHead>Political Leaning</TableHead>
+                                        <TableHead>Pred. SLP %</TableHead>
+                                        <TableHead>Pred. UWP %</TableHead>
                                         <TableHead>Map Top %</TableHead>
                                         <TableHead>Map Left %</TableHead>
                                     </TableRow>
@@ -245,6 +262,22 @@ export default function AdminConstituenciesPage() {
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Input
+                                                    type="number"
+                                                    value={c.predictedSlpPercentage || 0}
+                                                    onChange={(e) => handleFieldChange(c.id, 'predictedSlpPercentage', e.target.value)}
+                                                    className="w-24"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Input
+                                                    type="number"
+                                                    value={c.predictedUwpPercentage || 0}
+                                                    onChange={(e) => handleFieldChange(c.id, 'predictedUwpPercentage', e.target.value)}
+                                                    className="w-24"
+                                                />
                                             </TableCell>
                                             <TableCell>
                                                 <Input
