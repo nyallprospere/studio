@@ -271,11 +271,10 @@ export default function AdminCandidatesPage() {
                             </div>
                         )}
                         <div>
-                            <p className="font-semibold">{candidate.firstName} {candidate.lastName}</p>
+                            <p className="font-semibold">{candidate.firstName} {candidate.lastName} {candidate.isIncumbent && <span className="font-normal text-primary text-sm">(Inc.)</span>}</p>
                             <p className="text-sm text-muted-foreground">
                             {getPartyAcronym(candidate.partyId)} &bull; {getConstituencyName(candidate.constituencyId)}
                             {candidate.isPartyLeader && <span className="font-bold text-primary"> (Party Leader)</span>}
-                            {candidate.isIncumbent && !candidate.isPartyLeader && <span className="font-bold text-primary"> (Inc.)</span>}
                             </p>
                         </div>
                         </div>

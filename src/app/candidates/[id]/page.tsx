@@ -69,6 +69,8 @@ export default function CandidateDetailPage() {
   }
 
   const candidateName = `${candidate.firstName} ${candidate.lastName}`;
+  const displayName = `${candidateName} ${candidate.isIncumbent ? '(Inc.)' : ''}`.trim();
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -84,7 +86,7 @@ export default function CandidateDetailPage() {
                 )}
               </div>
               <div className="space-y-1">
-                <CardTitle className="font-headline text-3xl">{candidateName}</CardTitle>
+                <CardTitle className="font-headline text-3xl">{displayName}</CardTitle>
                 <CardDescription className="text-lg">
                   Candidate for <span className="font-semibold text-foreground">{constituency?.name}</span>
                 </CardDescription>
@@ -125,8 +127,6 @@ export default function CandidateDetailPage() {
                     </ul>
                 </div>
             )}
-
-            {candidate.isIncumbent && <p className="font-bold text-primary">This candidate is an incumbent.</p>}
           </CardContent>
         </ScrollArea>
       </Card>

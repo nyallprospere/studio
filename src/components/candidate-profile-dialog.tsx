@@ -29,6 +29,8 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
   }
 
   const candidateName = `${candidate.firstName} ${candidate.lastName}`;
+  const displayName = `${candidateName} ${candidate.isIncumbent ? '(Inc.)' : ''}`.trim();
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -44,7 +46,7 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
                 )}
               </div>
               <div className="space-y-1">
-                <CardTitle className="font-headline text-3xl">{candidateName}</CardTitle>
+                <CardTitle className="font-headline text-3xl">{displayName}</CardTitle>
                 <CardDescription className="text-lg">
                   Candidate for <span className="font-semibold text-foreground">{constituency?.name}</span>
                 </CardDescription>
@@ -85,8 +87,6 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
                     </ul>
                 </div>
             )}
-
-            {candidate.isIncumbent && <p className="font-bold text-primary mt-4">This candidate is an incumbent.</p>}
           </CardContent>
         </ScrollArea>
       </DialogContent>
@@ -99,4 +99,3 @@ const CardHeader = (props: React.HTMLAttributes<HTMLDivElement>) => <div {...pro
 const CardContent = (props: React.HTMLAttributes<HTMLDivElement>) => <div {...props} />;
 const CardTitle = (props: React.HTMLAttributes<HTMLHeadingElement>) => <h2 {...props} />;
 const CardDescription = (props: React.HTMLAttributes<HTMLParagraphElement>) => <p {...props} />;
-
