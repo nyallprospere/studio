@@ -15,6 +15,8 @@ import { Loader2, UploadCloud } from 'lucide-react';
 import type { SiteSettings, Constituency } from '@/lib/types';
 import { useMemoFirebase } from '@/firebase';
 import { InteractiveMap } from '@/components/interactive-map';
+import { DraggableImageOverlay } from '@/components/draggable-image-overlay';
+
 
 export default function AdminMapPage() {
   const { firestore } = useFirebase();
@@ -118,12 +120,15 @@ export default function AdminMapPage() {
                 <CardTitle>Current Map Preview</CardTitle>
                 <CardDescription>This is a preview of the currently active map.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                {isLoading ? (
-                    <p>Loading map preview...</p>
-                ) : (
-                    <InteractiveMap constituencies={constituencies ?? []} />
-                )}
+                <CardContent className="relative">
+                    {isLoading ? (
+                        <p>Loading map preview...</p>
+                    ) : (
+                      <>
+                        <InteractiveMap constituencies={constituencies ?? []} />
+                        <DraggableImageOverlay imageUrl="https://picsum.photos/seed/overlay/150/150" />
+                      </>
+                    )}
                 </CardContent>
             </Card>
         </div>
