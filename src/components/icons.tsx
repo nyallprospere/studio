@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 export const UwpLogo = (props: React.SVGProps<SVGSVGElement>) => (
@@ -9,8 +10,7 @@ export const UwpLogo = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 export const SlpLogo = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-    <circle cx="50" cy="50" r="48" fill="#E74C3C" stroke="#2c3e50" strokeWidth="4"/>
-    <path d="M50 25 V 75 M25 50 H 75" stroke="white" strokeWidth="10" strokeLinecap="round"/>
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <polygon points="50,5 61,35 95,35 68,55 78,85 50,65 22,85 32,55 5,35 39,35" fill="#E74C3C"/>
   </svg>
 );
