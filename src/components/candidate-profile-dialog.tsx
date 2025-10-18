@@ -36,7 +36,7 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl h-[70vh]">
         <ScrollArea className="h-full pr-6">
-          <CardHeader className="mb-4">
+          <DialogHeader className="mb-4">
             <div className="flex flex-col sm:flex-row items-start gap-4">
               <div className="relative h-32 w-32 flex-shrink-0 rounded-full overflow-hidden bg-muted">
                 {candidate.imageUrl ? (
@@ -46,10 +46,10 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
                 )}
               </div>
               <div className="space-y-1">
-                <CardTitle className="font-headline text-3xl">{displayName}</CardTitle>
-                <CardDescription className="text-lg">
+                <DialogTitle className="font-headline text-3xl">{displayName}</DialogTitle>
+                <DialogDescription className="text-lg">
                   Candidate for <span className="font-semibold text-foreground">{constituency?.name}</span>
-                </CardDescription>
+                </DialogDescription>
                 {party && (
                   <div className="flex items-center gap-2 pt-2">
                      <div className="relative h-8 w-8 flex-shrink-0">
@@ -66,9 +66,9 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
                 )}
               </div>
             </div>
-          </CardHeader>
+          </DialogHeader>
 
-          <CardContent className="space-y-6 text-sm">
+          <div className="space-y-6 text-sm px-6">
             {candidate.bio && (
                 <div>
                     <h4 className="font-semibold text-base mb-1 uppercase tracking-wider text-muted-foreground">Meet the Candidate</h4>
@@ -87,15 +87,9 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
                     </ul>
                 </div>
             )}
-          </CardContent>
+          </div>
         </ScrollArea>
       </DialogContent>
     </Dialog>
   );
 }
-
-// Minimal CardHeader and CardContent components for structure if not globally available
-const CardHeader = (props: React.HTMLAttributes<HTMLDivElement>) => <div {...props} />;
-const CardContent = (props: React.HTMLAttributes<HTMLDivElement>) => <div {...props} />;
-const CardTitle = (props: React.HTMLAttributes<HTMLHeadingElement>) => <h2 {...props} />;
-const CardDescription = (props: React.HTMLAttributes<HTMLParagraphElement>) => <p {...props} />;
