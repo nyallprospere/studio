@@ -2,15 +2,14 @@
 import React from 'react';
 
 export const UwpLogo = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-    <circle cx="50" cy="50" r="48" fill="#F1C40F" stroke="#2c3e50" strokeWidth="4"/>
-    <path d="M30 35 L50 65 L70 35" stroke="#2c3e50" strokeWidth="8" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M30 65 L70 65" stroke="#2c3e50" strokeWidth="8" fill="none" strokeLinecap="round"/>
-  </svg>
+    <svg viewBox="0 0 24 24" fill="#F1C40F" xmlns="http://www.w3.org/2000/svg" {...props}>
+        <path d="M15.19 14.83L16.22 8.94L18.42 8.58L17.39 14.47L15.19 14.83M12.91 15.2L12.5 10.33L14.65 10L15.06 14.87L12.91 15.2M9.68 15.82L8.29 11.41L10.45 10.79L11.84 15.2L9.68 15.82M7 16.5L5.18 12.7L7.33 12.12L9.15 15.91L7 16.5M19.92 6.5C19.64 6.5 19.36 6.5 19.09 6.53L17.5 2L15 3.5L16.1 7.2C14.7 6.13 12.75 5.5 11.23 5.5C9.25 5.5 7.04 6.55 5.85 8.1L4.31 4L2 5.33L3.8 10.5C3.8 10.5 3.8 10.5 3.79 10.53C2.76 13.13 3.81 16.2 6.41 17.24C9 18.28 12.08 17.23 13.11 14.63L13.5 15.5L15.81 15.97L17 22L20 21L18.43 14.39C19.93 13.56 21.05 11.69 21.05 9.5C21.05 8.25 20.61 7.22 19.92 6.5Z" />
+    </svg>
 );
+
 
 export const SlpLogo = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" {...props}>
-    <polygon points="50,5 61,35 95,35 68,55 78,85 50,65 22,85 32,55 5,35 39,35" fill="#E74C3C"/>
+    <polygon points="50,5 61,35 95,35 68,55 78,85 50,65 22,85 32,55 5,35 39,35" fill="#E53935"/>
   </svg>
 );
