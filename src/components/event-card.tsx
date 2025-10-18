@@ -33,7 +33,14 @@ export function EventCard({ event, party }: { event: Event, party: Party | undef
                     <div className="flex-grow">
                         <p className="font-semibold">{event.title}</p>
                         <div className="text-sm text-muted-foreground mt-1 space-y-1">
-                            <p className="flex items-center gap-2"><Shield className="h-4 w-4" /> {party?.name || 'Event'}</p>
+                            <div className="flex items-center gap-2">
+                                {party?.logoUrl ? (
+                                    <Image src={party.logoUrl} alt={`${party.name} logo`} width={16} height={16} className="rounded-full object-contain" />
+                                ) : (
+                                    <Shield className="h-4 w-4" />
+                                )}
+                                <span>{party?.name || 'Event'}</span>
+                            </div>
                             <p className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {format(eventDate, "PPP")}</p>
                             <p className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {event.location}</p>
                         </div>
