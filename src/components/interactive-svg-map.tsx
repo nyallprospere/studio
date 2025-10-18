@@ -128,4 +128,3 @@ export function InteractiveSvgMap({ constituencies, selectedConstituencyId, onCo
         </svg>
     );
 }
-
