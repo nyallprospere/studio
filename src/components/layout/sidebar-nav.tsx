@@ -37,6 +37,7 @@ const mainNavItems = [
   { href: '/constituencies', icon: Map, label: 'Constituencies' },
   { href: '/districts', icon: Map, label: 'Districts' },
   { href: '/make-your-own', icon: Pencil, label: 'Make Your Own' },
+  { href: '/interactive-maps', icon: Map, label: 'Interactive Maps' },
 ];
 
 const adminNavItems = [
