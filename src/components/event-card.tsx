@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Event } from '@/lib/types';
+import type { Event, Party } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
@@ -11,13 +11,17 @@ import { Timestamp } from 'firebase/firestore';
 import { Calendar, MapPin, Shield, ArrowRight } from 'lucide-react';
 import { EventProfileDialog } from '@/components/event-profile-dialog';
 
-export function EventCard({ event, partyName }: { event: Event, partyName: string }) {
+export function EventCard({ event, party }: { event: Event, party: Party | undefined }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const eventDate = (event.date as unknown as Timestamp)?.toDate ? (event.date as unknown as Timestamp).toDate() : new Date(event.date);
     
     return (
         <>
-            <Card className="flex flex-col overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full" onClick={() => setIsDialogOpen(true)}>
+            <Card 
+                className="flex flex-col overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full" 
+                onClick={() => setIsDialogOpen(true)}
+                style={{ borderTop: `4px solid ${party?.color || 'hsl(var(--border))'}` }}
+            >
                 <CardHeader className="flex-row items-start gap-4 p-4">
                      {event.imageUrl ? (
                         <Image src={event.imageUrl} alt={event.title} width={80} height={80} className="rounded-md object-cover aspect-square" />
@@ -29,7 +33,7 @@ export function EventCard({ event, partyName }: { event: Event, partyName: strin
                     <div className="flex-grow">
                         <p className="font-semibold">{event.title}</p>
                         <div className="text-sm text-muted-foreground mt-1 space-y-1">
-                            <p className="flex items-center gap-2"><Shield className="h-4 w-4" /> {partyName}</p>
+                            <p className="flex items-center gap-2"><Shield className="h-4 w-4" /> {party?.name || 'Event'}</p>
                             <p className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {format(eventDate, "PPP")}</p>
                             <p className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {event.location}</p>
                         </div>
@@ -50,5 +54,3 @@ export function EventCard({ event, partyName }: { event: Event, partyName: strin
         </>
     );
 }
-
-    

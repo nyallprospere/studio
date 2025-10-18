@@ -36,18 +36,18 @@ export default function EventsPage() {
   const { data: events, isLoading: loadingEvents } = useCollection<Event>(eventsQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
   
-  const getPartyName = (partyId: string) => parties?.find(p => p.id === partyId)?.name || 'N/A';
+  const getParty = (partyId: string) => parties?.find(p => p.id === partyId);
   const isLoading = loadingEvents || loadingParties;
 
-  const { slpEvents } = useMemo(() => {
+  const { slpEvents, slpParty } = useMemo(() => {
     if (!events || !parties) {
-      return { slpEvents: [] };
+      return { slpEvents: [], slpParty: null };
     }
     const slp = parties.find(p => p.acronym === 'SLP');
     
     const slpEvents = slp ? events.filter(e => e.partyId === slp.id) : [];
 
-    return { slpEvents };
+    return { slpEvents, slpParty: slp };
   }, [events, parties]);
 
 
@@ -101,7 +101,7 @@ export default function EventsPage() {
                     <div className="space-y-4">
                     {visibleSlpEvents.length > 0 ? (
                         visibleSlpEvents.map((event) => (
-                           <EventCard key={event.id} event={event} partyName={getPartyName(event.partyId)} />
+                           <EventCard key={event.id} event={event} party={slpParty || undefined} />
                         ))
                     ) : (
                         <p className="text-center text-muted-foreground py-8">No {slpViewMode} SLP events found.</p>

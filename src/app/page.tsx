@@ -100,7 +100,7 @@ export default function Home() {
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
   
-  const getPartyName = (partyId: string) => parties?.find(p => p.id === partyId)?.name || 'N/A';
+  const getParty = (partyId: string) => parties?.find(p => p.id === partyId);
 
   const filterAndSortEvents = (events: Event[], mode: 'upcoming' | 'past') => {
       const now = new Date();
@@ -195,7 +195,7 @@ export default function Home() {
                 <div className="space-y-4">
                 {loadingEvents || loadingParties ? <p>Loading events...</p> : visibleAllEvents.length > 0 ? (
                     visibleAllEvents.map((event) => (
-                       <EventCard key={event.id} event={event} partyName={getPartyName(event.partyId)} />
+                       <EventCard key={event.id} event={event} party={getParty(event.partyId)} />
                     ))
                 ) : (
                     <p className="text-center text-muted-foreground py-8">No {allEventsViewMode} events found.</p>

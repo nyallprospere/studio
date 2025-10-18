@@ -36,18 +36,18 @@ export default function EventsPage() {
   const { data: events, isLoading: loadingEvents } = useCollection<Event>(eventsQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
   
-  const getPartyName = (partyId: string) => parties?.find(p => p.id === partyId)?.name || 'N/A';
+  const getParty = (partyId: string) => parties?.find(p => p.id === partyId);
   const isLoading = loadingEvents || loadingParties;
 
-  const { uwpEvents } = useMemo(() => {
+  const { uwpEvents, uwpParty } = useMemo(() => {
     if (!events || !parties) {
-      return { uwpEvents: [] };
+      return { uwpEvents: [], uwpParty: null };
     }
     const uwp = parties.find(p => p.acronym === 'UWP');
     
     const uwpEvents = uwp ? events.filter(e => e.partyId === uwp.id) : [];
 
-    return { uwpEvents };
+    return { uwpEvents, uwpParty: uwp };
   }, [events, parties]);
 
 
@@ -101,7 +101,7 @@ export default function EventsPage() {
                     <div className="space-y-4">
                     {visibleUwpEvents.length > 0 ? (
                         visibleUwpEvents.map((event) => (
-                           <EventCard key={event.id} event={event} partyName={getPartyName(event.partyId)} />
+                           <EventCard key={event.id} event={event} party={uwpParty || undefined} />
                         ))
                     ) : (
                         <p className="text-center text-muted-foreground py-8">No {uwpViewMode} UWP events found.</p>
