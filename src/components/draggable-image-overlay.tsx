@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { DndContext, useDraggable, DragEndEvent } from '@dnd-kit/core';
 import Image from 'next/image';
 
