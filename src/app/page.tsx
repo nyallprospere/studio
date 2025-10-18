@@ -184,9 +184,9 @@ export default function Home() {
                     <CardTitle>Events</CardTitle>
                     <CardDescription>Upcoming and past political events.</CardDescription>
                 </div>
-                 <div className="flex items-center gap-1 p-1 bg-muted rounded-md mt-4">
-                    <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'secondary' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')}>Upcoming</Button>
-                    <Button size="sm" variant={allEventsViewMode === 'past' ? 'secondary' : 'ghost'} onClick={() => setAllEventsViewMode('past')}>Past</Button>
+                 <div className="flex w-full items-center gap-1 p-1 bg-muted rounded-md mt-4">
+                    <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'secondary' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')} className="flex-1">Upcoming</Button>
+                    <Button size="sm" variant={allEventsViewMode === 'past' ? 'secondary' : 'ghost'} onClick={() => setAllEventsViewMode('past')} className="flex-1">Past</Button>
                 </div>
             </CardHeader>
             <CardContent>
