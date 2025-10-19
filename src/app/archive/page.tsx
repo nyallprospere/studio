@@ -3,15 +3,15 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, doc, writeBatch, deleteDoc, query, orderBy, getDocs, where } from 'firebase/firestore';
-import type { Party, Constituency, ArchivedCandidate, Election } from '@/lib/types';
+import { collection, doc, writeBatch, deleteDoc, query, orderBy, getDocs, setDoc } from 'firebase/firestore';
+import type { Party, Constituency, ArchivedCandidate, Election, Candidate } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Download, Trash2, History, Lock, Unlock } from 'lucide-react';
+import { Download, Trash2, History, Lock, Unlock, Pencil } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,19 +24,23 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CandidateForm } from './candidate-form';
+import { uploadFile, deleteFile } from '@/firebase/storage';
+
 
 export default function ArchivePage() {
   const { firestore } = useFirebase();
   const { toast } = useToast();
 
-  const [selectedElectionId, setSelectedElectionId] = useState('');
+  const [selectedElectionId, setSelectedElectionId] = useState('all');
   const [restoreLocks, setRestoreLocks] = useState<Record<string, boolean>>({});
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingCandidate, setEditingCandidate] = useState<ArchivedCandidate | null>(null);
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
   const { data: allElections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
 
-  // We fetch all archives first, then filter client-side if needed.
-  // This is more efficient for this use case than changing the query dynamically.
   const archivedCandidatesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'archived_candidates') : null, [firestore]);
   const { data: allArchivedCandidates, isLoading: loadingArchived } = useCollection<ArchivedCandidate>(archivedCandidatesCollection);
   
@@ -59,13 +63,18 @@ export default function ArchivePage() {
   }, [allElections, archivedElectionIds]);
   
   useEffect(() => {
-    if (electionsWithArchives.length > 0 && !selectedElectionId) {
+    // Default to the most recent election with an archive
+    if (electionsWithArchives.length > 0 && selectedElectionId === 'all') {
       setSelectedElectionId(electionsWithArchives[0].id);
     }
   }, [electionsWithArchives, selectedElectionId]);
 
   const displayedArchivedCandidates = useMemo(() => {
-    if (!selectedElectionId || !allArchivedCandidates) return [];
+    if (!allArchivedCandidates) return [];
+    if (selectedElectionId === 'all') {
+      // Should not happen with new logic, but as a fallback
+      return allArchivedCandidates;
+    }
     return allArchivedCandidates.filter(c => c.electionId === selectedElectionId);
   }, [selectedElectionId, allArchivedCandidates]);
 
@@ -89,6 +98,58 @@ export default function ArchivePage() {
       return acc;
     }, {} as Record<string, { electionName: string; date: string; candidates: ArchivedCandidate[] }>);
   }, [displayedArchivedCandidates, allElections]);
+
+  const handleFormSubmit = async (values: any) => {
+    if (!firestore || !editingCandidate) return;
+
+    try {
+      let imageUrl = values.imageUrl;
+      if (values.photoFile) {
+        // If there was an old image, delete it from storage
+        if (editingCandidate.imageUrl) {
+          await deleteFile(editingCandidate.imageUrl);
+        }
+        // Upload the new one
+        imageUrl = await uploadFile(values.photoFile, `candidates/${values.photoFile.name}`);
+      }
+
+      const restoredCandidateData: Omit<Candidate, 'id'> = {
+        firstName: values.firstName,
+        lastName: values.lastName,
+        name: `${values.firstName} ${values.lastName}`,
+        partyId: values.partyId,
+        constituencyId: values.constituencyId,
+        bio: values.bio,
+        imageUrl: imageUrl,
+        isIncumbent: values.isIncumbent,
+        isPartyLeader: values.isPartyLeader,
+        isDeputyLeader: values.isDeputyLeader,
+        partyLevel: values.partyLevel,
+        policyPositions: [], // Reset policy positions on restore
+      };
+      
+      const batch = writeBatch(firestore);
+
+      // 1. Restore to main candidates collection using original ID
+      const newCandidateRef = doc(firestore, 'candidates', editingCandidate.originalId);
+      batch.set(newCandidateRef, restoredCandidateData);
+
+      // 2. Delete from archives collection
+      const archivedDocRef = doc(firestore, 'archived_candidates', editingCandidate.id);
+      batch.delete(archivedDocRef);
+      
+      await batch.commit();
+
+      toast({ title: 'Candidate Restored', description: `${restoredCandidateData.name} has been updated and moved back to current candidates.` });
+    
+    } catch (error) {
+       console.error("Error restoring candidate: ", error);
+       toast({ variant: "destructive", title: "Error", description: "Failed to restore candidate." });
+    } finally {
+        setIsFormOpen(false);
+        setEditingCandidate(null);
+    }
+  };
 
   const handleExport = (electionId: string) => {
     const archive = groupedArchives[electionId];
@@ -116,7 +177,7 @@ export default function ArchivePage() {
     toast({ title: "Export Successful", description: "Archived candidates have been exported." });
   };
   
-  const handleRestore = async (electionId: string) => {
+  const handleRestoreAll = async (electionId: string) => {
     if (!firestore) return;
 
     const archive = groupedArchives[electionId];
@@ -133,7 +194,7 @@ export default function ArchivePage() {
             const { id, originalId, archiveDate, electionId: aId, ...candidateData} = candidate;
             
             const newCandidateRef = doc(candidatesCollectionRef, originalId);
-            restoreBatch.set(newCandidateRef, candidateData);
+            restoreBatch.set(newCandidateRef, { ...candidateData, name: `${candidateData.firstName} ${candidateData.lastName}`});
 
             const archivedDocRef = doc(archiveCollectionRef, id);
             deleteBatch.delete(archivedDocRef);
@@ -190,6 +251,25 @@ export default function ArchivePage() {
          </div>
       </div>
       
+       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogContent className="sm:max-w-3xl h-[90vh]">
+                <DialogHeader>
+                <DialogTitle>Edit & Restore Candidate</DialogTitle>
+                </DialogHeader>
+                <ScrollArea className="h-full">
+                  <div className="pr-6">
+                    <CandidateForm
+                      onSubmit={handleFormSubmit}
+                      initialData={editingCandidate}
+                      onCancel={() => setIsFormOpen(false)}
+                      parties={parties || []}
+                      constituencies={constituencies || []}
+                    />
+                  </div>
+                </ScrollArea>
+            </DialogContent>
+        </Dialog>
+
       {isLoading ? <p>Loading archives...</p> : (
         <div className="space-y-8">
             {Object.keys(groupedArchives).length > 0 ? (
@@ -211,7 +291,7 @@ export default function ArchivePage() {
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
                                                 <Button variant="outline" size="sm" disabled={restoreLocks[electionId] !== false}>
-                                                    <History className="mr-2 h-4 w-4" /> Restore
+                                                    <History className="mr-2 h-4 w-4" /> Restore All
                                                 </Button>
                                             </AlertDialogTrigger>
                                             <AlertDialogContent>
@@ -223,7 +303,7 @@ export default function ArchivePage() {
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
                                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleRestore(electionId)}>Yes, Restore</AlertDialogAction>
+                                                    <AlertDialogAction onClick={() => handleRestoreAll(electionId)}>Yes, Restore All</AlertDialogAction>
                                                 </AlertDialogFooter>
                                             </AlertDialogContent>
                                         </AlertDialog>
@@ -262,8 +342,13 @@ export default function ArchivePage() {
                                 <div className="space-y-2 pr-4">
                                 {archiveData.candidates.map(c => (
                                     <div key={c.id} className="flex items-center justify-between p-3 border rounded-md text-sm">
-                                        <p className="font-medium">{c.firstName} {c.lastName}</p>
-                                        <p className="text-muted-foreground">{getPartyAcronym(c.partyId)} &bull; {getConstituencyName(c.constituencyId)}</p>
+                                        <div>
+                                            <p className="font-medium">{c.firstName} {c.lastName}</p>
+                                            <p className="text-muted-foreground text-xs">{getPartyAcronym(c.partyId)} &bull; {getConstituencyName(c.constituencyId)}</p>
+                                        </div>
+                                        <Button variant="ghost" size="icon" onClick={() => { setEditingCandidate(c); setIsFormOpen(true);}}>
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
                                     </div>
                                 ))}
                                 </div>
