@@ -83,57 +83,27 @@ export default function AdminMapPage() {
     <div className="container mx-auto px-4 py-8">
       <PageHeader
         title="Manage Constituency Map"
-        description="Upload and update the main map image used on the constituencies page."
+        description="A preview of the interactive map used on the constituencies page."
       />
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="space-y-8">
-            <Card>
-                <CardHeader>
-                <CardTitle>Map Uploader</CardTitle>
-                <CardDescription>Upload an image (e.g., SVG, PNG) for the interactive map background.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                <div className="space-y-2">
-                    <Input type="file" accept="image/*" onChange={handleFileChange} disabled={isUploading} />
-                    <p className="text-xs text-muted-foreground">For best results, use an SVG with a clear background.</p>
-                </div>
-                <Button onClick={handleUpload} disabled={!mapFile || isUploading}>
-                    {isUploading ? (
-                    <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Uploading...
-                    </>
-                    ) : (
-                        <>
-                        <UploadCloud className="mr-2 h-4 w-4" />
-                        Upload & Save Map
-                        </>
-                    )}
-                </Button>
-                </CardContent>
-            </Card>
-        </div>
-
-        <div>
-            <Card>
-                <CardHeader>
-                <CardTitle>Current Map Preview</CardTitle>
-                <CardDescription>This is a preview of the currently active map.</CardDescription>
-                </CardHeader>
-                <CardContent className="relative">
-                    {isLoading ? (
-                        <p>Loading map preview...</p>
-                    ) : (
-                      <InteractiveSvgMap 
-                        constituencies={constituencies ?? []} 
-                        selectedConstituencyId={selectedConstituencyId}
-                        onConstituencyClick={setSelectedConstituencyId}
-                      />
-                    )}
-                </CardContent>
-            </Card>
-        </div>
+      <div className="grid grid-cols-1 gap-8">
+        <Card>
+            <CardHeader>
+            <CardTitle>Map Preview</CardTitle>
+            <CardDescription>This is a preview of the currently active map.</CardDescription>
+            </CardHeader>
+            <CardContent className="relative">
+                {isLoading ? (
+                    <p>Loading map preview...</p>
+                ) : (
+                  <InteractiveSvgMap 
+                    constituencies={constituencies ?? []} 
+                    selectedConstituencyId={selectedConstituencyId}
+                    onConstituencyClick={setSelectedConstituencyId}
+                  />
+                )}
+            </CardContent>
+        </Card>
       </div>
     </div>
   );
