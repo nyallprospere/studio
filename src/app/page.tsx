@@ -28,7 +28,7 @@ import { EventCard } from '@/components/event-card';
 import { SortableFeatureCard } from '@/components/sortable-feature-card';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Pie, PieChart, ResponsiveContainer, Cell, Label } from 'recharts';
+import { Pie, PieChart, ResponsiveContainer, Cell, Label, ReferenceLine } from 'recharts';
 
 const initialKeyFeatures = [
     {
@@ -238,6 +238,7 @@ export default function Home() {
                                     }}
                                 />
                             </Pie>
+                             <ReferenceLine y={0} stroke="hsl(var(--foreground))" strokeWidth={2} label={{ value: 'Majority (9)', position: 'insideBottom', dy: -10, fill: 'hsl(var(--foreground))', fontSize: '10px' }} />
                         </PieChart>
                     </ResponsiveContainer>
                 </ChartContainer>
