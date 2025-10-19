@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Download, Trash2, History, Lock, Unlock, Pencil, Upload, Eraser, Star, Save } from 'lucide-react';
+import { Download, Trash2, History, Lock, Unlock, Pencil, Upload, Eraser, Star, Save, ArrowUpDown } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectLabel } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CandidateForm } from './candidate-form';
 import { uploadFile, deleteFile } from '@/firebase/storage';
@@ -44,6 +44,7 @@ export default function ArchivePage() {
 
   const [editableArchives, setEditableArchives] = useState<Record<string, ArchivedCandidate[]>>({});
   const [originalArchives, setOriginalArchives] = useState<Record<string, ArchivedCandidate[]>>({});
+  const [sortBy, setSortBy] = useState<'lastName' | 'constituency'>('lastName');
 
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
@@ -402,6 +403,16 @@ export default function ArchivePage() {
             {Object.keys(groupedArchives).length > 0 ? (
                 Object.entries(groupedArchives).map(([electionId, archiveData]) => {
                   const hasChanges = !isEqual(originalArchives[electionId], editableArchives[electionId]);
+                  
+                  const sortedCandidates = [...(editableArchives[electionId] || [])].sort((a, b) => {
+                    if (sortBy === 'constituency') {
+                        const nameA = getConstituencyName(a.constituencyId);
+                        const nameB = getConstituencyName(b.constituencyId);
+                        return nameA.localeCompare(nameB);
+                    }
+                    return a.lastName.localeCompare(b.lastName);
+                  });
+
                   return (
                     <Card key={electionId}>
                         <CardHeader>
@@ -490,13 +501,24 @@ export default function ArchivePage() {
                             <ScrollArea className="h-96">
                                 <div className="space-y-2 pr-4">
                                 <div className="flex items-center justify-between p-3 border-b text-sm font-medium text-muted-foreground">
-                                    <p>Candidate</p>
+                                    <div className="flex items-center gap-2">
+                                        <p>Candidate</p>
+                                        <Select value={sortBy} onValueChange={(value: 'lastName' | 'constituency') => setSortBy(value)}>
+                                            <SelectTrigger className="w-auto h-7 text-xs">
+                                                <SelectValue placeholder="Sort by..." />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="lastName">Name</SelectItem>
+                                                <SelectItem value="constituency">Constituency</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                     <div className="flex items-center gap-4">
                                         <p className="w-12 text-center">Inc.</p>
                                         <p>Actions</p>
                                     </div>
                                 </div>
-                                {(editableArchives[electionId] || []).map(c => (
+                                {sortedCandidates.map(c => (
                                     <div key={c.id} className="flex items-center justify-between p-3 border rounded-md text-sm">
                                         <div>
                                             <p className="font-medium flex items-center gap-2">
