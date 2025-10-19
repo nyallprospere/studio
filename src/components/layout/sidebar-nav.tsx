@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, LogIn, LogOut, UserPlus, FilePlus, Calendar, Pencil } from 'lucide-react';
+import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, LogIn, LogOut, UserPlus, FilePlus, Calendar, Pencil, Archive } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useUser, useAuth, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -42,7 +42,7 @@ const mainNavItems = [
 const adminNavItems = [
     { href: '/admin/elections', icon: Vote, label: 'Manage Elections' },
     { href: '/admin/parties', icon: Shield, label: 'Manage Parties' },
-    { href: '/admin/candidates', icon: Users, label: 'Manage Candidates' },
+    // { href: '/admin/candidates', icon: Users, label: 'Manage Candidates' },
     { href: '/admin/events', icon: Calendar, label: 'Manage Events'},
     { href: '/admin/results', icon: Landmark, label: 'Manage Election Results' },
     { href: '/admin/constituencies', icon: FilePlus, label: 'Manage Constituencies' },
@@ -120,6 +120,8 @@ export function SidebarNav() {
   const [isSlpOpen, setIsSlpOpen] = useState(false);
   const [isUwpCandidatesOpen, setIsUwpCandidatesOpen] = useState(false);
   const [isSlpCandidatesOpen, setIsSlpCandidatesOpen] = useState(false);
+  const [isManageCandidatesOpen, setIsManageCandidatesOpen] = useState(false);
+
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
@@ -175,7 +177,8 @@ export function SidebarNav() {
 
   useEffect(() => {
     setIsResultsOpen(pathname.startsWith('/results'));
-    
+    setIsManageCandidatesOpen(pathname.startsWith('/admin/candidates') || pathname.startsWith('/archive'));
+
     const isUwpRelated = uwpParty && (
         pathname.startsWith(`/parties/${uwpParty.id}`) || 
         pathname.startsWith('/events') ||
@@ -388,6 +391,37 @@ export function SidebarNav() {
                                   </Button>
                               </SidebarMenuItem>
                           ))}
+                          <SidebarMenuItem>
+                              <Collapsible open={isManageCandidatesOpen} onOpenChange={setIsManageCandidatesOpen}>
+                                  <CollapsibleTrigger asChild>
+                                      <Button variant={isManageCandidatesOpen ? 'secondary' : 'ghost'} className="w-full justify-between">
+                                          <div className="flex items-center gap-2">
+                                              <Users className="mr-2 h-4 w-4" />
+                                              Manage Candidates
+                                          </div>
+                                          <ChevronRight className={`h-4 w-4 transition-transform ${isManageCandidatesOpen ? 'rotate-90' : ''}`} />
+                                      </Button>
+                                  </CollapsibleTrigger>
+                                  <CollapsibleContent>
+                                      <SidebarMenuSub>
+                                          <SidebarMenuItem>
+                                              <SidebarMenuSubButton asChild isActive={pathname === '/admin/candidates'}>
+                                                  <Link href="/admin/candidates">
+                                                      Current Candidates
+                                                  </Link>
+                                              </SidebarMenuSubButton>
+                                          </SidebarMenuItem>
+                                           <SidebarMenuItem>
+                                              <SidebarMenuSubButton asChild isActive={pathname === '/archive'}>
+                                                  <Link href="/archive">
+                                                      Archived Candidates
+                                                  </Link>
+                                              </SidebarMenuSubButton>
+                                          </SidebarMenuItem>
+                                      </SidebarMenuSub>
+                                  </CollapsibleContent>
+                              </Collapsible>
+                          </SidebarMenuItem>
                       </SidebarMenu>
                   </SidebarGroup>
               </>
