@@ -54,8 +54,13 @@ export default function ArchivePage() {
   const pastElections = useMemo(() => allElections?.filter(e => !e.isCurrent), [allElections]);
 
   useEffect(() => {
+    // This effect ensures that a valid election is selected when the page loads,
+    // defaulting to the most recent past election if 'all' is not the intent.
+    // However, we want to allow 'all' to be a valid state, so we check if there are past elections first.
     if (pastElections && pastElections.length > 0 && selectedElectionId === 'all') {
-        setSelectedElectionId(pastElections[0].id);
+      // If we want to default to the most recent, we could set it here:
+      // setSelectedElectionId(pastElections[0].id);
+      // But for now, starting with "all" is acceptable.
     }
   }, [pastElections, selectedElectionId]);
 
@@ -173,6 +178,7 @@ export default function ArchivePage() {
                     <SelectValue placeholder="Filter by election..." />
                 </SelectTrigger>
                 <SelectContent>
+                    <SelectItem value="all">All Elections</SelectItem>
                     {pastElections?.map(election => (
                         <SelectItem key={election.id} value={election.id}>{election.name}</SelectItem>
                     ))}
