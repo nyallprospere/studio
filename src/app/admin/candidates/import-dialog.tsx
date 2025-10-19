@@ -9,24 +9,27 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Party, Constituency } from '@/lib/types';
+import type { Party, Constituency, Election } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ImportDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onImport: (data: any[]) => void;
+  onImport: (data: any[], electionId?: string) => void;
   parties: Party[];
   constituencies: Constituency[];
+  elections?: Election[];
+  isArchiveImport?: boolean;
 }
 
 const REQUIRED_HEADERS = ['firstName', 'lastName', 'party', 'constituency'];
 
-export function ImportDialog({ isOpen, onClose, onImport, parties, constituencies }: ImportDialogProps) {
+export function ImportDialog({ isOpen, onClose, onImport, parties, constituencies, elections, isArchiveImport }: ImportDialogProps) {
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<any[] | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<Record<string, string>>({});
+  const [selectedElectionId, setSelectedElectionId] = useState<string>('');
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,6 +98,11 @@ export function ImportDialog({ isOpen, onClose, onImport, parties, constituencie
 
   const handleImportClick = () => {
     if(!parsedData) return;
+    
+    if (isArchiveImport && !selectedElectionId) {
+        toast({ variant: 'destructive', title: 'Election Not Selected', description: 'Please select an election to import the archive for.' });
+        return;
+    }
 
     const mappedData = parsedData.map(row => {
         const newRow: Record<string, any> = {};
@@ -104,7 +112,7 @@ export function ImportDialog({ isOpen, onClose, onImport, parties, constituencie
         return newRow;
     });
 
-    onImport(mappedData);
+    onImport(mappedData, selectedElectionId);
     resetState();
     onClose();
   };
@@ -114,6 +122,7 @@ export function ImportDialog({ isOpen, onClose, onImport, parties, constituencie
     setParsedData(null);
     setHeaders([]);
     setMapping({});
+    setSelectedElectionId('');
   }
 
   const handleClose = () => {
@@ -146,6 +155,21 @@ export function ImportDialog({ isOpen, onClose, onImport, parties, constituencie
             </div>
         ) : (
             <div className="flex-grow flex flex-col min-h-0">
+                {isArchiveImport && elections && (
+                    <div className="mb-4">
+                        <label htmlFor="election-select" className="text-sm font-medium">Select Election for Import</label>
+                        <Select value={selectedElectionId} onValueChange={setSelectedElectionId}>
+                            <SelectTrigger id="election-select" className="w-full mt-1">
+                                <SelectValue placeholder="Select an election year..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {elections.map(e => (
+                                    <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
                 <h3 className="text-lg font-medium mb-2">Map Fields</h3>
                 <p className="text-sm text-muted-foreground mb-4">
                     Match the columns from your file to the destination fields in the database.
@@ -196,7 +220,7 @@ export function ImportDialog({ isOpen, onClose, onImport, parties, constituencie
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleImportClick} disabled={!parsedData || !isMappingComplete}>
+          <Button onClick={handleImportClick} disabled={!parsedData || !isMappingComplete || (isArchiveImport && !selectedElectionId)}>
             Import Data
           </Button>
         </DialogFooter>

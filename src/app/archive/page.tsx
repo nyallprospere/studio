@@ -70,9 +70,11 @@ export default function ArchivePage() {
   }, [electionsWithArchives, selectedElectionId]);
 
   const displayedArchivedCandidates = useMemo(() => {
-    if (!allArchivedCandidates || !selectedElectionId) return [];
+    if (!allArchivedCandidates) return [];
+    if (selectedElectionId === 'all') return allArchivedCandidates;
     return allArchivedCandidates.filter(c => c.electionId === selectedElectionId);
   }, [selectedElectionId, allArchivedCandidates]);
+
 
   const getPartyAcronym = (partyId: string) => parties?.find(p => p.id === partyId)?.acronym || 'N/A';
   const getConstituencyName = (constituencyId: string) => constituencies?.find(c => c.id === constituencyId)?.name || 'N/A';
@@ -237,10 +239,10 @@ export default function ArchivePage() {
     }
   }
 
-  const handleImport = async (data: any[]) => {
-    if (!firestore || !parties || !constituencies || !selectedElectionId) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Please select a specific election year before importing.' });
-      return;
+  const handleImport = async (data: any[], electionId?: string) => {
+    if (!firestore || !parties || !constituencies || !electionId) {
+        toast({ variant: 'destructive', title: 'Error', description: 'An election must be selected to import candidates.' });
+        return;
     }
     
     const archiveDate = new Date().toISOString();
@@ -260,7 +262,7 @@ export default function ArchivePage() {
 
             const newArchivedCandidate: Omit<ArchivedCandidate, 'id'> = {
                 originalId: doc(collection(firestore, 'candidates')).id, // Generate a placeholder original ID
-                electionId: selectedElectionId,
+                electionId: electionId,
                 archiveDate,
                 firstName: row.firstName || '',
                 lastName: row.lastName || '',
@@ -308,7 +310,8 @@ export default function ArchivePage() {
                     <SelectValue placeholder="Filter by election..." />
                 </SelectTrigger>
                 <SelectContent>
-                    {electionsWithArchives.map(election => (
+                    <SelectItem value="all">All Elections</SelectItem>
+                    {allElections?.sort((a,b) => b.year - a.year).map(election => (
                         <SelectItem key={election.id} value={election.id}>{election.name}</SelectItem>
                     ))}
                 </SelectContent>
@@ -322,6 +325,8 @@ export default function ArchivePage() {
         onImport={handleImport}
         parties={parties || []}
         constituencies={constituencies || []}
+        elections={allElections || []}
+        isArchiveImport={true}
       />
       
        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
@@ -401,7 +406,7 @@ export default function ArchivePage() {
                                         </AlertDialog>
                                         <Button 
                                             variant="outline" 
-                                            size="icon-sm" 
+                                            size="icon" 
                                             onClick={() => setRestoreLocks(prev => ({...prev, [electionId]: !prev[electionId]}))}
                                         >
                                             {restoreLocks[electionId] !== false ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
