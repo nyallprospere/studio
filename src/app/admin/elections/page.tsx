@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -213,7 +214,7 @@ export default function AdminElectionsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Existing Elections</CardTitle>
+          <CardTitle>St. Lucian General Elections</CardTitle>
           <CardDescription>A list of all elections currently in the system.</CardDescription>
         </CardHeader>
         <CardContent>
