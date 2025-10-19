@@ -22,7 +22,6 @@ const electionYearsToSeed = [
   { year: 1987, name: '1987 General Election (April 6)' },
   { year: 1982, name: '1982 General Election' },
   { year: 1979, name: '1979 General Election' },
-  { year: 1974, name: '1974 General Election' },
 ];
 
 export default function SettingsPage() {
@@ -62,7 +61,7 @@ export default function SettingsPage() {
 
             toast({
                 title: 'Seeding Successful',
-                description: 'Election years from 1974 to 2021 have been added to the database.'
+                description: 'Election years have been added to the database.'
             });
 
         } catch (error) {
@@ -104,7 +103,7 @@ export default function SettingsPage() {
                 ) : 'Seed Election Years'}
             </Button>
             <p className="text-xs text-muted-foreground mt-2">
-                Adds election years from 1974-2021. This operation will only run if no elections exist.
+                Adds election years from 1979-2021. This operation will only run if no elections exist.
             </p>
             </CardContent>
         </Card>
