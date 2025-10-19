@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useRef, useState, useMemo } from 'react';
+import { useRef, useState, useMemo, useEffect } from 'react';
 import type { Constituency } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -63,6 +63,11 @@ function DraggableConstituency({
     
     const [slpPercentage, setSlpPercentage] = useState(constituency.predictedSlpPercentage || 50);
     const [uwpPercentage, setUwpPercentage] = useState(constituency.predictedUwpPercentage || 50);
+
+    useEffect(() => {
+        setSlpPercentage(constituency.predictedSlpPercentage || 50);
+        setUwpPercentage(constituency.predictedUwpPercentage || 50);
+    }, [constituency]);
     
     const chartData = useMemo(() => [
       { name: 'SLP', value: slpPercentage, color: '#E74C3C' },
@@ -91,15 +96,21 @@ function DraggableConstituency({
       const numValue = parseInt(value, 10);
       if (isNaN(numValue) || numValue < 0 || numValue > 100) return;
 
+      let newSlp: number;
+      let newUwp: number;
+
       if (party === 'slp') {
-        setSlpPercentage(numValue);
+        newSlp = numValue;
+        newUwp = 100 - numValue;
       } else {
-        setUwpPercentage(numValue);
+        newUwp = numValue;
+        newSlp = 100 - numValue;
       }
+      
+      setSlpPercentage(newSlp);
+      setUwpPercentage(newUwp);
 
       if (onPredictionChange) {
-        const newSlp = party === 'slp' ? numValue : slpPercentage;
-        const newUwp = party === 'uwp' ? numValue : uwpPercentage;
         onPredictionChange(constituency.id, newSlp, newUwp);
       }
     };
@@ -257,7 +268,6 @@ export function InteractiveMap({ constituencies, onCoordinatesChange, onLeaningC
                 <DraggableConstituency
                     key={c.id}
                     constituency={c}
-                    onCoordinatesChange={onCoordinatesChange}
                     onLeaningChange={onLeaningChange}
                     onPredictionChange={onPredictionChange}
                     isDraggable={isDraggable}
