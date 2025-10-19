@@ -489,13 +489,22 @@ export default function ArchivePage() {
                         <CardContent>
                             <ScrollArea className="h-96">
                                 <div className="space-y-2 pr-4">
+                                <div className="flex items-center justify-between p-3 border-b text-sm font-medium text-muted-foreground">
+                                    <div className="flex items-center gap-4">
+                                        <p className="w-12 text-center">Incumbent</p>
+                                        <p>Candidate</p>
+                                    </div>
+                                    <p>Actions</p>
+                                </div>
                                 {(editableArchives[electionId] || []).map(c => (
                                     <div key={c.id} className="flex items-center justify-between p-3 border rounded-md text-sm">
                                         <div className="flex items-center gap-4">
-                                            <Checkbox 
-                                                checked={c.isIncumbent}
-                                                onCheckedChange={(checked) => handleIncumbentChange(electionId, c.id, !!checked)}
-                                            />
+                                            <div className="w-12 flex justify-center">
+                                                <Checkbox 
+                                                    checked={c.isIncumbent}
+                                                    onCheckedChange={(checked) => handleIncumbentChange(electionId, c.id, !!checked)}
+                                                />
+                                            </div>
                                             <div>
                                                 <p className="font-medium flex items-center gap-2">
                                                     {c.firstName} {c.lastName}
