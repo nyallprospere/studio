@@ -56,8 +56,6 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
     if (initialData) {
       form.reset({
         ...initialData,
-        partyId: initialData.partyId,
-        constituencyId: initialData.constituencyId,
         isIncumbent: initialData.isIncumbent ?? false,
         isPartyLeader: initialData.isPartyLeader ?? false,
         isDeputyLeader: initialData.isDeputyLeader ?? false,
