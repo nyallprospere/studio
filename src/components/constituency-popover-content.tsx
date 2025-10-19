@@ -108,10 +108,10 @@ export function ConstituencyPopoverContent({ constituency }: { constituency: Con
 
     return (
         <div className="space-y-3">
-            <h4 className="font-bold leading-none text-center text-lg">{constituency.name}</h4>
+            <h4 className="font-bold leading-none text-center text-xl">{constituency.name}</h4>
             
             <div>
-                <h5 className="text-center text-xs font-medium text-muted-foreground mb-1">Odds of Winning</h5>
+                <h5 className="text-center text-xs font-bold underline text-muted-foreground mb-1">Odds of Winning</h5>
                 <div className="relative h-24 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
