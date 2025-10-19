@@ -61,10 +61,11 @@ export default function AdminConstituenciesPage() {
 
 
     const hasUnsavedChanges = useMemo(() => {
-        if (!constituencies || !editableConstituencies) return false;
-        // Sort both arrays by ID to ensure correct comparison
+        if (!constituencies || !editableConstituencies || constituencies.length !== editableConstituencies.length) return false;
+        
         const sortedOriginal = [...constituencies].sort((a, b) => a.id.localeCompare(b.id));
         const sortedEditable = [...editableConstituencies].sort((a, b) => a.id.localeCompare(b.id));
+        
         return !isEqual(sortedOriginal, sortedEditable);
     }, [constituencies, editableConstituencies]);
 
@@ -113,7 +114,8 @@ export default function AdminConstituenciesPage() {
         );
     }, []);
 
-    const handlePredictionChange = useCallback((id: string, slp: number, uwp: number) => {
+    const handlePredictionChange = useCallback((id: string, slp: number) => {
+        const uwp = 100 - slp;
         setEditableConstituencies(prev =>
             prev.map(c =>
                 c.id === id ? { ...c, predictedSlpPercentage: slp, predictedUwpPercentage: uwp } : c
@@ -122,15 +124,22 @@ export default function AdminConstituenciesPage() {
     }, []);
 
 
-    const handleFieldChange = (id: string, field: keyof Constituency | 'registeredVoters' | 'predictedSlpPercentage' | 'predictedUwpPercentage', value: any) => {
+    const handleFieldChange = (id: string, field: keyof Constituency | 'registeredVoters', value: any) => {
         setEditableConstituencies(prev => 
             prev.map(c => {
                 if (c.id === id) {
                     if (field === 'registeredVoters') {
                         return { ...c, demographics: { ...c.demographics, registeredVoters: Number(value) } };
                     }
-                    if (field === 'predictedSlpPercentage' || field === 'predictedUwpPercentage') {
-                        return { ...c, [field]: Number(value) };
+                    if (field === 'predictedSlpPercentage') {
+                        const slp = Number(value);
+                        const uwp = 100 - slp;
+                        return { ...c, predictedSlpPercentage: slp, predictedUwpPercentage: uwp };
+                    }
+                     if (field === 'predictedUwpPercentage') {
+                        const uwp = Number(value);
+                        const slp = 100 - uwp;
+                        return { ...c, predictedSlpPercentage: slp, predictedUwpPercentage: uwp };
                     }
                     return { ...c, [field]: value };
                 }
@@ -251,6 +260,8 @@ export default function AdminConstituenciesPage() {
                                                     value={c.predictedSlpPercentage || 0}
                                                     onChange={(e) => handleFieldChange(c.id, 'predictedSlpPercentage', e.target.value)}
                                                     className="w-24"
+                                                    min="0"
+                                                    max="100"
                                                 />
                                             </TableCell>
                                             <TableCell>
@@ -259,6 +270,8 @@ export default function AdminConstituenciesPage() {
                                                     value={c.predictedUwpPercentage || 0}
                                                     onChange={(e) => handleFieldChange(c.id, 'predictedUwpPercentage', e.target.value)}
                                                     className="w-24"
+                                                    min="0"
+                                                    max="100"
                                                 />
                                             </TableCell>
                                         </TableRow>
