@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { CandidateForm } from './candidate-form';
 import { ImportDialog } from './import-dialog';
 import Image from 'next/image';
-import { UserSquare, Pencil, Trash2, Upload, Download, Archive } from 'lucide-react';
+import { UserSquare, Pencil, Trash2, Upload, Download, Archive, XCircle } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -169,8 +169,8 @@ export default function AdminCandidatesPage() {
     }
   };
 
-  const handleArchiveAndClear = async () => {
-    if (!firestore || !candidatesCollection || !candidates) {
+  const handleArchiveAll = async () => {
+    if (!firestore || !candidates) {
         toast({ variant: 'destructive', title: 'Error', description: 'Candidates data not loaded or firestore unavailable.' });
         return;
     }
@@ -181,9 +181,7 @@ export default function AdminCandidatesPage() {
 
     try {
         const archiveBatch = writeBatch(firestore);
-        const deleteBatch = writeBatch(firestore);
 
-        // Move each candidate to the archive collection
         for (const candidate of candidates) {
             const { id, ...candidateData } = candidate;
             const newArchivedDoc = doc(archiveCollectionRef);
@@ -193,21 +191,35 @@ export default function AdminCandidatesPage() {
                 archiveDate,
                 originalId: id
              });
-
-            const originalDocRef = doc(candidatesCollection, id);
-            deleteBatch.delete(originalDocRef);
         }
 
         await archiveBatch.commit();
-        await deleteBatch.commit();
-
-        toast({ title: 'Archive Successful', description: `${candidates.length} candidates have been archived and cleared.` });
-
+        toast({ title: 'Archive Successful', description: `${candidates.length} candidates have been archived.` });
     } catch (error) {
-        console.error("Error archiving and clearing candidates: ", error);
+        console.error("Error archiving candidates: ", error);
         toast({ variant: 'destructive', title: 'Archive Failed', description: 'Could not archive candidates. Check console for details.' });
     }
   };
+
+  const handleClearAll = async () => {
+    if (!firestore || !candidates || !candidatesCollection) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Candidates data not loaded or firestore unavailable.' });
+        return;
+    }
+     try {
+        const deleteBatch = writeBatch(firestore);
+        for (const candidate of candidates) {
+            if (candidate.imageUrl) await deleteFile(candidate.imageUrl);
+            const originalDocRef = doc(candidatesCollection, candidate.id);
+            deleteBatch.delete(originalDocRef);
+        }
+        await deleteBatch.commit();
+        toast({ title: 'Clear Successful', description: `All ${candidates.length} candidates have been cleared.` });
+    } catch (error) {
+        console.error("Error clearing candidates: ", error);
+        toast({ variant: 'destructive', title: 'Clear Failed', description: 'Could not clear all candidates. Check console for details.' });
+    }
+  }
 
 
   const getPartyAcronym = (partyId: string) => parties?.find(p => p.id === partyId)?.acronym || 'N/A';
@@ -248,19 +260,39 @@ export default function AdminCandidatesPage() {
                 <AlertDialogTrigger asChild>
                     <Button variant="outline" disabled={!candidates || candidates.length === 0}>
                         <Archive className="mr-2 h-4 w-4" />
-                        Archive & Clear All
+                        Archive All
                     </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action will move all {candidates?.length || 0} current candidates to an archive and then clear the current list. This cannot be undone.
+                        This action will move all {candidates?.length || 0} current candidates to an archive. You can clear them in a separate step.
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleArchiveAndClear}>Yes, Archive and Clear</AlertDialogAction>
+                    <AlertDialogAction onClick={handleArchiveAll}>Yes, Archive All</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+             <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="destructive" disabled={!candidates || candidates.length === 0}>
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Clear All
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will permanently delete all {candidates?.length || 0} candidates. This action cannot be undone. Consider archiving first.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleClearAll}>Yes, Clear All</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
