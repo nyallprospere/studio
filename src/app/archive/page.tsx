@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, doc, writeBatch, deleteDoc, query, orderBy, getDocs, setDoc } from 'firebase/firestore';
+import { collection, doc, writeBatch, deleteDoc, query, orderBy, getDocs, updateDoc } from 'firebase/firestore';
 import type { Party, Constituency, ArchivedCandidate, Election, Candidate } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,7 @@ export default function ArchivePage() {
   const { firestore } = useFirebase();
   const { toast } = useToast();
 
-  const [selectedElectionId, setSelectedElectionId] = useState('all');
+  const [selectedElectionId, setSelectedElectionId] = useState('');
   const [restoreLocks, setRestoreLocks] = useState<Record<string, boolean>>({});
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCandidate, setEditingCandidate] = useState<ArchivedCandidate | null>(null);
@@ -64,17 +64,13 @@ export default function ArchivePage() {
   
   useEffect(() => {
     // Default to the most recent election with an archive
-    if (electionsWithArchives.length > 0 && selectedElectionId === 'all') {
+    if (electionsWithArchives.length > 0 && !selectedElectionId) {
       setSelectedElectionId(electionsWithArchives[0].id);
     }
   }, [electionsWithArchives, selectedElectionId]);
 
   const displayedArchivedCandidates = useMemo(() => {
-    if (!allArchivedCandidates) return [];
-    if (selectedElectionId === 'all') {
-      // Should not happen with new logic, but as a fallback
-      return allArchivedCandidates;
-    }
+    if (!allArchivedCandidates || !selectedElectionId) return [];
     return allArchivedCandidates.filter(c => c.electionId === selectedElectionId);
   }, [selectedElectionId, allArchivedCandidates]);
 
@@ -113,38 +109,21 @@ export default function ArchivePage() {
         imageUrl = await uploadFile(values.photoFile, `candidates/${values.photoFile.name}`);
       }
 
-      const restoredCandidateData: Omit<Candidate, 'id'> = {
-        firstName: values.firstName,
-        lastName: values.lastName,
-        name: `${values.firstName} ${values.lastName}`,
-        partyId: values.partyId,
-        constituencyId: values.constituencyId,
-        bio: values.bio,
-        imageUrl: imageUrl,
-        isIncumbent: values.isIncumbent,
-        isPartyLeader: values.isPartyLeader,
-        isDeputyLeader: values.isDeputyLeader,
-        partyLevel: values.partyLevel,
-        policyPositions: [], // Reset policy positions on restore
+      const updatedCandidateData = {
+        ...editingCandidate,
+        ...values,
+        imageUrl,
       };
+      delete updatedCandidateData.photoFile;
       
-      const batch = writeBatch(firestore);
-
-      // 1. Restore to main candidates collection using original ID
-      const newCandidateRef = doc(firestore, 'candidates', editingCandidate.originalId);
-      batch.set(newCandidateRef, restoredCandidateData);
-
-      // 2. Delete from archives collection
       const archivedDocRef = doc(firestore, 'archived_candidates', editingCandidate.id);
-      batch.delete(archivedDocRef);
-      
-      await batch.commit();
+      await updateDoc(archivedDocRef, updatedCandidateData);
 
-      toast({ title: 'Candidate Restored', description: `${restoredCandidateData.name} has been updated and moved back to current candidates.` });
+      toast({ title: 'Candidate Updated', description: `${updatedCandidateData.firstName} ${updatedCandidateData.lastName}'s archived record has been updated.` });
     
     } catch (error) {
-       console.error("Error restoring candidate: ", error);
-       toast({ variant: "destructive", title: "Error", description: "Failed to restore candidate." });
+       console.error("Error updating archived candidate: ", error);
+       toast({ variant: "destructive", title: "Error", description: "Failed to update archived candidate." });
     } finally {
         setIsFormOpen(false);
         setEditingCandidate(null);
@@ -254,7 +233,7 @@ export default function ArchivePage() {
        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
             <DialogContent className="sm:max-w-3xl h-[90vh]">
                 <DialogHeader>
-                <DialogTitle>Edit & Restore Candidate</DialogTitle>
+                <DialogTitle>Edit Archived Candidate</DialogTitle>
                 </DialogHeader>
                 <ScrollArea className="h-full">
                   <div className="pr-6">

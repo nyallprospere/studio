@@ -273,7 +273,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit">Update & Restore Candidate</Button>
+          <Button type="submit">Update Candidate</Button>
         </div>
       </form>
     </Form>
