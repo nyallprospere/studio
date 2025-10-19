@@ -242,15 +242,6 @@ export default function ResultsPage() {
                                     </BarChart>
                                 </ResponsiveContainer>
                             </ChartContainer>
-                             <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-xs">
-                                {summaryData.map((item) => (
-                                     <div key={item.partyId} className="flex items-center gap-1.5">
-                                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></span>
-                                        <span>{item.name}</span>
-                                        <span className="font-bold">({item.seats})</span>
-                                    </div>
-                                ))}
-                            </div>
                         </CardContent>
                     </Card>
                   )}
