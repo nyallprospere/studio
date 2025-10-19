@@ -11,7 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ResultForm } from './result-form';
 import { ImportDialog } from './import-dialog';
-import { Pencil, Trash2, Upload, Download, PlusCircle, UserX } from 'lucide-react';
+import { LeaderForm } from './leader-form';
+import { Pencil, Trash2, Upload, Download, PlusCircle, UserX, User } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { uploadFile, deleteFile } from '@/firebase/storage';
 
 export default function AdminResultsPage() {
   const { firestore } = useFirebase();
@@ -35,15 +37,21 @@ export default function AdminResultsPage() {
   const [selectedElectionId, setSelectedElectionId] = useState<string>('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isLeaderFormOpen, setIsLeaderFormOpen] = useState(false);
   const [editingResult, setEditingResult] = useState<ElectionResult | null>(null);
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
   const resultsQuery = useMemoFirebase(() => firestore && selectedElectionId ? query(collection(firestore, 'election_results'), where('electionId', '==', selectedElectionId)) : null, [firestore, selectedElectionId]);
   const constituenciesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
+  const partiesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
   const { data: results, isLoading: loadingResults } = useCollection<ElectionResult>(resultsQuery);
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesCollection);
+  const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesCollection);
+
+  const uwpParty = useMemo(() => parties?.find(p => p.acronym === 'UWP'), [parties]);
+  const slpParty = useMemo(() => parties?.find(p => p.acronym === 'SLP'), [parties]);
 
   const sortedElections = useMemo(() => {
     if (!elections) return [];
@@ -100,6 +108,46 @@ export default function AdminResultsPage() {
       setEditingResult(null);
     }
   };
+
+  const handleLeaderFormSubmit = async (values: any) => {
+    if (!firestore || !selectedElectionId) return;
+    
+    try {
+      const election = getElection(selectedElectionId);
+      if (!election) return;
+
+      let uwpLeaderImageUrl = values.uwpLeaderImageUrl;
+      if (values.uwpLeaderPhotoFile) {
+        if(election.uwpLeaderImageUrl) await deleteFile(election.uwpLeaderImageUrl);
+        uwpLeaderImageUrl = await uploadFile(values.uwpLeaderPhotoFile, `leaders/${election.year}_uwp.jpg`);
+      }
+
+      let slpLeaderImageUrl = values.slpLeaderImageUrl;
+      if (values.slpLeaderPhotoFile) {
+        if(election.slpLeaderImageUrl) await deleteFile(election.slpLeaderImageUrl);
+        slpLeaderImageUrl = await uploadFile(values.slpLeaderPhotoFile, `leaders/${election.year}_slp.jpg`);
+      }
+      
+      const leaderData = {
+        uwpLeader: values.uwpLeader,
+        uwpLeaderImageUrl,
+        slpLeader: values.slpLeader,
+        slpLeaderImageUrl,
+      };
+
+      const electionDoc = doc(firestore, 'elections', selectedElectionId);
+      await updateDoc(electionDoc, leaderData);
+      toast({ title: "Leaders Updated", description: `Party leaders for ${election.name} have been updated.` });
+
+    } catch (error) {
+      console.error("Error saving leaders: ", error);
+      toast({ variant: "destructive", title: "Error", description: "Failed to save leaders. Check console for details." });
+    } finally {
+      setIsLeaderFormOpen(false);
+    }
+
+  };
+
 
   const handleDelete = async (result: ElectionResult) => {
     try {
@@ -238,7 +286,7 @@ export default function AdminResultsPage() {
     }
   };
   
-  const isLoading = loadingElections || loadingConstituencies;
+  const isLoading = loadingElections || loadingConstituencies || loadingParties;
   const isLoadingTable = isLoading || (selectedElectionId && loadingResults);
 
   return (
@@ -271,6 +319,25 @@ export default function AdminResultsPage() {
                         onCancel={() => setIsFormOpen(false)}
                         elections={sortedElections || []}
                         constituencies={constituencies || []}
+                    />
+                </DialogContent>
+            </Dialog>
+             <Dialog open={isLeaderFormOpen} onOpenChange={setIsLeaderFormOpen}>
+                <DialogTrigger asChild>
+                    <Button onClick={() => setIsLeaderFormOpen(true)} disabled={isLoading || !selectedElectionId}>
+                        <User className="mr-2 h-4 w-4" /> Set Leaders
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-3xl">
+                    <DialogHeader>
+                        <DialogTitle>Set Party Leaders for {getElection(selectedElectionId)?.name}</DialogTitle>
+                    </DialogHeader>
+                    <LeaderForm
+                        onSubmit={handleLeaderFormSubmit}
+                        initialData={getElection(selectedElectionId)}
+                        onCancel={() => setIsLeaderFormOpen(false)}
+                        uwpParty={uwpParty}
+                        slpParty={slpParty}
                     />
                 </DialogContent>
             </Dialog>
@@ -417,5 +484,3 @@ export default function AdminResultsPage() {
     </div>
   );
 }
-
-    

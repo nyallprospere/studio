@@ -73,6 +73,10 @@ export interface Election {
     name: string;
     year: number;
     description?: string;
+    uwpLeader?: string;
+    uwpLeaderImageUrl?: string;
+    slpLeader?: string;
+    slpLeaderImageUrl?: string;
 }
 
 export interface ElectionResult {
