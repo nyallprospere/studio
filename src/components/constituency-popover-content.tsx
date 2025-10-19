@@ -110,28 +110,31 @@ export function ConstituencyPopoverContent({ constituency }: { constituency: Con
         <div className="space-y-3">
             <h4 className="font-bold leading-none text-center text-lg">{constituency.name}</h4>
             
-            <div className="relative h-24 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                        <Pie
-                            data={chartData}
-                            cx="50%"
-                            cy="100%"
-                            startAngle={180}
-                            endAngle={0}
-                            innerRadius="60%"
-                            outerRadius="100%"
-                            dataKey="value"
-                            paddingAngle={2}
-                        >
-                            {chartData.map((entry) => (
-                                <Cell key={`cell-${entry.name}`} fill={entry.color} />
-                            ))}
-                        </Pie>
-                    </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                     <p className="font-bold text-sm text-muted-foreground -mt-4">{getLeaningLabel(constituency.politicalLeaning)}</p>
+            <div>
+                <h5 className="text-center text-xs font-medium text-muted-foreground mb-1">Odds of Winning</h5>
+                <div className="relative h-24 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <Pie
+                                data={chartData}
+                                cx="50%"
+                                cy="100%"
+                                startAngle={180}
+                                endAngle={0}
+                                innerRadius="60%"
+                                outerRadius="100%"
+                                dataKey="value"
+                                paddingAngle={2}
+                            >
+                                {chartData.map((entry) => (
+                                    <Cell key={`cell-${entry.name}`} fill={entry.color} />
+                                ))}
+                            </Pie>
+                        </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <p className="font-bold text-sm text-muted-foreground -mt-4">{getLeaningLabel(constituency.politicalLeaning)}</p>
+                    </div>
                 </div>
             </div>
 
