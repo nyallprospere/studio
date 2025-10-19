@@ -8,10 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { Candidate, Party, Constituency } from '@/lib/types';
+import { ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const candidateSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -36,6 +41,9 @@ type CandidateFormProps = {
 };
 
 export function CandidateForm({ onSubmit, initialData, onCancel, parties, constituencies }: CandidateFormProps) {
+  const [isPartyPopoverOpen, setPartyPopoverOpen] = useState(false);
+  const [isConstituencyPopoverOpen, setConstituencyPopoverOpen] = useState(false);
+    
   const form = useForm<z.infer<typeof candidateSchema>>({
     resolver: zodResolver(candidateSchema),
     defaultValues: {
@@ -116,20 +124,52 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
             control={form.control}
             name="partyId"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex flex-col">
                 <FormLabel>Political Party</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a party" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {parties.map(party => (
-                      <SelectItem key={party.id} value={party.id}>{party.name} ({party.acronym})</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={isPartyPopoverOpen} onOpenChange={setPartyPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn(
+                          "w-full justify-between",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value
+                          ? parties.find(
+                              (party) => party.id === field.value
+                            )?.name
+                          : "Select a party"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <ScrollArea className="h-64">
+                      <RadioGroup
+                        onValueChange={(value) => {
+                            field.onChange(value);
+                            setPartyPopoverOpen(false);
+                        }}
+                        value={field.value}
+                        className="p-4"
+                      >
+                        {parties.map(party => (
+                          <FormItem className="flex items-center space-x-3 space-y-0" key={party.id}>
+                            <FormControl>
+                              <RadioGroupItem value={party.id} />
+                            </FormControl>
+                            <FormLabel className="font-normal w-full cursor-pointer">
+                              {party.name} ({party.acronym})
+                            </FormLabel>
+                          </FormItem>
+                        ))}
+                      </RadioGroup>
+                    </ScrollArea>
+                  </PopoverContent>
+                </Popover>
                 <FormMessage />
               </FormItem>
             )}
@@ -138,20 +178,52 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
             control={form.control}
             name="constituencyId"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex flex-col">
                 <FormLabel>Constituency</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a constituency" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {constituencies.map(c => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                 <Popover open={isConstituencyPopoverOpen} onOpenChange={setConstituencyPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn(
+                          "w-full justify-between",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value
+                          ? constituencies.find(
+                              (c) => c.id === field.value
+                            )?.name
+                          : "Select a constituency"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <ScrollArea className="h-64">
+                      <RadioGroup
+                        onValueChange={(value) => {
+                            field.onChange(value);
+                            setConstituencyPopoverOpen(false);
+                        }}
+                        value={field.value}
+                        className="p-4"
+                      >
+                        {constituencies.map(c => (
+                          <FormItem className="flex items-center space-x-3 space-y-0" key={c.id}>
+                            <FormControl>
+                              <RadioGroupItem value={c.id} />
+                            </FormControl>
+                            <FormLabel className="font-normal w-full cursor-pointer">
+                              {c.name}
+                            </FormLabel>
+                          </FormItem>
+                        ))}
+                      </RadioGroup>
+                    </ScrollArea>
+                  </PopoverContent>
+                </Popover>
                 <FormMessage />
               </FormItem>
             )}
@@ -263,7 +335,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Party Level</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a level" />
