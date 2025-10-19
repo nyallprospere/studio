@@ -194,6 +194,10 @@
           "type": "string",
           "description": "The date of the election.",
           "format": "date-time"
+        },
+        "isCurrent": {
+          "type": "boolean",
+          "description": "Indicates if this is the current election."
         }
       },
       "required": [

@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ElectionForm } from './election-form';
 import { ImportDialog } from './import-dialog';
-import { Pencil, Trash2, Upload, Download } from 'lucide-react';
+import { Pencil, Trash2, Upload, Download, Star } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,11 +52,22 @@ export default function AdminElectionsPage() {
       toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available.' });
       return;
     }
-    const electionData = { ...values };
+    const electionData = { ...values, isCurrent: true };
 
+     const electionsCollection = collection(firestore, 'elections');
+    
+    // Unset current on all other elections
+    const batch = writeBatch(firestore);
+    const allElections = await getDocs(electionsCollection);
+    allElections.forEach(doc => {
+        batch.update(doc.ref, { isCurrent: false });
+    });
+    
     if (editingElection) {
       const electionDoc = doc(firestore, 'elections', editingElection.id);
-      updateDoc(electionDoc, electionData)
+      batch.update(electionDoc, values);
+      
+       await batch.commit()
         .then(() => {
           toast({ title: "Election Updated", description: `The ${electionData.name} has been successfully updated.` });
         })
@@ -69,24 +80,40 @@ export default function AdminElectionsPage() {
           errorEmitter.emit('permission-error', contextualError);
         });
     } else {
-      const electionsCollection = collection(firestore, 'elections');
-      addDoc(electionsCollection, electionData)
-        .then(() => {
-          toast({ title: "Election Added", description: `The ${electionData.name} has been successfully added.` });
-        })
-        .catch(error => {
-          const contextualError = new FirestorePermissionError({
-            path: (electionsCollection as CollectionReference).path,
-            operation: 'create',
-            requestResourceData: electionData,
-          });
-          errorEmitter.emit('permission-error', contextualError);
+        const newDocRef = doc(electionsCollection);
+        batch.set(newDocRef, electionData);
+        await batch.commit()
+            .then(() => {
+            toast({ title: "Election Added", description: `The ${electionData.name} has been successfully added.` });
+            })
+            .catch(error => {
+            const contextualError = new FirestorePermissionError({
+                path: (electionsCollection as CollectionReference).path,
+                operation: 'create',
+                requestResourceData: electionData,
+            });
+            errorEmitter.emit('permission-error', contextualError);
         });
     }
     
     setIsFormOpen(false);
     setEditingElection(null);
   };
+
+  const handleSetCurrent = async (electionId: string) => {
+    if (!firestore) return;
+    
+    const batch = writeBatch(firestore);
+    const electionsCollection = collection(firestore, 'elections');
+    
+    const allElections = await getDocs(electionsCollection);
+    allElections.forEach(doc => {
+        batch.update(doc.ref, { isCurrent: doc.id === electionId });
+    });
+    
+    await batch.commit();
+    toast({ title: "Current Election Set", description: "The current election has been updated."});
+  }
 
   const handleDelete = async (election: Election) => {
     if (!firestore) {
@@ -116,6 +143,7 @@ export default function AdminElectionsPage() {
       'Year': e.year,
       'Name': e.name,
       'Description': e.description,
+      'Is Current': e.isCurrent ? 'Yes' : 'No',
     }));
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
@@ -155,6 +183,7 @@ export default function AdminElectionsPage() {
                 year: year,
                 name: row.name,
                 description: row.description || '',
+                isCurrent: false, // Default to not current on import
             };
             
             const electionRef = doc(electionsCollection);
@@ -225,11 +254,17 @@ export default function AdminElectionsPage() {
               {sortedElections && sortedElections.length > 0 ? (
                 sortedElections.map((election) => (
                   <div key={election.id} className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50">
-                    <div>
-                      <p className="font-semibold">{election.name}</p>
-                      <p className="text-sm text-muted-foreground">Year: {election.year}</p>
+                    <div className="flex items-center gap-3">
+                      {election.isCurrent && <Star className="h-5 w-5 text-accent fill-accent" />}
+                      <div>
+                        <p className="font-semibold">{election.name}</p>
+                        <p className="text-sm text-muted-foreground">Year: {election.year}</p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
+                       <Button variant="outline" size="sm" onClick={() => handleSetCurrent(election.id)} disabled={election.isCurrent}>
+                           Set as Current
+                       </Button>
                        <Button variant="ghost" size="icon" onClick={() => { setEditingElection(election); setIsFormOpen(true);}}>
                            <Pencil className="h-4 w-4" />
                        </Button>

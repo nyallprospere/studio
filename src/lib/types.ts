@@ -85,6 +85,7 @@ export interface Election {
     uwpLeaderImageUrl?: string;
     slpLeader?: string;
     slpLeaderImageUrl?: string;
+    isCurrent?: boolean;
 }
 
 export interface ElectionResult {

@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useEffect } from 'react';
 import type { Election } from '@/lib/types';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const electionSchema = z.object({
   name: z.string().min(1, "Election name is required"),
