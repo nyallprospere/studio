@@ -175,10 +175,10 @@ export default function Home() {
             leanUwp: counts['lean-uwp'] || 0,
             solidUwp: counts['solid-uwp'] || 0,
         };
-        seatCounts.slpTotal = seatCounts.solidSlp + seatCounts.leanSlp;
-        seatCounts.uwpTotal = seatCounts.solidUwp + seatCounts.leanUwp;
+        (seatCounts as any).slpTotal = seatCounts.solidSlp + seatCounts.leanSlp;
+        (seatCounts as any).uwpTotal = seatCounts.solidUwp + seatCounts.leanUwp;
 
-        return { chartData, seatCounts };
+        return { chartData, seatCounts: seatCounts as any };
     }, [constituencies]);
 
     const chartConfig = politicalLeaningOptions.reduce((acc, option) => {
@@ -242,7 +242,7 @@ export default function Home() {
                                         if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
                                             return (
                                                 <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
-                                                    <tspan x={viewBox.cx} dy="-0.5em" className="text-3xl font-bold">9 to Win</tspan>
+                                                    <tspan x={viewBox.cx} dy="-0.5em" className="text-2xl font-bold">9 to Win</tspan>
                                                 </text>
                                             )
                                         }
@@ -385,3 +385,4 @@ export default function Home() {
   );
 
     
+
