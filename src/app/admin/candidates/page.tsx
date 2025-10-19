@@ -378,7 +378,7 @@ export default function AdminCandidatesPage() {
       </Card>
       <div className="mt-8">
         <Button asChild variant="outline">
-            <Link href="/admin/candidates/archive">Browse & Restore Archives</Link>
+            <Link href="/archive">Browse & Restore Archives</Link>
         </Button>
       </div>
     </div>
