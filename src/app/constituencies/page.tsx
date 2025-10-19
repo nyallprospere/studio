@@ -7,14 +7,16 @@ import type { Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirebase, useMemoFirebase, useUser, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, doc, setDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Pie, PieChart, ResponsiveContainer, Cell, Label } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { debounce } from 'lodash';
+import { debounce, isEqual } from 'lodash';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
+import { Save } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const politicalLeaningOptions = [
   { value: 'solid-slp', label: 'Solid SLP', color: 'hsl(var(--chart-5))' },
@@ -58,6 +60,7 @@ type LayoutConfiguration = typeof DEFAULT_LAYOUT;
 export default function ConstituenciesPage() {
     const { firestore } = useFirebase();
     const { user } = useUser();
+    const { toast } = useToast();
 
     const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
     const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
@@ -75,6 +78,24 @@ export default function ConstituenciesPage() {
     const [isEditingSeatCountTitle, setIsEditingSeatCountTitle] = useState(false);
     const [isEditingSeatCountDescription, setIsEditingSeatCountDescription] = useState(false);
     const [selectedConstituencyId, setSelectedConstituencyId] = useState<string | null>(null);
+
+    const [editableConstituencies, setEditableConstituencies] = useState<Constituency[]>([]);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const hasUnsavedChanges = useMemo(() => {
+        if (!constituencies || !editableConstituencies) return false;
+        // Sort both arrays by ID to ensure correct comparison
+        const sortedOriginal = [...constituencies].sort((a, b) => a.id.localeCompare(b.id));
+        const sortedEditable = [...editableConstituencies].sort((a, b) => a.id.localeCompare(b.id));
+        return !isEqual(sortedOriginal, sortedEditable);
+    }, [constituencies, editableConstituencies]);
+
+    
+    useEffect(() => {
+        if(constituencies) {
+            setEditableConstituencies(JSON.parse(JSON.stringify(constituencies)));
+        }
+    }, [constituencies]);
 
 
     const debouncedSaveLayout = useCallback(
@@ -111,13 +132,50 @@ export default function ConstituenciesPage() {
             setSeatCountDescription(savedConstituenciesLayout.seatCountDescription || DEFAULT_LAYOUT.seatCountDescription);
         }
     }, [savedLayouts]);
+    
+    const handleLeaningChange = useCallback((id: string, newLeaning: string) => {
+        setEditableConstituencies(prev =>
+            prev.map(c =>
+                c.id === id ? { ...c, politicalLeaning: newLeaning as Constituency['politicalLeaning'] } : c
+            )
+        );
+    }, []);
+
+    const handlePredictionChange = useCallback((id: string, slp: number, uwp: number) => {
+        setEditableConstituencies(prev =>
+            prev.map(c =>
+                c.id === id ? { ...c, predictedSlpPercentage: slp, predictedUwpPercentage: uwp } : c
+            )
+        );
+    }, []);
+
+    const handleSaveAll = async () => {
+        if (!firestore || !user) return;
+        setIsSaving(true);
+        try {
+            const batch = writeBatch(firestore);
+            editableConstituencies.forEach(c => {
+                const { id, ...dataToSave } = c;
+                const docRef = doc(firestore, 'constituencies', id);
+                batch.update(docRef, dataToSave as any);
+            });
+            await batch.commit();
+            toast({ title: 'Success', description: 'Your changes have been saved.' });
+        } catch (e) {
+            console.error(e);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not save changes.' });
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
 
     const isLoading = loadingConstituencies || loadingLayout;
 
     const chartData = useMemo(() => {
-        if (!constituencies) return [];
+        if (!editableConstituencies) return [];
 
-        const counts = constituencies.reduce((acc, constituency) => {
+        const counts = editableConstituencies.reduce((acc, constituency) => {
             const leaning = constituency.politicalLeaning || 'tossup';
             acc[leaning] = (acc[leaning] || 0) + 1;
             return acc;
@@ -128,7 +186,7 @@ export default function ConstituenciesPage() {
             value: counts[opt.value] || 0,
             fill: opt.color,
         })).filter(item => item.value > 0);
-    }, [constituencies]);
+    }, [editableConstituencies]);
 
     const chartConfig = politicalLeaningOptions.reduce((acc, option) => {
         // @ts-ignore
@@ -141,40 +199,50 @@ export default function ConstituenciesPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-            <div onClick={() => user && setIsEditingPageTitle(true)}>
-                {isEditingPageTitle && user ? (
-                     <div className="flex items-center gap-2 max-w-lg">
-                        <Input value={pageTitle} onChange={e => setPageTitle(e.target.value)} className="text-3xl md:text-4xl font-bold tracking-tight font-headline" />
-                        <Button onClick={(e) => {e.stopPropagation(); setIsEditingPageTitle(false);}}>Save</Button>
-                    </div>
-                ) : (
-                    <h1 className="text-3xl font-bold tracking-tight font-headline text-primary md:text-4xl">
-                        {pageTitle}
-                    </h1>
-                )}
+        <div className="flex justify-between items-start mb-8">
+            <div>
+                <div onClick={() => user && setIsEditingPageTitle(true)}>
+                    {isEditingPageTitle && user ? (
+                        <div className="flex items-center gap-2 max-w-lg">
+                            <Input value={pageTitle} onChange={e => setPageTitle(e.target.value)} className="text-3xl md:text-4xl font-bold tracking-tight font-headline" />
+                            <Button onClick={(e) => {e.stopPropagation(); setIsEditingPageTitle(false);}}>Save</Button>
+                        </div>
+                    ) : (
+                        <h1 className="text-3xl font-bold tracking-tight font-headline text-primary md:text-4xl">
+                            {pageTitle}
+                        </h1>
+                    )}
+                </div>
+                <div onClick={() => user && setIsEditingPageDescription(true)}>
+                    {isEditingPageDescription && user ? (
+                        <div className="flex items-center gap-2 max-w-lg mt-2">
+                            <Input value={pageDescription} onChange={e => setPageDescription(e.target.value)} className="text-lg" />
+                            <Button onClick={(e) => {e.stopPropagation(); setIsEditingPageDescription(false);}}>Save</Button>
+                        </div>
+                    ) : (
+                        <p className="mt-2 text-lg text-muted-foreground">{pageDescription}</p>
+                    )}
+                </div>
             </div>
-             <div onClick={() => user && setIsEditingPageDescription(true)}>
-                {isEditingPageDescription && user ? (
-                    <div className="flex items-center gap-2 max-w-lg mt-2">
-                        <Input value={pageDescription} onChange={e => setPageDescription(e.target.value)} className="text-lg" />
-                        <Button onClick={(e) => {e.stopPropagation(); setIsEditingPageDescription(false);}}>Save</Button>
-                    </div>
-                ) : (
-                    <p className="mt-2 text-lg text-muted-foreground">{pageDescription}</p>
-                )}
-            </div>
+            {user && (
+                <Button onClick={handleSaveAll} disabled={isSaving || !hasUnsavedChanges}>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Changes
+                </Button>
+            )}
         </div>
 
-      {isLoading || !constituencies ? (
+      {isLoading || !editableConstituencies ? (
           <ConstituenciesPageSkeleton />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="md:col-span-2">
             <InteractiveSvgMap 
-                constituencies={constituencies ?? []} 
+                constituencies={editableConstituencies} 
                 selectedConstituencyId={selectedConstituencyId}
                 onConstituencyClick={setSelectedConstituencyId}
+                onLeaningChange={user ? handleLeaningChange : undefined}
+                onPredictionChange={user ? handlePredictionChange : undefined}
             />
           </div>
           <div>
