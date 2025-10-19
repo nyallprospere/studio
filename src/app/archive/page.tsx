@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Download, Trash2, History, Lock, Unlock, Pencil, Upload } from 'lucide-react';
+import { Download, Trash2, History, Lock, Unlock, Pencil, Upload, Eraser } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,20 +59,18 @@ export default function ArchivePage() {
 
   const electionsWithArchives = useMemo(() => {
     if (!allElections) return [];
-    return allElections.sort((a, b) => b.year - a.year);
-  }, [allElections]);
+    return allElections.filter(e => archivedElectionIds.includes(e.id)).sort((a, b) => b.year - a.year);
+  }, [allElections, archivedElectionIds]);
   
   useEffect(() => {
     // Default to the most recent election with an archive
     if (electionsWithArchives.length > 0 && !selectedElectionId) {
-        const electionWithArchive = electionsWithArchives.find(e => archivedElectionIds.includes(e.id));
-        setSelectedElectionId(electionWithArchive?.id || electionsWithArchives[0].id);
+        setSelectedElectionId(electionsWithArchives[0].id);
     }
-  }, [electionsWithArchives, selectedElectionId, archivedElectionIds]);
+  }, [electionsWithArchives, selectedElectionId]);
 
   const displayedArchivedCandidates = useMemo(() => {
     if (!allArchivedCandidates || !selectedElectionId) return [];
-    if (selectedElectionId === 'all') return allArchivedCandidates;
     return allArchivedCandidates.filter(c => c.electionId === selectedElectionId);
   }, [selectedElectionId, allArchivedCandidates]);
 
@@ -189,6 +187,36 @@ export default function ArchivePage() {
     }
   };
 
+  const handleClearCandidateInfo = async (electionId: string) => {
+    if (!firestore) return;
+    const archive = groupedArchives[electionId];
+    if (!archive) return;
+
+    try {
+      const batch = writeBatch(firestore);
+      for (const candidate of archive.candidates) {
+        if (candidate.imageUrl) await deleteFile(candidate.imageUrl);
+        const docRef = doc(firestore, 'archived_candidates', candidate.id);
+        batch.update(docRef, {
+          firstName: '',
+          lastName: '',
+          bio: '',
+          imageUrl: '',
+          policyPositions: [],
+          isIncumbent: false,
+          isPartyLeader: false,
+          isDeputyLeader: false,
+          partyLevel: 'lower',
+        });
+      }
+      await batch.commit();
+      toast({ title: 'Candidate Info Cleared', description: `Cleared info for ${archive.candidates.length} candidates in ${archive.electionName}.` });
+    } catch (e) {
+      console.error("Error clearing candidate info:", e);
+      toast({ variant: 'destructive', title: 'Clear Failed', description: 'Could not clear candidate info. Check console for details.' });
+    }
+  }
+
   const handleDeleteArchive = async (electionId: string) => {
     if (!firestore) return;
     const archive = groupedArchives[electionId];
@@ -210,7 +238,7 @@ export default function ArchivePage() {
   }
 
   const handleImport = async (data: any[]) => {
-    if (!firestore || !parties || !constituencies || !selectedElectionId || selectedElectionId === 'all') {
+    if (!firestore || !parties || !constituencies || !selectedElectionId) {
       toast({ variant: 'destructive', title: 'Error', description: 'Please select a specific election year before importing.' });
       return;
     }
@@ -332,6 +360,25 @@ export default function ArchivePage() {
                                      <Button variant="outline" size="sm" onClick={() => handleExport(electionId)}>
                                         <Download className="mr-2 h-4 w-4" /> Export
                                     </Button>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="outline" size="sm">
+                                                <Eraser className="mr-2 h-4 w-4" /> Clear All Candidate Info
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will clear all personal information for {archiveData.candidates.length} candidates in this archive, leaving only their party and constituency. This action cannot be undone.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleClearCandidateInfo(electionId)}>Yes, Clear Info</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
                                     <div className="flex items-center gap-1">
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
@@ -363,7 +410,7 @@ export default function ArchivePage() {
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
                                             <Button variant="destructive" size="sm">
-                                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                <Trash2 className="mr-2 h-4 w-4" /> Delete Archive
                                             </Button>
                                         </AlertDialogTrigger>
                                         <AlertDialogContent>
