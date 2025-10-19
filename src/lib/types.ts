@@ -32,6 +32,14 @@ export interface Candidate {
   partyLevel?: 'higher' | 'lower';
 }
 
+export interface ArchivedCandidate extends Omit<Candidate, 'id' | 'name'> {
+    id: string;
+    originalId: string;
+    archiveId: string;
+    archiveDate: string;
+}
+
+
 export interface Constituency {
   id: string;
   name: string;

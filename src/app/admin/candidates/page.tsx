@@ -3,8 +3,8 @@
 
 import { useState, useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, writeBatch, getDocs } from 'firebase/firestore';
-import type { Candidate, Party, Constituency } from '@/lib/types';
+import { collection, addDoc, updateDoc, deleteDoc, doc, writeBatch, getDocs, query, orderBy } from 'firebase/firestore';
+import type { Candidate, Party, Constituency, ArchivedCandidate } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -28,6 +28,7 @@ import { uploadFile, deleteFile } from '@/firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import Link from 'next/link';
 
 
 export default function AdminCandidatesPage() {
@@ -35,10 +36,12 @@ export default function AdminCandidatesPage() {
   const { toast } = useToast();
 
   const candidatesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'candidates') : null, [firestore]);
+  const archivedCandidatesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'archived_candidates'), orderBy('archiveDate', 'desc')) : null, [firestore]);
   const partiesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const constituenciesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
   
   const { data: candidates, isLoading: loadingCandidates, error: errorCandidates } = useCollection<Candidate>(candidatesCollection);
+  const { data: archivedCandidates, isLoading: loadingArchived } = useCollection<ArchivedCandidate>(archivedCandidatesQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesCollection);
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesCollection);
 
@@ -48,7 +51,7 @@ export default function AdminCandidatesPage() {
   const [partyFilter, setPartyFilter] = useState<string | null>(null);
 
   const handleFormSubmit = async (values: any) => {
-    if (!firestore) return;
+    if (!firestore || !candidatesCollection) return;
     try {
       let imageUrl = values.imageUrl;
       if (values.photoFile) {
@@ -135,9 +138,10 @@ export default function AdminCandidatesPage() {
                 continue;
             }
 
-            const newCandidate = {
+            const newCandidate: Omit<Candidate, 'id'> = {
                 firstName: row.firstName || '',
                 lastName: row.lastName || '',
+                name: `${row.firstName || ''} ${row.lastName || ''}`,
                 partyId: party.id,
                 constituencyId: constituency.id,
                 bio: row.bio || '',
@@ -208,7 +212,7 @@ export default function AdminCandidatesPage() {
 
   const getPartyAcronym = (partyId: string) => parties?.find(p => p.id === partyId)?.acronym || 'N/A';
   const getConstituencyName = (constituencyId: string) => constituencies?.find(c => c.id === constituencyId)?.name || 'N/A';
-  const isLoading = loadingCandidates || loadingParties || loadingConstituencies;
+  const isLoading = loadingCandidates || loadingParties || loadingConstituencies || loadingArchived;
 
   const partyDetails = useMemo(() => {
     if (!parties) return { slp: null, uwp: null };
@@ -372,6 +376,11 @@ export default function AdminCandidatesPage() {
           )}
         </CardContent>
       </Card>
+      <div className="mt-8">
+        <Button asChild variant="outline">
+            <Link href="/admin/candidates/archive">Browse & Restore Archives</Link>
+        </Button>
+      </div>
     </div>
   );
 }
