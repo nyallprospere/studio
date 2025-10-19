@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, doc, writeBatch, deleteDoc, query, orderBy, getDocs, updateDoc } from 'firebase/firestore';
+import { collection, doc, writeBatch, deleteDoc, query, orderBy, getDocs, updateDoc, addDoc } from 'firebase/firestore';
 import type { Party, Constituency, ArchivedCandidate, Election, Candidate } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Download, Trash2, History, Lock, Unlock, Pencil } from 'lucide-react';
+import { Download, Trash2, History, Lock, Unlock, Pencil, Upload } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +27,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CandidateForm } from './candidate-form';
 import { uploadFile, deleteFile } from '@/firebase/storage';
+import { ImportDialog } from '../admin/candidates/import-dialog';
 
 
 export default function ArchivePage() {
@@ -36,6 +37,7 @@ export default function ArchivePage() {
   const [selectedElectionId, setSelectedElectionId] = useState('');
   const [restoreLocks, setRestoreLocks] = useState<Record<string, boolean>>({});
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingCandidate, setEditingCandidate] = useState<ArchivedCandidate | null>(null);
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
@@ -56,21 +58,21 @@ export default function ArchivePage() {
   }, [allArchivedCandidates]);
 
   const electionsWithArchives = useMemo(() => {
-    if (!allElections || archivedElectionIds.length === 0) return [];
-    return allElections
-      .filter(e => archivedElectionIds.includes(e.id))
-      .sort((a, b) => b.year - a.year);
-  }, [allElections, archivedElectionIds]);
+    if (!allElections) return [];
+    return allElections.sort((a, b) => b.year - a.year);
+  }, [allElections]);
   
   useEffect(() => {
     // Default to the most recent election with an archive
     if (electionsWithArchives.length > 0 && !selectedElectionId) {
-      setSelectedElectionId(electionsWithArchives[0].id);
+        const electionWithArchive = electionsWithArchives.find(e => archivedElectionIds.includes(e.id));
+        setSelectedElectionId(electionWithArchive?.id || electionsWithArchives[0].id);
     }
-  }, [electionsWithArchives, selectedElectionId]);
+  }, [electionsWithArchives, selectedElectionId, archivedElectionIds]);
 
   const displayedArchivedCandidates = useMemo(() => {
     if (!allArchivedCandidates || !selectedElectionId) return [];
+    if (selectedElectionId === 'all') return allArchivedCandidates;
     return allArchivedCandidates.filter(c => c.electionId === selectedElectionId);
   }, [selectedElectionId, allArchivedCandidates]);
 
@@ -101,11 +103,9 @@ export default function ArchivePage() {
     try {
       let imageUrl = values.imageUrl;
       if (values.photoFile) {
-        // If there was an old image, delete it from storage
         if (editingCandidate.imageUrl) {
           await deleteFile(editingCandidate.imageUrl);
         }
-        // Upload the new one
         imageUrl = await uploadFile(values.photoFile, `candidates/${values.photoFile.name}`);
       }
 
@@ -197,6 +197,7 @@ export default function ArchivePage() {
     try {
         const batch = writeBatch(firestore);
         for(const candidate of archive.candidates) {
+            if (candidate.imageUrl) await deleteFile(candidate.imageUrl);
             const docRef = doc(firestore, 'archived_candidates', candidate.id);
             batch.delete(docRef);
         }
@@ -208,6 +209,60 @@ export default function ArchivePage() {
     }
   }
 
+  const handleImport = async (data: any[]) => {
+    if (!firestore || !parties || !constituencies || !selectedElectionId || selectedElectionId === 'all') {
+      toast({ variant: 'destructive', title: 'Error', description: 'Please select a specific election year before importing.' });
+      return;
+    }
+    
+    const archiveDate = new Date().toISOString();
+
+    try {
+        const batch = writeBatch(firestore);
+        let count = 0;
+
+        for (const row of data) {
+            const party = parties.find(p => p.name === row.party || p.acronym === row.party);
+            const constituency = constituencies.find(c => c.name === row.constituency);
+
+            if (!party || !constituency) {
+                console.warn(`Skipping row due to missing party or constituency:`, row);
+                continue;
+            }
+
+            const newArchivedCandidate: Omit<ArchivedCandidate, 'id'> = {
+                originalId: doc(collection(firestore, 'candidates')).id, // Generate a placeholder original ID
+                electionId: selectedElectionId,
+                archiveDate,
+                firstName: row.firstName || '',
+                lastName: row.lastName || '',
+                partyId: party.id,
+                constituencyId: constituency.id,
+                bio: row.bio || '',
+                isIncumbent: row.isIncumbent === 'Yes' || row.isIncumbent === true,
+                isPartyLeader: row.isPartyLeader === 'Yes' || row.isPartyLeader === true,
+                isDeputyLeader: row.isDeputyLeader === 'Yes' || row.isDeputyLeader === true,
+                partyLevel: row.partyLevel === 'higher' ? 'higher' : 'lower',
+                imageUrl: row.imageUrl || '',
+                policyPositions: [],
+            };
+            
+            const candidateRef = doc(collection(firestore, 'archived_candidates'));
+            batch.set(candidateRef, newArchivedCandidate);
+            count++;
+        }
+
+        await batch.commit();
+        toast({ title: 'Import Successful', description: `${count} archived candidates imported.` });
+
+    } catch(e) {
+        console.error("Error importing archived candidates:", e);
+        toast({ variant: 'destructive', title: 'Import Failed', description: 'An error occurred during import. Check console for details.' });
+    } finally {
+        setIsImportOpen(false);
+    }
+  };
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -217,6 +272,9 @@ export default function ArchivePage() {
             description="Browse and manage past sets of candidates."
          />
          <div className="flex items-center gap-4">
+            <Button variant="outline" onClick={() => setIsImportOpen(true)} disabled={isLoading}>
+                <Upload className="mr-2 h-4 w-4" /> Import
+            </Button>
             <Select onValueChange={setSelectedElectionId} value={selectedElectionId}>
                 <SelectTrigger className="w-[220px]">
                     <SelectValue placeholder="Filter by election..." />
@@ -229,6 +287,14 @@ export default function ArchivePage() {
             </Select>
          </div>
       </div>
+      
+       <ImportDialog
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        onImport={handleImport}
+        parties={parties || []}
+        constituencies={constituencies || []}
+      />
       
        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
             <DialogContent className="sm:max-w-3xl h-[90vh]">
