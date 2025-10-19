@@ -27,6 +27,8 @@ import type { Event, Party, Constituency } from '@/lib/types';
 import { EventCard } from '@/components/event-card';
 import { SortableFeatureCard } from '@/components/sortable-feature-card';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Pie, PieChart, ResponsiveContainer, Cell, Label } from 'recharts';
 
 const initialKeyFeatures = [
     {
@@ -82,6 +84,14 @@ const adminSections = [
     { id: 'admin-constituencies', title: 'Manage Constituencies', href: '/admin/constituencies', icon: FilePlus },
     { id: 'admin-map', title: 'Manage Map', href: '/admin/map', icon: Map },
     { id: 'admin-settings', title: 'Manage Settings', href: '/admin/settings', icon: Settings },
+];
+
+const politicalLeaningOptions = [
+  { value: 'solid-slp', label: 'Solid SLP', color: 'hsl(var(--chart-5))' },
+  { value: 'lean-slp', label: 'Lean SLP', color: 'hsl(var(--chart-3))' },
+  { value: 'tossup', label: 'Tossup', color: 'hsl(var(--chart-4))' },
+  { value: 'lean-uwp', label: 'Lean UWP', color: 'hsl(var(--chart-2))' },
+  { value: 'solid-uwp', label: 'Solid UWP', color: 'hsl(var(--chart-1))' },
 ];
 
 export default function Home() {
@@ -143,6 +153,32 @@ export default function Home() {
     }
   }
 
+   const chartData = useMemo(() => {
+        if (!constituencies) return [];
+
+        const counts = constituencies.reduce((acc, constituency) => {
+            const leaning = constituency.politicalLeaning || 'tossup';
+            acc[leaning] = (acc[leaning] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+
+        return politicalLeaningOptions.map(opt => ({
+            name: opt.label,
+            value: counts[opt.value] || 0,
+            fill: opt.color,
+        })).filter(item => item.value > 0);
+    }, [constituencies]);
+
+    const chartConfig = politicalLeaningOptions.reduce((acc, option) => {
+        // @ts-ignore
+        acc[option.label] = {
+            label: option.label,
+            color: option.color,
+        };
+        return acc;
+    }, {});
+
+
   return (
     <div className="container mx-auto px-4 py-8">
       <PageHeader
@@ -150,16 +186,77 @@ export default function Home() {
         description="Your comprehensive guide to the 2026 General Elections."
       />
 
-      <Card className="mb-8 bg-card shadow-lg border-primary/20">
-        <CardHeader>
-          <CardTitle className="text-center text-2xl font-headline md:text-3xl text-primary">
-            Countdown to Election Day 2026
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Countdown date={electionDate} />
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <Card className="lg:col-span-2 bg-card shadow-lg border-primary/20">
+          <CardHeader>
+            <CardTitle className="text-center text-2xl font-headline md:text-3xl text-primary">
+              Countdown to Election Day 2026
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Countdown date={electionDate} />
+          </CardContent>
+        </Card>
+         <Card>
+            <CardHeader>
+                <CardTitle className="font-headline">Seat Count</CardTitle>
+                <CardDescription>Current political leaning of the 17 constituencies.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center">
+                <ChartContainer config={chartConfig} className="h-40 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <ChartTooltip 
+                                cursor={false}
+                                content={<ChartTooltipContent hideLabel />}
+                            />
+                            <Pie 
+                                data={chartData} 
+                                dataKey="value"
+                                nameKey="name"
+                                cx="50%" 
+                                cy="100%" 
+                                startAngle={180} 
+                                endAngle={0} 
+                                innerRadius="60%"
+                                outerRadius="100%"
+                                paddingAngle={2}
+                            >
+                                  {chartData.map((entry) => (
+                                    <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                                ))}
+                                <Label
+                                    content={({ viewBox }) => {
+                                        if (viewBox && 'cx' in viewBox && 'cy' in viewBox && constituencies) {
+                                            return (
+                                                <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
+                                                    <tspan x={viewBox.cx} dy="-0.5em" className="text-3xl font-bold">{constituencies.length}</tspan>
+                                                    <tspan x={viewBox.cx} dy="1.2em" className="text-sm text-muted-foreground">Seats</tspan>
+                                                </text>
+                                            )
+                                        }
+                                    }}
+                                />
+                            </Pie>
+                        </PieChart>
+                    </ResponsiveContainer>
+                </ChartContainer>
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-xs">
+                    {politicalLeaningOptions.map((option) => {
+                        const count = chartData.find(d => d.name === option.label)?.value || 0;
+                        if (count === 0) return null;
+                        return (
+                            <div key={option.value} className="flex items-center gap-1.5">
+                                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: option.color }}></span>
+                                <span>{option.label}</span>
+                                <span className="font-bold">({count})</span>
+                            </div>
+                        )
+                    })}
+                </div>
+            </CardContent>
+        </Card>
+      </div>
       
        <DndContext
         sensors={sensors}
