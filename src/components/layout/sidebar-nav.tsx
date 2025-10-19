@@ -143,7 +143,7 @@ export function SidebarNav() {
     if (!elections) return [];
     // Filter out the 1974 election and then sort
     return elections
-      .filter(election => election.year !== 1974)
+      .filter(election => election.year !== 1974 && !election.isCurrent)
       .sort((a, b) => {
           if (a.year !== b.year) {
               return b.year - a.year;
