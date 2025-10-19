@@ -153,8 +153,8 @@ export default function Home() {
     }
   }
 
-   const chartData = useMemo(() => {
-        if (!constituencies) return [];
+   const { chartData, seatCounts } = useMemo(() => {
+        if (!constituencies) return { chartData: [], seatCounts: {} };
 
         const counts = constituencies.reduce((acc, constituency) => {
             const leaning = constituency.politicalLeaning || 'tossup';
@@ -162,11 +162,23 @@ export default function Home() {
             return acc;
         }, {} as Record<string, number>);
 
-        return politicalLeaningOptions.map(opt => ({
+        const chartData = politicalLeaningOptions.map(opt => ({
             name: opt.label,
             value: counts[opt.value] || 0,
             fill: opt.color,
         })).filter(item => item.value > 0);
+
+        const seatCounts = {
+            solidSlp: counts['solid-slp'] || 0,
+            leanSlp: counts['lean-slp'] || 0,
+            tossup: counts['tossup'] || 0,
+            leanUwp: counts['lean-uwp'] || 0,
+            solidUwp: counts['solid-uwp'] || 0,
+        };
+        seatCounts.slpTotal = seatCounts.solidSlp + seatCounts.leanSlp;
+        seatCounts.uwpTotal = seatCounts.solidUwp + seatCounts.leanUwp;
+
+        return { chartData, seatCounts };
     }, [constituencies]);
 
     const chartConfig = politicalLeaningOptions.reduce((acc, option) => {
@@ -230,8 +242,7 @@ export default function Home() {
                                         if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
                                             return (
                                                 <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
-                                                    <tspan x={viewBox.cx} dy="-0.5em" className="text-3xl font-bold">9</tspan>
-                                                    <tspan x={viewBox.cx} dy="1.2em" className="text-sm text-muted-foreground">to Win</tspan>
+                                                    <tspan x={viewBox.cx} dy="-0.5em" className="text-3xl font-bold">9 to Win</tspan>
                                                 </text>
                                             )
                                         }
@@ -241,18 +252,27 @@ export default function Home() {
                         </PieChart>
                     </ResponsiveContainer>
                 </ChartContainer>
-                <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-xs">
-                    {politicalLeaningOptions.map((option) => {
-                        const count = chartData.find(d => d.name === option.label)?.value || 0;
-                        if (count === 0) return null;
-                        return (
-                            <div key={option.value} className="flex items-center gap-1.5">
-                                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: option.color }}></span>
-                                <span>{option.label}</span>
-                                <span className="font-bold">({count})</span>
-                            </div>
-                        )
-                    })}
+                <div className="mt-4 grid grid-cols-3 gap-4 w-full text-center text-xs">
+                    <div>
+                        <p className="font-bold text-lg" style={{color: 'hsl(var(--chart-5))'}}>{seatCounts.slpTotal}</p>
+                        <p className="text-muted-foreground font-semibold">SLP</p>
+                        <div className="mt-2 space-y-1 text-muted-foreground">
+                            <p>Solid: {seatCounts.solidSlp}</p>
+                            <p>Lean: {seatCounts.leanSlp}</p>
+                        </div>
+                    </div>
+                    <div>
+                        <p className="font-bold text-lg" style={{color: 'hsl(var(--chart-4))'}}>{seatCounts.tossup}</p>
+                        <p className="text-muted-foreground font-semibold">Tossup</p>
+                    </div>
+                    <div>
+                        <p className="font-bold text-lg" style={{color: 'hsl(var(--chart-1))'}}>{seatCounts.uwpTotal}</p>
+                        <p className="text-muted-foreground font-semibold">UWP</p>
+                         <div className="mt-2 space-y-1 text-muted-foreground">
+                            <p>Solid: {seatCounts.solidUwp}</p>
+                            <p>Lean: {seatCounts.leanUwp}</p>
+                        </div>
+                    </div>
                 </div>
             </CardContent>
         </Card>
@@ -363,4 +383,5 @@ export default function Home() {
       </Card>
     </div>
   );
-}
+
+    
