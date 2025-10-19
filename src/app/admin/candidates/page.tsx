@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { CandidateForm } from './candidate-form';
 import { ImportDialog } from './import-dialog';
 import Image from 'next/image';
-import { UserSquare, Pencil, Trash2, Upload, Download, Archive, XCircle } from 'lucide-react';
+import { UserSquare, Pencil, Trash2, Upload, Download, Archive, XCircle, Lock, Unlock } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +49,7 @@ export default function AdminCandidatesPage() {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(null);
   const [partyFilter, setPartyFilter] = useState<string | null>(null);
+  const [isClearAllLocked, setIsClearAllLocked] = useState(true);
 
   const handleFormSubmit = async (values: any) => {
     if (!firestore || !candidatesCollection) return;
@@ -276,26 +277,36 @@ export default function AdminCandidatesPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-             <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button variant="destructive" disabled={!candidates || candidates.length === 0}>
-                        <XCircle className="mr-2 h-4 w-4" />
-                        Clear All
-                    </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This will permanently delete all {candidates?.length || 0} candidates. This action cannot be undone. Consider archiving first.
-                    </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleClearAll}>Yes, Clear All</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <div className="flex items-center gap-1">
+                 <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" disabled={!candidates || candidates.length === 0 || isClearAllLocked}>
+                            <XCircle className="mr-2 h-4 w-4" />
+                            Clear All
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete all {candidates?.length || 0} candidates. This action cannot be undone. Consider archiving first.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleClearAll}>Yes, Clear All</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+                <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => setIsClearAllLocked(!isClearAllLocked)}
+                    disabled={!candidates || candidates.length === 0}
+                    >
+                    {isClearAllLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                </Button>
+            </div>
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
             <DialogTrigger asChild>
                 <Button onClick={() => { setEditingCandidate(null); setIsFormOpen(true)}}>Add New Candidate</Button>
