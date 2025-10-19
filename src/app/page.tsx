@@ -210,11 +210,7 @@ export default function Home() {
           </CardContent>
         </Card>
          <Card>
-            <CardHeader>
-                <CardTitle className="font-headline">Seat Count</CardTitle>
-                <CardDescription>Current political leaning of the 17 constituencies.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center">
+            <CardContent className="flex flex-col items-center pt-6">
                 <ChartContainer config={chartConfig} className="h-40 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
@@ -374,5 +370,6 @@ export default function Home() {
   );
 
     
+
 
 
