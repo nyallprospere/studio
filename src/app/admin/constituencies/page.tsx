@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Save, Lock, Unlock } from 'lucide-react';
-import { InteractiveMap } from '@/components/interactive-map';
+import { InteractiveSvgMap } from '@/components/interactive-svg-map';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { isEqual } from 'lodash';
 
@@ -57,7 +57,8 @@ export default function AdminConstituenciesPage() {
     const [editableConstituencies, setEditableConstituencies] = useState<Constituency[]>([]);
     const [isSeeding, setIsSeeding] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
-    const [isMapDraggable, setIsMapDraggable] = useState(false);
+    const [selectedConstituencyId, setSelectedConstituencyId] = useState<string | null>(null);
+
 
     const hasUnsavedChanges = useMemo(() => {
         if (!constituencies || !editableConstituencies) return false;
@@ -103,14 +104,6 @@ export default function AdminConstituenciesPage() {
             setIsSeeding(false);
         }
     }
-
-    const handleCoordinatesChange = useCallback((id: string, newCoords: { top: string; left: string }) => {
-        setEditableConstituencies(prev =>
-            prev.map(c => 
-                c.id === id ? { ...c, mapCoordinates: { top: newCoords.top, left: newCoords.left } } : c
-            )
-        );
-    }, []);
     
     const handleLeaningChange = useCallback((id: string, newLeaning: string) => {
         setEditableConstituencies(prev =>
@@ -129,15 +122,12 @@ export default function AdminConstituenciesPage() {
     }, []);
 
 
-    const handleFieldChange = (id: string, field: keyof Constituency | 'registeredVoters' | 'top' | 'left' | 'predictedSlpPercentage' | 'predictedUwpPercentage', value: any) => {
+    const handleFieldChange = (id: string, field: keyof Constituency | 'registeredVoters' | 'predictedSlpPercentage' | 'predictedUwpPercentage', value: any) => {
         setEditableConstituencies(prev => 
             prev.map(c => {
                 if (c.id === id) {
                     if (field === 'registeredVoters') {
                         return { ...c, demographics: { ...c.demographics, registeredVoters: Number(value) } };
-                    }
-                     if (field === 'top' || field === 'left') {
-                        return { ...c, mapCoordinates: { ...c.mapCoordinates, [field]: value } };
                     }
                     if (field === 'predictedSlpPercentage' || field === 'predictedUwpPercentage') {
                         return { ...c, [field]: Number(value) };
@@ -183,10 +173,7 @@ export default function AdminConstituenciesPage() {
                             Seed Constituencies
                         </Button>
                     )}
-                     <Button variant="outline" size="icon" onClick={() => setIsMapDraggable(!isMapDraggable)} title={isMapDraggable ? "Lock map movement" : "Unlock map movement"}>
-                        {isMapDraggable ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-                    </Button>
-                    <Button onClick={handleSaveAll} disabled={isSaving || !hasUnsavedChanges}>
+                     <Button onClick={handleSaveAll} disabled={isSaving || !hasUnsavedChanges}>
                         {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                         Save Changes
                     </Button>
@@ -198,26 +185,23 @@ export default function AdminConstituenciesPage() {
                     <CardHeader>
                         <CardTitle>Map Preview</CardTitle>
                         <CardDescription>
-                            {isMapDraggable 
-                                ? "Drag the labels to adjust their positions. Remember to save your changes."
-                                : "Click a label to edit leanings and predictions. Unlock to move labels."
-                            }
+                            Click a constituency on the map to edit its details in the table below.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <InteractiveMap 
+                        <InteractiveSvgMap 
                             constituencies={editableConstituencies} 
-                            onCoordinatesChange={handleCoordinatesChange}
+                            selectedConstituencyId={selectedConstituencyId}
+                            onConstituencyClick={setSelectedConstituencyId}
                             onLeaningChange={handleLeaningChange}
                             onPredictionChange={handlePredictionChange}
-                            isDraggable={isMapDraggable}
                         />
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader>
                         <CardTitle>Constituency Data</CardTitle>
-                        <CardDescription>Edit voter numbers, map positions, leanings, and predictions.</CardDescription>
+                        <CardDescription>Edit voter numbers, leanings, and predictions.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         {loadingConstituencies ? <p>Loading...</p> : 
@@ -232,13 +216,11 @@ export default function AdminConstituenciesPage() {
                                         <TableHead>Political Leaning</TableHead>
                                         <TableHead>Pred. SLP %</TableHead>
                                         <TableHead>Pred. UWP %</TableHead>
-                                        <TableHead>Map Top %</TableHead>
-                                        <TableHead>Map Left %</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {editableConstituencies.sort((a,b) => a.name.localeCompare(b.name)).map(c => (
-                                        <TableRow key={c.id}>
+                                        <TableRow key={c.id} className={c.id === selectedConstituencyId ? 'bg-muted' : ''}>
                                             <TableCell className="font-medium whitespace-nowrap">{c.name}</TableCell>
                                             <TableCell>
                                                 <Input
@@ -277,22 +259,6 @@ export default function AdminConstituenciesPage() {
                                                     value={c.predictedUwpPercentage || 0}
                                                     onChange={(e) => handleFieldChange(c.id, 'predictedUwpPercentage', e.target.value)}
                                                     className="w-24"
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Input
-                                                    type="text"
-                                                    value={c.mapCoordinates?.top || ''}
-                                                    onChange={(e) => handleFieldChange(c.id, 'top', e.target.value)}
-                                                    className="w-20"
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Input
-                                                    type="text"
-                                                    value={c.mapCoordinates?.left || ''}
-                                                    onChange={(e) => handleFieldChange(c.id, 'left', e.target.value)}
-                                                    className="w-20"
                                                 />
                                             </TableCell>
                                         </TableRow>

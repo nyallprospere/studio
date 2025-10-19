@@ -26,7 +26,7 @@ import { collection, query, orderBy, Timestamp } from 'firebase/firestore';
 import type { Event, Party, Constituency } from '@/lib/types';
 import { EventCard } from '@/components/event-card';
 import { SortableFeatureCard } from '@/components/sortable-feature-card';
-import { InteractiveMap } from '@/components/interactive-map';
+import { InteractiveSvgMap } from '@/components/interactive-svg-map';
 
 const initialKeyFeatures = [
     {
@@ -91,6 +91,7 @@ export default function Home() {
   
   const { firestore } = useFirebase();
   const [allEventsViewMode, setAllEventsViewMode] = useState<'upcoming' | 'past'>('upcoming');
+  const [selectedConstituencyId, setSelectedConstituencyId] = useState<string | null>(null);
   
   const eventsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'events'), orderBy('date', 'desc')) : null, [firestore]);
   const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
@@ -207,7 +208,11 @@ export default function Home() {
                 <CardDescription>Click on a constituency to learn more.</CardDescription>
             </CardHeader>
             <CardContent className="p-2">
-                 <InteractiveMap constituencies={constituencies ?? []} />
+                 <InteractiveSvgMap 
+                    constituencies={constituencies ?? []} 
+                    selectedConstituencyId={selectedConstituencyId}
+                    onConstituencyClick={setSelectedConstituencyId}
+                 />
             </CardContent>
         </Card>
       </div>

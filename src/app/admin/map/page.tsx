@@ -14,8 +14,7 @@ import Image from 'next/image';
 import { Loader2, UploadCloud } from 'lucide-react';
 import type { SiteSettings, Constituency } from '@/lib/types';
 import { useMemoFirebase } from '@/firebase';
-import { InteractiveMap } from '@/components/interactive-map';
-import { DraggableImageOverlay } from '@/components/draggable-image-overlay';
+import { InteractiveSvgMap } from '@/components/interactive-svg-map';
 
 
 export default function AdminMapPage() {
@@ -31,6 +30,8 @@ export default function AdminMapPage() {
   const [mapFile, setMapFile] = useState<File | null>(null);
   const [currentMapUrl, setCurrentMapUrl] = useState<string | undefined>(undefined);
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedConstituencyId, setSelectedConstituencyId] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (siteSettings) {
@@ -124,10 +125,11 @@ export default function AdminMapPage() {
                     {isLoading ? (
                         <p>Loading map preview...</p>
                     ) : (
-                      <>
-                        <InteractiveMap constituencies={constituencies ?? []} />
-                        <DraggableImageOverlay imageUrl="https://picsum.photos/seed/overlay/150/150" />
-                      </>
+                      <InteractiveSvgMap 
+                        constituencies={constituencies ?? []} 
+                        selectedConstituencyId={selectedConstituencyId}
+                        onConstituencyClick={setSelectedConstituencyId}
+                      />
                     )}
                 </CardContent>
             </Card>

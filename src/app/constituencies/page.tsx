@@ -14,6 +14,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { debounce } from 'lodash';
+import { InteractiveSvgMap } from '@/components/interactive-svg-map';
 
 const politicalLeaningOptions = [
   { value: 'solid-slp', label: 'Solid SLP', color: 'hsl(var(--chart-5))' },
@@ -73,6 +74,7 @@ export default function ConstituenciesPage() {
     const [isEditingPageDescription, setIsEditingPageDescription] = useState(false);
     const [isEditingSeatCountTitle, setIsEditingSeatCountTitle] = useState(false);
     const [isEditingSeatCountDescription, setIsEditingSeatCountDescription] = useState(false);
+    const [selectedConstituencyId, setSelectedConstituencyId] = useState<string | null>(null);
 
 
     const debouncedSaveLayout = useCallback(
@@ -169,6 +171,13 @@ export default function ConstituenciesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="md:col-span-2">
+            <InteractiveSvgMap 
+                constituencies={constituencies ?? []} 
+                selectedConstituencyId={selectedConstituencyId}
+                onConstituencyClick={setSelectedConstituencyId}
+            />
+          </div>
+          <div>
             <Card>
                 <CardHeader>
                     {isEditingSeatCountTitle && user ? (
@@ -213,6 +222,18 @@ export default function ConstituenciesPage() {
                                      {chartData.map((entry) => (
                                         <Cell key={`cell-${entry.name}`} fill={entry.fill} />
                                     ))}
+                                    <Label
+                                        content={({ viewBox }) => {
+                                            if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
+                                                return (
+                                                    <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
+                                                        <tspan x={viewBox.cx} dy="-0.5em" className="text-3xl font-bold">{constituencies.length}</tspan>
+                                                        <tspan x={viewBox.cx} dy="1.2em" className="text-sm text-muted-foreground">Seats</tspan>
+                                                    </text>
+                                                )
+                                            }
+                                        }}
+                                    />
                                 </Pie>
                             </PieChart>
                         </ResponsiveContainer>
