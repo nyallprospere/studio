@@ -55,7 +55,7 @@ export default function SettingsPage() {
             
             electionYearsToSeed.forEach(election => {
                 const docRef = doc(electionsCollection);
-                batch.set(docRef, election);
+                batch.set(docRef, { ...election, isCurrent: false });
             });
             
             await batch.commit();
