@@ -36,13 +36,11 @@ export default function AdminCandidatesPage() {
   const { toast } = useToast();
 
   const candidatesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'candidates') : null, [firestore]);
-  const archivedCandidatesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'archived_candidates'), orderBy('archiveDate', 'desc')) : null, [firestore]);
   const partiesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const constituenciesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), where('isCurrent', '==', true)) : null, [firestore]);
   
   const { data: candidates, isLoading: loadingCandidates, error: errorCandidates } = useCollection<Candidate>(candidatesCollection);
-  const { data: archivedCandidates, isLoading: loadingArchived } = useCollection<ArchivedCandidate>(archivedCandidatesQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesCollection);
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesCollection);
   const { data: currentElections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
@@ -175,15 +173,14 @@ export default function AdminCandidatesPage() {
   };
 
   const handleArchiveAll = async () => {
-    if (!firestore || !candidates) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Candidates data not loaded or firestore unavailable.' });
+    if (!firestore || !candidates || !currentElection) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Candidates data not loaded or no current election set.' });
         return;
     }
 
     const archiveCollectionRef = collection(firestore, 'archived_candidates');
     const archiveDate = new Date().toISOString();
-    const archiveId = `archive-${Date.now()}`;
-
+    
     try {
         const archiveBatch = writeBatch(firestore);
 
@@ -192,14 +189,14 @@ export default function AdminCandidatesPage() {
             const newArchivedDoc = doc(archiveCollectionRef);
             archiveBatch.set(newArchivedDoc, { 
                 ...candidateData, 
-                archiveId,
                 archiveDate,
+                electionId: currentElection.id,
                 originalId: id
              });
         }
 
         await archiveBatch.commit();
-        toast({ title: 'Archive Successful', description: `${candidates.length} candidates have been archived.` });
+        toast({ title: 'Archive Successful', description: `${candidates.length} candidates have been archived for the ${currentElection.name}.` });
     } catch (error) {
         console.error("Error archiving candidates: ", error);
         toast({ variant: 'destructive', title: 'Archive Failed', description: 'Could not archive candidates. Check console for details.' });
@@ -229,7 +226,7 @@ export default function AdminCandidatesPage() {
 
   const getPartyAcronym = (partyId: string) => parties?.find(p => p.id === partyId)?.acronym || 'N/A';
   const getConstituencyName = (constituencyId: string) => constituencies?.find(c => c.id === constituencyId)?.name || 'N/A';
-  const isLoading = loadingCandidates || loadingParties || loadingConstituencies || loadingArchived || loadingElections;
+  const isLoading = loadingCandidates || loadingParties || loadingConstituencies || loadingElections;
 
   const partyDetails = useMemo(() => {
     if (!parties) return { slp: null, uwp: null };
@@ -267,7 +264,7 @@ export default function AdminCandidatesPage() {
             </Button>
              <AlertDialog>
                 <AlertDialogTrigger asChild>
-                    <Button variant="outline" disabled={!candidates || candidates.length === 0}>
+                    <Button variant="outline" disabled={!candidates || candidates.length === 0 || !currentElection}>
                         <Archive className="mr-2 h-4 w-4" />
                         Archive
                     </Button>
@@ -276,7 +273,7 @@ export default function AdminCandidatesPage() {
                     <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action will move all {candidates?.length || 0} current candidates to an archive. You can clear them in a separate step.
+                        This action will move all {candidates?.length || 0} current candidates to an archive under the election: <strong>{currentElection?.name}</strong>. You can clear them in a separate step.
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

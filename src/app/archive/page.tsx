@@ -1,17 +1,17 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, doc, writeBatch, deleteDoc, query, orderBy } from 'firebase/firestore';
-import type { Party, Constituency, ArchivedCandidate } from '@/lib/types';
+import { collection, doc, writeBatch, deleteDoc, query, orderBy, getDocs, where } from 'firebase/firestore';
+import type { Party, Constituency, ArchivedCandidate, Election } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Download, Trash2, History } from 'lucide-react';
+import { Download, Trash2, History, Lock, Unlock } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,40 +23,66 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 export default function ArchivePage() {
   const { firestore } = useFirebase();
   const { toast } = useToast();
 
-  const archivedCandidatesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'archived_candidates'), orderBy('archiveDate', 'desc')) : null, [firestore]);
+  const [selectedElectionId, setSelectedElectionId] = useState('all');
+  const [restoreLocks, setRestoreLocks] = useState<Record<string, boolean>>({});
+
+  const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
+  const { data: allElections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
+
+  const archivedCandidatesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    if (selectedElectionId === 'all') {
+        return query(collection(firestore, 'archived_candidates'), orderBy('archiveDate', 'desc'));
+    }
+    return query(collection(firestore, 'archived_candidates'), where('electionId', '==', selectedElectionId), orderBy('archiveDate', 'desc'));
+  }, [firestore, selectedElectionId]);
+  
+  const { data: archivedCandidates, isLoading: loadingArchived } = useCollection<ArchivedCandidate>(archivedCandidatesQuery);
+  
   const partiesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const constituenciesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
 
-  const { data: archivedCandidates, isLoading: loadingArchived } = useCollection<ArchivedCandidate>(archivedCandidatesQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesCollection);
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesCollection);
+  
+  const pastElections = useMemo(() => allElections?.filter(e => !e.isCurrent), [allElections]);
+
+  useEffect(() => {
+    if (pastElections && pastElections.length > 0 && selectedElectionId === 'all') {
+        setSelectedElectionId(pastElections[0].id);
+    }
+  }, [pastElections, selectedElectionId]);
+
 
   const getPartyAcronym = (partyId: string) => parties?.find(p => p.id === partyId)?.acronym || 'N/A';
   const getConstituencyName = (constituencyId: string) => constituencies?.find(c => c.id === constituencyId)?.name || 'N/A';
-  const isLoading = loadingArchived || loadingParties || loadingConstituencies;
+  const isLoading = loadingArchived || loadingParties || loadingConstituencies || loadingElections;
   
   const groupedArchives = useMemo(() => {
     if (!archivedCandidates) return {};
     return archivedCandidates.reduce((acc, candidate) => {
-      const { archiveId } = candidate;
-      if (!acc[archiveId]) {
-        acc[archiveId] = {
+      const { electionId } = candidate;
+      if (!acc[electionId]) {
+        const election = allElections?.find(e => e.id === electionId);
+        acc[electionId] = {
+          electionName: election?.name || 'Unknown Election',
           date: candidate.archiveDate,
           candidates: []
         };
       }
-      acc[archiveId].candidates.push(candidate);
+      acc[electionId].candidates.push(candidate);
       return acc;
-    }, {} as Record<string, { date: string; candidates: ArchivedCandidate[] }>);
-  }, [archivedCandidates]);
+    }, {} as Record<string, { electionName: string; date: string; candidates: ArchivedCandidate[] }>);
+  }, [archivedCandidates, allElections]);
 
-  const handleExport = (archiveId: string) => {
-    const archive = groupedArchives[archiveId];
+  const handleExport = (electionId: string) => {
+    const archive = groupedArchives[electionId];
     if (!archive || !parties || !constituencies) {
         toast({ variant: "destructive", title: "Error", description: "Data not loaded yet." });
         return;
@@ -77,14 +103,14 @@ export default function ArchivePage() {
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "ArchivedCandidates");
-    XLSX.writeFile(workbook, `archive-${archiveId}.xlsx`);
+    XLSX.writeFile(workbook, `archive-${archive.electionName.replace(/\s/g, '_')}.xlsx`);
     toast({ title: "Export Successful", description: "Archived candidates have been exported." });
   };
   
-  const handleRestore = async (archiveId: string) => {
+  const handleRestore = async (electionId: string) => {
     if (!firestore) return;
 
-    const archive = groupedArchives[archiveId];
+    const archive = groupedArchives[electionId];
     if (!archive) return;
 
     const candidatesCollectionRef = collection(firestore, 'candidates');
@@ -95,13 +121,11 @@ export default function ArchivePage() {
         const deleteBatch = writeBatch(firestore);
 
         for (const candidate of archive.candidates) {
-            const { id, originalId, archiveDate, archiveId: aId, ...candidateData} = candidate;
+            const { id, originalId, archiveDate, electionId: aId, ...candidateData} = candidate;
             
-            // Restore to main candidates collection
             const newCandidateRef = doc(candidatesCollectionRef, originalId);
             restoreBatch.set(newCandidateRef, candidateData);
 
-            // Delete from archive
             const archivedDocRef = doc(archiveCollectionRef, id);
             deleteBatch.delete(archivedDocRef);
         }
@@ -109,16 +133,16 @@ export default function ArchivePage() {
         await restoreBatch.commit();
         await deleteBatch.commit();
 
-        toast({ title: 'Restore Successful', description: `Restored ${archive.candidates.length} candidates.` });
+        toast({ title: 'Restore Successful', description: `Restored ${archive.candidates.length} candidates for ${archive.electionName}.` });
     } catch (e) {
         console.error("Error restoring archive:", e);
         toast({ variant: 'destructive', title: 'Restore Failed', description: 'Could not restore candidates. Check console for details.' });
     }
   };
 
-  const handleDeleteArchive = async (archiveId: string) => {
+  const handleDeleteArchive = async (electionId: string) => {
     if (!firestore) return;
-    const archive = groupedArchives[archiveId];
+    const archive = groupedArchives[electionId];
     if (!archive) return;
 
     try {
@@ -128,7 +152,7 @@ export default function ArchivePage() {
             batch.delete(docRef);
         }
         await batch.commit();
-        toast({ title: 'Archive Deleted', description: `Archive from ${new Date(archive.date).toLocaleString()} has been deleted.` });
+        toast({ title: 'Archive Deleted', description: `Archive for ${archive.electionName} has been deleted.` });
     } catch (e) {
         console.error("Error deleting archive:", e);
         toast({ variant: 'destructive', title: 'Delete Failed', description: 'Could not delete archive. Check console for details.' });
@@ -138,45 +162,70 @@ export default function ArchivePage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Archived Candidates"
-        description="Browse and manage past sets of candidates."
-      />
+       <div className="flex justify-between items-start mb-8">
+         <PageHeader
+            title="Archived Candidates"
+            description="Browse and manage past sets of candidates."
+         />
+         <div className="flex items-center gap-4">
+            <Select onValueChange={setSelectedElectionId} value={selectedElectionId}>
+                <SelectTrigger className="w-[220px]">
+                    <SelectValue placeholder="Filter by election..." />
+                </SelectTrigger>
+                <SelectContent>
+                    {pastElections?.map(election => (
+                        <SelectItem key={election.id} value={election.id}>{election.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+         </div>
+      </div>
       
       {isLoading ? <p>Loading archives...</p> : (
         <div className="space-y-8">
             {Object.keys(groupedArchives).length > 0 ? (
-                Object.entries(groupedArchives).map(([archiveId, archiveData]) => (
-                    <Card key={archiveId}>
+                Object.entries(groupedArchives).map(([electionId, archiveData]) => (
+                    <Card key={electionId}>
                         <CardHeader>
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <CardTitle>Archived on {new Date(archiveData.date).toLocaleString()}</CardTitle>
-                                    <CardDescription>{archiveData.candidates.length} candidates</CardDescription>
+                                    <CardTitle>{archiveData.electionName}</CardTitle>
+                                    <CardDescription>
+                                        {archiveData.candidates.length} candidates archived on <span className="text-xs">{new Date(archiveData.date).toLocaleString()}</span>
+                                    </CardDescription>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                     <Button variant="outline" size="sm" onClick={() => handleExport(archiveId)}>
+                                     <Button variant="outline" size="sm" onClick={() => handleExport(electionId)}>
                                         <Download className="mr-2 h-4 w-4" /> Export
                                     </Button>
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="outline" size="sm">
-                                                <History className="mr-2 h-4 w-4" /> Restore
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                   This will restore all {archiveData.candidates.length} candidates from this archive to the main list and remove them from the archive. This is useful for correcting mistakes.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleRestore(archiveId)}>Yes, Restore</AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
+                                    <div className="flex items-center gap-1">
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="outline" size="sm" disabled={restoreLocks[electionId] !== false}>
+                                                    <History className="mr-2 h-4 w-4" /> Restore
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                    This will restore all {archiveData.candidates.length} candidates from this archive to the main list and remove them from the archive.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleRestore(electionId)}>Yes, Restore</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                        <Button 
+                                            variant="outline" 
+                                            size="icon-sm" 
+                                            onClick={() => setRestoreLocks(prev => ({...prev, [electionId]: !prev[electionId]}))}
+                                        >
+                                            {restoreLocks[electionId] !== false ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                                        </Button>
+                                    </div>
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
                                             <Button variant="destructive" size="sm">
@@ -192,7 +241,7 @@ export default function ArchivePage() {
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
                                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleDeleteArchive(archiveId)}>Yes, Delete Archive</AlertDialogAction>
+                                                <AlertDialogAction onClick={() => handleDeleteArchive(electionId)}>Yes, Delete Archive</AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
                                     </AlertDialog>
@@ -215,7 +264,7 @@ export default function ArchivePage() {
                 ))
             ) : (
                 <div className="text-center text-muted-foreground py-16">
-                    <p>No archived candidates found.</p>
+                    <p>No archived candidates found for the selected election.</p>
                 </div>
             )}
         </div>

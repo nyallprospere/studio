@@ -35,8 +35,8 @@ export interface Candidate {
 export interface ArchivedCandidate extends Omit<Candidate, 'id' | 'name'> {
     id: string;
     originalId: string;
-    archiveId: string;
     archiveDate: string;
+    electionId: string;
 }
 
 

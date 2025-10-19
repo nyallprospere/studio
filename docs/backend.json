@@ -79,14 +79,14 @@
           "description": "URL to the candidate's image.",
           "format": "uri"
         },
-        "archiveId": {
-          "type": "string",
-          "description": "An identifier for the archive batch."
-        },
         "archiveDate": {
           "type": "string",
           "format": "date-time",
           "description": "The date and time the candidate was archived."
+        },
+        "electionId": {
+          "type": "string",
+          "description": "The ID of the election this candidate was archived from."
         }
       },
       "required": [
@@ -94,8 +94,8 @@
         "partyId",
         "constituencyId",
         "name",
-        "archiveId",
-        "archiveDate"
+        "archiveDate",
+        "electionId"
       ]
     },
     "Party": {
