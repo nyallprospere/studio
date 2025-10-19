@@ -15,8 +15,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { debounce, isEqual } from 'lodash';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
-import { Save } from 'lucide-react';
+import { Save, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 const politicalLeaningOptions = [
   { value: 'solid-slp', label: 'Solid SLP', color: 'hsl(var(--chart-5))' },
@@ -248,24 +249,35 @@ export default function ConstituenciesPage() {
           <div>
             <Card>
                 <CardHeader>
-                    {isEditingSeatCountTitle && user ? (
-                        <div className="flex items-center gap-2">
-                            <Input value={seatCountTitle} onChange={(e) => setSeatCountTitle(e.target.value)} className="font-headline" />
-                            <Button size="sm" onClick={() => setIsEditingSeatCountTitle(false)}>Save</Button>
+                    <div className="flex items-center justify-between">
+                         <div>
+                            {isEditingSeatCountTitle && user ? (
+                                <div className="flex items-center gap-2">
+                                    <Input value={seatCountTitle} onChange={(e) => setSeatCountTitle(e.target.value)} className="font-headline" />
+                                    <Button size="sm" onClick={() => setIsEditingSeatCountTitle(false)}>Save</Button>
+                                </div>
+                            ) : (
+                                <CardTitle className="font-headline" onClick={() => user && setIsEditingSeatCountTitle(true)}>
+                                    {seatCountTitle}
+                                </CardTitle>
+                            )}
+                            {isEditingSeatCountDescription && user ? (
+                                <div className="flex items-center gap-2">
+                                <Input value={seatCountDescription} onChange={(e) => setSeatCountDescription(e.target.value)} />
+                                <Button size="sm" onClick={() => setIsEditingSeatCountDescription(false)}>Save</Button>
+                                </div>
+                            ) : (
+                                <CardDescription onClick={() => user && setIsEditingSeatCountDescription(true)}>{seatCountDescription}</CardDescription>
+                            )}
                         </div>
-                    ) : (
-                        <CardTitle className="font-headline" onClick={() => user && setIsEditingSeatCountTitle(true)}>
-                            {seatCountTitle}
-                        </CardTitle>
-                    )}
-                    {isEditingSeatCountDescription && user ? (
-                        <div className="flex items-center gap-2">
-                           <Input value={seatCountDescription} onChange={(e) => setSeatCountDescription(e.target.value)} />
-                           <Button size="sm" onClick={() => setIsEditingSeatCountDescription(false)}>Save</Button>
-                        </div>
-                    ) : (
-                        <CardDescription onClick={() => user && setIsEditingSeatCountDescription(true)}>{seatCountDescription}</CardDescription>
-                    )}
+                        {user && (
+                            <Button asChild variant="outline" size="icon">
+                                <Link href="/admin/constituencies">
+                                    <Pencil className="h-4 w-4" />
+                                </Link>
+                            </Button>
+                        )}
+                    </div>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center">
                     <ChartContainer config={chartConfig} className="h-40 w-full">
