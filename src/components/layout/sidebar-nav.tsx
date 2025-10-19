@@ -141,11 +141,14 @@ export function SidebarNav() {
 
   const sortedElections = useMemo(() => {
     if (!elections) return [];
-    return [...elections].sort((a, b) => {
-        if (a.year !== b.year) {
-            return b.year - a.year;
-        }
-        return b.name.localeCompare(a.name);
+    // Filter out the 1974 election and then sort
+    return elections
+      .filter(election => election.year !== 1974)
+      .sort((a, b) => {
+          if (a.year !== b.year) {
+              return b.year - a.year;
+          }
+          return b.name.localeCompare(a.name);
     });
   }, [elections]);
 
