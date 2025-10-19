@@ -261,7 +261,7 @@ export default function AdminCandidatesPage() {
                 <AlertDialogTrigger asChild>
                     <Button variant="outline" disabled={!candidates || candidates.length === 0}>
                         <Archive className="mr-2 h-4 w-4" />
-                        Archive All
+                        Archive
                     </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
