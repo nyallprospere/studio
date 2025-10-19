@@ -29,49 +29,53 @@ export default function ArchivePage() {
   const { firestore } = useFirebase();
   const { toast } = useToast();
 
-  const [selectedElectionId, setSelectedElectionId] = useState('all');
+  const [selectedElectionId, setSelectedElectionId] = useState('');
   const [restoreLocks, setRestoreLocks] = useState<Record<string, boolean>>({});
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
   const { data: allElections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
 
-  const archivedCandidatesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    if (selectedElectionId === 'all') {
-        return query(collection(firestore, 'archived_candidates'), orderBy('archiveDate', 'desc'));
-    }
-    return query(collection(firestore, 'archived_candidates'), where('electionId', '==', selectedElectionId), orderBy('archiveDate', 'desc'));
-  }, [firestore, selectedElectionId]);
-  
-  const { data: archivedCandidates, isLoading: loadingArchived } = useCollection<ArchivedCandidate>(archivedCandidatesQuery);
+  // We fetch all archives first, then filter client-side if needed.
+  // This is more efficient for this use case than changing the query dynamically.
+  const archivedCandidatesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'archived_candidates') : null, [firestore]);
+  const { data: allArchivedCandidates, isLoading: loadingArchived } = useCollection<ArchivedCandidate>(archivedCandidatesCollection);
   
   const partiesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const constituenciesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
 
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesCollection);
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesCollection);
+
+  const archivedElectionIds = useMemo(() => {
+    if (!allArchivedCandidates) return [];
+    return [...new Set(allArchivedCandidates.map(c => c.electionId))];
+  }, [allArchivedCandidates]);
+
+  const electionsWithArchives = useMemo(() => {
+    if (!allElections || archivedElectionIds.length === 0) return [];
+    return allElections
+      .filter(e => archivedElectionIds.includes(e.id))
+      .sort((a, b) => b.year - a.year);
+  }, [allElections, archivedElectionIds]);
   
-  const pastElections = useMemo(() => allElections?.filter(e => !e.isCurrent), [allElections]);
-
   useEffect(() => {
-    // This effect ensures that a valid election is selected when the page loads,
-    // defaulting to the most recent past election if 'all' is not the intent.
-    // However, we want to allow 'all' to be a valid state, so we check if there are past elections first.
-    if (pastElections && pastElections.length > 0 && selectedElectionId === 'all') {
-      // If we want to default to the most recent, we could set it here:
-      // setSelectedElectionId(pastElections[0].id);
-      // But for now, starting with "all" is acceptable.
+    if (electionsWithArchives.length > 0 && !selectedElectionId) {
+      setSelectedElectionId(electionsWithArchives[0].id);
     }
-  }, [pastElections, selectedElectionId]);
+  }, [electionsWithArchives, selectedElectionId]);
 
+  const displayedArchivedCandidates = useMemo(() => {
+    if (!selectedElectionId || !allArchivedCandidates) return [];
+    return allArchivedCandidates.filter(c => c.electionId === selectedElectionId);
+  }, [selectedElectionId, allArchivedCandidates]);
 
   const getPartyAcronym = (partyId: string) => parties?.find(p => p.id === partyId)?.acronym || 'N/A';
   const getConstituencyName = (constituencyId: string) => constituencies?.find(c => c.id === constituencyId)?.name || 'N/A';
   const isLoading = loadingArchived || loadingParties || loadingConstituencies || loadingElections;
   
   const groupedArchives = useMemo(() => {
-    if (!archivedCandidates) return {};
-    return archivedCandidates.reduce((acc, candidate) => {
+    if (!displayedArchivedCandidates) return {};
+    return displayedArchivedCandidates.reduce((acc, candidate) => {
       const { electionId } = candidate;
       if (!acc[electionId]) {
         const election = allElections?.find(e => e.id === electionId);
@@ -84,7 +88,7 @@ export default function ArchivePage() {
       acc[electionId].candidates.push(candidate);
       return acc;
     }, {} as Record<string, { electionName: string; date: string; candidates: ArchivedCandidate[] }>);
-  }, [archivedCandidates, allElections]);
+  }, [displayedArchivedCandidates, allElections]);
 
   const handleExport = (electionId: string) => {
     const archive = groupedArchives[electionId];
@@ -178,8 +182,7 @@ export default function ArchivePage() {
                     <SelectValue placeholder="Filter by election..." />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">All Elections</SelectItem>
-                    {pastElections?.map(election => (
+                    {electionsWithArchives.map(election => (
                         <SelectItem key={election.id} value={election.id}>{election.name}</SelectItem>
                     ))}
                 </SelectContent>
