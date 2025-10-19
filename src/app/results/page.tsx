@@ -151,7 +151,6 @@ export default function ResultsPage() {
       <div className="container mx-auto px-4 py-8">
         <PageHeader
           title="Past Election Results"
-          description="A historical overview of St. Lucia's general elections."
         />
         <p>Loading...</p>
       </div>
@@ -162,7 +161,6 @@ export default function ResultsPage() {
     <div className="container mx-auto px-4 py-8">
       <PageHeader
         title="Past Election Results"
-        description="A historical overview of St. Lucia's general elections since 1974."
       />
       <div className="mb-6 flex justify-end">
           <Select value={selectedElectionId} onValueChange={handleYearChange}>
