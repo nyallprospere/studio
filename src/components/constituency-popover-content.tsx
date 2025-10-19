@@ -29,7 +29,7 @@ const getLeaningLabel = (leaningValue?: string) => {
 function CandidateBox({ candidate, party }: { candidate: Candidate | null, party: Party | null }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const isIncumbent = candidate?.isIncumbent;
-    const candidateName = candidate ? `${'${candidate.firstName}'} ${'${candidate.lastName}'}${isIncumbent ? '*' : ''}` : 'Candidate TBD';
+    const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}${isIncumbent ? '*' : ''}` : 'Candidate TBD';
 
     if (!party) {
          return (
@@ -44,7 +44,7 @@ function CandidateBox({ candidate, party }: { candidate: Candidate | null, party
         );
     }
     
-    const partyText = `${'${party.acronym}'} Candidate`;
+    const partyText = `${party.acronym} Candidate`;
 
     return (
         <>
@@ -137,7 +137,7 @@ export function ConstituencyPopoverContent({
                                 paddingAngle={2}
                             >
                                 {chartData.map((entry) => (
-                                    <Cell key={`cell-${'${entry.name}'}`} fill={entry.color} />
+                                    <Cell key={`cell-${entry.name}`} fill={entry.color} />
                                 ))}
                             </Pie>
                         </PieChart>
