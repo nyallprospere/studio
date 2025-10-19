@@ -11,6 +11,8 @@ import { UserSquare, User } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { Button } from './ui/button';
 import { CandidateProfileDialog } from './candidate-profile-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 
 const politicalLeaningOptions = [
     { value: 'solid-uwp', label: 'Solid UWP' },
@@ -27,7 +29,7 @@ const getLeaningLabel = (leaningValue?: string) => {
 function CandidateBox({ candidate, party }: { candidate: Candidate | null, party: Party | null }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const isIncumbent = candidate?.isIncumbent;
-    const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}${isIncumbent ? '*' : ''}` : 'Candidate TBD';
+    const candidateName = candidate ? `${'${candidate.firstName}'} ${'${candidate.lastName}'}${isIncumbent ? '*' : ''}` : 'Candidate TBD';
 
     if (!party) {
          return (
@@ -42,7 +44,7 @@ function CandidateBox({ candidate, party }: { candidate: Candidate | null, party
         );
     }
     
-    const partyText = `${party.acronym} Candidate`;
+    const partyText = `${'${party.acronym}'} Candidate`;
 
     return (
         <>
@@ -70,7 +72,15 @@ function CandidateBox({ candidate, party }: { candidate: Candidate | null, party
 }
 
 
-export function ConstituencyPopoverContent({ constituency }: { constituency: Constituency }) {
+export function ConstituencyPopoverContent({ 
+    constituency, 
+    onLeaningChange,
+    onPredictionChange 
+}: { 
+    constituency: Constituency,
+    onLeaningChange?: (leaning: string) => void;
+    onPredictionChange?: (slp: number, uwp: number) => void;
+}) {
     const { firestore } = useFirebase();
 
     const candidatesQuery = useMemoFirebase(
@@ -112,7 +122,7 @@ export function ConstituencyPopoverContent({ constituency }: { constituency: Con
             
             <div>
                 <h5 className="text-center text-xs font-bold underline text-muted-foreground">Odds of Winning</h5>
-                <div className="relative h-24 w-full">
+                <div className="relative h-24 w-full -mb-1">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
@@ -127,7 +137,7 @@ export function ConstituencyPopoverContent({ constituency }: { constituency: Con
                                 paddingAngle={2}
                             >
                                 {chartData.map((entry) => (
-                                    <Cell key={`cell-${entry.name}`} fill={entry.color} />
+                                    <Cell key={`cell-${'${entry.name}'}`} fill={entry.color} />
                                 ))}
                             </Pie>
                         </PieChart>
@@ -143,6 +153,36 @@ export function ConstituencyPopoverContent({ constituency }: { constituency: Con
                 <CandidateBox candidate={uwpCandidate!} party={uwpParty!} />
             </div>
 
+            {onLeaningChange && (
+                <div className="space-y-2 pt-2">
+                    <h5 className="text-xs font-medium text-muted-foreground">Edit Leaning</h5>
+                     <Select value={constituency.politicalLeaning} onValueChange={onLeaningChange}>
+                        <SelectTrigger className="w-full h-8 text-xs">
+                            <SelectValue placeholder="Select leaning" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {politicalLeaningOptions.map(opt => (
+                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
+            {onPredictionChange && (
+                 <div className="space-y-2 pt-2">
+                    <h5 className="text-xs font-medium text-muted-foreground">Edit Prediction</h5>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold" style={{color: slpParty?.color}}>SLP: {constituency.predictedSlpPercentage}%</span>
+                        <Slider
+                            value={[constituency.predictedSlpPercentage || 50]}
+                            onValueChange={(value) => onPredictionChange(value[0], 100 - value[0])}
+                            max={100}
+                            step={1}
+                        />
+                        <span className="text-xs font-semibold" style={{color: uwpParty?.color}}>UWP: {constituency.predictedUwpPercentage}%</span>
+                    </div>
+                 </div>
+            )}
         </div>
     );
 }
