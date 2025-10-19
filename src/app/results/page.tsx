@@ -6,19 +6,20 @@ import { useState, useEffect, useMemo } from 'react';
 import type { Election, ElectionResult, Party, Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, orderBy, query, where, getDocs } from 'firebase/firestore';
-import { useSearchParams } from 'next/navigation';
+import { collection, orderBy, query, getDocs } from 'firebase/firestore';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 export default function ResultsPage() {
   const { firestore } = useFirebase();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const yearFromQuery = searchParams.get('year');
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
@@ -29,7 +30,7 @@ export default function ResultsPage() {
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
   
-  const [activeTab, setActiveTab] = useState<string | undefined>(undefined);
+  const [selectedElectionId, setSelectedElectionId] = useState<string | undefined>(undefined);
   const [resultsByYear, setResultsByYear] = useState<Record<string, ElectionResult[]>>({});
   const [loadingResults, setLoadingResults] = useState(true);
 
@@ -44,13 +45,12 @@ export default function ResultsPage() {
   }, [elections]);
 
   useEffect(() => {
-    if (yearFromQuery) {
-      const foundElection = sortedElections.find(e => e.id === yearFromQuery);
-      if(foundElection) setActiveTab(foundElection.id);
-    } else if (sortedElections && sortedElections.length > 0) {
-      setActiveTab(sortedElections[0].id);
+    if (yearFromQuery && sortedElections.find(e => e.id === yearFromQuery)) {
+      setSelectedElectionId(yearFromQuery);
+    } else if (sortedElections && sortedElections.length > 0 && !selectedElectionId) {
+      setSelectedElectionId(sortedElections[0].id);
     }
-  }, [yearFromQuery, sortedElections]);
+  }, [yearFromQuery, sortedElections, selectedElectionId]);
 
   useEffect(() => {
     async function fetchAllResults() {
@@ -81,7 +81,8 @@ export default function ResultsPage() {
   
   const loading = loadingElections || loadingParties || loadingConstituencies;
 
-  const currentElectionResults = activeTab ? resultsByYear[activeTab] : [];
+  const currentElectionResults = selectedElectionId ? resultsByYear[selectedElectionId] : [];
+  const currentElection = useMemo(() => sortedElections.find(e => e.id === selectedElectionId), [selectedElectionId, sortedElections]);
 
   const summaryData = useMemo(() => {
     if (!currentElectionResults || !parties) return [];
@@ -108,9 +109,6 @@ export default function ResultsPage() {
             slpSeats++;
         } else if (result.uwpVotes > result.slpVotes) {
             uwpSeats++;
-        } else {
-            // In case of a tie, it might be considered 'other' or a special case.
-            // For now, let's not assign it to either major party.
         }
     });
 
@@ -119,7 +117,6 @@ export default function ResultsPage() {
         { partyId: uwp.id, name: uwp.name, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color },
     ];
     
-    // Add "Other" if there are votes or seats
     if(otherVotes > 0 || otherSeats > 0) {
         summary.push({ partyId: 'other', name: 'Other/Independent', acronym: 'Other', seats: otherSeats, totalVotes: otherVotes, color: '#8884d8' });
     }
@@ -141,6 +138,11 @@ export default function ResultsPage() {
     }
     return config;
   }, [summaryData]);
+  
+  const handleYearChange = (electionId: string) => {
+    setSelectedElectionId(electionId);
+    router.push(`/results?year=${electionId}`);
+  };
 
 
   if (loading) {
@@ -161,22 +163,28 @@ export default function ResultsPage() {
         title="Past Election Results"
         description="A historical overview of St. Lucia's general elections since 1974."
       />
+      <div className="mb-6 flex justify-end">
+          <Select value={selectedElectionId} onValueChange={handleYearChange}>
+              <SelectTrigger className="w-[280px]">
+                  <SelectValue placeholder="Select an election year" />
+              </SelectTrigger>
+              <SelectContent>
+                  {sortedElections.map(election => (
+                      <SelectItem key={election.id} value={election.id}>
+                          {election.name}
+                      </SelectItem>
+                  ))}
+              </SelectContent>
+          </Select>
+      </div>
       <Card>
         <CardContent className="p-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {sortedElections?.map((election) => (
-                <TabsTrigger key={election.id} value={election.id}>
-                  {election.name}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
-            {sortedElections?.map((election) => (
-              <TabsContent key={election.id} value={election.id}>
+            {!selectedElectionId || !currentElection ? (
+                <div className="text-center py-12 text-muted-foreground">Please select an election to view results.</div>
+            ) : (
                 <div className="mt-6">
                   <h3 className="text-2xl font-headline mb-4">
-                    {election.name} Election Summary
+                    {currentElection.name} Election Summary
                   </h3>
 
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -230,7 +238,6 @@ export default function ResultsPage() {
                     </Card>
                   )}
 
-
                   <h3 className="text-2xl font-headline my-6">Constituency Breakdown</h3>
                    {loadingResults ? <p>Loading results...</p> : (
                         <Table>
@@ -276,9 +283,7 @@ export default function ResultsPage() {
                         </Table>
                    )}
                 </div>
-              </TabsContent>
-            ))}
-          </Tabs>
+              )}
         </CardContent>
       </Card>
     </div>
