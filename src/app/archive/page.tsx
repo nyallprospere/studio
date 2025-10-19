@@ -490,28 +490,18 @@ export default function ArchivePage() {
                             <ScrollArea className="h-96">
                                 <div className="space-y-2 pr-4">
                                 <div className="flex items-center justify-between p-3 border-b text-sm font-medium text-muted-foreground">
-                                    <div className="flex items-center gap-4">
-                                        <p className="w-12 text-center">Incumbent</p>
-                                        <p>Candidate</p>
-                                    </div>
+                                    <p>Candidate</p>
                                     <p>Actions</p>
                                 </div>
                                 {(editableArchives[electionId] || []).map(c => (
                                     <div key={c.id} className="flex items-center justify-between p-3 border rounded-md text-sm">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 flex justify-center">
-                                                <Checkbox 
-                                                    checked={c.isIncumbent}
-                                                    onCheckedChange={(checked) => handleIncumbentChange(electionId, c.id, !!checked)}
-                                                />
-                                            </div>
-                                            <div>
-                                                <p className="font-medium flex items-center gap-2">
-                                                    {c.firstName} {c.lastName}
-                                                    {c.isPartyLeader && <Star className="h-4 w-4 text-accent" />}
-                                                </p>
-                                                <p className="text-muted-foreground text-xs">{getPartyAcronym(c.partyId)} &bull; {getConstituencyName(c.constituencyId)}</p>
-                                            </div>
+                                        <div>
+                                            <p className="font-medium flex items-center gap-2">
+                                                {c.firstName} {c.lastName}
+                                                {c.isIncumbent && <span className="font-normal text-primary text-xs">(Inc.)</span>}
+                                                {c.isPartyLeader && <Star className="h-4 w-4 text-accent" />}
+                                            </p>
+                                            <p className="text-muted-foreground text-xs">{getPartyAcronym(c.partyId)} &bull; {getConstituencyName(c.constituencyId)}</p>
                                         </div>
                                         <Button variant="ghost" size="icon" onClick={() => { setEditingCandidate(c); setIsFormOpen(true);}}>
                                             <Pencil className="h-4 w-4" />
