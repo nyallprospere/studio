@@ -492,7 +492,7 @@ export default function ArchivePage() {
                                 <div className="flex items-center justify-between p-3 border-b text-sm font-medium text-muted-foreground">
                                     <p>Candidate</p>
                                     <div className="flex items-center gap-4">
-                                        <p className="w-12 text-center">Incumbent</p>
+                                        <p className="w-12 text-center">Inc.</p>
                                         <p>Actions</p>
                                     </div>
                                 </div>
