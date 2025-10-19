@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, writeBatch, getDocs } from 'firebase/firestore';
 import type { Candidate, Party, Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { CandidateForm } from './candidate-form';
 import { ImportDialog } from './import-dialog';
 import Image from 'next/image';
-import { UserSquare, Pencil, Trash2, Upload, Download } from 'lucide-react';
+import { UserSquare, Pencil, Trash2, Upload, Download, Archive } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -165,6 +165,46 @@ export default function AdminCandidatesPage() {
     }
   };
 
+  const handleArchiveAndClear = async () => {
+    if (!firestore || !candidatesCollection || !candidates) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Candidates data not loaded or firestore unavailable.' });
+        return;
+    }
+
+    const archiveCollectionRef = collection(firestore, 'archived_candidates');
+    const archiveDate = new Date().toISOString();
+    const archiveId = `archive-${Date.now()}`;
+
+    try {
+        const archiveBatch = writeBatch(firestore);
+        const deleteBatch = writeBatch(firestore);
+
+        // Move each candidate to the archive collection
+        for (const candidate of candidates) {
+            const { id, ...candidateData } = candidate;
+            const newArchivedDoc = doc(archiveCollectionRef);
+            archiveBatch.set(newArchivedDoc, { 
+                ...candidateData, 
+                archiveId,
+                archiveDate,
+                originalId: id
+             });
+
+            const originalDocRef = doc(candidatesCollection, id);
+            deleteBatch.delete(originalDocRef);
+        }
+
+        await archiveBatch.commit();
+        await deleteBatch.commit();
+
+        toast({ title: 'Archive Successful', description: `${candidates.length} candidates have been archived and cleared.` });
+
+    } catch (error) {
+        console.error("Error archiving and clearing candidates: ", error);
+        toast({ variant: 'destructive', title: 'Archive Failed', description: 'Could not archive candidates. Check console for details.' });
+    }
+  };
+
 
   const getPartyAcronym = (partyId: string) => parties?.find(p => p.id === partyId)?.acronym || 'N/A';
   const getConstituencyName = (constituencyId: string) => constituencies?.find(c => c.id === constituencyId)?.name || 'N/A';
@@ -200,6 +240,26 @@ export default function AdminCandidatesPage() {
                 <Download className="mr-2 h-4 w-4" />
                 Export
             </Button>
+             <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="outline" disabled={!candidates || candidates.length === 0}>
+                        <Archive className="mr-2 h-4 w-4" />
+                        Archive & Clear All
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action will move all {candidates?.length || 0} current candidates to an archive and then clear the current list. This cannot be undone.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleArchiveAndClear}>Yes, Archive and Clear</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
             <DialogTrigger asChild>
                 <Button onClick={() => { setEditingCandidate(null); setIsFormOpen(true)}}>Add New Candidate</Button>

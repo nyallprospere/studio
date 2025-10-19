@@ -44,6 +44,60 @@
         "name"
       ]
     },
+    "ArchivedCandidate": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Archived Candidate",
+      "type": "object",
+      "description": "Represents a candidate that has been archived from a previous election cycle.",
+      "properties": {
+        "originalId": {
+          "type": "string",
+          "description": "The original unique identifier for the candidate."
+        },
+        "partyId": {
+          "type": "string",
+          "description": "Reference to the political party the candidate belongs to."
+        },
+        "constituencyId": {
+          "type": "string",
+          "description": "Reference to the constituency the candidate was running in."
+        },
+        "name": {
+          "type": "string",
+          "description": "The candidate's full name."
+        },
+        "bio": {
+          "type": "string",
+          "description": "A short biography of the candidate."
+        },
+        "policyPositions": {
+          "type": "string",
+          "description": "The candidate's stances on key policy issues."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to the candidate's image.",
+          "format": "uri"
+        },
+        "archiveId": {
+          "type": "string",
+          "description": "An identifier for the archive batch."
+        },
+        "archiveDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date and time the candidate was archived."
+        }
+      },
+      "required": [
+        "originalId",
+        "partyId",
+        "constituencyId",
+        "name",
+        "archiveId",
+        "archiveDate"
+      ]
+    },
     "Party": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Party",
@@ -402,6 +456,22 @@
         }
       },
       {
+        "path": "/archived_candidates/{archivedCandidateId}",
+        "definition": {
+          "entityName": "ArchivedCandidate",
+          "schema": {
+            "$ref": "#/backend/entities/ArchivedCandidate"
+          },
+          "description": "Stores archived candidate data from previous election cycles. The `archivedCandidateId` is used as the document ID.",
+          "params": [
+            {
+              "name": "archivedCandidateId",
+              "description": "The unique identifier for the archived candidate record."
+            }
+          ]
+        }
+      },
+      {
         "path": "/elections/{electionId}",
         "definition": {
           "entityName": "Election",
@@ -505,5 +575,3 @@
     "reasoning": "The Firestore structure is designed to support the St. Lucia Elections Hub application, focusing on tracking candidates, parties, elections, polling data, constituencies, and election results. The structure prioritizes Authorization Independence by avoiding hierarchical authorization dependencies and denormalizing data where necessary. Structural Segregation is applied by keeping data with similar access needs in separate collections. Access Modeling employs path-based ownership and membership maps where appropriate. Data Clarity and Predictability are achieved through explicit state modeling and consistent naming conventions.\n\nAuthorization Independence is achieved primarily through structural choices that avoid the need for `get()` calls in security rules.  For instance, access to candidate information does not require reading party or constituency data.\n\nThe structure supports the required QAPs (Rules are not Filters) by:\n\n*   Segregating data into collections with homogeneous security needs.\n*   Avoiding overly complex rule logic that could lead to inefficient queries.\n* Added documents to store page layout and site settings."
   }
 }
-
-    
