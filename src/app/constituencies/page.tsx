@@ -225,8 +225,8 @@ export default function ConstituenciesPage() {
                     )}
                 </div>
             </div>
-            {user && (
-                <Button onClick={handleSaveAll} disabled={isSaving || !hasUnsavedChanges}>
+            {user && hasUnsavedChanges && (
+                <Button onClick={handleSaveAll} disabled={isSaving}>
                     <Save className="mr-2 h-4 w-4" />
                     Save Changes
                 </Button>
