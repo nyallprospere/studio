@@ -3,8 +3,8 @@
 
 import { useState, useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, writeBatch, getDocs, query, orderBy } from 'firebase/firestore';
-import type { Candidate, Party, Constituency, ArchivedCandidate } from '@/lib/types';
+import { collection, addDoc, updateDoc, deleteDoc, doc, writeBatch, getDocs, query, orderBy, where } from 'firebase/firestore';
+import type { Candidate, Party, Constituency, ArchivedCandidate, Election } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -39,11 +39,15 @@ export default function AdminCandidatesPage() {
   const archivedCandidatesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'archived_candidates'), orderBy('archiveDate', 'desc')) : null, [firestore]);
   const partiesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const constituenciesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
+  const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), where('isCurrent', '==', true)) : null, [firestore]);
   
   const { data: candidates, isLoading: loadingCandidates, error: errorCandidates } = useCollection<Candidate>(candidatesCollection);
   const { data: archivedCandidates, isLoading: loadingArchived } = useCollection<ArchivedCandidate>(archivedCandidatesQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesCollection);
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesCollection);
+  const { data: currentElections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
+
+  const currentElection = useMemo(() => currentElections?.[0], [currentElections]);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
@@ -225,7 +229,7 @@ export default function AdminCandidatesPage() {
 
   const getPartyAcronym = (partyId: string) => parties?.find(p => p.id === partyId)?.acronym || 'N/A';
   const getConstituencyName = (constituencyId: string) => constituencies?.find(c => c.id === constituencyId)?.name || 'N/A';
-  const isLoading = loadingCandidates || loadingParties || loadingConstituencies || loadingArchived;
+  const isLoading = loadingCandidates || loadingParties || loadingConstituencies || loadingArchived || loadingElections;
 
   const partyDetails = useMemo(() => {
     if (!parties) return { slp: null, uwp: null };
@@ -240,6 +244,10 @@ export default function AdminCandidatesPage() {
     if (!partyFilter) return candidates;
     return candidates.filter(candidate => candidate.partyId === partyFilter);
   }, [candidates, partyFilter]);
+  
+  const cardTitle = currentElection ? `${currentElection.name} Candidates` : 'Existing Candidates';
+  const cardDescription = currentElection ? `A list of all candidates for the ${currentElection.year} election.` : 'A list of all candidates currently in the system.';
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -344,8 +352,8 @@ export default function AdminCandidatesPage() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle>Existing Candidates</CardTitle>
-              <CardDescription>A list of all candidates currently in the system.</CardDescription>
+              <CardTitle>{cardTitle}</CardTitle>
+              <CardDescription>{cardDescription}</CardDescription>
             </div>
             <div className="flex items-center gap-2">
                 <Button variant={!partyFilter ? "secondary" : "outline"} size="sm" onClick={() => setPartyFilter(null)}>All</Button>
