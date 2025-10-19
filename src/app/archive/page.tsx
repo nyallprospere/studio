@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, doc, writeBatch, deleteDoc, query, orderBy, getDocs, updateDoc, addDoc } from 'firebase/firestore';
 import type { Party, Constituency, ArchivedCandidate, Election, Candidate } from '@/lib/types';
@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Download, Trash2, History, Lock, Unlock, Pencil, Upload, Eraser } from 'lucide-react';
+import { Download, Trash2, History, Lock, Unlock, Pencil, Upload, Eraser, Star, Save } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +28,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { CandidateForm } from './candidate-form';
 import { uploadFile, deleteFile } from '@/firebase/storage';
 import { ImportDialog } from '../admin/candidates/import-dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { isEqual } from 'lodash';
 
 
 export default function ArchivePage() {
@@ -39,6 +41,10 @@ export default function ArchivePage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingCandidate, setEditingCandidate] = useState<ArchivedCandidate | null>(null);
+
+  const [editableArchives, setEditableArchives] = useState<Record<string, ArchivedCandidate[]>>({});
+  const [originalArchives, setOriginalArchives] = useState<Record<string, ArchivedCandidate[]>>({});
+
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
   const { data: allElections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
@@ -63,7 +69,6 @@ export default function ArchivePage() {
   }, [allElections, archivedElectionIds]);
   
   useEffect(() => {
-    // Default to the most recent election with an archive
     if (electionsWithArchives.length > 0 && !selectedElectionId) {
         setSelectedElectionId(electionsWithArchives[0].id);
     }
@@ -97,6 +102,52 @@ export default function ArchivePage() {
     }, {} as Record<string, { electionName: string; date: string; candidates: ArchivedCandidate[] }>);
   }, [displayedArchivedCandidates, allElections]);
 
+  useEffect(() => {
+    const archives: Record<string, ArchivedCandidate[]> = {};
+     for (const electionId in groupedArchives) {
+        archives[electionId] = JSON.parse(JSON.stringify(groupedArchives[electionId].candidates));
+    }
+    setEditableArchives(archives);
+    setOriginalArchives(archives);
+  }, [groupedArchives]);
+
+  const handleIncumbentChange = (electionId: string, candidateId: string, isIncumbent: boolean) => {
+    setEditableArchives(prev => ({
+        ...prev,
+        [electionId]: prev[electionId].map(c => 
+            c.id === candidateId ? { ...c, isIncumbent } : c
+        )
+    }));
+  };
+
+  const handleSaveChanges = async (electionId: string) => {
+    if (!firestore) return;
+    const original = originalArchives[electionId];
+    const editable = editableArchives[electionId];
+    if (!original || !editable) return;
+    
+    const changes = editable.filter((c, index) => !isEqual(c, original[index]));
+    
+    if (changes.length === 0) {
+        toast({ title: 'No changes to save.' });
+        return;
+    }
+
+    try {
+        const batch = writeBatch(firestore);
+        changes.forEach(candidate => {
+            const docRef = doc(firestore, 'archived_candidates', candidate.id);
+            batch.update(docRef, { isIncumbent: candidate.isIncumbent });
+        });
+        await batch.commit();
+        toast({ title: 'Success', description: `${changes.length} candidate(s) updated.` });
+    } catch(e) {
+        console.error("Error saving changes: ", e);
+        toast({ variant: "destructive", title: "Error", description: "Failed to save changes." });
+    }
+  }
+
+
   const handleFormSubmit = async (values: any) => {
     if (!firestore || !editingCandidate) return;
 
@@ -117,7 +168,7 @@ export default function ArchivePage() {
       delete updatedCandidateData.photoFile;
       
       const archivedDocRef = doc(firestore, 'archived_candidates', editingCandidate.id);
-      await updateDoc(archivedDocRef, updatedCandidateData);
+      await updateDoc(archivedDocRef, updatedCandidateData as any);
 
       toast({ title: 'Candidate Updated', description: `${updatedCandidateData.firstName} ${updatedCandidateData.lastName}'s archived record has been updated.` });
     
@@ -145,7 +196,6 @@ export default function ArchivePage() {
         'Bio': c.bio,
         'Is Incumbent': c.isIncumbent ? 'Yes' : 'No',
         'Is Party Leader': c.isPartyLeader ? 'Yes' : 'No',
-        'Is Deputy Leader': c.isDeputyLeader ? 'Yes' : 'No',
         'Party Level': c.partyLevel,
         'Image URL': c.imageUrl
     }));
@@ -310,8 +360,7 @@ export default function ArchivePage() {
                     <SelectValue placeholder="Filter by election..." />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">All Elections</SelectItem>
-                    {allElections?.sort((a,b) => b.year - a.year).map(election => (
+                    {electionsWithArchives?.map(election => (
                         <SelectItem key={election.id} value={election.id}>{election.name}</SelectItem>
                     ))}
                 </SelectContent>
@@ -351,7 +400,9 @@ export default function ArchivePage() {
       {isLoading ? <p>Loading archives...</p> : (
         <div className="space-y-8">
             {Object.keys(groupedArchives).length > 0 ? (
-                Object.entries(groupedArchives).map(([electionId, archiveData]) => (
+                Object.entries(groupedArchives).map(([electionId, archiveData]) => {
+                  const hasChanges = !isEqual(originalArchives[electionId], editableArchives[electionId]);
+                  return (
                     <Card key={electionId}>
                         <CardHeader>
                             <div className="flex justify-between items-start">
@@ -362,6 +413,7 @@ export default function ArchivePage() {
                                     </CardDescription>
                                 </div>
                                 <div className="flex items-center gap-2">
+                                     {hasChanges && <Button size="sm" onClick={() => handleSaveChanges(electionId)}><Save className="mr-2 h-4 w-4" /> Save Changes</Button>}
                                      <Button variant="outline" size="sm" onClick={() => handleExport(electionId)}>
                                         <Download className="mr-2 h-4 w-4" /> Export
                                     </Button>
@@ -437,11 +489,20 @@ export default function ArchivePage() {
                         <CardContent>
                             <ScrollArea className="h-96">
                                 <div className="space-y-2 pr-4">
-                                {archiveData.candidates.map(c => (
+                                {(editableArchives[electionId] || []).map(c => (
                                     <div key={c.id} className="flex items-center justify-between p-3 border rounded-md text-sm">
-                                        <div>
-                                            <p className="font-medium">{c.firstName} {c.lastName}</p>
-                                            <p className="text-muted-foreground text-xs">{getPartyAcronym(c.partyId)} &bull; {getConstituencyName(c.constituencyId)}</p>
+                                        <div className="flex items-center gap-4">
+                                            <Checkbox 
+                                                checked={c.isIncumbent}
+                                                onCheckedChange={(checked) => handleIncumbentChange(electionId, c.id, !!checked)}
+                                            />
+                                            <div>
+                                                <p className="font-medium flex items-center gap-2">
+                                                    {c.firstName} {c.lastName}
+                                                    {c.isPartyLeader && <Star className="h-4 w-4 text-accent" />}
+                                                </p>
+                                                <p className="text-muted-foreground text-xs">{getPartyAcronym(c.partyId)} &bull; {getConstituencyName(c.constituencyId)}</p>
+                                            </div>
                                         </div>
                                         <Button variant="ghost" size="icon" onClick={() => { setEditingCandidate(c); setIsFormOpen(true);}}>
                                             <Pencil className="h-4 w-4" />
@@ -452,7 +513,7 @@ export default function ArchivePage() {
                             </ScrollArea>
                         </CardContent>
                     </Card>
-                ))
+                )})
             ) : (
                 <div className="text-center text-muted-foreground py-16">
                     <p>No archived candidates found for the selected election.</p>
