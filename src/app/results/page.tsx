@@ -10,10 +10,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, orderBy, query, getDocs } from 'firebase/firestore';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Cell, LabelList } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Image from 'next/image';
 
 
 export default function ResultsPage() {
@@ -113,12 +114,12 @@ export default function ResultsPage() {
     });
 
     const summary = [
-        { partyId: slp.id, name: slp.name, acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color },
-        { partyId: uwp.id, name: uwp.name, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color },
+        { partyId: slp.id, name: slp.name, acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color, logoUrl: slp.logoUrl },
+        { partyId: uwp.id, name: uwp.name, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color, logoUrl: uwp.logoUrl },
     ];
     
     if(otherVotes > 0 || otherSeats > 0) {
-        summary.push({ partyId: 'other', name: 'Other/Independent', acronym: 'Other', seats: otherSeats, totalVotes: otherVotes, color: '#8884d8' });
+        summary.push({ partyId: 'other', name: 'Other/Independent', acronym: 'Other', seats: otherSeats, totalVotes: otherVotes, color: '#8884d8', logoUrl: undefined });
     }
 
     return summary.filter(p => p.seats > 0 || p.totalVotes > 0)
@@ -211,7 +212,7 @@ export default function ResultsPage() {
                         <CardContent>
                             <ChartContainer config={chartConfig} className="h-40 w-full">
                                 <ResponsiveContainer>
-                                    <BarChart data={summaryData} layout="vertical" margin={{left: 20}}>
+                                    <BarChart data={summaryData} layout="vertical" margin={{left: 30}}>
                                         <XAxis type="number" hide />
                                         <YAxis dataKey="acronym" type="category" hide/>
                                         <ChartTooltip 
@@ -221,7 +222,23 @@ export default function ResultsPage() {
                                                 indicator="dot" 
                                             />}
                                         />
-                                        <Bar dataKey="seats" stackId="a" fill="var(--color)" radius={[0, 4, 4, 0]} />
+                                        <Bar dataKey="seats" stackId="a" radius={[0, 4, 4, 0]}>
+                                            {summaryData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                            <LabelList
+                                                dataKey="logoUrl"
+                                                position="insideLeft"
+                                                offset={10}
+                                                content={({ value, x, y, width, height }) => 
+                                                    value ? (
+                                                        <foreignObject x={(x || 0) - 25} y={(y || 0) - 5} width={30} height={30}>
+                                                          <Image src={value} alt="logo" width={30} height={30} className="rounded-full bg-white p-1" />
+                                                        </foreignObject>
+                                                    ) : null
+                                                }
+                                            />
+                                        </Bar>
                                     </BarChart>
                                 </ResponsiveContainer>
                             </ChartContainer>
