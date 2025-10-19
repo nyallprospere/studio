@@ -203,6 +203,8 @@ export default function AdminElectionsPage() {
     }
   };
 
+  const currentYear = new Date().getFullYear();
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-start mb-8">
@@ -262,7 +264,7 @@ export default function AdminElectionsPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                       <Button variant="outline" size="sm" onClick={() => handleSetCurrent(election.id)} disabled={election.isCurrent}>
+                       <Button variant="outline" size="sm" onClick={() => handleSetCurrent(election.id)} disabled={election.isCurrent || election.year < currentYear}>
                            Set as Current
                        </Button>
                        <Button variant="ghost" size="icon" onClick={() => { setEditingElection(election); setIsFormOpen(true);}}>
