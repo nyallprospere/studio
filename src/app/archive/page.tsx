@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
@@ -11,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Download, Trash2, History, Lock, Unlock, Pencil, Upload, Eraser, Star, Save, ArrowUpDown } from 'lucide-react';
+import { Download, Trash2, History, Lock, Unlock, Pencil, Upload, Eraser, Star, Save, ArrowUpDown, Image as ImageIcon } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +29,8 @@ import { uploadFile, deleteFile } from '@/firebase/storage';
 import { ImportDialog } from '../admin/candidates/import-dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { isEqual } from 'lodash';
+import Image from 'next/image';
+import { Input } from '@/components/ui/input';
 
 
 export default function ArchivePage() {
@@ -45,6 +46,7 @@ export default function ArchivePage() {
   const [editableArchives, setEditableArchives] = useState<Record<string, ArchivedCandidate[]>>({});
   const [originalArchives, setOriginalArchives] = useState<Record<string, ArchivedCandidate[]>>({});
   const [sortBy, setSortBy] = useState<'lastName' | 'constituency'>('lastName');
+  const [candidatePhotos, setCandidatePhotos] = useState<Record<string, File | null>>({});
 
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
@@ -344,6 +346,36 @@ export default function ArchivePage() {
     }
   };
 
+  const handlePhotoFileChange = (candidateId: string, file: File | null) => {
+    setCandidatePhotos(prev => ({ ...prev, [candidateId]: file }));
+  };
+
+  const handlePhotoUpload = async (candidate: ArchivedCandidate) => {
+    if (!firestore) return;
+    const file = candidatePhotos[candidate.id];
+    if (!file) {
+      toast({ variant: 'destructive', title: 'No file selected' });
+      return;
+    }
+
+    try {
+      if (candidate.imageUrl) {
+        await deleteFile(candidate.imageUrl);
+      }
+      const newImageUrl = await uploadFile(file, `candidates/${candidate.originalId || candidate.id}.jpg`);
+      
+      const candidateDoc = doc(firestore, 'archived_candidates', candidate.id);
+      await updateDoc(candidateDoc, { imageUrl: newImageUrl });
+
+      toast({ title: 'Photo Uploaded', description: `Photo for ${candidate.firstName} ${candidate.lastName} has been updated.` });
+      setCandidatePhotos(prev => ({...prev, [candidate.id]: null}));
+
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload photo.' });
+    }
+  };
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -514,20 +546,40 @@ export default function ArchivePage() {
                                         </Select>
                                     </div>
                                     <div className="flex items-center gap-4">
+                                        <p className="w-24 text-center">Photo</p>
                                         <p className="w-12 text-center">Inc.</p>
                                         <p>Actions</p>
                                     </div>
                                 </div>
                                 {sortedCandidates.map(c => (
                                     <div key={c.id} className="flex items-center justify-between p-3 border rounded-md text-sm">
-                                        <div>
-                                            <p className="font-medium flex items-center gap-2">
-                                                {c.firstName} {c.lastName}
-                                                {c.isPartyLeader && <Star className="h-4 w-4 text-accent" />}
-                                            </p>
-                                            <p className="text-muted-foreground text-xs">{getPartyAcronym(c.partyId)} &bull; {getConstituencyName(c.constituencyId)}</p>
+                                        <div className="flex items-center gap-3">
+                                            <div className="relative h-10 w-10 flex-shrink-0 rounded-full overflow-hidden bg-muted">
+                                                {c.imageUrl ? (
+                                                    <Image src={c.imageUrl} alt={`${c.firstName} ${c.lastName}`} fill className="object-cover" />
+                                                ) : (
+                                                    <ImageIcon className="h-6 w-6 text-muted-foreground m-auto" />
+                                                )}
+                                            </div>
+                                            <div>
+                                                <p className="font-medium flex items-center gap-2">
+                                                    {c.firstName} {c.lastName}
+                                                    {c.isPartyLeader && <Star className="h-4 w-4 text-accent" />}
+                                                </p>
+                                                <p className="text-muted-foreground text-xs">{getPartyAcronym(c.partyId)} &bull; {getConstituencyName(c.constituencyId)}</p>
+                                            </div>
                                         </div>
                                         <div className="flex items-center gap-4">
+                                            <div className="flex items-center gap-2 w-24">
+                                                <Input 
+                                                    type="file" 
+                                                    className="h-8 text-xs file:mr-2 file:text-xs"
+                                                    onChange={(e) => handlePhotoFileChange(c.id, e.target.files ? e.target.files[0] : null)}
+                                                />
+                                                <Button size="icon" className="h-8 w-8" onClick={() => handlePhotoUpload(c)} disabled={!candidatePhotos[c.id]}>
+                                                    <Upload className="h-4 w-4" />
+                                                </Button>
+                                            </div>
                                             <Checkbox
                                                 checked={c.isIncumbent}
                                                 onCheckedChange={(checked) => handleIncumbentChange(electionId, c.id, !!checked)}
