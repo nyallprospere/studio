@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, LogIn, LogOut, UserPlus, FilePlus, Calendar, Pencil, Archive } from 'lucide-react';
+import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, LogIn, LogOut, UserPlus, FilePlus, Calendar, Pencil, Archive, Cat } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useUser, useAuth, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -37,6 +37,7 @@ const mainNavItems = [
   { href: '/constituencies', icon: Map, label: 'Constituencies' },
   { href: '/make-your-own', icon: Pencil, label: 'Make Your Own' },
   { href: '/interactive-maps', icon: Map, label: 'Interactive Maps' },
+  { href: '/pokemon', icon: Cat, label: 'Pokemon' },
 ];
 
 const adminNavItems = [
