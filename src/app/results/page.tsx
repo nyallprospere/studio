@@ -317,6 +317,7 @@ export default function ResultsPage() {
                                         constituencies={resultsMapConstituencies}
                                         selectedConstituencyId={selectedConstituencyId}
                                         onConstituencyClick={setSelectedConstituencyId}
+                                        electionId={selectedElectionId}
                                     />
                                 </CardContent>
                              </Card>

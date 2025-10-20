@@ -2,12 +2,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { Constituency, Candidate, Party } from '@/lib/types';
+import type { Constituency, Candidate, Party, ArchivedCandidate } from '@/lib/types';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import Image from 'next/image';
-import { UserSquare, User } from 'lucide-react';
+import { UserSquare } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { Button } from './ui/button';
 import { CandidateProfileDialog } from './candidate-profile-dialog';
@@ -26,7 +26,7 @@ const getLeaningLabel = (leaningValue?: string) => {
     return politicalLeaningOptions.find(opt => opt.value === leaningValue)?.label || 'Tossup';
 };
 
-function CandidateBox({ candidate, party }: { candidate: Candidate | null, party: Party | null }) {
+function CandidateBox({ candidate, party }: { candidate: Candidate | ArchivedCandidate | null, party: Party | null }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const isIncumbent = candidate?.isIncumbent;
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}${isIncumbent ? '*' : ''}` : 'Candidate TBD';
@@ -66,7 +66,8 @@ function CandidateBox({ candidate, party }: { candidate: Candidate | null, party
                     View Profile
                 </Button>
             </div>
-            <CandidateProfileDialog candidate={candidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />
+            {/* The dialog expects a `Candidate` type, so we cast it. */}
+            <CandidateProfileDialog candidate={candidate as Candidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />
         </>
     );
 }
@@ -74,20 +75,33 @@ function CandidateBox({ candidate, party }: { candidate: Candidate | null, party
 
 export function ConstituencyPopoverContent({ 
     constituency, 
+    electionId,
     onLeaningChange,
     onPredictionChange 
 }: { 
     constituency: Constituency,
+    electionId?: string;
     onLeaningChange?: (leaning: string) => void;
     onPredictionChange?: (slp: number, uwp: number) => void;
 }) {
     const { firestore } = useFirebase();
 
-    const candidatesQuery = useMemoFirebase(
-        () => firestore ? query(collection(firestore, 'candidates'), where('constituencyId', '==', constituency.id)) : null,
-        [firestore, constituency.id]
-    );
-    const { data: candidates, isLoading: loadingCandidates } = useCollection<Candidate>(candidatesQuery);
+    // Determine the collection and queries based on whether an electionId is provided
+    const candidatesQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        if (electionId) {
+            // Fetch from archived_candidates for a specific election
+            return query(
+                collection(firestore, 'archived_candidates'),
+                where('constituencyId', '==', constituency.id),
+                where('electionId', '==', electionId)
+            );
+        }
+        // Default to current candidates
+        return query(collection(firestore, 'candidates'), where('constituencyId', '==', constituency.id));
+    }, [firestore, constituency.id, electionId]);
+
+    const { data: candidates, isLoading: loadingCandidates } = useCollection<Candidate | ArchivedCandidate>(candidatesQuery);
 
     const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
     const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
