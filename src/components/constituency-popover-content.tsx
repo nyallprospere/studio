@@ -77,13 +77,14 @@ function CandidateBox({ candidate, party, isWinner, votes, margin, electionStatu
                                 {isWinner && margin !== undefined && margin !== null && (
                                     <sup className="text-[11px] font-bold text-muted-foreground ml-1">(+{margin.toLocaleString()})</sup>
                                 )}
-                                <span className="text-xs text-muted-foreground font-normal"> votes</span>
                             </div>
                         }
                     </div>
                 </div>
                 {isWinner && electionStatus && (
-                    <p className="font-bold text-xs text-right mt-1" style={{color: statusColor}}>{electionStatus}</p>
+                   <div className="text-right mt-1">
+                        <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
+                    </div>
                 )}
             </div>
             <CandidateProfileDialog candidate={candidate as Candidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />
