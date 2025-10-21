@@ -51,36 +51,34 @@ function CandidateBox({ candidate, party, isWinner, votes, margin, electionStatu
                 isWinner && "border-2 border-green-600"
             )}>
                  {isWinner && <CheckCircle2 className="absolute -top-2 -right-2 h-5 w-5 text-green-600 bg-white rounded-full" />}
-                 <div className="flex items-start justify-between gap-2">
-                     <div className="flex items-center gap-2">
-                        {party.logoUrl && (
-                            <Image src={party.logoUrl} alt={party.name} width={24} height={24} className="mx-auto" />
-                        )}
-                        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-background flex-shrink-0">
+                 <div className="flex items-center justify-between gap-2">
+                    <div className="flex-1 flex flex-col items-center text-center">
+                         <div className="relative h-10 w-10 rounded-full overflow-hidden bg-background flex-shrink-0">
                             {candidate?.imageUrl ? (
                                 <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
                             ) : (
                                 <UserSquare className="h-full w-full text-muted-foreground" />
                             )}
                         </div>
-                    </div>
-                    <div className="flex-grow text-center">
-                       <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                        <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold" onClick={() => setProfileOpen(true)} disabled={!candidate}>
                            {candidateName}
                         </Button>
-                        <div className="flex items-center justify-center gap-2">
-                             {isWinner && electionStatus && (
-                                <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
-                            )}
-                        </div>
                     </div>
-                    <div className="text-right">
-                         <div className="text-sm font-bold">
+                    {party.logoUrl && (
+                        <div className="flex-1 flex justify-center items-center">
+                            <Image src={party.logoUrl} alt={party.name} width={32} height={32} />
+                        </div>
+                    )}
+                    <div className="flex-1 text-right">
+                         <div className="text-lg font-bold">
                             {votes !== undefined && votes.toLocaleString()}
                             {isWinner && margin !== undefined && margin !== null && (
                                  <sup className="text-[11px] font-bold text-muted-foreground ml-1">(+{margin.toLocaleString()})</sup>
                             )}
                         </div>
+                        {isWinner && electionStatus && (
+                            <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
+                        )}
                     </div>
                 </div>
             </div>
