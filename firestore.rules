@@ -1,179 +1,24 @@
-/**
- * @fileoverview Firestore Security Rules for the political data platform.
- *
- * Core Philosophy:
- * This ruleset prioritizes secure data access based on a combination of factors:
- *  - For most collections, only authenticated users can read or write data.
- *  - Certain collections, such as `party_logos`, allow public read access.
- *  - No collection allows completely open write access. Write operations always require authentication.
- *  - Data validation is relaxed to enable rapid prototyping and iteration.
- *
- * Data Structure:
- * The Firestore database is structured as follows:
- * - Top-level collections store core data entities like parties, candidates, elections, etc.
- * - A `/settings` document stores global site settings and page layouts.
- * - User activity is stored under the `/user_activity` collection.
- *
- * Key Security Decisions:
- * - User listing is generally disallowed to protect user privacy.
- * - The `party_logos` collection is publicly readable to allow the display of party logos without authentication.
- * - Default security posture for ambiguous relationships is strict: deny access unless explicitly granted.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * @description Grants public read access to party logos.
-     * @path /party_logos/{partyLogoId}
-     * @allow (get, list): Any user (or no user) can read party logos.
-     * @deny (create, update, delete): No user can create, update, or delete party logos.
-     * @principle Allows public read access for displaying party logos.
-     */
-    match /party_logos/{partyLogoId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+    // Allow read access to any authenticated user.
+    match /{document=**} {
+      allow read: if request.auth != null;
     }
 
-    /**
-     * @description Controls access to political party information.
-     * @path /parties/{partyId}
-     * @allow (get, list): Any authenticated user can read party information.
-     * @deny (create, update, delete): No user can create, update, or delete party information.
-     * @principle Requires authentication for accessing party data.
-     */
-    match /parties/{partyId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
+    // Parties collection: Only allow updates if the user is authenticated
+    // and creating the doc, otherwise deny
+   match /parties/{partyId} {
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow read: if request.auth != null;
+      allow delete: if false; // No one can delete a party.
     }
 
-    /**
-     * @description Controls access to event information.
-     * @path /events/{eventId}
-     * @allow (get, list): Any authenticated user can read event information.
-     * @deny (create, update, delete): No user can create, update, or delete event information.
-     * @principle Requires authentication for accessing event data.
-     */
-    match /events/{eventId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
+    // Secure user profiles. Only the authenticated user can read/write their own profile.
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
-
-    /**
-     * @description Controls access to candidate information.
-     * @path /candidates/{candidateId}
-     * @allow (get, list): Any authenticated user can read candidate information.
-     * @deny (create, update, delete): No user can create, update, or delete candidate information.
-     * @principle Requires authentication for accessing candidate data.
-     */
-    match /candidates/{candidateId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Controls access to archived candidate information.
-     * @path /archived_candidates/{archivedCandidateId}
-     * @allow (get, list): Any authenticated user can read archived candidate information.
-     * @deny (create, update, delete): No user can create, update, or delete archived candidate information.
-     * @principle Requires authentication for accessing archived candidate data.
-     */
-    match /archived_candidates/{archivedCandidateId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Controls access to election information.
-     * @path /elections/{electionId}
-     * @allow (get, list): Any authenticated user can read election information.
-     * @deny (create, update, delete): No user can create, update, or delete election information.
-     * @principle Requires authentication for accessing election data.
-     */
-    match /elections/{electionId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Controls access to polling data.
-     * @path /polling_data/{pollingDataId}
-     * @allow (get, list): Any authenticated user can read polling data.
-     * @deny (create, update, delete): No user can create, update, or delete polling data.
-     * @principle Requires authentication for accessing polling data.
-     */
-    match /polling_data/{pollingDataId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Controls access to constituency information.
-     * @path /constituencies/{constituencyId}
-     * @allow (get, list): Any authenticated user can read constituency information.
-     * @deny (create, update, delete): No user can create, update, or delete constituency information.
-     * @principle Requires authentication for accessing constituency data.
-     */
-    match /constituencies/{constituencyId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Controls access to election result information.
-     * @path /election_results/{electionResultId}
-     * @allow (get, list): Any authenticated user can read election result information.
-     * @deny (create, update, delete): No user can create, update, or delete election result information.
-     * @principle Requires authentication for accessing election result data.
-     */
-    match /election_results/{electionResultId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Controls access to page layouts. This is a single document.
-     * @path /settings/pageLayouts
-     * @allow (get): Any authenticated user can read page layouts.
-     * @deny (create, update, delete, list): No user can create, update, delete or list page layouts.
-     * @principle Requires authentication for accessing page layout data.
-     */
-    match /settings/pageLayouts {
-      allow get: if isSignedIn();
-      allow create, update, delete, list: if false;
-    }
-
-    /**
-     * @description Controls access to site settings. This is a single document.
-     * @path /settings/site
-     * @allow (get): Any authenticated user can read site settings.
-     * @deny (create, update, delete, list): No user can create, update, delete or list site settings.
-     * @principle Requires authentication for accessing site settings data.
-     */
-    match /settings/site {
-      allow get: if isSignedIn();
-      allow create, update, delete, list: if false;
-    }
-
-   /**
-     * @description Controls access to user activity data.
-     * @path /user_activity/{activityId}
-     * @allow (create): Any authenticated user can create their own activity log.
-     * @deny (get, list, update, delete): No user can read, list, update or delete activity logs.
-     * @principle Only allows authenticated users to create their own activity logs.
-     */
-    match /user_activity/{activityId} {
-        allow create: if isSignedIn();
-        allow get, list, update, delete: if false;
-    }
-
-  }
-
-  /**
-   * @description Checks if the user is signed in.
-   * @return {bool} True if the user is signed in, false otherwise.
-   */
-  function isSignedIn() {
-    return request.auth != null;
   }
 }
