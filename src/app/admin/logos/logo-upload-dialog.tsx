@@ -16,10 +16,10 @@ import { useFirebase, errorEmitter, FirestorePermissionError } from '@/firebase'
 import { collection, doc, query, where, getDocs, updateDoc, addDoc, writeBatch } from 'firebase/firestore';
 import { uploadFile, deleteFile } from '@/firebase/storage';
 import { Loader2 } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface LogoUploadDialogProps {
   isOpen: boolean;
@@ -122,14 +122,6 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
         onClose();
 
     } catch (error) {
-        if (!(error instanceof FirestorePermissionError)) {
-             const permissionError = new FirestorePermissionError({
-                path: 'party_logos',
-                operation: 'list',
-            });
-            errorEmitter.emit('permission-error', permissionError);
-        }
-        
         toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload logos due to a permission issue.' });
     } finally {
         setIsLoading(false);
@@ -163,32 +155,30 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
                                 placeholder="Select elections..."
                             >
                                 <CommandInput placeholder="Search elections..." />
-                                <ScrollArea className="h-48">
-                                    <CommandList>
-                                        <CommandEmpty>No results found.</CommandEmpty>
-                                        <CommandGroup>
-                                        {electionOptions.map((option) => (
-                                            <CommandItem
-                                                key={option.value}
-                                                onSelect={() => {
-                                                    const newValue = field.value.includes(option.value)
-                                                    ? field.value.filter((v) => v !== option.value)
-                                                    : [...field.value, option.value];
-                                                    field.onChange(newValue);
-                                                }}
-                                                >
-                                                <Check
-                                                    className={cn(
-                                                    'mr-2 h-4 w-4',
-                                                    field.value.includes(option.value) ? 'opacity-100' : 'opacity-0'
-                                                    )}
-                                                />
-                                                {option.label}
-                                            </CommandItem>
-                                        ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </ScrollArea>
+                                <CommandList>
+                                    <CommandEmpty>No results found.</CommandEmpty>
+                                    <CommandGroup>
+                                    {electionOptions.map((option) => (
+                                        <CommandItem
+                                            key={option.value}
+                                            onSelect={() => {
+                                                const newValue = field.value.includes(option.value)
+                                                ? field.value.filter((v) => v !== option.value)
+                                                : [...field.value, option.value];
+                                                field.onChange(newValue);
+                                            }}
+                                            >
+                                            <Check
+                                                className={cn(
+                                                'mr-2 h-4 w-4',
+                                                field.value.includes(option.value) ? 'opacity-100' : 'opacity-0'
+                                                )}
+                                            />
+                                            {option.label}
+                                        </CommandItem>
+                                    ))}
+                                    </CommandGroup>
+                                </CommandList>
                             </MultiSelect>
                             <FormMessage />
                         </FormItem>
