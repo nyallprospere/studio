@@ -276,7 +276,7 @@ export default function ResultsPage() {
                                     <TableHeader>
                                     <TableRow>
                                         <TableHead>Constituency</TableHead>
-                                        <TableHead>Winning Party</TableHead>
+                                        <TableHead>Result</TableHead>
                                         <TableHead>SLP Votes</TableHead>
                                         <TableHead>UWP Votes</TableHead>
                                         <TableHead>Other Votes</TableHead>
@@ -288,15 +288,30 @@ export default function ResultsPage() {
                                     <TableBody>
                                     {currentElectionResults && currentElectionResults.length > 0 ? currentElectionResults.map((cr) => {
                                         const constituency = getConstituencyById(cr.constituencyId);
-                                        const winner = cr.slpVotes > cr.uwpVotes ? 'SLP' : 'UWP';
+                                        const currentWinner = cr.slpVotes > cr.uwpVotes ? 'SLP' : 'UWP';
+                                        
+                                        const previousResult = previousElectionResults?.find(r => r.constituencyId === cr.constituencyId);
+                                        const previousWinner = previousResult ? (previousResult.slpVotes > previousResult.uwpVotes ? 'SLP' : 'UWP') : null;
+
+                                        let resultStatus = `${currentWinner} Win`;
+                                        if (previousWinner) {
+                                            if (currentWinner === previousWinner) {
+                                                resultStatus = `${currentWinner} Hold`;
+                                            } else {
+                                                resultStatus = `${currentWinner} Gain`;
+                                            }
+                                        }
+
                                         const slpParty = parties?.find(p => p.acronym === 'SLP');
                                         const uwpParty = parties?.find(p => p.acronym === 'UWP');
+                                        const winnerColor = currentWinner === 'SLP' ? slpParty?.color : uwpParty?.color;
+
 
                                         return (
                                         <TableRow key={cr.id} onClick={() => setSelectedConstituencyId(cr.constituencyId)} className={selectedConstituencyId === cr.constituencyId ? 'bg-muted' : ''}>
                                             <TableCell className="font-medium">{constituency?.name || cr.constituencyId}</TableCell>
                                             <TableCell>
-                                                <span className="font-semibold" style={{ color: winner === 'SLP' ? slpParty?.color : uwpParty?.color }}>{winner}</span>
+                                                <span className="font-semibold" style={{ color: winnerColor }}>{resultStatus}</span>
                                             </TableCell>
                                             <TableCell>{cr.slpVotes.toLocaleString()}</TableCell>
                                             <TableCell>{cr.uwpVotes.toLocaleString()}</TableCell>
@@ -341,3 +356,5 @@ export default function ResultsPage() {
     </div>
   );
 }
+
+    
