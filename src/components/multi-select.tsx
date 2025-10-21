@@ -14,7 +14,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from './ui/scroll-area';
 
 export type OptionType = {
   label: string;
@@ -52,48 +51,13 @@ function MultiSelect({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={`w-full justify-between h-auto min-h-10 ${selected.length > 0 ? 'h-auto' : ''}`}
-          onClick={() => setOpen(!open)}
+          className={cn("w-full justify-between", className)}
         >
           <div className="flex gap-1 flex-wrap">
             {selected.length > 0 ? (
-              options
-                .filter((option) => selected.includes(option.value))
-                .map((option) => (
-                  <Badge
-                    variant="secondary"
-                    key={option.value}
-                    className="mr-1"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleUnselect(option.value);
-                    }}
-                  >
-                    {option.label}
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`Remove ${option.label}`}
-                      className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          handleUnselect(option.value);
-                        }
-                      }}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleUnselect(option.value);
-                      }}
-                    >
-                      <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                    </span>
-                  </Badge>
-                ))
+               <span className="text-sm">
+                {selected.length} {selected.length === 1 ? 'year' : 'years'} selected
+              </span>
             ) : (
               <span className="text-muted-foreground">{placeholder}</span>
             )}
@@ -103,11 +67,7 @@ function MultiSelect({
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
         <Command className={className}>
-          <ScrollArea>
-              <div className="max-h-64">
-                {children}
-              </div>
-          </ScrollArea>
+            {children}
         </Command>
       </PopoverContent>
     </Popover>
