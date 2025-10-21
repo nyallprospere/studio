@@ -7,7 +7,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <div className="flex min-h-screen">
         <SidebarNav />
-        <main className="flex-1 flex flex-col bg-background">
+        <main className="flex-1 flex flex-col bg-background p-4">
           <Header />
           <div className="flex-1 overflow-y-auto">{children}</div>
         </main>

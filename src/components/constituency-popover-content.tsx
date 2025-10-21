@@ -211,42 +211,56 @@ export function ConstituencyPopoverContent({
             
             {election?.isCurrent || !election ? (
                <div className="space-y-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex flex-col items-center p-2 rounded-md bg-muted">
-                        {slpParty?.logoUrl && (
-                            <div className="relative h-8 w-8 mb-2">
-                                <Image src={slpParty.logoUrl} alt={slpParty.name} fill className="object-contain" />
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="flex flex-col items-center p-2 rounded-md bg-muted">
+                            {slpParty?.logoUrl && (
+                                <div className="relative h-8 w-8 mb-2">
+                                    <Image src={slpParty.logoUrl} alt={slpParty.name} fill className="object-contain" />
+                                </div>
+                            )}
+                            <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
+                            {slpCandidate?.imageUrl ? (
+                                <Image src={slpCandidate.imageUrl} alt={slpCandidate.name || 'SLP Candidate'} fill className="object-cover" />
+                            ) : (
+                                <UserSquare className="h-full w-full text-gray-400" />
+                            )}
                             </div>
-                        )}
-                        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
-                          {slpCandidate?.imageUrl ? (
-                              <Image src={slpCandidate.imageUrl} alt={slpCandidate.name} fill className="object-cover" />
-                          ) : (
-                              <UserSquare className="h-full w-full text-gray-400" />
-                          )}
+                            <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!slpCandidate}>
+                            {slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'TBD'}
+                            </Button>
                         </div>
-                        <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!slpCandidate}>
-                           {slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'TBD'}
-                        </Button>
-                    </div>
-                    <div className="flex flex-col items-center p-2 rounded-md bg-muted">
-                        {uwpParty?.logoUrl && (
-                            <div className="relative h-8 w-8 mb-2">
-                                <Image src={uwpParty.logoUrl} alt={uwpParty.name} fill className="object-contain" />
+                        <div className="flex flex-col items-center p-2 rounded-md bg-muted">
+                            {uwpParty?.logoUrl && (
+                                <div className="relative h-8 w-8 mb-2">
+                                    <Image src={uwpParty.logoUrl} alt={uwpParty.name} fill className="object-contain" />
+                                </div>
+                            )}
+                            <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
+                            {uwpCandidate?.imageUrl ? (
+                                <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || 'UWP Candidate'} fill className="object-cover" />
+                            ) : (
+                                <UserSquare className="h-full w-full text-gray-400" />
+                            )}
                             </div>
-                        )}
-                        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
-                          {uwpCandidate?.imageUrl ? (
-                              <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name} fill className="object-cover" />
-                          ) : (
-                              <UserSquare className="h-full w-full text-gray-400" />
-                          )}
+                            <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!uwpCandidate}>
+                            {uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'TBD'}
+                            </Button>
                         </div>
-                        <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!uwpCandidate}>
-                           {uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'TBD'}
-                        </Button>
                     </div>
-                  </div>
+                    <div className="text-center space-y-1 py-2">
+                        <div>
+                            <p className="text-xs font-semibold text-muted-foreground">STATUS</p>
+                            <p className="font-bold">{getLeaningLabel(constituency.politicalLeaning)}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-semibold text-muted-foreground">ODDS OF WINNING</p>
+                            <div className="flex justify-center items-baseline gap-2">
+                                <p className="font-bold" style={{color: slpParty?.color}}>{constituency.predictedSlpPercentage}%</p>
+                                <p className="text-xs text-muted-foreground">vs</p>
+                                <p className="font-bold" style={{color: uwpParty?.color}}>{constituency.predictedUwpPercentage}%</p>
+                            </div>
+                        </div>
+                    </div>
                    <ChartContainer config={{}} className="h-24 w-full">
                        <ResponsiveContainer width="100%" height="100%">
                            <PieChart>
