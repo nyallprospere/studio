@@ -8,7 +8,7 @@ import type { Party, Election } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { PartyForm } from './party-form';
 import Image from 'next/image';
 import { Shield, Pencil, Trash2, Link as LinkIcon, Upload } from 'lucide-react';
@@ -17,7 +17,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
+  AlertDialogDescription as AlertDialogDescriptionComponent,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -266,9 +266,9 @@ export default function AdminPartiesPage() {
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
+                              <AlertDialogDescriptionComponent>
                                 This will permanently delete the party "{party.name}" and all associated data. This action cannot be undone.
-                              </AlertDialogDescription>
+                              </AlertDialogDescriptionComponent>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
