@@ -17,7 +17,7 @@ import { collection, doc, query, where, getDocs, updateDoc, addDoc, writeBatch }
 import { uploadFile, deleteFile } from '@/firebase/storage';
 import { Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandList } from '@/components/ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
