@@ -213,15 +213,15 @@ export default function ResultsPage() {
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
                     {summaryData.map((summaryItem) => (
                       <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
-                        <CardHeader>
+                        <CardHeader className="flex flex-col items-center">
                           <CardTitle className="text-lg">{summaryItem.acronym}</CardTitle>
                           {summaryItem.logoUrl && (
-                            <div className="relative h-12 w-12">
+                            <div className="relative h-12 w-12 mt-2">
                                 <Image src={summaryItem.logoUrl} alt={`${summaryItem.name} logo`} fill className="object-contain" />
                             </div>
                           )}
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="text-center">
                           <div className="text-3xl font-bold">{summaryItem.seats} Seats</div>
                           <p className="text-sm text-muted-foreground">
                             {summaryItem.totalVotes.toLocaleString()} votes
@@ -260,7 +260,7 @@ export default function ResultsPage() {
                                                 content={({ value, x, y, width, height }) => 
                                                     value ? (
                                                         <foreignObject x={(x || 0) - 25} y={(y || 0) - 5} width={30} height={30}>
-                                                          <Image src={value} alt="logo" width={30} height={30} className="rounded-full bg-white p-1" />
+                                                          <Image src={value} alt="logo" width={30} height={30} className="rounded-full p-1" />
                                                         </foreignObject>
                                                     ) : null
                                                 }
