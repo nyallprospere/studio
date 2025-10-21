@@ -326,7 +326,7 @@ export default function ResultsPage() {
                                         constituencies={resultsMapConstituencies}
                                         selectedConstituencyId={selectedConstituencyId}
                                         onConstituencyClick={setSelectedConstituencyId}
-                                        electionId={selectedElectionId}
+                                        election={currentElection}
                                         electionResults={currentElectionResults}
                                         previousElectionResults={previousElectionResults}
                                     />
