@@ -12,9 +12,10 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { uploadFile, deleteFile } from '@/firebase/storage';
 import Image from 'next/image';
-import { Upload, Shield } from 'lucide-react';
+import { Upload, Shield, Pencil } from 'lucide-react';
 import { LogoUploadDialog } from './logo-upload-dialog';
 import { groupBy } from 'lodash';
+import { Button } from '@/components/ui/button';
 
 export default function ManageLogosPage() {
   const { firestore } = useFirebase();
@@ -123,7 +124,13 @@ export default function ManageLogosPage() {
                           {logoGroups.length > 0 ? logoGroups.map(group => {
                             return (
                               <div key={group.key} className="p-4 border rounded-md">
-                                <h4 className="font-semibold mb-4">Applicable Years: {group.dateRange}</h4>
+                                <div className="flex justify-between items-center mb-4">
+                                  <h4 className="font-semibold">Applicable Years: {group.dateRange}</h4>
+                                  <Button variant="outline" size="sm">
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Edit
+                                  </Button>
+                                </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 items-end">
                                   <div className="flex flex-col items-center gap-2">
                                       <p className="text-sm font-medium">Standard Logo</p>
