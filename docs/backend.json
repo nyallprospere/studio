@@ -1,4 +1,5 @@
 
+
 {
   "entities": {
     "Candidate": {
@@ -198,6 +199,16 @@
         "isCurrent": {
           "type": "boolean",
           "description": "Indicates if this is the current election."
+        },
+        "independentLogoUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the logo for independent candidates for this election."
+        },
+        "independentExpandedLogoUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the expanded logo for independent candidates for this election."
         }
       },
       "required": [
@@ -579,3 +590,4 @@
     "reasoning": "The Firestore structure is designed to support the St. Lucia Elections Hub application, focusing on tracking candidates, parties, elections, polling data, constituencies, and election results. The structure prioritizes Authorization Independence by avoiding hierarchical authorization dependencies and denormalizing data where necessary. Structural Segregation is applied by keeping data with similar access needs in separate collections. Access Modeling employs path-based ownership and membership maps where appropriate. Data Clarity and Predictability are achieved through explicit state modeling and consistent naming conventions.\n\nAuthorization Independence is achieved primarily through structural choices that avoid the need for `get()` calls in security rules.  For instance, access to candidate information does not require reading party or constituency data.\n\nThe structure supports the required QAPs (Rules are not Filters) by:\n\n*   Segregating data into collections with homogeneous security needs.\n*   Avoiding overly complex rule logic that could lead to inefficient queries.\n* Added documents to store page layout and site settings."
   }
 }
+

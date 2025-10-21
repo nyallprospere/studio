@@ -1,17 +1,17 @@
 
 'use client';
 
-import { useState } from 'react';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
-import type { Party } from '@/lib/types';
+import { useState, useMemo } from 'react';
+import { useCollection, useFirebase, useMemoFirebase, useDoc } from '@/firebase';
+import { collection, addDoc, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
+import type { Party, Election } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { PartyForm } from './party-form';
 import Image from 'next/image';
-import { Shield, Pencil, Trash2, Link as LinkIcon } from 'lucide-react';
+import { Shield, Pencil, Trash2, Link as LinkIcon, Upload } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +27,7 @@ import { uploadFile, deleteFile } from '@/firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { IndependentLogoForm } from './independent-logo-form';
 
 export default function AdminPartiesPage() {
   const { firestore } = useFirebase();
@@ -34,10 +35,18 @@ export default function AdminPartiesPage() {
   const partiesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const { data: parties, isLoading } = useCollection<Party>(partiesCollection);
 
+  const currentElectionQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), where('isCurrent', '==', true)) : null, [firestore]);
+  const { data: currentElections, isLoading: loadingElections } = useCollection<Election>(currentElectionQuery);
+  const currentElection = useMemo(() => currentElections?.[0], [currentElections]);
+
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingParty, setEditingParty] = useState<Party | null>(null);
+  const [isIndependentLogoFormOpen, setIsIndependentLogoFormOpen] = useState(false);
+
 
   const handleFormSubmit = async (values: any) => {
+    if (!firestore || !partiesCollection) return;
     try {
       let logoUrl = values.logoUrl;
       if (values.logoFile) {
@@ -101,7 +110,45 @@ export default function AdminPartiesPage() {
     }
   };
 
+  const handleIndependentLogoSubmit = async (values: any) => {
+    if (!firestore || !currentElection) return;
+
+    try {
+      let independentLogoUrl = values.independentLogoUrl;
+      if (values.independentLogoFile) {
+        if (currentElection.independentLogoUrl) {
+          await deleteFile(currentElection.independentLogoUrl);
+        }
+        independentLogoUrl = await uploadFile(values.independentLogoFile, `logos/independent_${currentElection.year}.png`);
+      }
+
+      let independentExpandedLogoUrl = values.independentExpandedLogoUrl;
+      if (values.independentExpandedLogoFile) {
+        if (currentElection.independentExpandedLogoUrl) {
+          await deleteFile(currentElection.independentExpandedLogoUrl);
+        }
+        independentExpandedLogoUrl = await uploadFile(values.independentExpandedLogoFile, `logos/independent_expanded_${currentElection.year}.png`);
+      }
+
+      const electionDocRef = doc(firestore, 'elections', currentElection.id);
+      await updateDoc(electionDocRef, {
+        independentLogoUrl,
+        independentExpandedLogoUrl
+      });
+      
+      toast({ title: "Independent Logos Updated", description: "The logos for independent candidates have been updated." });
+
+    } catch (error) {
+       console.error("Error saving independent logos: ", error);
+      toast({ variant: "destructive", title: "Error", description: "Failed to save independent logos." });
+    } finally {
+      setIsIndependentLogoFormOpen(false);
+    }
+
+  };
+
   const handleDelete = async (party: Party) => {
+    if (!firestore) return;
     try {
       if(party.logoUrl) await deleteFile(party.logoUrl);
       if(party.expandedLogoUrl) await deleteFile(party.expandedLogoUrl);
@@ -124,25 +171,49 @@ export default function AdminPartiesPage() {
           title="Manage Parties"
           description="Add, edit, or remove political parties."
         />
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => { setEditingParty(null); setIsFormOpen(true)}}>Add New Party</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-2xl h-[90vh]">
-            <DialogHeader>
-              <DialogTitle>{editingParty ? 'Edit Party' : 'Add New Party'}</DialogTitle>
-            </DialogHeader>
-            <ScrollArea className="h-full">
-              <div className="pr-6">
-                <PartyForm
-                  onSubmit={handleFormSubmit}
-                  initialData={editingParty}
-                  onCancel={() => setIsFormOpen(false)}
+        <div className="flex items-center gap-2">
+           <Dialog open={isIndependentLogoFormOpen} onOpenChange={setIsIndependentLogoFormOpen}>
+            <DialogTrigger asChild>
+                <Button variant="outline" disabled={!currentElection} onClick={() => setIsIndependentLogoFormOpen(true)}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Independent Logos
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-xl">
+                <DialogHeader>
+                  <DialogTitle>Independent Candidate Logos</DialogTitle>
+                  <DialogDescription>
+                    Upload logos for independent candidates for the {currentElection?.name}.
+                  </DialogDescription>
+                </DialogHeader>
+                <IndependentLogoForm
+                  onSubmit={handleIndependentLogoSubmit}
+                  initialData={currentElection}
+                  onCancel={() => setIsIndependentLogoFormOpen(false)}
                 />
-              </div>
-            </ScrollArea>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => { setEditingParty(null); setIsFormOpen(true)}}>Add New Party</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-2xl h-[90vh]">
+              <DialogHeader>
+                <DialogTitle>{editingParty ? 'Edit Party' : 'Add New Party'}</DialogTitle>
+              </DialogHeader>
+              <ScrollArea className="h-full">
+                <div className="pr-6">
+                  <PartyForm
+                    onSubmit={handleFormSubmit}
+                    initialData={editingParty}
+                    onCancel={() => setIsFormOpen(false)}
+                  />
+                </div>
+              </ScrollArea>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Card>

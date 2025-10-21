@@ -87,6 +87,8 @@ export interface Election {
     uwpLeaderImageUrl?: string;
     slpLeader?: string;
     slpLeaderImageUrl?: string;
+    independentLogoUrl?: string;
+    independentExpandedLogoUrl?: string;
     isCurrent?: boolean;
 }
 
