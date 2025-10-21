@@ -47,13 +47,13 @@ function CandidateBox({ candidate, party, isWinner, margin, votes, electionStatu
     return (
         <div className="flex-1 mb-2">
             <div className={cn(
-                "p-2 rounded-md bg-muted relative h-full",
+                "p-2 rounded-md bg-muted relative h-full flex flex-col justify-between",
                 isWinner && "border-2 border-green-600"
             )}>
                  {isWinner && <CheckCircle2 className="absolute -top-2 -right-2 h-5 w-5 text-green-600 bg-white rounded-full" />}
-                 <div className="flex items-center justify-between">
+                 <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
-                        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-background">
+                        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-background flex-shrink-0">
                             {candidate?.imageUrl ? (
                                 <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
                             ) : (
@@ -62,20 +62,20 @@ function CandidateBox({ candidate, party, isWinner, margin, votes, electionStatu
                         </div>
                         <div className="text-left">
                             <p className="font-semibold text-xs">{candidateName}</p>
-                            <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
-                                View Profile
-                            </Button>
+                            <p style={{ color: party.color }} className="font-bold text-[10px]">{party.acronym} Candidate</p>
                         </div>
                     </div>
-                     <div style={{ color: party.color }} className="text-right">
-                        <span className="font-bold text-[10px]">{party.acronym} Candidate</span>
+                     <div className="text-right flex-shrink-0">
+                        <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                            View Profile
+                        </Button>
                         {votes !== undefined &&
                             <p className="text-xs text-muted-foreground">{votes.toLocaleString()} votes</p>
                         }
                     </div>
                 </div>
                  {isWinner && (
-                    <div className="text-center mt-2">
+                    <div className="text-center mt-1">
                         <p className="text-[11px] font-bold text-muted-foreground">Won by {margin?.toLocaleString()} votes</p>
                         {electionStatus && <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>}
                     </div>
