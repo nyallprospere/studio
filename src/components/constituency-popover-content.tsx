@@ -63,9 +63,16 @@ function CandidateBox({ candidate, party, isWinner, votes, margin, electionStatu
                                 <UserSquare className="h-full w-full text-muted-foreground" />
                             )}
                         </div>
-                        <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
-                           View
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                               View
+                            </Button>
+                             {isWinner && electionStatus && (
+                               <div className="text-right">
+                                    <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
+                                </div>
+                            )}
+                        </div>
                      </div>
                      <div className="flex-grow text-right">
                         <p className="font-semibold text-xs">{candidateName}</p>
@@ -77,11 +84,6 @@ function CandidateBox({ candidate, party, isWinner, votes, margin, electionStatu
                         </div>
                     </div>
                 </div>
-                {isWinner && electionStatus && (
-                   <div className="text-right mt-1">
-                        <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
-                    </div>
-                )}
             </div>
             <CandidateProfileDialog candidate={candidate as Candidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />
         </div>
