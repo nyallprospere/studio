@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -8,11 +7,12 @@ import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import Image from 'next/image';
-import { UserSquare } from 'lucide-react';
+import { UserSquare, CheckCircle2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { CandidateProfileDialog } from './candidate-profile-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
+import { cn } from '@/lib/utils';
 
 const politicalLeaningOptions = [
     { value: 'solid-uwp', label: 'Solid UWP' },
@@ -26,7 +26,7 @@ const getLeaningLabel = (leaningValue?: string) => {
     return politicalLeaningOptions.find(opt => opt.value === leaningValue)?.label || 'Tossup';
 };
 
-function CandidateBox({ candidate, party }: { candidate: Candidate | ArchivedCandidate | null, party: Party | null }) {
+function CandidateBox({ candidate, party, isWinner }: { candidate: Candidate | ArchivedCandidate | null, party: Party | null, isWinner: boolean }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const isIncumbent = candidate?.isIncumbent;
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}${isIncumbent ? '*' : ''}` : 'Candidate TBD';
@@ -48,7 +48,8 @@ function CandidateBox({ candidate, party }: { candidate: Candidate | ArchivedCan
 
     return (
         <>
-            <div className="flex flex-col items-center gap-2 p-2 rounded-md bg-muted flex-1">
+            <div className={cn("flex flex-col items-center gap-2 p-2 rounded-md bg-muted flex-1 relative", isWinner && "border-2 border-green-500")}>
+                {isWinner && <CheckCircle2 className="absolute -top-2 -right-2 h-5 w-5 text-green-600 bg-white rounded-full" />}
                 <div className="relative h-10 w-10 rounded-full overflow-hidden bg-background">
                     {candidate?.imageUrl ? (
                         <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
@@ -124,31 +125,39 @@ export function ConstituencyPopoverContent({
     }, [parties, candidates]);
 
 
-    const electionStatus = useMemo(() => {
-        if (!electionResults || !previousElectionResults) return null;
+    const { electionStatus, statusColor, margin } = useMemo(() => {
+        if (!electionResults) return { electionStatus: null, statusColor: undefined, margin: null };
 
         const currentResult = electionResults.find(r => r.constituencyId === constituency.id);
-        const previousResult = previousElectionResults.find(r => r.constituencyId === constituency.id);
-
-        if (!currentResult) return null;
-
-        const currentWinner = currentResult.slpVotes > currentResult.uwpVotes ? 'SLP' : 'UWP';
         
-        if (!previousResult) {
-            return `${currentWinner} Win`;
-        }
-
-        const previousWinner = previousResult.slpVotes > previousResult.uwpVotes ? 'SLP' : 'UWP';
+        if (!currentResult) return { electionStatus: null, statusColor: undefined, margin: null };
         
-        if (currentWinner === previousWinner) {
-            return `${currentWinner} Hold`;
-        } else {
-            return `${currentWinner} Gain`;
+        const margin = Math.abs(currentResult.slpVotes - currentResult.uwpVotes);
+        const currentWinner = currentResult.slpVotes > currentResult.uwpVotes ? slpParty : uwpParty;
+        let status = `${currentWinner?.acronym} Win`;
+        let color = currentWinner?.color;
+
+        if (previousElectionResults) {
+            const previousResult = previousElectionResults.find(r => r.constituencyId === constituency.id);
+            if (previousResult) {
+                const previousWinnerAcronym = previousResult.slpVotes > previousResult.uwpVotes ? 'SLP' : 'UWP';
+                if (currentWinner?.acronym === previousWinnerAcronym) {
+                    status = `${currentWinner?.acronym} Hold`;
+                } else {
+                    status = `${currentWinner?.acronym} Gain`;
+                }
+            }
         }
-    }, [constituency.id, electionResults, previousElectionResults]);
+        
+        return { electionStatus: status, statusColor: color, margin: margin };
+
+    }, [constituency.id, electionResults, previousElectionResults, slpParty, uwpParty]);
 
 
     const isLoading = loadingCandidates || loadingParties;
+    const currentResult = electionResults?.find(r => r.constituencyId === constituency.id);
+    const winnerAcronym = currentResult ? (currentResult.slpVotes > currentResult.uwpVotes ? 'SLP' : 'UWP') : null;
+
 
     if (isLoading) {
         return <Skeleton className="h-40 w-full" />;
@@ -159,14 +168,15 @@ export function ConstituencyPopoverContent({
             <h4 className="font-bold leading-none text-center text-xl">{constituency.name}</h4>
             
             {electionStatus && (
-                <div>
-                    <p className="text-center font-bold text-sm">{electionStatus}</p>
+                <div className="text-center">
+                    <p className="font-bold text-sm" style={{color: statusColor}}>{electionStatus}</p>
+                    { margin !== null && <p className="text-xs text-muted-foreground">Won by {margin.toLocaleString()} votes</p> }
                 </div>
             )}
 
             <div className="flex gap-2">
-                <CandidateBox candidate={slpCandidate!} party={slpParty!} />
-                <CandidateBox candidate={uwpCandidate!} party={uwpParty!} />
+                <CandidateBox candidate={slpCandidate!} party={slpParty!} isWinner={winnerAcronym === 'SLP'} />
+                <CandidateBox candidate={uwpCandidate!} party={uwpParty!} isWinner={winnerAcronym === 'UWP'} />
             </div>
 
             {onLeaningChange && (
