@@ -13,6 +13,7 @@ import { CandidateProfileDialog } from './candidate-profile-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
+import { Progress } from './ui/progress';
 
 const politicalLeaningOptions = [
     { value: 'solid-uwp', label: 'Solid UWP' },
@@ -26,64 +27,66 @@ const getLeaningLabel = (leaningValue?: string) => {
     return politicalLeaningOptions.find(opt => opt.value === leaningValue)?.label || 'Tossup';
 };
 
-function CandidateBox({ candidate, party, isWinner, votes, margin, electionStatus, statusColor }: { candidate: Candidate | ArchivedCandidate | null, party: Party | null, isWinner: boolean, votes?: number, margin?: number | null, electionStatus?: string | null, statusColor?: string | undefined }) {
+function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, electionStatus, statusColor }: { 
+    candidate: Candidate | ArchivedCandidate | null;
+    party: Party | null;
+    isWinner: boolean;
+    votes?: number;
+    totalVotes?: number;
+    margin?: number | null;
+    electionStatus?: string | null;
+    statusColor?: string | undefined;
+}) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const isIncumbent = candidate?.isIncumbent;
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}${isIncumbent ? '*' : ''}` : 'Candidate TBD';
 
-    if (!party) {
-         return (
-            <div className="flex flex-col items-center gap-2 p-2 rounded-md bg-muted flex-1">
-                <div className="h-10 w-10 rounded-full bg-background flex items-center justify-center">
-                    <UserSquare className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <div className="text-xs text-center">
-                    <p className="font-semibold text-muted-foreground">{candidateName}</p>
-                </div>
-            </div>
-        );
-    }
-    
+    const votePercentage = totalVotes && votes ? (votes / totalVotes) * 100 : 0;
+
     return (
-        <div className="flex-1">
-             <div className={cn(
-                "p-2 rounded-md bg-muted relative h-full flex flex-col justify-between",
+        <>
+            <div className={cn(
+                "p-2 rounded-md bg-muted relative h-full flex flex-col",
                 isWinner && "border-2 border-green-600"
             )}>
                  {isWinner && <CheckCircle2 className="absolute -top-2 -right-2 h-5 w-5 text-green-600 bg-white rounded-full" />}
-                <div className="flex items-start justify-between gap-2">
-                    {party.logoUrl && (
-                        <div className="flex-shrink-0">
-                            <Image src={party.logoUrl} alt={party.name} width={24} height={24} />
-                        </div>
-                    )}
-                    <div className="flex flex-col items-center gap-1">
-                         <div className="relative h-10 w-10 rounded-full overflow-hidden bg-background flex-shrink-0">
-                            {candidate?.imageUrl ? (
-                                <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
-                            ) : (
-                                <UserSquare className="h-full w-full text-muted-foreground" />
-                            )}
-                        </div>
-                        <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                
+                <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2">
+                         {party?.logoUrl && (
+                            <div className="flex-shrink-0">
+                                <Image src={party.logoUrl} alt={party.name} width={24} height={24} />
+                            </div>
+                        )}
+                        <Button variant="link" size="sm" className="h-auto p-0 text-sm font-semibold" onClick={() => setProfileOpen(true)} disabled={!candidate}>
                            {candidateName}
                         </Button>
                     </div>
-                     <div className="text-right">
-                         <div className="text-lg font-bold">
-                            {votes !== undefined && votes.toLocaleString()}
-                            {isWinner && margin !== undefined && margin !== null && (
-                                 <sup className="text-[11px] font-bold text-muted-foreground ml-1">(+{margin.toLocaleString()})</sup>
-                            )}
-                        </div>
+                     <div className="flex items-center gap-2">
                         {isWinner && electionStatus && (
                             <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
                         )}
                     </div>
                 </div>
+
+                <div className="relative w-full h-8 bg-gray-200 rounded overflow-hidden">
+                    <div 
+                        className="absolute top-0 left-0 h-full rounded" 
+                        style={{ width: `${votePercentage}%`, backgroundColor: party?.color }}
+                    ></div>
+                    <div className="absolute inset-0 flex items-center justify-between px-2">
+                        <span className="text-white font-bold text-sm">
+                            {votes !== undefined && votes.toLocaleString()}
+                        </span>
+                         {isWinner && margin !== undefined && margin !== null && (
+                            <span className="text-white text-[11px] font-bold ml-1">(+{margin.toLocaleString()})</span>
+                        )}
+                    </div>
+                </div>
+
             </div>
-            <CandidateProfileDialog candidate={candidate as Candidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />
-        </div>
+            {candidate && <CandidateProfileDialog candidate={candidate as Candidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />}
+        </>
     );
 }
 
@@ -136,13 +139,14 @@ export function ConstituencyPopoverContent({
     }, [parties, candidates]);
 
 
-    const { electionStatus, statusColor, margin } = useMemo(() => {
-        if (!electionResults) return { electionStatus: null, statusColor: undefined, margin: null };
+    const { electionStatus, statusColor, margin, totalConstituencyVotes } = useMemo(() => {
+        if (!electionResults) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0 };
 
         const currentResult = electionResults.find(r => r.constituencyId === constituency.id);
         
-        if (!currentResult) return { electionStatus: null, statusColor: undefined, margin: null };
+        if (!currentResult) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0 };
         
+        const totalVotes = currentResult.slpVotes + currentResult.uwpVotes + currentResult.otherVotes;
         const margin = Math.abs(currentResult.slpVotes - currentResult.uwpVotes);
         const currentWinner = currentResult.slpVotes > currentResult.uwpVotes ? slpParty : uwpParty;
         let status = `${currentWinner?.acronym} Win`;
@@ -161,7 +165,7 @@ export function ConstituencyPopoverContent({
             }
         }
         
-        return { electionStatus: status, statusColor: color, margin: margin };
+        return { electionStatus: status, statusColor: color, margin: margin, totalConstituencyVotes: totalVotes };
 
     }, [constituency.id, electionResults, previousElectionResults, slpParty, uwpParty]);
 
@@ -185,6 +189,7 @@ export function ConstituencyPopoverContent({
                     party={slpParty!} 
                     isWinner={winnerAcronym === 'SLP'} 
                     votes={currentResult?.slpVotes} 
+                    totalVotes={totalConstituencyVotes}
                     margin={margin}
                     electionStatus={electionStatus}
                     statusColor={statusColor}
@@ -194,6 +199,7 @@ export function ConstituencyPopoverContent({
                     party={uwpParty!} 
                     isWinner={winnerAcronym === 'UWP'} 
                     votes={currentResult?.uwpVotes}
+                    totalVotes={totalConstituencyVotes}
                     margin={margin}
                     electionStatus={electionStatus}
                     statusColor={statusColor}
