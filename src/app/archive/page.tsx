@@ -76,6 +76,7 @@ export default function ArchivePage() {
   const [editingCandidate, setEditingCandidate] = useState<ArchivedCandidate | null>(null);
   const [uploadingPhotoId, setUploadingPhotoId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [partyFilter, setPartyFilter] = useState<string | null>(null);
 
   const [editableArchives, setEditableArchives] = useState<Record<string, ArchivedCandidate[]>>({});
   const [originalArchives, setOriginalArchives] = useState<Record<string, ArchivedCandidate[]>>({});
@@ -408,6 +409,14 @@ export default function ArchivePage() {
     }
   };
 
+  const partyDetails = useMemo(() => {
+    if (!parties) return { slp: null, uwp: null };
+    return {
+      slp: parties.find(p => p.acronym === 'SLP'),
+      uwp: parties.find(p => p.acronym === 'UWP'),
+    };
+  }, [parties]);
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -470,9 +479,12 @@ export default function ArchivePage() {
                   
                   const sortedCandidates = [...(editableArchives[electionId] || [])]
                     .filter(c => {
-                      if (!searchTerm) return true;
-                      const fullName = `${c.firstName} ${c.lastName}`.toLowerCase();
-                      return fullName.includes(searchTerm.toLowerCase());
+                      if (!searchTerm && !partyFilter) return true;
+                      
+                      const nameMatch = searchTerm ? `${c.firstName} ${c.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) : true;
+                      const partyMatch = partyFilter ? c.partyId === partyFilter : true;
+                      
+                      return nameMatch && partyMatch;
                     })
                     .sort((a, b) => {
                       if (sortBy === 'constituency') {
@@ -568,13 +580,18 @@ export default function ArchivePage() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                           <div className="mb-4">
+                            <div className="flex justify-between items-center mb-4">
                                 <Input 
                                     placeholder="Search by candidate name..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="max-w-sm"
                                 />
+                                <div className="flex items-center gap-2">
+                                    <Button variant={!partyFilter ? "secondary" : "outline"} size="sm" onClick={() => setPartyFilter(null)}>All</Button>
+                                    {partyDetails.slp && <Button variant={partyFilter === partyDetails.slp.id ? "secondary" : "outline"} size="sm" onClick={() => setPartyFilter(partyDetails.slp!.id)}>SLP</Button>}
+                                    {partyDetails.uwp && <Button variant={partyFilter === partyDetails.uwp.id ? "secondary" : "outline"} size="sm" onClick={() => setPartyFilter(partyDetails.uwp!.id)}>UWP</Button>}
+                                </div>
                             </div>
                             <ScrollArea className="h-96">
                                 <div className="space-y-2 pr-4">
