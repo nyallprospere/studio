@@ -65,7 +65,7 @@ function CandidateBox({ candidate, party, isWinner, margin, votes }: { candidate
                     <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
                         View Profile
                     </Button>
-                    <div style={{ color: party.color }} className="mt-2">
+                    <div style={{ color: party.color }} className="mt-2 text-center">
                         <span className="font-bold text-[10px]">{partyText}</span>
                         {votes !== undefined &&
                             <p className="text-xs text-muted-foreground">{votes.toLocaleString()} votes</p>
@@ -73,7 +73,7 @@ function CandidateBox({ candidate, party, isWinner, margin, votes }: { candidate
                     </div>
                 </div>
                 {isWinner && margin !== null && 
-                    <p className="text-xs text-muted-foreground mt-1">Won by {margin.toLocaleString()} votes</p>
+                    <p className="text-[11px] font-bold text-muted-foreground mt-1">Won by {margin.toLocaleString()} votes</p>
                 }
             </div>
             {/* The dialog expects a `Candidate` type, so we cast it. */}
