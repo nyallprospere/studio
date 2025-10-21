@@ -16,7 +16,7 @@ import { useFirebase, errorEmitter, FirestorePermissionError } from '@/firebase'
 import { collection, doc, query, where, getDocs, updateDoc, addDoc, writeBatch } from 'firebase/firestore';
 import { uploadFile, deleteFile } from '@/firebase/storage';
 import { Loader2 } from 'lucide-react';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -50,7 +50,10 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
     },
   });
 
-  const electionOptions = elections.map(e => ({ value: e.id, label: e.name }));
+  const electionOptions = elections.map(e => ({ 
+    value: e.id, 
+    label: e.name.replace(' General Election', '').replace('(April 6th)', '(Apr 6)').replace('(April 30th)', '(Apr 30)') 
+  })).sort((a,b) => b.label.localeCompare(a.label));
 
   const handleFormSubmit = async (values: z.infer<typeof uploadSchema>) => {
     if (!firestore || !party) {
@@ -155,30 +158,31 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
                                 placeholder="Select elections..."
                             >
                                 <CommandInput placeholder="Search elections..." />
-                                <CommandList>
-                                    <CommandEmpty>No results found.</CommandEmpty>
-                                    <CommandGroup>
-                                    {electionOptions.map((option) => (
-                                        <CommandItem
-                                            key={option.value}
-                                            onSelect={() => {
-                                                const newValue = field.value.includes(option.value)
-                                                ? field.value.filter((v) => v !== option.value)
-                                                : [...field.value, option.value];
-                                                field.onChange(newValue);
-                                            }}
-                                            >
-                                            <Check
-                                                className={cn(
-                                                'mr-2 h-4 w-4',
-                                                field.value.includes(option.value) ? 'opacity-100' : 'opacity-0'
-                                                )}
-                                            />
-                                            {option.label}
-                                        </CommandItem>
-                                    ))}
-                                    </CommandGroup>
-                                </CommandList>
+                                <ScrollArea className="h-48">
+                                  <CommandGroup className="grid grid-cols-3 gap-1">
+                                  {electionOptions.map((option) => (
+                                      <CommandItem
+                                          key={option.value}
+                                          onSelect={() => {
+                                              const newValue = field.value.includes(option.value)
+                                              ? field.value.filter((v) => v !== option.value)
+                                              : [...field.value, option.value];
+                                              field.onChange(newValue);
+                                          }}
+                                          className="flex-col items-start p-2 h-auto"
+                                          >
+                                          <Check
+                                              className={cn(
+                                              'absolute top-2 right-2 h-4 w-4',
+                                              field.value.includes(option.value) ? 'opacity-100' : 'opacity-0'
+                                              )}
+                                          />
+                                          <span className="font-bold">{option.label}</span>
+                                          <span className="text-xs text-muted-foreground">Election</span>
+                                      </CommandItem>
+                                  ))}
+                                  </CommandGroup>
+                                </ScrollArea>
                             </MultiSelect>
                             <FormMessage />
                         </FormItem>
