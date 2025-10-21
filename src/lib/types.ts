@@ -9,6 +9,7 @@ export interface Party {
   color: string;
   seats?: number;
   logoUrl?: string; // URL to logo in storage
+  expandedLogoUrl?: string; // URL to a larger logo in storage
   description?: string;
   history?: string;
   manifestoUrl?: string; // URL to PDF in storage

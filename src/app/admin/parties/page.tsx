@@ -47,6 +47,14 @@ export default function AdminPartiesPage() {
         logoUrl = await uploadFile(values.logoFile, `parties/${values.logoFile.name}`);
       }
 
+      let expandedLogoUrl = values.expandedLogoUrl;
+      if (values.expandedLogoFile) {
+        if(editingParty?.expandedLogoUrl) {
+            await deleteFile(editingParty.expandedLogoUrl);
+        }
+        expandedLogoUrl = await uploadFile(values.expandedLogoFile, `parties/expanded_${values.expandedLogoFile.name}`);
+      }
+
       let manifestoUrl = values.manifestoUrl;
       if (values.manifestoFile) {
         if(editingParty?.manifestoUrl) {
@@ -59,9 +67,11 @@ export default function AdminPartiesPage() {
         ...values,
         founded: Number(values.founded),
         logoUrl,
+        expandedLogoUrl,
         manifestoUrl,
       };
       delete partyData.logoFile;
+      delete partyData.expandedLogoFile;
       delete partyData.manifestoFile;
 
       if (editingParty) {
@@ -84,6 +94,7 @@ export default function AdminPartiesPage() {
   const handleDelete = async (party: Party) => {
     try {
       if(party.logoUrl) await deleteFile(party.logoUrl);
+      if(party.expandedLogoUrl) await deleteFile(party.expandedLogoUrl);
       if(party.manifestoUrl) await deleteFile(party.manifestoUrl);
 
       const partyDoc = doc(firestore, 'parties', party.id);

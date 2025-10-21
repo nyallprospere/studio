@@ -24,8 +24,10 @@ const partySchema = z.object({
   history: z.string().optional(),
   manifestoSummary: z.string().optional(),
   logoFile: z.any().optional(),
+  expandedLogoFile: z.any().optional(),
   manifestoFile: z.any().optional(),
   logoUrl: z.string().url().optional().or(z.literal('')),
+  expandedLogoUrl: z.string().url().optional().or(z.literal('')),
   manifestoUrl: z.string().url().optional().or(z.literal('')),
 });
 
@@ -56,6 +58,7 @@ export function PartyForm({ onSubmit, initialData, onCancel }: PartyFormProps) {
       history: '',
       manifestoSummary: '',
       logoUrl: '',
+      expandedLogoUrl: '',
       manifestoUrl: '',
     },
   });
@@ -78,6 +81,7 @@ export function PartyForm({ onSubmit, initialData, onCancel }: PartyFormProps) {
             history: '',
             manifestoSummary: '',
             logoUrl: '',
+            expandedLogoUrl: '',
             manifestoUrl: '',
         });
     }
@@ -252,10 +256,25 @@ export function PartyForm({ onSubmit, initialData, onCancel }: PartyFormProps) {
                 <FormItem>
                 <FormLabel>Party Logo</FormLabel>
                 <FormControl>
-                    <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
+                    <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
                 </FormControl>
-                <FormDescription>Upload a PNG, JPG, or SVG file.</FormDescription>
+                <FormDescription>Upload a PNG or JPG file.</FormDescription>
                 {initialData?.logoUrl && <a href={initialData.logoUrl} target="_blank" className="text-sm text-blue-500 hover:underline">View current logo</a>}
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="expandedLogoFile"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Expanded Party Logo</FormLabel>
+                <FormControl>
+                    <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
+                </FormControl>
+                <FormDescription>Upload a PNG or JPG file. This will be used in places that require a larger logo.</FormDescription>
+                {initialData?.expandedLogoUrl && <a href={initialData.expandedLogoUrl} target="_blank" className="text-sm text-blue-500 hover:underline">View current expanded logo</a>}
                 <FormMessage />
                 </FormItem>
             )}
