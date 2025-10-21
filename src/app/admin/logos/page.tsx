@@ -200,13 +200,13 @@ export default function ManageLogosPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 items-end">
                                   <div className="flex flex-col items-center gap-2">
                                       <p className="text-sm font-medium">Standard Logo</p>
-                                      <div className="h-20 w-20 bg-muted rounded-md flex items-center justify-center">
+                                      <div className="h-20 w-20 rounded-md flex items-center justify-center">
                                           {group.logoUrl ? <Image src={group.logoUrl} alt="Standard Logo" width={80} height={80} className="object-contain" /> : <Shield className="h-8 w-8 text-muted-foreground" />}
                                       </div>
                                   </div>
                                   <div className="flex flex-col items-center gap-2">
                                       <p className="text-sm font-medium">Expanded Logo</p>
-                                      <div className="h-20 w-32 bg-muted rounded-md flex items-center justify-center">
+                                      <div className="h-20 w-32 rounded-md flex items-center justify-center">
                                           {group.expandedLogoUrl ? <Image src={group.expandedLogoUrl} alt="Expanded Logo" width={128} height={80} className="object-contain"/> : <Shield className="h-8 w-8 text-muted-foreground" />}
                                       </div>
                                   </div>
