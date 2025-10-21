@@ -7,6 +7,7 @@ import { X, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Command,
+  CommandList
 } from '@/components/ui/command';
 import {
   Popover,
@@ -67,7 +68,7 @@ function MultiSelect({
                     onClick={(e) => handleUnselect(e, option.value)}
                   >
                     {option.label}
-                    <span
+                    <button
                       className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
@@ -78,12 +79,10 @@ function MultiSelect({
                         e.preventDefault();
                         e.stopPropagation();
                       }}
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`Remove ${option.label}`}
+                      onClick={(e) => handleUnselect(e, option.value)}
                     >
                       <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                    </span>
+                    </button>
                   </Badge>
                 ))
             ) : (
@@ -95,7 +94,9 @@ function MultiSelect({
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
         <Command className={className}>
-          {children}
+          <CommandList className="max-h-64 overflow-auto">
+            {children}
+          </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
