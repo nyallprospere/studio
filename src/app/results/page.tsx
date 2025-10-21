@@ -119,14 +119,14 @@ export default function ResultsPage() {
 
         if (result.slpVotes > result.uwpVotes) {
             slpSeats++;
-        } else if (result.uwpVotes > result.uwpVotes) {
+        } else if (result.uwpVotes > result.slpVotes) {
             uwpSeats++;
         }
     });
 
     const summary = [
-        { partyId: slp.id, name: slp.name, acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color, logoUrl: slp.expandedLogoUrl || slp.logoUrl },
-        { partyId: uwp.id, name: uwp.name, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color, logoUrl: uwp.expandedLogoUrl || uwp.logoUrl },
+        { partyId: slp.id, name: slp.name, acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color, logoUrl: currentElection && currentElection.year < 1997 ? slp.oldLogoUrl || slp.logoUrl : slp.expandedLogoUrl || slp.logoUrl },
+        { partyId: uwp.id, name: uwp.name, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color, logoUrl: currentElection && currentElection.year < 1997 ? uwp.oldLogoUrl || uwp.logoUrl : uwp.expandedLogoUrl || uwp.logoUrl },
     ];
     
     if(otherVotes > 0 || otherSeats > 0) {
@@ -135,7 +135,7 @@ export default function ResultsPage() {
 
     return summary.filter(p => p.seats > 0 || p.totalVotes > 0)
      .sort((a,b) => b.seats - a.seats || b.totalVotes - a.totalVotes);
-  }, [currentElectionResults, parties]);
+  }, [currentElectionResults, parties, currentElection]);
 
 
   const chartConfig = useMemo(() => {
@@ -213,10 +213,10 @@ export default function ResultsPage() {
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
                     {summaryData.map((summaryItem) => (
                       <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
-                        <CardHeader className="flex flex-col items-center">
+                        <CardHeader className="flex flex-col items-center text-center">
                           <CardTitle className="text-lg">{summaryItem.acronym}</CardTitle>
                           {summaryItem.logoUrl && (
-                            <div className="relative h-20 w-20 mt-2">
+                            <div className="relative h-24 w-24 mt-2">
                                 <Image src={summaryItem.logoUrl} alt={`${summaryItem.name} logo`} fill className="object-contain" />
                             </div>
                           )}
