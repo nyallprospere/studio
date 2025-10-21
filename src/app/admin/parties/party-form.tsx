@@ -25,9 +25,11 @@ const partySchema = z.object({
   manifestoSummary: z.string().optional(),
   logoFile: z.any().optional(),
   expandedLogoFile: z.any().optional(),
+  oldLogoFile: z.any().optional(),
   manifestoFile: z.any().optional(),
   logoUrl: z.string().url().optional().or(z.literal('')),
   expandedLogoUrl: z.string().url().optional().or(z.literal('')),
+  oldLogoUrl: z.string().url().optional().or(z.literal('')),
   manifestoUrl: z.string().url().optional().or(z.literal('')),
 });
 
@@ -59,6 +61,7 @@ export function PartyForm({ onSubmit, initialData, onCancel }: PartyFormProps) {
       manifestoSummary: '',
       logoUrl: '',
       expandedLogoUrl: '',
+      oldLogoUrl: '',
       manifestoUrl: '',
     },
   });
@@ -82,6 +85,7 @@ export function PartyForm({ onSubmit, initialData, onCancel }: PartyFormProps) {
             manifestoSummary: '',
             logoUrl: '',
             expandedLogoUrl: '',
+            oldLogoUrl: '',
             manifestoUrl: '',
         });
     }
@@ -264,6 +268,21 @@ export function PartyForm({ onSubmit, initialData, onCancel }: PartyFormProps) {
                 </FormItem>
             )}
             />
+             <FormField
+              control={form.control}
+              name="oldLogoFile"
+              render={({ field }) => (
+                  <FormItem>
+                  <FormLabel>Old Party Logo</FormLabel>
+                  <FormControl>
+                      <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
+                  </FormControl>
+                  <FormDescription>For elections before 1997. Upload a PNG or JPG file.</FormDescription>
+                  {initialData?.oldLogoUrl && <a href={initialData.oldLogoUrl} target="_blank" className="text-sm text-blue-500 hover:underline">View current old logo</a>}
+                  <FormMessage />
+                  </FormItem>
+              )}
+              />
             <FormField
             control={form.control}
             name="expandedLogoFile"
