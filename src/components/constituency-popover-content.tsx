@@ -52,26 +52,24 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
                  {isWinner && <CheckCircle2 className="absolute -top-2 -right-2 h-5 w-5 text-green-600 bg-white rounded-full" />}
                 
                 <div className="flex items-center justify-between gap-2 mb-2">
-                    <div className="flex items-center gap-2">
-                        {party?.logoUrl && (
-                            <div className="relative h-10 w-10">
-                                <Image src={party.logoUrl} alt={party.name} fill className="object-contain" />
-                            </div>
-                        )}
-                        <div className="flex flex-col items-center">
-                             <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
-                                {candidate?.imageUrl ? (
-                                    <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
-                                ) : (
-                                    <UserSquare className="h-full w-full text-gray-400" />
-                                )}
-                            </div>
-                            <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold" onClick={() => setProfileOpen(true)} disabled={!candidate}>
-                                {candidateName}
-                            </Button>
+                    {party?.logoUrl && (
+                        <div className="relative h-10 w-10">
+                            <Image src={party.logoUrl} alt={party.name} fill className="object-contain" />
                         </div>
+                    )}
+                    <div className="flex flex-col items-center">
+                            <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
+                            {candidate?.imageUrl ? (
+                                <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
+                            ) : (
+                                <UserSquare className="h-full w-full text-gray-400" />
+                            )}
+                        </div>
+                        <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                            {candidateName}
+                        </Button>
                     </div>
-                     <div className="flex-grow text-center">
+                    <div className="flex-grow text-center">
                         <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
                     </div>
                 </div>
@@ -85,6 +83,11 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
                         <span className="text-white font-bold text-sm">
                             {votes !== undefined && votes.toLocaleString()}
                         </span>
+                        {isWinner && margin !== null && (
+                            <span className="text-black text-[11px] font-bold ml-1">
+                                (+{margin.toLocaleString()})
+                            </span>
+                        )}
                     </div>
                 </div>
 
