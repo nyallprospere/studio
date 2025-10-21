@@ -66,7 +66,7 @@ function CandidateBox({ candidate, party, isWinner, votes, margin, electionStatu
                                 <p style={{ color: party.color }} className="font-bold text-[10px]">{party.acronym} Candidate</p>
                             </div>
                             <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
-                                View Profile
+                                View
                             </Button>
                         </div>
                     </div>
@@ -238,3 +238,5 @@ export function ConstituencyPopoverContent({
         </div>
     );
 }
+
+    
