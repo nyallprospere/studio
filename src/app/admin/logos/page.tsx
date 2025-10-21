@@ -36,9 +36,9 @@ export default function ManageLogosPage() {
   const electionsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'elections') : null, [firestore]);
   const partyLogosQuery = useMemoFirebase(() => firestore ? collection(firestore, 'party_logos') : null, [firestore]);
 
-  const { data: parties, isLoading: loadingParties, refetch: refetchParties } = useCollection<Party>(partiesQuery);
+  const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
-  const { data: partyLogos, isLoading: loadingLogos, refetch: refetchLogos } = useCollection<PartyLogo>(partyLogosQuery);
+  const { data: partyLogos, isLoading: loadingLogos } = useCollection<PartyLogo>(partyLogosQuery);
   
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedPartyForUpload, setSelectedPartyForUpload] = useState<Party | null>(null);
@@ -58,7 +58,6 @@ export default function ManageLogosPage() {
   const handleUploadSuccess = () => {
     setIsUploadDialogOpen(false);
     toast({ title: 'Logos Updated Successfully' });
-    refetchLogos();
   }
   
   const getLogoGroups = (partyId: string) => {
@@ -112,7 +111,6 @@ export default function ManageLogosPage() {
         }
         await batch.commit();
         toast({ title: 'Logos Deleted', description: 'The selected logo entries have been deleted.' });
-        refetchLogos();
     } catch(e) {
         console.error("Error deleting logos:", e);
         toast({variant: 'destructive', title: 'Deletion Failed', description: 'Could not delete logos.'});
