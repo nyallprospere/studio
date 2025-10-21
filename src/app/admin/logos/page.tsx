@@ -8,7 +8,7 @@ import type { Party, Election, PartyLogo } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { uploadFile, deleteFile } from '@/firebase/storage';
@@ -104,48 +104,55 @@ export default function ManageLogosPage() {
       />
 
       {isLoading ? <p>Loading...</p> : (
-        <div className="space-y-8">
-          {allParties.map(party => (
-            <Card key={party.id}>
-              <CardHeader>
-                <CardTitle style={{color: party.color}}>{party.name}</CardTitle>
-                <CardDescription>Manage logos for the {party.name}.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {sortedElections?.map(election => {
-                  const logoSet = partyLogos?.find(l => l.partyId === party.id && l.electionId === election.id);
-                  return (
-                    <div key={election.id} className="p-4 border rounded-md">
-                      <h4 className="font-semibold mb-4">{election.name}</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-                        <div className="flex flex-col items-center gap-2">
-                            <p className="text-sm font-medium">Standard Logo</p>
-                            <div className="h-20 w-20 bg-muted rounded-md flex items-center justify-center">
-                                {logoSet?.logoUrl ? <Image src={logoSet.logoUrl} alt="Standard Logo" width={80} height={80} className="object-contain" /> : <Shield className="h-8 w-8 text-muted-foreground" />}
+        <Tabs defaultValue={allParties[0]?.id} className="w-full">
+            <TabsList>
+                {allParties.map(party => (
+                    <TabsTrigger key={party.id} value={party.id} style={{ color: party.color }}>{party.name}</TabsTrigger>
+                ))}
+            </TabsList>
+            {allParties.map(party => (
+                <TabsContent key={party.id} value={party.id}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle style={{color: party.color}}>{party.name}</CardTitle>
+                            <CardDescription>Manage logos for the {party.name}.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                        {sortedElections?.map(election => {
+                          const logoSet = partyLogos?.find(l => l.partyId === party.id && l.electionId === election.id);
+                          return (
+                            <div key={election.id} className="p-4 border rounded-md">
+                              <h4 className="font-semibold mb-4">{election.name}</h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                                <div className="flex flex-col items-center gap-2">
+                                    <p className="text-sm font-medium">Standard Logo</p>
+                                    <div className="h-20 w-20 bg-muted rounded-md flex items-center justify-center">
+                                        {logoSet?.logoUrl ? <Image src={logoSet.logoUrl} alt="Standard Logo" width={80} height={80} className="object-contain" /> : <Shield className="h-8 w-8 text-muted-foreground" />}
+                                    </div>
+                                    <Input type="file" onChange={(e) => e.target.files && handleFileChange(party.id, 'standard', e.target.files[0])} className="text-xs" />
+                                </div>
+                                <div className="flex flex-col items-center gap-2">
+                                    <p className="text-sm font-medium">Expanded Logo</p>
+                                    <div className="h-20 w-32 bg-muted rounded-md flex items-center justify-center">
+                                        {logoSet?.expandedLogoUrl ? <Image src={logoSet.expandedLogoUrl} alt="Expanded Logo" width={128} height={80} className="object-contain"/> : <Shield className="h-8 w-8 text-muted-foreground" />}
+                                    </div>
+                                    <Input type="file" onChange={(e) => e.target.files && handleFileChange(party.id, 'expanded', e.target.files[0])} className="text-xs" />
+                                </div>
+                                <div className="col-span-2 flex justify-end">
+                                <Button onClick={() => handleUpload(party.id, election.id)} disabled={!logoFiles[party.id]}>
+                                        <Upload className="mr-2 h-4 w-4" />
+                                        Save for {election.year}
+                                    </Button>
+                                </div>
+                              </div>
                             </div>
-                            <Input type="file" onChange={(e) => handleFileChange(party.id, 'standard', e.target.files![0])} className="text-xs" />
-                        </div>
-                        <div className="flex flex-col items-center gap-2">
-                             <p className="text-sm font-medium">Expanded Logo</p>
-                            <div className="h-20 w-32 bg-muted rounded-md flex items-center justify-center">
-                                {logoSet?.expandedLogoUrl ? <Image src={logoSet.expandedLogoUrl} alt="Expanded Logo" width={128} height={80} className="object-contain"/> : <Shield className="h-8 w-8 text-muted-foreground" />}
-                            </div>
-                            <Input type="file" onChange={(e) => handleFileChange(party.id, 'expanded', e.target.files![0])} className="text-xs" />
-                        </div>
-                        <div className="col-span-2 flex justify-end">
-                           <Button onClick={() => handleUpload(party.id, election.id)} disabled={!logoFiles[party.id]}>
-                                <Upload className="mr-2 h-4 w-4" />
-                                Save for {election.year}
-                            </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                          )
+                        })}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            ))}
+        </Tabs>
       )}
     </div>
   );
