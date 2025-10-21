@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { Progress } from './ui/progress';
+import { Pie, PieChart, Cell } from 'recharts';
+import { ChartContainer } from './ui/chart';
 
 const politicalLeaningOptions = [
     { value: 'solid-uwp', label: 'Solid UWP' },
@@ -190,6 +192,16 @@ export function ConstituencyPopoverContent({
     const isCastriesNorth2021 = election?.year === 2021 && constituency.name === 'Castries North';
     const castriesNorthWinnerAcronym = isCastriesNorth2021 ? (currentResult && currentResult.slpVotes > currentResult.uwpVotes ? 'SLP' : 'UWP') : null;
 
+    const predictionChartData = useMemo(() => {
+      if (!slpParty || !uwpParty) return [];
+      const slpPercent = constituency.predictedSlpPercentage || 50;
+      const uwpPercent = constituency.predictedUwpPercentage || 50;
+      return [
+        { name: slpParty.acronym, value: slpPercent, fill: slpParty.color },
+        { name: uwpParty.acronym, value: uwpPercent, fill: uwpParty.color },
+      ];
+    }, [constituency, slpParty, uwpParty]);
+
 
     if (isLoading) {
         return <Skeleton className="h-40 w-full" />;
@@ -199,32 +211,83 @@ export function ConstituencyPopoverContent({
         <div className="space-y-3">
             <h4 className="font-bold leading-none text-center text-xl">{constituency.name}</h4>
             
-            <div className="space-y-2">
-                <CandidateBox 
-                    candidate={slpCandidate!} 
-                    party={slpParty!} 
-                    isWinner={winnerAcronym === 'SLP'} 
-                    votes={currentResult?.slpVotes} 
-                    totalVotes={totalConstituencyVotes}
-                    margin={margin}
-                    electionStatus={electionStatus}
-                    statusColor={statusColor}
-                    isStriped={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'SLP'}
-                    barFill={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'SLP' ? 'blue-red-stripes' : undefined}
-                />
-                <CandidateBox 
-                    candidate={uwpCandidate!} 
-                    party={uwpParty!} 
-                    isWinner={winnerAcronym === 'UWP'} 
-                    votes={currentResult?.uwpVotes}
-                    totalVotes={totalConstituencyVotes}
-                    margin={margin}
-                    electionStatus={electionStatus}
-                    statusColor={statusColor}
-                    isStriped={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'UWP'}
-                    barFill={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'UWP' ? 'blue-red-stripes' : undefined}
-                />
-            </div>
+            {election?.isCurrent || !election ? (
+               <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex flex-col items-center p-2 rounded-md bg-muted">
+                        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
+                          {slpCandidate?.imageUrl ? (
+                              <Image src={slpCandidate.imageUrl} alt={slpCandidate.name} fill className="object-cover" />
+                          ) : (
+                              <UserSquare className="h-full w-full text-gray-400" />
+                          )}
+                        </div>
+                        <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!slpCandidate}>
+                           {slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'TBD'}
+                        </Button>
+                    </div>
+                    <div className="flex flex-col items-center p-2 rounded-md bg-muted">
+                        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
+                          {uwpCandidate?.imageUrl ? (
+                              <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name} fill className="object-cover" />
+                          ) : (
+                              <UserSquare className="h-full w-full text-gray-400" />
+                          )}
+                        </div>
+                        <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!uwpCandidate}>
+                           {uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'TBD'}
+                        </Button>
+                    </div>
+                  </div>
+                   <ChartContainer config={{}} className="h-24 w-full">
+                       <ResponsiveContainer width="100%" height="100%">
+                           <PieChart>
+                               <Pie
+                                   data={predictionChartData}
+                                   dataKey="value"
+                                   startAngle={180}
+                                   endAngle={0}
+                                   innerRadius="60%"
+                                   outerRadius="100%"
+                                   cy="100%"
+                                   paddingAngle={2}
+                               >
+                                   {predictionChartData.map((entry) => (
+                                       <Cell key={entry.name} fill={entry.fill} />
+                                   ))}
+                               </Pie>
+                           </PieChart>
+                       </ResponsiveContainer>
+                   </ChartContainer>
+               </div>
+            ) : (
+              <div className="space-y-2">
+                  <CandidateBox 
+                      candidate={slpCandidate!} 
+                      party={slpParty!} 
+                      isWinner={winnerAcronym === 'SLP'} 
+                      votes={currentResult?.slpVotes} 
+                      totalVotes={totalConstituencyVotes}
+                      margin={margin}
+                      electionStatus={electionStatus}
+                      statusColor={statusColor}
+                      isStriped={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'SLP'}
+                      barFill={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'SLP' ? 'blue-red-stripes' : undefined}
+                  />
+                  <CandidateBox 
+                      candidate={uwpCandidate!} 
+                      party={uwpParty!} 
+                      isWinner={winnerAcronym === 'UWP'} 
+                      votes={currentResult?.uwpVotes}
+                      totalVotes={totalConstituencyVotes}
+                      margin={margin}
+                      electionStatus={electionStatus}
+                      statusColor={statusColor}
+                      isStriped={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'UWP'}
+                      barFill={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'UWP' ? 'blue-red-stripes' : undefined}
+                  />
+              </div>
+            )}
             
             {onLeaningChange && (
                 <div className="space-y-2 pt-2">
