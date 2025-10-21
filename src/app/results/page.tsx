@@ -328,6 +328,9 @@ export default function ResultsPage() {
                                         const slpParty = parties?.find(p => p.acronym === 'SLP');
                                         const uwpParty = parties?.find(p => p.acronym === 'UWP');
                                         const winnerColor = currentWinner === 'SLP' ? slpParty?.color : uwpParty?.color;
+                                        
+                                        const is2021 = currentElection?.year === 2021;
+                                        const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
 
 
                                         return (
@@ -336,9 +339,9 @@ export default function ResultsPage() {
                                             <TableCell>
                                                 <span className="font-semibold" style={{ color: winnerColor }}>{resultStatus}</span>
                                             </TableCell>
-                                            <TableCell>{cr.slpVotes.toLocaleString()}</TableCell>
+                                            <TableCell>{isSpecialConstituency ? '-' : cr.slpVotes.toLocaleString()}</TableCell>
                                             <TableCell>{cr.uwpVotes.toLocaleString()}</TableCell>
-                                            <TableCell>{cr.otherVotes.toLocaleString()}</TableCell>
+                                            <TableCell>{isSpecialConstituency ? (cr.slpVotes + cr.otherVotes).toLocaleString() : cr.otherVotes.toLocaleString()}</TableCell>
                                             <TableCell className="text-right font-semibold">{cr.totalVotes.toLocaleString()}</TableCell>
                                             <TableCell className="text-right">{cr.registeredVoters === 0 ? 'N/A' : cr.registeredVoters.toLocaleString()}</TableCell>
                                             <TableCell className="text-right">{cr.turnout === 0 ? 'N/A' : `${cr.turnout}%`}</TableCell>
