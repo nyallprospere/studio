@@ -26,14 +26,14 @@ const getLeaningLabel = (leaningValue?: string) => {
     return politicalLeaningOptions.find(opt => opt.value === leaningValue)?.label || 'Tossup';
 };
 
-function CandidateBox({ candidate, party, isWinner, margin, votes, electionStatus, statusColor }: { candidate: Candidate | ArchivedCandidate | null, party: Party | null, isWinner: boolean, margin: number | null, votes?: number, electionStatus: string | null, statusColor: string | undefined }) {
+function CandidateBox({ candidate, party, isWinner, votes }: { candidate: Candidate | ArchivedCandidate | null, party: Party | null, isWinner: boolean, votes?: number }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const isIncumbent = candidate?.isIncumbent;
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}${isIncumbent ? '*' : ''}` : 'Candidate TBD';
 
     if (!party) {
          return (
-            <div className="flex flex-col items-center gap-2 p-2 rounded-md bg-muted flex-1 mb-2">
+            <div className="flex flex-col items-center gap-2 p-2 rounded-md bg-muted flex-1">
                 <div className="h-10 w-10 rounded-full bg-background flex items-center justify-center">
                     <UserSquare className="h-6 w-6 text-muted-foreground" />
                 </div>
@@ -45,13 +45,13 @@ function CandidateBox({ candidate, party, isWinner, margin, votes, electionStatu
     }
     
     return (
-        <div className="flex-1 mb-2">
+        <div className="flex-1">
             <div className={cn(
                 "p-2 rounded-md bg-muted relative h-full flex flex-col justify-between",
                 isWinner && "border-2 border-green-600"
             )}>
                  {isWinner && <CheckCircle2 className="absolute -top-2 -right-2 h-5 w-5 text-green-600 bg-white rounded-full" />}
-                 <div className="flex items-start justify-between">
+                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <div className="relative h-10 w-10 rounded-full overflow-hidden bg-background flex-shrink-0">
                             {candidate?.imageUrl ? (
@@ -62,24 +62,18 @@ function CandidateBox({ candidate, party, isWinner, margin, votes, electionStatu
                         </div>
                         <div className="text-left">
                             <p className="font-semibold text-xs">{candidateName}</p>
-                            <p style={{ color: party.color }} className="font-bold text-[10px]">{party.acronym} Candidate</p>
+                            <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                                View Profile
+                            </Button>
                         </div>
                     </div>
                      <div className="text-right flex-shrink-0">
-                        <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
-                            View Profile
-                        </Button>
+                        <p style={{ color: party.color }} className="font-bold text-[10px]">{party.acronym} Candidate</p>
                         {votes !== undefined &&
                             <p className="text-xs text-muted-foreground">{votes.toLocaleString()} votes</p>
                         }
                     </div>
                 </div>
-                 {isWinner && (
-                    <div className="text-center mt-1">
-                        <p className="text-[11px] font-bold text-muted-foreground">Won by {margin?.toLocaleString()} votes</p>
-                        {electionStatus && <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>}
-                    </div>
-                )}
             </div>
             <CandidateProfileDialog candidate={candidate as Candidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />
         </div>
@@ -179,9 +173,16 @@ export function ConstituencyPopoverContent({
             <h4 className="font-bold leading-none text-center text-xl">{constituency.name}</h4>
             
             <div className="flex flex-col gap-2">
-                <CandidateBox candidate={slpCandidate!} party={slpParty!} isWinner={winnerAcronym === 'SLP'} margin={margin} votes={currentResult?.slpVotes} electionStatus={electionStatus} statusColor={statusColor} />
-                <CandidateBox candidate={uwpCandidate!} party={uwpParty!} isWinner={winnerAcronym === 'UWP'} margin={margin} votes={currentResult?.uwpVotes} electionStatus={electionStatus} statusColor={statusColor} />
+                <CandidateBox candidate={slpCandidate!} party={slpParty!} isWinner={winnerAcronym === 'SLP'} votes={currentResult?.slpVotes} />
+                <CandidateBox candidate={uwpCandidate!} party={uwpParty!} isWinner={winnerAcronym === 'UWP'} votes={currentResult?.uwpVotes} />
             </div>
+
+            {winnerAcronym && margin !== null && (
+                 <div className="text-center mt-2">
+                    <p className="text-[11px] font-bold text-muted-foreground">Won by {margin.toLocaleString()} votes</p>
+                    {electionStatus && <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>}
+                </div>
+            )}
 
             {onLeaningChange && (
                 <div className="space-y-2 pt-2">
