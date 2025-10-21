@@ -60,21 +60,21 @@ function CandidateBox({ candidate, party, isWinner, margin }: { candidate: Candi
                         <UserSquare className="h-full w-full text-muted-foreground" />
                     )}
                 </div>
-                <div className="text-center">
+                <div className="text-center mt-auto">
                     <p className="font-semibold text-xs">{candidateName}</p>
                     <div style={{ color: party.color }}>
                         <span className="font-bold text-[10px]">{partyText}</span>
                     </div>
                 </div>
-                <Button variant="link" size="sm" className="h-auto p-0 text-xs mt-auto" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                 {isWinner && margin !== null && 
+                    <div className="text-center">
+                        <p className="text-xs text-muted-foreground">Won by {margin.toLocaleString()} votes</p>
+                    </div>
+                 }
+                <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
                     View Profile
                 </Button>
             </div>
-             {isWinner && margin !== null && 
-                <div className="text-center mt-1">
-                    <p className="text-xs text-muted-foreground">Won by {margin.toLocaleString()} votes</p>
-                </div>
-             }
             {/* The dialog expects a `Candidate` type, so we cast it. */}
             <CandidateProfileDialog candidate={candidate as Candidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />
         </div>
