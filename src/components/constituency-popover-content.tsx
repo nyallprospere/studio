@@ -26,7 +26,7 @@ const getLeaningLabel = (leaningValue?: string) => {
     return politicalLeaningOptions.find(opt => opt.value === leaningValue)?.label || 'Tossup';
 };
 
-function CandidateBox({ candidate, party, isWinner, margin, votes }: { candidate: Candidate | ArchivedCandidate | null, party: Party | null, isWinner: boolean, margin: number | null, votes?: number }) {
+function CandidateBox({ candidate, party, isWinner, margin, votes, electionStatus, statusColor }: { candidate: Candidate | ArchivedCandidate | null, party: Party | null, isWinner: boolean, margin: number | null, votes?: number, electionStatus: string | null, statusColor: string | undefined }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const isIncumbent = candidate?.isIncumbent;
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}${isIncumbent ? '*' : ''}` : 'Candidate TBD';
@@ -44,8 +44,6 @@ function CandidateBox({ candidate, party, isWinner, margin, votes }: { candidate
         );
     }
     
-    const partyText = `${party.acronym} Candidate`;
-
     return (
         <div className="flex-1">
             <div className={cn(
@@ -67,16 +65,18 @@ function CandidateBox({ candidate, party, isWinner, margin, votes }: { candidate
                     </Button>
                 </div>
                  <div style={{ color: party.color }} className="mt-auto text-center">
-                    <span className="font-bold text-[10px]">{partyText}</span>
+                    <span className="font-bold text-[10px]">{party.acronym} Candidate</span>
                     {votes !== undefined &&
                         <p className="text-xs text-muted-foreground">{votes.toLocaleString()} votes</p>
                     }
                 </div>
             </div>
              {isWinner && margin !== null && 
-                <p className="text-[11px] font-bold text-muted-foreground mt-1 text-center">Won by {margin.toLocaleString()} votes</p>
+                <div>
+                    <p className="text-[11px] font-bold text-muted-foreground mt-1 text-center">Won by {margin.toLocaleString()} votes</p>
+                    {electionStatus && <p className="font-bold text-xs text-center" style={{color: statusColor}}>{electionStatus}</p>}
+                </div>
             }
-            {/* The dialog expects a `Candidate` type, so we cast it. */}
             <CandidateProfileDialog candidate={candidate as Candidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />
         </div>
     );
@@ -100,18 +100,15 @@ export function ConstituencyPopoverContent({
 }) {
     const { firestore } = useFirebase();
 
-    // Determine the collection and queries based on whether an election is provided
     const candidatesQuery = useMemoFirebase(() => {
         if (!firestore) return null;
         if (election) {
-            // Fetch from archived_candidates for a specific election
             return query(
                 collection(firestore, 'archived_candidates'),
                 where('constituencyId', '==', constituency.id),
                 where('electionId', '==', election.id)
             );
         }
-        // Default to current candidates
         return query(collection(firestore, 'candidates'), where('constituencyId', '==', constituency.id));
     }, [firestore, constituency.id, election]);
 
@@ -177,15 +174,9 @@ export function ConstituencyPopoverContent({
         <div className="space-y-3">
             <h4 className="font-bold leading-none text-center text-xl">{constituency.name}</h4>
             
-            {electionStatus && (
-                <div className="text-center">
-                    <p className="font-bold text-sm" style={{color: statusColor}}>{electionStatus}</p>
-                </div>
-            )}
-
             <div className="flex gap-2">
-                <CandidateBox candidate={slpCandidate!} party={slpParty!} isWinner={winnerAcronym === 'SLP'} margin={margin} votes={currentResult?.slpVotes} />
-                <CandidateBox candidate={uwpCandidate!} party={uwpParty!} isWinner={winnerAcronym === 'UWP'} margin={margin} votes={currentResult?.uwpVotes} />
+                <CandidateBox candidate={slpCandidate!} party={slpParty!} isWinner={winnerAcronym === 'SLP'} margin={margin} votes={currentResult?.slpVotes} electionStatus={electionStatus} statusColor={statusColor} />
+                <CandidateBox candidate={uwpCandidate!} party={uwpParty!} isWinner={winnerAcronym === 'UWP'} margin={margin} votes={currentResult?.uwpVotes} electionStatus={electionStatus} statusColor={statusColor} />
             </div>
 
             {onLeaningChange && (
