@@ -2,7 +2,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { Constituency, Candidate, Party, ArchivedCandidate, ElectionResult } from '@/lib/types';
+import type { Constituency, Candidate, Party, ArchivedCandidate, ElectionResult, Election } from '@/lib/types';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
@@ -60,20 +60,18 @@ function CandidateBox({ candidate, party, isWinner, margin }: { candidate: Candi
                         <UserSquare className="h-full w-full text-muted-foreground" />
                     )}
                 </div>
-                <div className="text-center mt-auto">
+                <div className="text-center mt-auto flex flex-col">
                     <p className="font-semibold text-xs">{candidateName}</p>
-                    <div style={{ color: party.color }}>
+                    <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                        View Profile
+                    </Button>
+                    <div style={{ color: party.color }} className="mt-2">
                         <span className="font-bold text-[10px]">{partyText}</span>
+                         {isWinner && margin !== null && 
+                            <p className="text-xs text-muted-foreground">Won by {margin.toLocaleString()} votes</p>
+                         }
                     </div>
                 </div>
-                 {isWinner && margin !== null && 
-                    <div className="text-center">
-                        <p className="text-xs text-muted-foreground">Won by {margin.toLocaleString()} votes</p>
-                    </div>
-                 }
-                <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
-                    View Profile
-                </Button>
             </div>
             {/* The dialog expects a `Candidate` type, so we cast it. */}
             <CandidateProfileDialog candidate={candidate as Candidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />
@@ -91,7 +89,7 @@ export function ConstituencyPopoverContent({
     previousElectionResults
 }: { 
     constituency: Constituency,
-    election?: any;
+    election?: Election | null;
     onLeaningChange?: (leaning: string) => void;
     onPredictionChange?: (slp: number, uwp: number) => void;
     electionResults?: ElectionResult[];
