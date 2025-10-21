@@ -252,14 +252,6 @@ export function ConstituencyPopoverContent({
                             <p className="text-xs font-semibold text-muted-foreground">STATUS</p>
                             <p className="font-bold">{getLeaningLabel(constituency.politicalLeaning)}</p>
                         </div>
-                        <div>
-                            <p className="text-xs font-semibold text-muted-foreground">ODDS OF WINNING</p>
-                            <div className="flex justify-center items-baseline gap-2">
-                                <p className="font-bold" style={{color: slpParty?.color}}>{constituency.predictedSlpPercentage}%</p>
-                                <p className="text-xs text-muted-foreground">vs</p>
-                                <p className="font-bold" style={{color: uwpParty?.color}}>{constituency.predictedUwpPercentage}%</p>
-                            </div>
-                        </div>
                          <ChartContainer config={{}} className="h-24 w-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
