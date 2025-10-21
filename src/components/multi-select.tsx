@@ -3,15 +3,10 @@
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-import { Check, X, ChevronsUpDown } from 'lucide-react';
+import { X, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList
 } from '@/components/ui/command';
 import {
   Popover,
@@ -31,6 +26,7 @@ interface MultiSelectProps {
   onChange: (selected: string[]) => void;
   className?: string;
   placeholder?: string;
+  children?: React.ReactNode;
 }
 
 function MultiSelect({
@@ -39,6 +35,7 @@ function MultiSelect({
   onChange,
   className,
   placeholder = 'Select options',
+  children,
   ...props
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
@@ -67,10 +64,11 @@ function MultiSelect({
                     variant="secondary"
                     key={option.value}
                     className="mr-1 mb-1"
+                    onClick={(e) => handleUnselect(e, option.value)}
                   >
                     {option.label}
                     <span
-                      className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
+                      className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           handleUnselect(e as any, option.value);
@@ -80,7 +78,6 @@ function MultiSelect({
                         e.preventDefault();
                         e.stopPropagation();
                       }}
-                      onClick={(e) => handleUnselect(e, option.value)}
                       role="button"
                       tabIndex={0}
                       aria-label={`Remove ${option.label}`}
@@ -98,35 +95,7 @@ function MultiSelect({
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
         <Command className={className}>
-          <CommandInput placeholder="Search ..." />
-          <CommandList>
-            <CommandEmpty>No item found.</CommandEmpty>
-            <CommandGroup className="max-h-64 overflow-auto">
-              {options.map((option) => (
-                <CommandItem
-                  key={option.value}
-                  onSelect={() => {
-                    onChange(
-                      selected.includes(option.value)
-                        ? selected.filter((item) => item !== option.value)
-                        : [...selected, option.value]
-                    );
-                    setOpen(true);
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      'mr-2 h-4 w-4',
-                      selected.includes(option.value)
-                        ? 'opacity-100'
-                        : 'opacity-0'
-                    )}
-                  />
-                  {option.label}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
+          {children}
         </Command>
       </PopoverContent>
     </Popover>

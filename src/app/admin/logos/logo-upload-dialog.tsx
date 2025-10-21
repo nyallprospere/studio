@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,10 +12,14 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Party, Election } from '@/lib/types';
 import { MultiSelect } from '@/components/multi-select';
-import { useFirebase } from '@/firebase';
-import { collection, doc, query, where, getDocs, updateDoc, addDoc } from 'firebase/firestore';
+import { useFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { collection, doc, query, where, getDocs, updateDoc, addDoc, writeBatch } from 'firebase/firestore';
 import { uploadFile, deleteFile } from '@/firebase/storage';
 import { Loader2 } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandList } from '@/components/ui/command';
+import { Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface LogoUploadDialogProps {
   isOpen: boolean;
@@ -57,6 +61,8 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
     setIsLoading(true);
 
     try {
+        const batch = writeBatch(firestore);
+
         for (const electionId of values.electionIds) {
             const files = {
                 standard: values.standardLogoFile,
@@ -68,6 +74,7 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
                 where('partyId', '==', party.id),
                 where('electionId', '==', electionId)
             );
+            
             const existingLogoSnap = await getDocs(existingLogoQuery);
             const existingLogoDoc = existingLogoSnap.docs[0];
 
@@ -91,19 +98,39 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
             };
 
             if (existingLogoDoc) {
-                await updateDoc(doc(firestore, 'party_logos', existingLogoDoc.id), dataToSave);
+                const docRef = doc(firestore, 'party_logos', existingLogoDoc.id);
+                batch.update(docRef, dataToSave);
             } else {
-                await addDoc(collection(firestore, 'party_logos'), dataToSave);
+                const newDocRef = doc(collection(firestore, 'party_logos'));
+                batch.set(newDocRef, dataToSave);
             }
         }
         
+        await batch.commit().catch(error => {
+            const permissionError = new FirestorePermissionError({
+                path: 'party_logos',
+                operation: 'write',
+                requestResourceData: values,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            throw error;
+        });
+
+        toast({ title: 'Upload Successful', description: 'Logos have been processed.' });
         onSuccess();
         form.reset();
         onClose();
 
     } catch (error) {
-        console.error("Error uploading logos:", error);
-        toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload logos.' });
+        if (!(error instanceof FirestorePermissionError)) {
+             const permissionError = new FirestorePermissionError({
+                path: 'party_logos',
+                operation: 'list',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        }
+        
+        toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload logos due to a permission issue.' });
     } finally {
         setIsLoading(false);
     }
@@ -112,7 +139,7 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
   const handleClose = () => {
     form.reset();
     onClose();
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -134,7 +161,35 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
                                 selected={field.value}
                                 onChange={field.onChange}
                                 placeholder="Select elections..."
-                            />
+                            >
+                                <CommandInput placeholder="Search elections..." />
+                                <ScrollArea className="h-48">
+                                    <CommandList>
+                                        <CommandEmpty>No results found.</CommandEmpty>
+                                        <CommandGroup>
+                                        {electionOptions.map((option) => (
+                                            <CommandItem
+                                                key={option.value}
+                                                onSelect={() => {
+                                                    const newValue = field.value.includes(option.value)
+                                                    ? field.value.filter((v) => v !== option.value)
+                                                    : [...field.value, option.value];
+                                                    field.onChange(newValue);
+                                                }}
+                                                >
+                                                <Check
+                                                    className={cn(
+                                                    'mr-2 h-4 w-4',
+                                                    field.value.includes(option.value) ? 'opacity-100' : 'opacity-0'
+                                                    )}
+                                                />
+                                                {option.label}
+                                            </CommandItem>
+                                        ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </ScrollArea>
+                            </MultiSelect>
                             <FormMessage />
                         </FormItem>
                     )}
@@ -165,11 +220,12 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
                         </FormItem>
                     )}
                     />
+
                 <DialogFooter>
-                    <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>Cancel</Button>
+                    <Button type="button" variant="outline" onClick={handleClose}>Cancel</Button>
                     <Button type="submit" disabled={isLoading}>
-                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Upload
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Upload and Apply
                     </Button>
                 </DialogFooter>
             </form>
