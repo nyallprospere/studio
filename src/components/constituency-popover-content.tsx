@@ -160,7 +160,6 @@ export function ConstituencyPopoverContent({
             
             {electionStatus && (
                 <div>
-                    <h5 className="text-center text-xs font-bold underline text-muted-foreground">Election Status</h5>
                     <p className="text-center font-bold text-sm">{electionStatus}</p>
                 </div>
             )}
