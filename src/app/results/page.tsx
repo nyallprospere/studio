@@ -214,7 +214,12 @@ export default function ResultsPage() {
                     {summaryData.map((summaryItem) => (
                       <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
                         <CardHeader>
-                          <CardTitle className="text-lg">{summaryItem.name}</CardTitle>
+                          <CardTitle className="text-lg">{summaryItem.acronym}</CardTitle>
+                          {summaryItem.logoUrl && (
+                            <div className="relative h-12 w-12">
+                                <Image src={summaryItem.logoUrl} alt={`${summaryItem.name} logo`} fill className="object-contain" />
+                            </div>
+                          )}
                         </CardHeader>
                         <CardContent>
                           <div className="text-3xl font-bold">{summaryItem.seats} Seats</div>
