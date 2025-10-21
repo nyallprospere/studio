@@ -8,7 +8,7 @@ import type { Party, Election } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as DialogDescriptionComponent } from '@/components/ui/dialog';
 import { PartyForm } from './party-form';
 import Image from 'next/image';
 import { Shield, Pencil, Trash2, Link as LinkIcon, Upload } from 'lucide-react';
@@ -17,7 +17,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription as AlertDialogDescriptionComponent,
+  AlertDialogDescription as AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -181,10 +181,10 @@ export default function AdminPartiesPage() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-xl">
                 <DialogHeader>
-                  <DialogTitle>Independent Candidate Logos</DialogTitle>
-                  <DialogDescription>
-                    Upload logos for independent candidates for the {currentElection?.name}.
-                  </DialogDescription>
+                  <DialogTitle>Independent Party Logos</DialogTitle>
+                  <DialogDescriptionComponent>
+                    Upload logos for the Independent party for the {currentElection?.name}.
+                  </DialogDescriptionComponent>
                 </DialogHeader>
                 <IndependentLogoForm
                   onSubmit={handleIndependentLogoSubmit}
@@ -266,9 +266,9 @@ export default function AdminPartiesPage() {
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescriptionComponent>
+                              <AlertDialogDescription>
                                 This will permanently delete the party "{party.name}" and all associated data. This action cannot be undone.
-                              </AlertDialogDescriptionComponent>
+                              </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>

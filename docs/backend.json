@@ -421,173 +421,71 @@
     ]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/parties/{partyId}",
-        "definition": {
-          "entityName": "Party",
-          "schema": {
-            "$ref": "#/backend/entities/Party"
-          },
-          "description": "Stores information about political parties.  The `partyId` is used as the document ID.",
-          "params": [
-            {
-              "name": "partyId",
-              "description": "The unique identifier of the party."
-            }
-          ]
-        }
+    "/parties/{partyId}": {
+      "schema": {
+        "$ref": "#/entities/Party"
       },
-      {
-        "path": "/events/{eventId}",
-        "definition": {
-          "entityName": "Event",
-          "schema": {
-            "$ref": "#/backend/entities/Event"
-          },
-          "description": "Stores information about political events. The `eventId` is used as the document ID.",
-          "params": [
-            {
-              "name": "eventId",
-              "description": "The unique identifier of the event."
-            }
-          ]
-        }
+      "description": "Stores information about political parties.  The `partyId` is used as the document ID."
+    },
+    "/events/{eventId}": {
+      "schema": {
+        "$ref": "#/entities/Event"
       },
-      {
-        "path": "/candidates/{candidateId}",
-        "definition": {
-          "entityName": "Candidate",
-          "schema": {
-            "$ref": "#/backend/entities/Candidate"
-          },
-          "description": "Stores information about candidates. The `candidateId` is used as the document ID.",
-          "params": [
-            {
-              "name": "candidateId",
-              "description": "The unique identifier of the candidate."
-            }
-          ]
-        }
+      "description": "Stores information about political events. The `eventId` is used as the document ID."
+    },
+    "/candidates/{candidateId}": {
+      "schema": {
+        "$ref": "#/entities/Candidate"
       },
-      {
-        "path": "/archived_candidates/{archivedCandidateId}",
-        "definition": {
-          "entityName": "ArchivedCandidate",
-          "schema": {
-            "$ref": "#/backend/entities/ArchivedCandidate"
-          },
-          "description": "Stores archived candidate data from previous election cycles. The `archivedCandidateId` is used as the document ID.",
-          "params": [
-            {
-              "name": "archivedCandidateId",
-              "description": "The unique identifier for the archived candidate record."
-            }
-          ]
-        }
+      "description": "Stores information about candidates. The `candidateId` is used as the document ID."
+    },
+    "/archived_candidates/{archivedCandidateId}": {
+      "schema": {
+        "$ref": "#/entities/ArchivedCandidate"
       },
-      {
-        "path": "/elections/{electionId}",
-        "definition": {
-          "entityName": "Election",
-          "schema": {
-            "$ref": "#/backend/entities/Election"
-          },
-          "description": "Stores information about elections. The `electionId` is used as the document ID.",
-          "params": [
-            {
-              "name": "electionId",
-              "description": "The unique identifier of the election."
-            }
-          ]
-        }
+      "description": "Stores archived candidate data from previous election cycles. The `archivedCandidateId` is used as the document ID."
+    },
+    "/elections/{electionId}": {
+      "schema": {
+        "$ref": "#/entities/Election"
       },
-      {
-        "path": "/polling_data/{pollingDataId}",
-        "definition": {
-          "entityName": "PollingData",
-          "schema": {
-            "$ref": "#/backend/entities/PollingData"
-          },
-          "description": "Stores polling data for elections. The `pollingDataId` is used as the document ID.",
-          "params": [
-            {
-              "name": "pollingDataId",
-              "description": "The unique identifier of the polling data."
-            }
-          ]
-        }
+      "description": "Stores information about elections. The `electionId` is used as the document ID."
+    },
+    "/polling_data/{pollingDataId}": {
+      "schema": {
+        "$ref": "#/entities/PollingData"
       },
-      {
-        "path": "/constituencies/{constituencyId}",
-        "definition": {
-          "entityName": "Constituency",
-          "schema": {
-            "$ref": "#/backend/entities/Constituency"
-          },
-          "description": "Stores information about constituencies. The `constituencyId` is used as the document ID.",
-          "params": [
-            {
-              "name": "constituencyId",
-              "description": "The unique identifier of the constituency."
-            }
-          ]
-        }
+      "description": "Stores polling data for elections. The `pollingDataId` is used as the document ID."
+    },
+    "/constituencies/{constituencyId}": {
+      "schema": {
+        "$ref": "#/entities/Constituency"
       },
-      {
-        "path": "/election_results/{electionResultId}",
-        "definition": {
-          "entityName": "ElectionResult",
-          "schema": {
-            "$ref": "#/backend/entities/ElectionResult"
-          },
-          "description": "Stores election results. The `electionResultId` is used as the document ID.",
-          "params": [
-            {
-              "name": "electionResultId",
-              "description": "The unique identifier of the election result."
-            }
-          ]
-        }
+      "description": "Stores information about constituencies. The `constituencyId` is used as the document ID."
+    },
+    "/election_results/{electionResultId}": {
+      "schema": {
+        "$ref": "#/entities/ElectionResult"
       },
-      {
-        "path": "/settings/pageLayouts",
-        "definition": {
-          "entityName": "PageLayouts",
-          "schema": {
-            "$ref": "#/backend/entities/PageLayouts"
-          },
-          "description": "Stores user-defined layouts for various pages. This is a single document."
-        }
+      "description": "Stores election results. The `electionResultId` is used as the document ID."
+    },
+    "/settings/pageLayouts": {
+      "schema": {
+        "$ref": "#/entities/PageLayouts"
       },
-      {
-        "path": "/settings/site",
-        "definition": {
-          "entityName": "SiteSettings",
-          "schema": {
-            "$ref": "#/backend/entities/SiteSettings"
-          },
-          "description": "Stores global site settings. This is a single document."
-        }
+      "description": "Stores user-defined layouts for various pages. This is a single document."
+    },
+    "/settings/site": {
+      "schema": {
+        "$ref": "#/entities/SiteSettings"
       },
-      {
-        "path": "/user_activity/{activityId}",
-        "definition": {
-          "entityName": "UserActivity",
-          "schema": {
-            "$ref": "#/backend/entities/UserActivity"
-          },
-          "description": "Stores user activity events, such as page visits. The `activityId` is used as the document ID.",
-          "params": [
-            {
-              "name": "activityId",
-              "description": "The unique identifier for the activity log."
-            }
-          ]
-        }
-      }
-    ],
-    "reasoning": "The Firestore structure is designed to support the St. Lucia Elections Hub application, focusing on tracking candidates, parties, elections, polling data, constituencies, and election results. The structure prioritizes Authorization Independence by avoiding hierarchical authorization dependencies and denormalizing data where necessary. Structural Segregation is applied by keeping data with similar access needs in separate collections. Access Modeling employs path-based ownership and membership maps where appropriate. Data Clarity and Predictability are achieved through explicit state modeling and consistent naming conventions.\n\nAuthorization Independence is achieved primarily through structural choices that avoid the need for `get()` calls in security rules.  For instance, access to candidate information does not require reading party or constituency data.\n\nThe structure supports the required QAPs (Rules are not Filters) by:\n\n*   Segregating data into collections with homogeneous security needs.\n*   Avoiding overly complex rule logic that could lead to inefficient queries.\n* Added documents to store page layout and site settings."
+      "description": "Stores global site settings. This is a single document."
+    },
+    "/user_activity/{activityId}": {
+      "schema": {
+        "$ref": "#/entities/UserActivity"
+      },
+      "description": "Stores user activity events, such as page visits. The `activityId` is used as the document ID."
+    }
   }
 }
-
