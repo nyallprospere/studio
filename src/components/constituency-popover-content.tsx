@@ -26,7 +26,7 @@ const getLeaningLabel = (leaningValue?: string) => {
     return politicalLeaningOptions.find(opt => opt.value === leaningValue)?.label || 'Tossup';
 };
 
-function CandidateBox({ candidate, party, isWinner }: { candidate: Candidate | ArchivedCandidate | null, party: Party | null, isWinner: boolean }) {
+function CandidateBox({ candidate, party, isWinner, margin }: { candidate: Candidate | ArchivedCandidate | null, party: Party | null, isWinner: boolean, margin: number | null }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const isIncumbent = candidate?.isIncumbent;
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}${isIncumbent ? '*' : ''}` : 'Candidate TBD';
@@ -47,8 +47,8 @@ function CandidateBox({ candidate, party, isWinner }: { candidate: Candidate | A
     const partyText = `${party.acronym} Candidate`;
 
     return (
-        <>
-            <div className={cn("flex flex-col items-center gap-2 p-2 rounded-md bg-muted flex-1 relative", isWinner && "border-2 border-green-500")}>
+        <div className="flex-1">
+            <div className={cn("flex flex-col items-center gap-2 p-2 rounded-md bg-muted relative h-full")}>
                 {isWinner && <CheckCircle2 className="absolute -top-2 -right-2 h-5 w-5 text-green-600 bg-white rounded-full" />}
                 <div className="relative h-10 w-10 rounded-full overflow-hidden bg-background">
                     {candidate?.imageUrl ? (
@@ -63,13 +63,18 @@ function CandidateBox({ candidate, party, isWinner }: { candidate: Candidate | A
                         <span className="font-bold text-[10px]">{partyText}</span>
                     </div>
                 </div>
-                <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                <Button variant="link" size="sm" className="h-auto p-0 text-xs mt-auto" onClick={() => setProfileOpen(true)} disabled={!candidate}>
                     View Profile
                 </Button>
             </div>
+             {isWinner && margin !== null && 
+                <div className="text-center mt-1">
+                    <p className="text-xs text-muted-foreground">Won by {margin.toLocaleString()} votes</p>
+                </div>
+             }
             {/* The dialog expects a `Candidate` type, so we cast it. */}
             <CandidateProfileDialog candidate={candidate as Candidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />
-        </>
+        </div>
     );
 }
 
@@ -175,16 +180,9 @@ export function ConstituencyPopoverContent({
             )}
 
             <div className="flex gap-2">
-                <CandidateBox candidate={slpCandidate!} party={slpParty!} isWinner={winnerAcronym === 'SLP'} />
-                <CandidateBox candidate={uwpCandidate!} party={uwpParty!} isWinner={winnerAcronym === 'UWP'} />
+                <CandidateBox candidate={slpCandidate!} party={slpParty!} isWinner={winnerAcronym === 'SLP'} margin={margin} />
+                <CandidateBox candidate={uwpCandidate!} party={uwpParty!} isWinner={winnerAcronym === 'UWP'} margin={margin} />
             </div>
-
-             { margin !== null && 
-                <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Won by {margin.toLocaleString()} votes</p>
-                </div>
-             }
-
 
             {onLeaningChange && (
                 <div className="space-y-2 pt-2">
