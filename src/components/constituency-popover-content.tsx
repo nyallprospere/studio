@@ -26,7 +26,7 @@ const getLeaningLabel = (leaningValue?: string) => {
     return politicalLeaningOptions.find(opt => opt.value === leaningValue)?.label || 'Tossup';
 };
 
-function CandidateBox({ candidate, party, isWinner, margin }: { candidate: Candidate | ArchivedCandidate | null, party: Party | null, isWinner: boolean, margin: number | null }) {
+function CandidateBox({ candidate, party, isWinner, margin, votes }: { candidate: Candidate | ArchivedCandidate | null, party: Party | null, isWinner: boolean, margin: number | null, votes?: number }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const isIncumbent = candidate?.isIncumbent;
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}${isIncumbent ? '*' : ''}` : 'Candidate TBD';
@@ -60,18 +60,21 @@ function CandidateBox({ candidate, party, isWinner, margin }: { candidate: Candi
                         <UserSquare className="h-full w-full text-muted-foreground" />
                     )}
                 </div>
-                <div className="text-center mt-auto flex flex-col">
+                <div className="text-center mt-auto flex flex-col items-center">
                     <p className="font-semibold text-xs">{candidateName}</p>
                     <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
                         View Profile
                     </Button>
                     <div style={{ color: party.color }} className="mt-2">
                         <span className="font-bold text-[10px]">{partyText}</span>
-                         {isWinner && margin !== null && 
-                            <p className="text-xs text-muted-foreground">Won by {margin.toLocaleString()} votes</p>
+                        {votes !== undefined &&
+                            <p className="text-xs text-muted-foreground">{votes.toLocaleString()} votes</p>
                          }
                     </div>
                 </div>
+                {isWinner && margin !== null && 
+                    <p className="text-xs text-muted-foreground mt-1">Won by {margin.toLocaleString()} votes</p>
+                }
             </div>
             {/* The dialog expects a `Candidate` type, so we cast it. */}
             <CandidateProfileDialog candidate={candidate as Candidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />
@@ -181,8 +184,8 @@ export function ConstituencyPopoverContent({
             )}
 
             <div className="flex gap-2">
-                <CandidateBox candidate={slpCandidate!} party={slpParty!} isWinner={winnerAcronym === 'SLP'} margin={margin} />
-                <CandidateBox candidate={uwpCandidate!} party={uwpParty!} isWinner={winnerAcronym === 'UWP'} margin={margin} />
+                <CandidateBox candidate={slpCandidate!} party={slpParty!} isWinner={winnerAcronym === 'SLP'} margin={margin} votes={currentResult?.slpVotes} />
+                <CandidateBox candidate={uwpCandidate!} party={uwpParty!} isWinner={winnerAcronym === 'UWP'} margin={margin} votes={currentResult?.uwpVotes} />
             </div>
 
             {onLeaningChange && (
