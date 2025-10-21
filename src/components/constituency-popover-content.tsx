@@ -66,13 +66,13 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
                                     <UserSquare className="h-full w-full text-gray-400" />
                                 )}
                             </div>
-                            <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                             <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold" onClick={() => setProfileOpen(true)} disabled={!candidate}>
                                 {candidateName}
                             </Button>
                         </div>
                     </div>
                      <div className="flex-grow text-center">
-                        <p className="font-bold text-[10px]" style={{color: statusColor}}>{electionStatus}</p>
+                        <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
                     </div>
                      <div className="flex-grow text-right">
                         {isWinner && margin !== undefined && margin !== null && (
@@ -90,9 +90,6 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
                         <span className="text-white font-bold text-sm">
                             {votes !== undefined && votes.toLocaleString()}
                         </span>
-                         {isWinner && margin !== undefined && margin !== null && (
-                            <span className="text-black text-[11px] font-bold ml-1">(+{margin.toLocaleString()})</span>
-                        )}
                     </div>
                 </div>
 
