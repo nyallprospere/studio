@@ -48,7 +48,10 @@ function CandidateBox({ candidate, party, isWinner, margin }: { candidate: Candi
 
     return (
         <div className="flex-1">
-            <div className={cn("flex flex-col items-center gap-2 p-2 rounded-md bg-muted relative h-full")}>
+            <div className={cn(
+                "flex flex-col items-center gap-2 p-2 rounded-md bg-muted relative h-full",
+                isWinner && "border-2 border-green-600"
+            )}>
                 {isWinner && <CheckCircle2 className="absolute -top-2 -right-2 h-5 w-5 text-green-600 bg-white rounded-full" />}
                 <div className="relative h-10 w-10 rounded-full overflow-hidden bg-background">
                     {candidate?.imageUrl ? (
