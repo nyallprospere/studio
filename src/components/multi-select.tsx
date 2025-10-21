@@ -43,7 +43,8 @@ function MultiSelect({
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
 
-  const handleUnselect = (item: string) => {
+  const handleUnselect = (e: React.MouseEvent, item: string) => {
+    e.stopPropagation();
     onChange(selected.filter((i) => i !== item));
   };
 
@@ -66,30 +67,26 @@ function MultiSelect({
                     variant="secondary"
                     key={option.value}
                     className="mr-1 mb-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleUnselect(option.value);
-                    }}
                   >
                     {option.label}
-                    <button
-                      className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    <span
+                      className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
-                          handleUnselect(option.value);
+                          handleUnselect(e as any, option.value);
                         }
                       }}
                       onMouseDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                       }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleUnselect(option.value);
-                      }}
+                      onClick={(e) => handleUnselect(e, option.value)}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Remove ${option.label}`}
                     >
                       <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                    </button>
+                    </span>
                   </Badge>
                 ))
             ) : (
