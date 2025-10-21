@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { collection, addDoc, updateDoc, doc, query, where, getDocs, writeBatch, deleteDoc } from 'firebase/firestore';
 import type { Party, Election, PartyLogo } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
@@ -171,7 +171,7 @@ export default function ManageLogosPage() {
                                   <div className="flex items-center gap-2">
                                      <Button variant="outline" size="sm" onClick={() => { /* No action for now */ }}>
                                         <Pencil className="mr-2 h-4 w-4" />
-                                        Edit
+                                        Edit Applicable Years
                                     </Button>
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
