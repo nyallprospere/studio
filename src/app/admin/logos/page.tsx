@@ -38,7 +38,7 @@ export default function ManageLogosPage() {
 
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
-  const { data: partyLogos, isLoading: loadingLogos, error } = useCollection<PartyLogo>(partyLogosQuery);
+  const { data: partyLogos, isLoading: loadingLogos, error, refetch: refetchLogos } = useCollection<PartyLogo>(partyLogosQuery);
   
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedPartyForUpload, setSelectedPartyForUpload] = useState<Party | null>(null);
@@ -58,6 +58,7 @@ export default function ManageLogosPage() {
   const handleUploadSuccess = () => {
     setIsUploadDialogOpen(false);
     toast({ title: 'Logos Updated Successfully' });
+    if(refetchLogos) refetchLogos();
   }
   
   const getLogoGroups = (partyId: string) => {
@@ -167,7 +168,7 @@ export default function ManageLogosPage() {
                             return (
                               <div key={group.key} className="p-4 border rounded-md flex flex-col gap-4">
                                 <div className="text-center">
-                                  <h4 className="font-semibold">Applicable Years</h4>
+                                  <h4 className="font-semibold">Election Year</h4>
                                   <p className="text-sm text-muted-foreground">{group.dateRange}</p>
                                 </div>
                                 
