@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { Progress } from './ui/progress';
-import { Pie, PieChart, Cell } from 'recharts';
+import { Pie, PieChart, Cell, ResponsiveContainer } from 'recharts';
 import { ChartContainer } from './ui/chart';
 
 const politicalLeaningOptions = [
