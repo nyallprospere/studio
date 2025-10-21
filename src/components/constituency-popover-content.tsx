@@ -55,24 +55,22 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
             )}>
                  {isWinner && <CheckCircle2 className="absolute -top-2 -right-2 h-5 w-5 text-green-600 bg-white rounded-full" />}
                 
-                <div className="flex items-center justify-between gap-2 mb-2">
-                    {party?.logoUrl && (
+                <div className="flex flex-col items-center gap-2 mb-2">
+                     {party?.logoUrl && (
                         <div className="relative h-10 w-10">
                             <Image src={party.logoUrl} alt={party.name} fill className="object-contain" />
                         </div>
                     )}
-                    <div className="flex flex-col items-center">
-                        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
-                        {candidate?.imageUrl ? (
-                            <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
-                        ) : (
-                            <UserSquare className="h-full w-full text-gray-400" />
-                        )}
-                        </div>
-                        <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold" onClick={() => setProfileOpen(true)} disabled={!candidate}>
-                           {candidateName}
-                        </Button>
+                    <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
+                    {candidate?.imageUrl ? (
+                        <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
+                    ) : (
+                        <UserSquare className="h-full w-full text-gray-400" />
+                    )}
                     </div>
+                    <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                        {candidateName}
+                    </Button>
                      <div className="flex-grow text-center">
                         <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
                     </div>
@@ -215,6 +213,11 @@ export function ConstituencyPopoverContent({
                <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex flex-col items-center p-2 rounded-md bg-muted">
+                        {slpParty?.logoUrl && (
+                            <div className="relative h-8 w-8 mb-2">
+                                <Image src={slpParty.logoUrl} alt={slpParty.name} fill className="object-contain" />
+                            </div>
+                        )}
                         <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
                           {slpCandidate?.imageUrl ? (
                               <Image src={slpCandidate.imageUrl} alt={slpCandidate.name} fill className="object-cover" />
@@ -227,6 +230,11 @@ export function ConstituencyPopoverContent({
                         </Button>
                     </div>
                     <div className="flex flex-col items-center p-2 rounded-md bg-muted">
+                        {uwpParty?.logoUrl && (
+                            <div className="relative h-8 w-8 mb-2">
+                                <Image src={uwpParty.logoUrl} alt={uwpParty.name} fill className="object-contain" />
+                            </div>
+                        )}
                         <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
                           {uwpCandidate?.imageUrl ? (
                               <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name} fill className="object-cover" />
