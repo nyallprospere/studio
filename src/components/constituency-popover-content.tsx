@@ -57,37 +57,39 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
                             <Image src={party.logoUrl} alt={party.name} fill className="object-contain" />
                         </div>
                     )}
-                    <div className="flex flex-col items-center">
-                            <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
-                            {candidate?.imageUrl ? (
-                                <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
-                            ) : (
-                                <UserSquare className="h-full w-full text-gray-400" />
-                            )}
+                     <div className="flex flex-col items-center">
+                        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
+                        {candidate?.imageUrl ? (
+                            <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
+                        ) : (
+                            <UserSquare className="h-full w-full text-gray-400" />
+                        )}
                         </div>
-                        <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                         <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold" onClick={() => setProfileOpen(true)} disabled={!candidate}>
                             {candidateName}
                         </Button>
                     </div>
-                    <div className="flex-grow text-center">
+                     <div className="flex-grow text-center">
                         <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
                     </div>
                 </div>
 
-                <div className="relative w-full h-8 bg-gray-200 rounded overflow-hidden">
+                 <div className="relative w-full h-8 bg-gray-200 rounded overflow-hidden">
                     <div 
                         className="absolute top-0 left-0 h-full rounded" 
                         style={{ width: `${votePercentage}%`, backgroundColor: party?.color }}
                     ></div>
                     <div className="absolute inset-0 flex items-center justify-start px-2">
-                        <span className="text-white font-bold text-sm">
-                            {votes !== undefined && votes.toLocaleString()}
-                        </span>
-                        {isWinner && margin !== null && (
-                            <span className="text-black text-[11px] font-bold ml-1">
-                                (+{margin.toLocaleString()})
+                        <div className="flex items-baseline">
+                            <span className="text-white font-bold text-sm">
+                                {votes !== undefined && votes.toLocaleString()}
                             </span>
-                        )}
+                            {isWinner && margin !== null && (
+                                <sup className="text-white text-[11px] font-bold ml-1">
+                                    (+{margin.toLocaleString()})
+                                </sup>
+                            )}
+                        </div>
                     </div>
                 </div>
 
