@@ -52,7 +52,7 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
                  {isWinner && <CheckCircle2 className="absolute -top-2 -right-2 h-5 w-5 text-green-600 bg-white rounded-full" />}
                 
                 <div className="flex items-center justify-between gap-2 mb-2">
-                     <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                         {party?.logoUrl && (
                             <div className="relative h-10 w-10">
                                 <Image src={party.logoUrl} alt={party.name} fill className="object-contain" />
@@ -66,18 +66,13 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
                                     <UserSquare className="h-full w-full text-gray-400" />
                                 )}
                             </div>
-                             <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                            <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold" onClick={() => setProfileOpen(true)} disabled={!candidate}>
                                 {candidateName}
                             </Button>
                         </div>
                     </div>
                      <div className="flex-grow text-center">
                         <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
-                    </div>
-                     <div className="flex-grow text-right">
-                        {isWinner && margin !== undefined && margin !== null && (
-                            <p className="font-bold text-xs" style={{color: statusColor}}>+{margin.toLocaleString()}</p>
-                        )}
                     </div>
                 </div>
 
@@ -86,7 +81,7 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
                         className="absolute top-0 left-0 h-full rounded" 
                         style={{ width: `${votePercentage}%`, backgroundColor: party?.color }}
                     ></div>
-                    <div className="absolute inset-0 flex items-center justify-center px-2">
+                    <div className="absolute inset-0 flex items-center justify-start px-2">
                         <span className="text-white font-bold text-sm">
                             {votes !== undefined && votes.toLocaleString()}
                         </span>
