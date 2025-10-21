@@ -76,14 +76,14 @@ function CandidateBox({ candidate, party, isWinner }: { candidate: Candidate | A
 
 export function ConstituencyPopoverContent({ 
     constituency, 
-    electionId,
+    election,
     onLeaningChange,
     onPredictionChange,
     electionResults,
     previousElectionResults
 }: { 
     constituency: Constituency,
-    electionId?: string;
+    election?: any;
     onLeaningChange?: (leaning: string) => void;
     onPredictionChange?: (slp: number, uwp: number) => void;
     electionResults?: ElectionResult[];
@@ -91,20 +91,20 @@ export function ConstituencyPopoverContent({
 }) {
     const { firestore } = useFirebase();
 
-    // Determine the collection and queries based on whether an electionId is provided
+    // Determine the collection and queries based on whether an election is provided
     const candidatesQuery = useMemoFirebase(() => {
         if (!firestore) return null;
-        if (electionId) {
+        if (election) {
             // Fetch from archived_candidates for a specific election
             return query(
                 collection(firestore, 'archived_candidates'),
                 where('constituencyId', '==', constituency.id),
-                where('electionId', '==', electionId)
+                where('electionId', '==', election.id)
             );
         }
         // Default to current candidates
         return query(collection(firestore, 'candidates'), where('constituencyId', '==', constituency.id));
-    }, [firestore, constituency.id, electionId]);
+    }, [firestore, constituency.id, election]);
 
     const { data: candidates, isLoading: loadingCandidates } = useCollection<Candidate | ArchivedCandidate>(candidatesQuery);
 
@@ -145,6 +145,7 @@ export function ConstituencyPopoverContent({
                     status = `${currentWinner?.acronym} Hold`;
                 } else {
                     status = `${currentWinner?.acronym} Gain`;
+                    color = currentWinner?.color;
                 }
             }
         }
@@ -170,7 +171,6 @@ export function ConstituencyPopoverContent({
             {electionStatus && (
                 <div className="text-center">
                     <p className="font-bold text-sm" style={{color: statusColor}}>{electionStatus}</p>
-                    { margin !== null && <p className="text-xs text-muted-foreground">Won by {margin.toLocaleString()} votes</p> }
                 </div>
             )}
 
@@ -178,6 +178,13 @@ export function ConstituencyPopoverContent({
                 <CandidateBox candidate={slpCandidate!} party={slpParty!} isWinner={winnerAcronym === 'SLP'} />
                 <CandidateBox candidate={uwpCandidate!} party={uwpParty!} isWinner={winnerAcronym === 'UWP'} />
             </div>
+
+             { margin !== null && 
+                <div className="text-center">
+                    <p className="text-xs text-muted-foreground">Won by {margin.toLocaleString()} votes</p>
+                </div>
+             }
+
 
             {onLeaningChange && (
                 <div className="space-y-2 pt-2">

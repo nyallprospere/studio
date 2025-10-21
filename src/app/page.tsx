@@ -22,8 +22,8 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, Timestamp } from 'firebase/firestore';
-import type { Event, Party, Constituency } from '@/lib/types';
+import { collection, query, orderBy, Timestamp, where, limit } from 'firebase/firestore';
+import type { Event, Party, Constituency, Election } from '@/lib/types';
 import { EventCard } from '@/components/event-card';
 import { SortableFeatureCard } from '@/components/sortable-feature-card';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
@@ -106,10 +106,14 @@ export default function Home() {
   const eventsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'events'), orderBy('date', 'desc')) : null, [firestore]);
   const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
+  const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), where('isCurrent', '==', true), limit(1)) : null, [firestore]);
   
   const { data: events, isLoading: loadingEvents } = useCollection<Event>(eventsQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
+  const { data: currentElections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
+  
+  const currentElection = useMemo(() => currentElections?.[0], [currentElections]);
   
   const getParty = (partyId: string) => parties?.find(p => p.id === partyId);
 
@@ -314,6 +318,7 @@ export default function Home() {
                     constituencies={constituencies ?? []} 
                     selectedConstituencyId={selectedConstituencyId}
                     onConstituencyClick={setSelectedConstituencyId}
+                    election={currentElection}
                  />
             </CardContent>
         </Card>
@@ -370,6 +375,8 @@ export default function Home() {
   );
 
     
+
+
 
 
 
