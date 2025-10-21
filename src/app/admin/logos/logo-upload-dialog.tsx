@@ -86,8 +86,8 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
             const dataToSave = {
                 partyId: party.id,
                 electionId,
-                logoUrl: standardUrl,
-                expandedLogoUrl: expandedUrl,
+                logoUrl: standardUrl || '',
+                expandedLogoUrl: expandedUrl || '',
             };
 
             if (existingLogoDoc) {
