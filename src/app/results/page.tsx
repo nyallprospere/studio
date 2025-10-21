@@ -87,6 +87,15 @@ export default function ResultsPage() {
   const currentElectionResults = selectedElectionId ? resultsByYear[selectedElectionId] : [];
   const currentElection = useMemo(() => sortedElections.find(e => e.id === selectedElectionId), [selectedElectionId, sortedElections]);
 
+  const previousElection = useMemo(() => {
+    if (!currentElection || !sortedElections) return null;
+    const currentIndex = sortedElections.findIndex(e => e.id === currentElection.id);
+    return sortedElections[currentIndex + 1] || null;
+  }, [currentElection, sortedElections]);
+
+  const previousElectionResults = previousElection ? resultsByYear[previousElection.id] : [];
+
+
   const summaryData = useMemo(() => {
     if (!currentElectionResults || !parties) return [];
 
@@ -318,6 +327,8 @@ export default function ResultsPage() {
                                         selectedConstituencyId={selectedConstituencyId}
                                         onConstituencyClick={setSelectedConstituencyId}
                                         electionId={selectedElectionId}
+                                        electionResults={currentElectionResults}
+                                        previousElectionResults={previousElectionResults}
                                     />
                                 </CardContent>
                              </Card>

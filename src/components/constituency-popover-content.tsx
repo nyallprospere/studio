@@ -1,14 +1,14 @@
 
+
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { Constituency, Candidate, Party, ArchivedCandidate } from '@/lib/types';
+import type { Constituency, Candidate, Party, ArchivedCandidate, ElectionResult } from '@/lib/types';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import Image from 'next/image';
 import { UserSquare } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { Button } from './ui/button';
 import { CandidateProfileDialog } from './candidate-profile-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -77,12 +77,16 @@ export function ConstituencyPopoverContent({
     constituency, 
     electionId,
     onLeaningChange,
-    onPredictionChange 
+    onPredictionChange,
+    electionResults,
+    previousElectionResults
 }: { 
     constituency: Constituency,
     electionId?: string;
     onLeaningChange?: (leaning: string) => void;
     onPredictionChange?: (slp: number, uwp: number) => void;
+    electionResults?: ElectionResult[];
+    previousElectionResults?: ElectionResult[];
 }) {
     const { firestore } = useFirebase();
 
@@ -119,10 +123,30 @@ export function ConstituencyPopoverContent({
         return { slpCandidate: slpCand, uwpCandidate: uwpCand, slpParty: slp, uwpParty: uwp };
     }, [parties, candidates]);
 
-    const chartData = useMemo(() => [
-        { name: 'SLP', value: constituency.predictedSlpPercentage || 50, color: '#E74C3C' },
-        { name: 'UWP', value: constituency.predictedUwpPercentage || 50, color: '#F1C40F' },
-    ], [constituency.predictedSlpPercentage, constituency.predictedUwpPercentage]);
+
+    const electionStatus = useMemo(() => {
+        if (!electionResults || !previousElectionResults) return null;
+
+        const currentResult = electionResults.find(r => r.constituencyId === constituency.id);
+        const previousResult = previousElectionResults.find(r => r.constituencyId === constituency.id);
+
+        if (!currentResult) return null;
+
+        const currentWinner = currentResult.slpVotes > currentResult.uwpVotes ? 'SLP' : 'UWP';
+        
+        if (!previousResult) {
+            return `${currentWinner} Win`;
+        }
+
+        const previousWinner = previousResult.slpVotes > previousResult.uwpVotes ? 'SLP' : 'UWP';
+        
+        if (currentWinner === previousWinner) {
+            return `${currentWinner} Hold`;
+        } else {
+            return `${currentWinner} Gain`;
+        }
+    }, [constituency.id, electionResults, previousElectionResults]);
+
 
     const isLoading = loadingCandidates || loadingParties;
 
@@ -134,33 +158,12 @@ export function ConstituencyPopoverContent({
         <div className="space-y-3">
             <h4 className="font-bold leading-none text-center text-xl">{constituency.name}</h4>
             
-            <div>
-                <h5 className="text-center text-xs font-bold underline text-muted-foreground">Odds of Winning</h5>
-                <div className="relative h-24 w-full -mb-1">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                            <Pie
-                                data={chartData}
-                                cx="50%"
-                                cy="100%"
-                                startAngle={180}
-                                endAngle={0}
-                                innerRadius="60%"
-                                outerRadius="100%"
-                                dataKey="value"
-                                paddingAngle={2}
-                            >
-                                {chartData.map((entry) => (
-                                    <Cell key={`cell-${entry.name}`} fill={entry.color} />
-                                ))}
-                            </Pie>
-                        </PieChart>
-                    </ResponsiveContainer>
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <p className="font-bold text-sm text-muted-foreground -mt-4">{getLeaningLabel(constituency.politicalLeaning)}</p>
-                    </div>
+            {electionStatus && (
+                <div>
+                    <h5 className="text-center text-xs font-bold underline text-muted-foreground">Election Status</h5>
+                    <p className="text-center font-bold text-sm">{electionStatus}</p>
                 </div>
-            </div>
+            )}
 
             <div className="flex gap-2">
                 <CandidateBox candidate={slpCandidate!} party={slpParty!} />
