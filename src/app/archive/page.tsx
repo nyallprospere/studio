@@ -118,6 +118,7 @@ export default function ArchivePage() {
 
 
   const getPartyAcronym = (partyId: string) => parties?.find(p => p.id === partyId)?.acronym || 'N/A';
+  const getParty = (partyId: string) => parties?.find(p => p.id === partyId);
   const getConstituencyName = (constituencyId: string) => constituencies?.find(c => c.id === constituencyId)?.name || 'N/A';
   const isLoading = loadingArchived || loadingParties || loadingConstituencies || loadingElections;
   
@@ -581,39 +582,44 @@ export default function ArchivePage() {
                                         <p>Actions</p>
                                     </div>
                                 </div>
-                                {sortedCandidates.map(c => (
-                                    <div key={c.id} className="flex items-center justify-between p-3 border rounded-md text-sm">
-                                        <div className="flex items-center gap-3">
-                                            <div className="relative h-10 w-10 flex-shrink-0 rounded-full overflow-hidden bg-muted">
-                                                {c.imageUrl ? (
-                                                    <Image src={c.imageUrl} alt={`${c.firstName} ${c.lastName}`} fill className="object-cover" />
-                                                ) : (
-                                                    <ImageIcon className="h-6 w-6 text-muted-foreground m-auto" />
-                                                )}
+                                {sortedCandidates.map(c => {
+                                    const party = getParty(c.partyId);
+                                    return (
+                                        <div key={c.id} className="flex items-center justify-between p-3 border rounded-md text-sm">
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative h-10 w-10 flex-shrink-0 rounded-full overflow-hidden bg-muted">
+                                                    {c.imageUrl ? (
+                                                        <Image src={c.imageUrl} alt={`${c.firstName} ${c.lastName}`} fill className="object-cover" />
+                                                    ) : party?.logoUrl ? (
+                                                        <Image src={party.logoUrl} alt={`${party.name} logo`} fill className="object-contain p-1" />
+                                                    ) : (
+                                                        <ImageIcon className="h-6 w-6 text-muted-foreground m-auto" />
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium flex items-center gap-2">
+                                                        {c.firstName} {c.lastName}
+                                                        {c.isPartyLeader && <Star className="h-4 w-4 text-accent" />}
+                                                    </p>
+                                                    <p className="text-muted-foreground text-xs">{getPartyAcronym(c.partyId)} &bull; {getConstituencyName(c.constituencyId)}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="font-medium flex items-center gap-2">
-                                                    {c.firstName} {c.lastName}
-                                                    {c.isPartyLeader && <Star className="h-4 w-4 text-accent" />}
-                                                </p>
-                                                <p className="text-muted-foreground text-xs">{getPartyAcronym(c.partyId)} &bull; {getConstituencyName(c.constituencyId)}</p>
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-40">
+                                                    <CustomUploadButton onFileSelect={handlePhotoUpload} candidate={c} isLoading={uploadingPhotoId === c.id} />
+                                                </div>
+                                                <Checkbox
+                                                    checked={c.isIncumbent}
+                                                    onCheckedChange={(checked) => handleIncumbentChange(electionId, c.id, !!checked)}
+                                                    className="w-12"
+                                                />
+                                                <Button variant="ghost" size="icon" onClick={() => { setEditingCandidate(c); setIsFormOpen(true);}}>
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-40">
-                                                <CustomUploadButton onFileSelect={handlePhotoUpload} candidate={c} isLoading={uploadingPhotoId === c.id} />
-                                            </div>
-                                            <Checkbox
-                                                checked={c.isIncumbent}
-                                                onCheckedChange={(checked) => handleIncumbentChange(electionId, c.id, !!checked)}
-                                                className="w-12"
-                                            />
-                                            <Button variant="ghost" size="icon" onClick={() => { setEditingCandidate(c); setIsFormOpen(true);}}>
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))}
+                                    )
+                                })}
                                 </div>
                             </ScrollArea>
                         </CardContent>
@@ -629,5 +635,3 @@ export default function ArchivePage() {
     </div>
   )
 }
-
-    
