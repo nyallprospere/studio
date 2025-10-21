@@ -14,6 +14,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from './ui/scroll-area';
 
 export type OptionType = {
   label: string;
@@ -67,7 +68,7 @@ function MultiSelect({
                     onClick={(e) => handleUnselect(e, option.value)}
                   >
                     {option.label}
-                    <div
+                    <button
                       className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
@@ -79,12 +80,10 @@ function MultiSelect({
                         e.stopPropagation();
                       }}
                       onClick={(e) => handleUnselect(e, option.value)}
-                      role="button"
-                      tabIndex={0}
                       aria-label={`Remove ${option.label}`}
                     >
                       <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                    </div>
+                    </button>
                   </Badge>
                 ))
             ) : (
