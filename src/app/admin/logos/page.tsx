@@ -32,7 +32,7 @@ export default function ManageLogosPage() {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedPartyForUpload, setSelectedPartyForUpload] = useState<Party | null>(null);
 
-  const sortedElections = useMemo(() => elections?.sort((a, b) => a.year - b.year) || [], [elections]);
+  const sortedElections = useMemo(() => elections?.sort((a, b) => b.year - a.year) || [], [elections]);
 
   const allParties = useMemo(() => {
     if (!parties) return [];
@@ -64,14 +64,13 @@ export default function ManageLogosPage() {
       
       if (groupElections.length === 0) return null;
 
-      const startYear = groupElections[0].year;
-      const endYear = groupElections[groupElections.length - 1].year;
-      const dateRange = startYear === endYear ? `${startYear}` : `${startYear} - ${endYear}`;
+      // Create a display string for all years
+      const years = groupElections.map(e => e.year).sort((a,b) => b - a).join(', ');
       
       return {
         logoUrl: first.logoUrl,
         expandedLogoUrl: first.expandedLogoUrl,
-        dateRange: dateRange,
+        dateRange: years,
         key: `${first.logoUrl || ''}|${first.expandedLogoUrl || ''}`
       };
     }).filter(g => g !== null);
@@ -112,13 +111,12 @@ export default function ManageLogosPage() {
                                   <CardTitle style={{color: party.color}}>{party.name}</CardTitle>
                                   <CardDescription>Manage logos for the {party.name}.</CardDescription>
                               </div>
-                              <button
+                              <Button
                                 onClick={() => handleUploadClick(party)}
-                                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
                               >
                                 <Upload className="h-4 w-4" />
                                 Upload Logos
-                              </button>
+                              </Button>
                           </CardHeader>
                           <CardContent className="space-y-4">
                           {logoGroups.length > 0 ? logoGroups.map(group => {
