@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -65,5 +66,14 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  .red-stripes-overlay {
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgba(229, 57, 53, 0.7),
+      rgba(229, 57, 53, 0.7) 5px,
+      transparent 5px,
+      transparent 10px
+    );
   }
 }

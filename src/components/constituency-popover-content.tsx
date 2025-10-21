@@ -27,7 +27,7 @@ const getLeaningLabel = (leaningValue?: string) => {
     return politicalLeaningOptions.find(opt => opt.value === leaningValue)?.label || 'Tossup';
 };
 
-function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, electionStatus, statusColor }: { 
+function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, electionStatus, statusColor, isStriped, barFill }: { 
     candidate: Candidate | ArchivedCandidate | null;
     party: Party | null;
     isWinner: boolean;
@@ -36,6 +36,8 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
     margin?: number | null;
     electionStatus?: string | null;
     statusColor?: string | undefined;
+    isStriped?: boolean;
+    barFill?: string;
 }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const isIncumbent = candidate?.isIncumbent;
@@ -57,7 +59,7 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
                             <Image src={party.logoUrl} alt={party.name} fill className="object-contain" />
                         </div>
                     )}
-                     <div className="flex flex-col items-center">
+                    <div className="flex flex-col items-center">
                         <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
                         {candidate?.imageUrl ? (
                             <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
@@ -65,8 +67,8 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
                             <UserSquare className="h-full w-full text-gray-400" />
                         )}
                         </div>
-                         <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold" onClick={() => setProfileOpen(true)} disabled={!candidate}>
-                            {candidateName}
+                        <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                           {candidateName}
                         </Button>
                     </div>
                      <div className="flex-grow text-center">
@@ -76,9 +78,11 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
 
                  <div className="relative w-full h-8 bg-gray-200 rounded overflow-hidden">
                     <div 
-                        className="absolute top-0 left-0 h-full rounded" 
-                        style={{ width: `${votePercentage}%`, backgroundColor: party?.color }}
-                    ></div>
+                        className={cn("absolute top-0 left-0 h-full rounded", isStriped && barFill === 'blue-red-stripes' && 'bg-blue-600')}
+                        style={{ width: `${votePercentage}%`, backgroundColor: (isStriped && barFill === 'blue-red-stripes') ? '' : party?.color }}
+                    >
+                         {isStriped && barFill === 'blue-red-stripes' && <div className="absolute inset-0 red-stripes-overlay"></div>}
+                    </div>
                     <div className="absolute inset-0 flex items-center justify-start px-2">
                         <div className="flex items-baseline">
                             <span className="text-white font-bold text-sm">
@@ -182,6 +186,9 @@ export function ConstituencyPopoverContent({
     const isLoading = loadingCandidates || loadingParties;
     const currentResult = electionResults?.find(r => r.constituencyId === constituency.id);
     const winnerAcronym = currentResult ? (currentResult.slpVotes > currentResult.uwpVotes ? 'SLP' : 'UWP') : null;
+    
+    const isCastriesNorth2021 = election?.year === 2021 && constituency.name === 'Castries North';
+    const castriesNorthWinnerAcronym = isCastriesNorth2021 ? (currentResult && currentResult.slpVotes > currentResult.uwpVotes ? 'SLP' : 'UWP') : null;
 
 
     if (isLoading) {
@@ -202,6 +209,8 @@ export function ConstituencyPopoverContent({
                     margin={margin}
                     electionStatus={electionStatus}
                     statusColor={statusColor}
+                    isStriped={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'SLP'}
+                    barFill={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'SLP' ? 'blue-red-stripes' : undefined}
                 />
                 <CandidateBox 
                     candidate={uwpCandidate!} 
@@ -212,6 +221,8 @@ export function ConstituencyPopoverContent({
                     margin={margin}
                     electionStatus={electionStatus}
                     statusColor={statusColor}
+                    isStriped={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'UWP'}
+                    barFill={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'UWP' ? 'blue-red-stripes' : undefined}
                 />
             </div>
             
