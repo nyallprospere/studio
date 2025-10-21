@@ -51,15 +51,13 @@ function CandidateBox({ candidate, party, isWinner, votes, margin, electionStatu
                 isWinner && "border-2 border-green-600"
             )}>
                  {isWinner && <CheckCircle2 className="absolute -top-2 -right-2 h-5 w-5 text-green-600 bg-white rounded-full" />}
-                 <div className="flex items-start justify-between gap-2">
-                     <div className="flex-shrink-0 text-center">
-                        {party.logoUrl ? (
+                 <div className="flex items-center justify-between gap-2">
+                    <div className="flex-shrink-0 text-center w-8">
+                         {party.logoUrl && (
                             <Image src={party.logoUrl} alt={party.name} width={24} height={24} className="mx-auto" />
-                        ) : (
-                             <p style={{ color: party.color }} className="font-bold text-[10px] text-center">{party.acronym} Candidate</p>
                         )}
                      </div>
-                     <div className="text-center">
+                     <div className="flex flex-col items-center">
                         <div className="relative h-10 w-10 rounded-full overflow-hidden bg-background flex-shrink-0 mx-auto">
                             {candidate?.imageUrl ? (
                                 <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
@@ -71,21 +69,23 @@ function CandidateBox({ candidate, party, isWinner, votes, margin, electionStatu
                             <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
                                View
                             </Button>
-                             {isWinner && electionStatus && (
-                               <div className="text-right">
-                                    <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
-                                </div>
-                            )}
                         </div>
                      </div>
-                     <div className="flex-grow text-right">
+
+                    <div className="flex-grow text-center">
                         <p className="font-semibold text-xs">{candidateName}</p>
-                        <div className="text-sm font-bold">
+                    </div>
+
+                    <div className="text-right">
+                         <div className="text-sm font-bold">
                             {votes !== undefined && votes.toLocaleString()}
                             {isWinner && margin !== undefined && margin !== null && (
                                  <sup className="text-[11px] font-bold text-muted-foreground ml-1">(+{margin.toLocaleString()})</sup>
                             )}
                         </div>
+                        {isWinner && electionStatus && (
+                            <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
+                        )}
                     </div>
                 </div>
             </div>
