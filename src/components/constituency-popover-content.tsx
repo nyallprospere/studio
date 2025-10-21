@@ -69,14 +69,14 @@ function CandidateBox({ candidate, party, isWinner, margin, votes, electionStatu
                     {votes !== undefined &&
                         <p className="text-xs text-muted-foreground">{votes.toLocaleString()} votes</p>
                     }
+                     {isWinner && margin !== null && 
+                        <div className="mt-1">
+                            <p className="text-[10px] font-bold text-muted-foreground">Won by {margin.toLocaleString()} votes</p>
+                            {electionStatus && <p className="font-bold text-xs text-center" style={{color: statusColor}}>{electionStatus}</p>}
+                        </div>
+                    }
                 </div>
             </div>
-             {isWinner && margin !== null && 
-                <div>
-                    <p className="text-[11px] font-bold text-muted-foreground mt-1 text-center">Won by {margin.toLocaleString()} votes</p>
-                    {electionStatus && <p className="font-bold text-xs text-center" style={{color: statusColor}}>{electionStatus}</p>}
-                </div>
-            }
             <CandidateProfileDialog candidate={candidate as Candidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />
         </div>
     );
@@ -174,7 +174,7 @@ export function ConstituencyPopoverContent({
         <div className="space-y-3">
             <h4 className="font-bold leading-none text-center text-xl">{constituency.name}</h4>
             
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
                 <CandidateBox candidate={slpCandidate!} party={slpParty!} isWinner={winnerAcronym === 'SLP'} margin={margin} votes={currentResult?.slpVotes} electionStatus={electionStatus} statusColor={statusColor} />
                 <CandidateBox candidate={uwpCandidate!} party={uwpParty!} isWinner={winnerAcronym === 'UWP'} margin={margin} votes={currentResult?.uwpVotes} electionStatus={electionStatus} statusColor={statusColor} />
             </div>
