@@ -210,8 +210,8 @@ export function ConstituencyPopoverContent({
             <h4 className="font-bold leading-none text-center text-xl">{constituency.name}</h4>
             
             {election?.isCurrent || !election ? (
-               <div className="space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
                         <div className="flex flex-col items-center p-2 rounded-md bg-muted">
                             {slpParty?.logoUrl && (
                                 <div className="relative h-8 w-8 mb-2">
@@ -220,7 +220,7 @@ export function ConstituencyPopoverContent({
                             )}
                             <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
                             {slpCandidate?.imageUrl ? (
-                                <Image src={slpCandidate.imageUrl} alt={slpCandidate.name || 'SLP Candidate'} fill className="object-cover" />
+                                <Image src={slpCandidate.imageUrl} alt={slpCandidate?.name || 'SLP Candidate'} fill className="object-cover" />
                             ) : (
                                 <UserSquare className="h-full w-full text-gray-400" />
                             )}
@@ -237,7 +237,7 @@ export function ConstituencyPopoverContent({
                             )}
                             <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
                             {uwpCandidate?.imageUrl ? (
-                                <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || 'UWP Candidate'} fill className="object-cover" />
+                                <Image src={uwpCandidate.imageUrl} alt={uwpCandidate?.name || 'UWP Candidate'} fill className="object-cover" />
                             ) : (
                                 <UserSquare className="h-full w-full text-gray-400" />
                             )}
@@ -247,7 +247,7 @@ export function ConstituencyPopoverContent({
                             </Button>
                         </div>
                     </div>
-                    <div className="text-center space-y-1 py-2">
+                    <div className="flex flex-col justify-center text-center space-y-2 py-2">
                         <div>
                             <p className="text-xs font-semibold text-muted-foreground">STATUS</p>
                             <p className="font-bold">{getLeaningLabel(constituency.politicalLeaning)}</p>
@@ -260,28 +260,28 @@ export function ConstituencyPopoverContent({
                                 <p className="font-bold" style={{color: uwpParty?.color}}>{constituency.predictedUwpPercentage}%</p>
                             </div>
                         </div>
+                         <ChartContainer config={{}} className="h-24 w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={predictionChartData}
+                                        dataKey="value"
+                                        startAngle={180}
+                                        endAngle={0}
+                                        innerRadius="60%"
+                                        outerRadius="100%"
+                                        cy="100%"
+                                        paddingAngle={2}
+                                    >
+                                        {predictionChartData.map((entry) => (
+                                            <Cell key={entry.name} fill={entry.fill} />
+                                        ))}
+                                    </Pie>
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
                     </div>
-                   <ChartContainer config={{}} className="h-24 w-full">
-                       <ResponsiveContainer width="100%" height="100%">
-                           <PieChart>
-                               <Pie
-                                   data={predictionChartData}
-                                   dataKey="value"
-                                   startAngle={180}
-                                   endAngle={0}
-                                   innerRadius="60%"
-                                   outerRadius="100%"
-                                   cy="100%"
-                                   paddingAngle={2}
-                               >
-                                   {predictionChartData.map((entry) => (
-                                       <Cell key={entry.name} fill={entry.fill} />
-                                   ))}
-                               </Pie>
-                           </PieChart>
-                       </ResponsiveContainer>
-                   </ChartContainer>
-               </div>
+                </div>
             ) : (
               <div className="space-y-2">
                   <CandidateBox 
