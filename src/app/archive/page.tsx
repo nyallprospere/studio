@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Download, Trash2, History, Lock, Unlock, Pencil, Upload, Eraser, Star, Save, ArrowUpDown, Image as ImageIcon } from 'lucide-react';
+import { Download, Trash2, History, Lock, Unlock, Pencil, Upload, Eraser, Star, Save, ArrowUpDown, ImageIcon, UserSquare } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -493,7 +493,7 @@ export default function ArchivePage() {
                                     </Button>
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                            <Button variant="outline" size="sm">
+                                            <Button variant="outline" size="sm" disabled={restoreLocks[electionId] !== false}>
                                                 <Eraser className="mr-2 h-4 w-4" /> Clear All Candidate Info
                                             </Button>
                                         </AlertDialogTrigger>
@@ -540,7 +540,7 @@ export default function ArchivePage() {
                                     </div>
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                            <Button variant="destructive" size="sm">
+                                            <Button variant="destructive" size="sm" disabled={restoreLocks[electionId] !== false}>
                                                 <Trash2 className="mr-2 h-4 w-4" /> Delete Archive
                                             </Button>
                                         </AlertDialogTrigger>
@@ -593,7 +593,7 @@ export default function ArchivePage() {
                                                     ) : party?.logoUrl ? (
                                                         <Image src={party.logoUrl} alt={`${party.name} logo`} fill className="object-contain p-1" />
                                                     ) : (
-                                                        <ImageIcon className="h-6 w-6 text-muted-foreground m-auto" />
+                                                        <UserSquare className="h-6 w-6 text-muted-foreground m-auto" />
                                                     )}
                                                 </div>
                                                 <div>
