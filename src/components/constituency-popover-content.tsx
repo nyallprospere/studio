@@ -52,6 +52,9 @@ function CandidateBox({ candidate, party, isWinner, votes, margin, electionStatu
             )}>
                  {isWinner && <CheckCircle2 className="absolute -top-2 -right-2 h-5 w-5 text-green-600 bg-white rounded-full" />}
                  <div className="flex items-start justify-between gap-2">
+                     <div className="flex-shrink-0">
+                        <p style={{ color: party.color }} className="font-bold text-[10px] text-center">{party.acronym} Candidate</p>
+                     </div>
                      <div className="text-center">
                         <div className="relative h-10 w-10 rounded-full overflow-hidden bg-background flex-shrink-0 mx-auto">
                             {candidate?.imageUrl ? (
@@ -64,19 +67,14 @@ function CandidateBox({ candidate, party, isWinner, votes, margin, electionStatu
                            View
                         </Button>
                      </div>
-                     <div className="flex-grow">
+                     <div className="flex-grow text-right">
                         <p className="font-semibold text-xs">{candidateName}</p>
-                        <p style={{ color: party.color }} className="font-bold text-[10px]">{party.acronym} Candidate</p>
-                    </div>
-                     <div className="text-right flex-shrink-0">
-                        {votes !== undefined &&
-                             <div className="text-sm font-bold">
-                                {votes.toLocaleString()}
-                                {isWinner && margin !== undefined && margin !== null && (
-                                     <sup className="text-[11px] font-bold text-muted-foreground ml-1">(+{margin.toLocaleString()})</sup>
-                                )}
-                            </div>
-                        }
+                        <div className="text-sm font-bold">
+                            {votes !== undefined && votes.toLocaleString()}
+                            {isWinner && margin !== undefined && margin !== null && (
+                                 <sup className="text-[11px] font-bold text-muted-foreground ml-1">(+{margin.toLocaleString()})</sup>
+                            )}
+                        </div>
                     </div>
                 </div>
                 {isWinner && electionStatus && (
@@ -236,5 +234,3 @@ export function ConstituencyPopoverContent({
         </div>
     );
 }
-
-    
