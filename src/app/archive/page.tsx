@@ -75,6 +75,7 @@ export default function ArchivePage() {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingCandidate, setEditingCandidate] = useState<ArchivedCandidate | null>(null);
   const [uploadingPhotoId, setUploadingPhotoId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [editableArchives, setEditableArchives] = useState<Record<string, ArchivedCandidate[]>>({});
   const [originalArchives, setOriginalArchives] = useState<Record<string, ArchivedCandidate[]>>({});
@@ -467,14 +468,20 @@ export default function ArchivePage() {
                 Object.entries(groupedArchives).map(([electionId, archiveData]) => {
                   const hasChanges = !isEqual(originalArchives[electionId], editableArchives[electionId]);
                   
-                  const sortedCandidates = [...(editableArchives[electionId] || [])].sort((a, b) => {
-                    if (sortBy === 'constituency') {
-                        const nameA = getConstituencyName(a.constituencyId);
-                        const nameB = getConstituencyName(b.constituencyId);
-                        return nameA.localeCompare(nameB);
-                    }
-                    return a.lastName.localeCompare(b.lastName);
-                  });
+                  const sortedCandidates = [...(editableArchives[electionId] || [])]
+                    .filter(c => {
+                      if (!searchTerm) return true;
+                      const fullName = `${c.firstName} ${c.lastName}`.toLowerCase();
+                      return fullName.includes(searchTerm.toLowerCase());
+                    })
+                    .sort((a, b) => {
+                      if (sortBy === 'constituency') {
+                          const nameA = getConstituencyName(a.constituencyId);
+                          const nameB = getConstituencyName(b.constituencyId);
+                          return nameA.localeCompare(nameB);
+                      }
+                      return a.lastName.localeCompare(b.lastName);
+                    });
 
                   return (
                     <Card key={electionId}>
@@ -561,6 +568,14 @@ export default function ArchivePage() {
                             </div>
                         </CardHeader>
                         <CardContent>
+                           <div className="mb-4">
+                                <Input 
+                                    placeholder="Search by candidate name..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="max-w-sm"
+                                />
+                            </div>
                             <ScrollArea className="h-96">
                                 <div className="space-y-2 pr-4">
                                 <div className="flex items-center justify-between p-3 border-b text-sm font-medium text-muted-foreground">
