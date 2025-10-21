@@ -143,8 +143,8 @@ export default function ResultsPage() {
     });
   
     const summary = [
-        { partyId: slp.id, name: slp.name, acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color, logoUrl: currentElection && currentElection.year < 1997 ? slp.oldLogoUrl || slp.logoUrl : slp.expandedLogoUrl || slp.logoUrl },
-        { partyId: uwp.id, name: uwp.name, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color, logoUrl: currentElection && currentElection.year < 1997 ? uwp.oldLogoUrl || uwp.logoUrl : uwp.expandedLogoUrl || uwp.logoUrl },
+        { partyId: slp.id, name: slp.acronym, acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color, logoUrl: currentElection && currentElection.year < 1997 ? slp.oldLogoUrl || slp.logoUrl : slp.expandedLogoUrl || slp.logoUrl },
+        { partyId: uwp.id, name: uwp.acronym, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color, logoUrl: currentElection && currentElection.year < 1997 ? uwp.oldLogoUrl || uwp.logoUrl : uwp.expandedLogoUrl || uwp.logoUrl },
     ];
     
     if(otherVotes > 0 || otherSeats > 0) {
