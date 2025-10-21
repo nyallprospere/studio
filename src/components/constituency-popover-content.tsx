@@ -26,7 +26,7 @@ const getLeaningLabel = (leaningValue?: string) => {
     return politicalLeaningOptions.find(opt => opt.value === leaningValue)?.label || 'Tossup';
 };
 
-function CandidateBox({ candidate, party, isWinner, votes }: { candidate: Candidate | ArchivedCandidate | null, party: Party | null, isWinner: boolean, votes?: number }) {
+function CandidateBox({ candidate, party, isWinner, votes, margin, electionStatus, statusColor }: { candidate: Candidate | ArchivedCandidate | null, party: Party | null, isWinner: boolean, votes?: number, margin?: number | null, electionStatus?: string | null, statusColor?: string | undefined }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const isIncumbent = candidate?.isIncumbent;
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}${isIncumbent ? '*' : ''}` : 'Candidate TBD';
@@ -60,19 +60,29 @@ function CandidateBox({ candidate, party, isWinner, votes }: { candidate: Candid
                                 <UserSquare className="h-full w-full text-muted-foreground" />
                             )}
                         </div>
-                        <div className="text-left">
+                        <div>
                             <p className="font-semibold text-xs">{candidateName}</p>
-                            <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
-                                View Profile
-                            </Button>
+                            <p style={{ color: party.color }} className="font-bold text-[10px]">{party.acronym} Candidate</p>
                         </div>
                     </div>
                      <div className="text-right flex-shrink-0">
-                        <p style={{ color: party.color }} className="font-bold text-[10px]">{party.acronym} Candidate</p>
                         {votes !== undefined &&
-                            <p className="text-xs text-muted-foreground">{votes.toLocaleString()} votes</p>
+                            <div>
+                                <p className="text-sm font-bold">{votes.toLocaleString()} votes</p>
+                                {isWinner && margin !== undefined && margin !== null && (
+                                    <p className="text-[11px] font-bold text-muted-foreground">(+{margin.toLocaleString()})</p>
+                                )}
+                            </div>
                         }
                     </div>
+                </div>
+                <div className="flex justify-between items-end mt-1">
+                    <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                        View Profile
+                    </Button>
+                    {isWinner && electionStatus && (
+                        <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
+                    )}
                 </div>
             </div>
             <CandidateProfileDialog candidate={candidate as Candidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />
@@ -173,17 +183,26 @@ export function ConstituencyPopoverContent({
             <h4 className="font-bold leading-none text-center text-xl">{constituency.name}</h4>
             
             <div className="flex flex-col gap-2">
-                <CandidateBox candidate={slpCandidate!} party={slpParty!} isWinner={winnerAcronym === 'SLP'} votes={currentResult?.slpVotes} />
-                <CandidateBox candidate={uwpCandidate!} party={uwpParty!} isWinner={winnerAcronym === 'UWP'} votes={currentResult?.uwpVotes} />
+                <CandidateBox 
+                    candidate={slpCandidate!} 
+                    party={slpParty!} 
+                    isWinner={winnerAcronym === 'SLP'} 
+                    votes={currentResult?.slpVotes} 
+                    margin={margin}
+                    electionStatus={electionStatus}
+                    statusColor={statusColor}
+                />
+                <CandidateBox 
+                    candidate={uwpCandidate!} 
+                    party={uwpParty!} 
+                    isWinner={winnerAcronym === 'UWP'} 
+                    votes={currentResult?.uwpVotes}
+                    margin={margin}
+                    electionStatus={electionStatus}
+                    statusColor={statusColor}
+                />
             </div>
-
-            {winnerAcronym && margin !== null && (
-                 <div className="text-center mt-2">
-                    <p className="text-[11px] font-bold text-muted-foreground">Won by {margin.toLocaleString()} votes</p>
-                    {electionStatus && <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>}
-                </div>
-            )}
-
+            
             {onLeaningChange && (
                 <div className="space-y-2 pt-2">
                     <h5 className="text-xs font-medium text-muted-foreground">Edit Leaning</h5>
