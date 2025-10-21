@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, doc, writeBatch, deleteDoc, query, orderBy, getDocs, updateDoc, addDoc } from 'firebase/firestore';
 import type { Party, Constituency, ArchivedCandidate, Election, Candidate } from '@/lib/types';
@@ -32,6 +33,37 @@ import { isEqual } from 'lodash';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 
+const CustomUploadButton = ({ onFileSelect, candidate, isLoading }: { onFileSelect: (file: File, candidateId: string) => void; candidate: ArchivedCandidate; isLoading: boolean }) => {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+  
+    const handleButtonClick = () => {
+      fileInputRef.current?.click();
+    };
+  
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        onFileSelect(file, candidate.id);
+      }
+    };
+  
+    return (
+      <div>
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          onChange={handleFileChange}
+          accept="image/*"
+        />
+        <Button onClick={handleButtonClick} size="sm" variant="outline" disabled={isLoading}>
+          <Upload className="mr-2 h-4 w-4" />
+          Upload
+        </Button>
+      </div>
+    );
+};
+
 
 export default function ArchivePage() {
   const { firestore } = useFirebase();
@@ -42,6 +74,7 @@ export default function ArchivePage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingCandidate, setEditingCandidate] = useState<ArchivedCandidate | null>(null);
+  const [uploadingPhotoId, setUploadingPhotoId] = useState<string | null>(null);
 
   const [editableArchives, setEditableArchives] = useState<Record<string, ArchivedCandidate[]>>({});
   const [originalArchives, setOriginalArchives] = useState<Record<string, ArchivedCandidate[]>>({});
@@ -346,18 +379,14 @@ export default function ArchivePage() {
     }
   };
 
-  const handlePhotoFileChange = (candidateId: string, file: File | null) => {
-    setCandidatePhotos(prev => ({ ...prev, [candidateId]: file }));
-  };
-
-  const handlePhotoUpload = async (candidate: ArchivedCandidate) => {
+  const handlePhotoUpload = async (file: File, candidateId: string) => {
     if (!firestore) return;
-    const file = candidatePhotos[candidate.id];
-    if (!file) {
-      toast({ variant: 'destructive', title: 'No file selected' });
-      return;
+    const candidate = allArchivedCandidates?.find(c => c.id === candidateId);
+    if (!candidate) {
+        toast({ variant: 'destructive', title: 'Candidate not found' });
+        return;
     }
-
+    setUploadingPhotoId(candidateId);
     try {
       if (candidate.imageUrl) {
         await deleteFile(candidate.imageUrl);
@@ -368,11 +397,12 @@ export default function ArchivePage() {
       await updateDoc(candidateDoc, { imageUrl: newImageUrl });
 
       toast({ title: 'Photo Uploaded', description: `Photo for ${candidate.firstName} ${candidate.lastName} has been updated.` });
-      setCandidatePhotos(prev => ({...prev, [candidate.id]: null}));
 
     } catch (error) {
       console.error("Error uploading photo:", error);
       toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload photo.' });
+    } finally {
+        setUploadingPhotoId(null);
     }
   };
 
@@ -570,15 +600,8 @@ export default function ArchivePage() {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4">
-                                            <div className="flex items-center gap-2 w-24">
-                                                <Input 
-                                                    type="file" 
-                                                    className="h-8 text-xs file:mr-2 file:text-xs"
-                                                    onChange={(e) => handlePhotoFileChange(c.id, e.target.files ? e.target.files[0] : null)}
-                                                />
-                                                <Button size="icon" className="h-8 w-8" onClick={() => handlePhotoUpload(c)} disabled={!candidatePhotos[c.id]}>
-                                                    <Upload className="h-4 w-4" />
-                                                </Button>
+                                            <div className="w-40">
+                                                <CustomUploadButton onFileSelect={handlePhotoUpload} candidate={c} isLoading={uploadingPhotoId === c.id} />
                                             </div>
                                             <Checkbox
                                                 checked={c.isIncumbent}
@@ -606,3 +629,5 @@ export default function ArchivePage() {
     </div>
   )
 }
+
+    
