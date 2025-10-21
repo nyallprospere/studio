@@ -61,29 +61,30 @@ function CandidateBox({ candidate, party, isWinner, votes, margin, electionStatu
                             )}
                         </div>
                         <div>
-                            <p className="font-semibold text-xs">{candidateName}</p>
-                            <p style={{ color: party.color }} className="font-bold text-[10px]">{party.acronym} Candidate</p>
+                            <div className="flex items-center gap-2">
+                                <p className="font-semibold text-xs">{candidateName}</p>
+                                <p style={{ color: party.color }} className="font-bold text-[10px]">{party.acronym} Candidate</p>
+                            </div>
+                            <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                                View Profile
+                            </Button>
                         </div>
                     </div>
                      <div className="text-right flex-shrink-0">
                         {votes !== undefined &&
-                            <div>
-                                <p className="text-sm font-bold">{votes.toLocaleString()} votes</p>
+                             <div className="text-sm font-bold">
+                                {votes.toLocaleString()}
                                 {isWinner && margin !== undefined && margin !== null && (
-                                    <p className="text-[11px] font-bold text-muted-foreground">(+{margin.toLocaleString()})</p>
+                                    <sup className="text-[11px] font-bold text-muted-foreground ml-1">(+{margin.toLocaleString()})</sup>
                                 )}
+                                <span className="text-xs text-muted-foreground font-normal"> votes</span>
                             </div>
                         }
                     </div>
                 </div>
-                <div className="flex justify-between items-end mt-1">
-                    <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
-                        View Profile
-                    </Button>
-                    {isWinner && electionStatus && (
-                        <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
-                    )}
-                </div>
+                {isWinner && electionStatus && (
+                    <p className="font-bold text-xs text-right mt-1" style={{color: statusColor}}>{electionStatus}</p>
+                )}
             </div>
             <CandidateProfileDialog candidate={candidate as Candidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />
         </div>
