@@ -162,59 +162,56 @@ export default function ManageLogosPage() {
                                 Upload Logos
                               </Button>
                           </CardHeader>
-                          <CardContent className="space-y-4">
+                          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {logoGroups.length > 0 ? logoGroups.map(group => {
                             return (
-                              <div key={group.key} className="p-4 border rounded-md">
-                                <div className="flex justify-between items-center mb-4">
-                                  <h4 className="font-semibold">Applicable Years: {group.dateRange}</h4>
-                                  <div className="flex items-center gap-2">
-                                     <Button variant="outline" size="sm" onClick={() => { /* No action for now */ }}>
-                                        <Pencil className="mr-2 h-4 w-4" />
-                                        Edit Applicable Years
-                                    </Button>
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="destructive" size="sm">
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                Delete
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    This will delete the logo entries for the years: {group.dateRange}. This action cannot be undone.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleDeleteLogos(party.id, group.electionIds)}>
-                                                    Yes, Delete
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                  </div>
+                              <div key={group.key} className="p-4 border rounded-md flex flex-col gap-4">
+                                <div className="text-center">
+                                  <h4 className="font-semibold">Applicable Years</h4>
+                                  <p className="text-sm text-muted-foreground">{group.dateRange}</p>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 items-end">
-                                  <div className="flex flex-col items-center gap-2">
+                                
+                                <div className="grid grid-cols-2 gap-4 items-center flex-grow">
+                                  <div className="flex flex-col items-center gap-2 text-center">
                                       <p className="text-sm font-medium">Standard Logo</p>
-                                      <div className="h-20 w-20 rounded-md flex items-center justify-center">
+                                      <div className="h-20 w-20 flex items-center justify-center">
                                           {group.logoUrl ? <Image src={group.logoUrl} alt="Standard Logo" width={80} height={80} className="object-contain" /> : <Shield className="h-8 w-8 text-muted-foreground" />}
                                       </div>
                                   </div>
-                                  <div className="flex flex-col items-center gap-2">
+                                  <div className="flex flex-col items-center gap-2 text-center">
                                       <p className="text-sm font-medium">Expanded Logo</p>
-                                      <div className="h-20 w-32 rounded-md flex items-center justify-center">
+                                      <div className="h-20 w-32 flex items-center justify-center">
                                           {group.expandedLogoUrl ? <Image src={group.expandedLogoUrl} alt="Expanded Logo" width={128} height={80} className="object-contain"/> : <Shield className="h-8 w-8 text-muted-foreground" />}
                                       </div>
                                   </div>
                                 </div>
+
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" size="sm" className="w-full mt-auto">
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Delete
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will delete the logo entries for the years: {group.dateRange}. This action cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDeleteLogos(party.id, group.electionIds)}>
+                                                Yes, Delete
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
                               </div>
                             )
                           }) : (
-                             <p className="text-center text-muted-foreground py-8">No logos found for this party.</p>
+                             <p className="text-center text-muted-foreground py-8 col-span-full">No logos found for this party.</p>
                           )}
                           </CardContent>
                       </Card>
