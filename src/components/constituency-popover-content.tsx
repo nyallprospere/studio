@@ -51,8 +51,13 @@ function CandidateBox({ candidate, party, isWinner, votes, margin, electionStatu
                 isWinner && "border-2 border-green-600"
             )}>
                  {isWinner && <CheckCircle2 className="absolute -top-2 -right-2 h-5 w-5 text-green-600 bg-white rounded-full" />}
-                 <div className="flex items-center justify-between gap-2">
-                    <div className="flex-1 flex flex-col items-center text-center">
+                <div className="flex items-center justify-between gap-2">
+                    {party.logoUrl && (
+                        <div className="flex-shrink-0">
+                            <Image src={party.logoUrl} alt={party.name} width={32} height={32} />
+                        </div>
+                    )}
+                    <div className="flex-1 flex items-center gap-2">
                          <div className="relative h-10 w-10 rounded-full overflow-hidden bg-background flex-shrink-0">
                             {candidate?.imageUrl ? (
                                 <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
@@ -64,12 +69,7 @@ function CandidateBox({ candidate, party, isWinner, votes, margin, electionStatu
                            {candidateName}
                         </Button>
                     </div>
-                    {party.logoUrl && (
-                        <div className="flex-1 flex justify-center items-center">
-                            <Image src={party.logoUrl} alt={party.name} width={32} height={32} />
-                        </div>
-                    )}
-                    <div className="flex-1 text-right">
+                    <div className="text-right">
                          <div className="text-lg font-bold">
                             {votes !== undefined && votes.toLocaleString()}
                             {isWinner && margin !== undefined && margin !== null && (
