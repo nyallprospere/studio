@@ -38,7 +38,7 @@ export default function ManageLogosPage() {
 
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
-  const { data: partyLogos, isLoading: loadingLogos } = useCollection<PartyLogo>(partyLogosQuery);
+  const { data: partyLogos, isLoading: loadingLogos, error } = useCollection<PartyLogo>(partyLogosQuery);
   
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedPartyForUpload, setSelectedPartyForUpload] = useState<Party | null>(null);
@@ -67,7 +67,7 @@ export default function ManageLogosPage() {
     
     // Create a unique key for each logo combination
     const groupedByLogo = groupBy(logosForParty, logo => `${logo.logoUrl || ''}|${logo.expandedLogoUrl || ''}`);
-
+    
     return Object.values(groupedByLogo).map(group => {
       const first = group[0];
       const electionIds = group.map(g => g.electionId);
@@ -128,7 +128,9 @@ export default function ManageLogosPage() {
         description="Assign specific logos to parties for each election."
       />
 
-      {isLoading ? <p>Loading...</p> : (
+      {isLoading ? <p>Loading...</p> : 
+       error ? <p className="text-destructive">Error loading logos: {error.message}</p> :
+       (
         <>
           <LogoUploadDialog
             isOpen={isUploadDialogOpen}
