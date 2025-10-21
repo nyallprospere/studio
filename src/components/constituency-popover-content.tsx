@@ -52,8 +52,12 @@ function CandidateBox({ candidate, party, isWinner, votes, margin, electionStatu
             )}>
                  {isWinner && <CheckCircle2 className="absolute -top-2 -right-2 h-5 w-5 text-green-600 bg-white rounded-full" />}
                  <div className="flex items-start justify-between gap-2">
-                     <div className="flex-shrink-0">
-                        <p style={{ color: party.color }} className="font-bold text-[10px] text-center">{party.acronym} Candidate</p>
+                     <div className="flex-shrink-0 text-center">
+                        {party.logoUrl ? (
+                            <Image src={party.logoUrl} alt={party.name} width={24} height={24} className="mx-auto" />
+                        ) : (
+                             <p style={{ color: party.color }} className="font-bold text-[10px] text-center">{party.acronym} Candidate</p>
+                        )}
                      </div>
                      <div className="text-center">
                         <div className="relative h-10 w-10 rounded-full overflow-hidden bg-background flex-shrink-0 mx-auto">
@@ -63,7 +67,7 @@ function CandidateBox({ candidate, party, isWinner, votes, margin, electionStatu
                                 <UserSquare className="h-full w-full text-muted-foreground" />
                             )}
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 justify-center">
                             <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
                                View
                             </Button>
@@ -182,7 +186,7 @@ export function ConstituencyPopoverContent({
         <div className="space-y-3">
             <h4 className="font-bold leading-none text-center text-xl">{constituency.name}</h4>
             
-            <div className="flex flex-col gap-2">
+            <div className="space-y-2">
                 <CandidateBox 
                     candidate={slpCandidate!} 
                     party={slpParty!} 
