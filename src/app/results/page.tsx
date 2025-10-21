@@ -148,7 +148,7 @@ export default function ResultsPage() {
     ];
     
     if(otherVotes > 0 || otherSeats > 0) {
-        summary.push({ partyId: 'other', name: 'Other/Independent', acronym: 'Other', seats: otherSeats, totalVotes: otherVotes, color: '#8884d8', logoUrl: undefined });
+        summary.push({ partyId: 'other', name: 'INDEPENDENTS', acronym: 'IND', seats: otherSeats, totalVotes: otherVotes, color: '#8884d8', logoUrl: undefined });
     }
 
     return summary.filter(p => p.seats > 0 || p.totalVotes > 0)
@@ -232,7 +232,7 @@ export default function ResultsPage() {
                     {summaryData.map((summaryItem) => (
                       <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
                         <CardHeader className="flex flex-col items-center text-center">
-                          <CardTitle className="text-lg">{summaryItem.acronym}</CardTitle>
+                          <CardTitle className="text-lg">{summaryItem.name}</CardTitle>
                           {summaryItem.logoUrl && (
                             <div className="relative h-24 w-24 mt-2">
                                 <Image src={summaryItem.logoUrl} alt={`${summaryItem.name} logo`} fill className="object-contain" />
