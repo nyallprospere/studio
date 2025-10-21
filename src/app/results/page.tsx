@@ -216,7 +216,7 @@ export default function ResultsPage() {
                         <CardHeader className="flex flex-col items-center">
                           <CardTitle className="text-lg">{summaryItem.acronym}</CardTitle>
                           {summaryItem.logoUrl && (
-                            <div className="relative h-12 w-12 mt-2">
+                            <div className="relative h-20 w-20 mt-2">
                                 <Image src={summaryItem.logoUrl} alt={`${summaryItem.name} logo`} fill className="object-contain" />
                             </div>
                           )}
