@@ -14,6 +14,7 @@ import { uploadFile, deleteFile } from '@/firebase/storage';
 import Image from 'next/image';
 import { Upload, Shield } from 'lucide-react';
 import { LogoUploadDialog } from './logo-upload-dialog';
+import { groupBy } from 'lodash';
 
 export default function ManageLogosPage() {
   const { firestore } = useFirebase();
@@ -30,7 +31,7 @@ export default function ManageLogosPage() {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedPartyForUpload, setSelectedPartyForUpload] = useState<Party | null>(null);
 
-  const sortedElections = useMemo(() => elections?.sort((a, b) => b.year - a.year), [elections]);
+  const sortedElections = useMemo(() => elections?.sort((a, b) => a.year - b.year) || [], [elections]);
 
   const allParties = useMemo(() => {
     if (!parties) return [];
@@ -46,6 +47,35 @@ export default function ManageLogosPage() {
     setIsUploadDialogOpen(false);
     toast({ title: 'Logos Updated Successfully' });
   }
+  
+  const getLogoGroups = (partyId: string) => {
+    if (!partyLogos || !sortedElections) return [];
+
+    const logosForParty = partyLogos.filter(logo => logo.partyId === partyId);
+    
+    // Create a unique key for each logo combination
+    const groupedByLogo = groupBy(logosForParty, logo => `${logo.logoUrl || ''}|${logo.expandedLogoUrl || ''}`);
+
+    return Object.values(groupedByLogo).map(group => {
+      const first = group[0];
+      const electionIds = group.map(g => g.electionId);
+      const groupElections = sortedElections.filter(e => electionIds.includes(e.id));
+      
+      if (groupElections.length === 0) return null;
+
+      const startYear = groupElections[0].year;
+      const endYear = groupElections[groupElections.length - 1].year;
+      const dateRange = startYear === endYear ? `${startYear}` : `${startYear} - ${endYear}`;
+      
+      return {
+        logoUrl: first.logoUrl,
+        expandedLogoUrl: first.expandedLogoUrl,
+        dateRange: dateRange,
+        key: `${first.logoUrl || ''}|${first.expandedLogoUrl || ''}`
+      };
+    }).filter(g => g !== null);
+  };
+
 
   const isLoading = loadingParties || loadingElections || loadingLogos;
 
@@ -62,7 +92,7 @@ export default function ManageLogosPage() {
             isOpen={isUploadDialogOpen}
             onClose={() => setIsUploadDialogOpen(false)}
             party={selectedPartyForUpload}
-            elections={sortedElections || []}
+            elections={elections || []}
             onSuccess={handleUploadSuccess}
           />
           <Tabs defaultValue={allParties[0]?.id} className="w-full">
@@ -71,7 +101,9 @@ export default function ManageLogosPage() {
                       <TabsTrigger key={party.id} value={party.id} style={{ color: party.color }}>{party.name}</TabsTrigger>
                   ))}
               </TabsList>
-              {allParties.map(party => (
+              {allParties.map(party => {
+                const logoGroups = getLogoGroups(party.id);
+                return (
                   <TabsContent key={party.id} value={party.id}>
                       <Card>
                           <CardHeader className="flex flex-row justify-between items-center">
@@ -88,32 +120,34 @@ export default function ManageLogosPage() {
                               </button>
                           </CardHeader>
                           <CardContent className="space-y-4">
-                          {sortedElections?.map(election => {
-                            const logoSet = partyLogos?.find(l => l.partyId === party.id && l.electionId === election.id);
+                          {logoGroups.length > 0 ? logoGroups.map(group => {
                             return (
-                              <div key={election.id} className="p-4 border rounded-md">
-                                <h4 className="font-semibold mb-4">{election.name}</h4>
+                              <div key={group.key} className="p-4 border rounded-md">
+                                <h4 className="font-semibold mb-4">Applicable Years: {group.dateRange}</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 items-end">
                                   <div className="flex flex-col items-center gap-2">
                                       <p className="text-sm font-medium">Standard Logo</p>
                                       <div className="h-20 w-20 bg-muted rounded-md flex items-center justify-center">
-                                          {logoSet?.logoUrl ? <Image src={logoSet.logoUrl} alt="Standard Logo" width={80} height={80} className="object-contain" /> : <Shield className="h-8 w-8 text-muted-foreground" />}
+                                          {group.logoUrl ? <Image src={group.logoUrl} alt="Standard Logo" width={80} height={80} className="object-contain" /> : <Shield className="h-8 w-8 text-muted-foreground" />}
                                       </div>
                                   </div>
                                   <div className="flex flex-col items-center gap-2">
                                       <p className="text-sm font-medium">Expanded Logo</p>
                                       <div className="h-20 w-32 bg-muted rounded-md flex items-center justify-center">
-                                          {logoSet?.expandedLogoUrl ? <Image src={logoSet.expandedLogoUrl} alt="Expanded Logo" width={128} height={80} className="object-contain"/> : <Shield className="h-8 w-8 text-muted-foreground" />}
+                                          {group.expandedLogoUrl ? <Image src={group.expandedLogoUrl} alt="Expanded Logo" width={128} height={80} className="object-contain"/> : <Shield className="h-8 w-8 text-muted-foreground" />}
                                       </div>
                                   </div>
                                 </div>
                               </div>
                             )
-                          })}
+                          }) : (
+                             <p className="text-center text-muted-foreground py-8">No logos found for this party.</p>
+                          )}
                           </CardContent>
                       </Card>
                   </TabsContent>
-              ))}
+                );
+              })}
           </Tabs>
         </>
       )}
