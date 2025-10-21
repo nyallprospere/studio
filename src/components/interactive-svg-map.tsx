@@ -154,7 +154,7 @@ export function InteractiveSvgMap({ constituencies, selectedConstituencyId, elec
                                 onClick={() => onConstituencyClick(constituency.id)}
                             />
                         </PopoverTrigger>
-                        <PopoverContent className="w-96">
+                        <PopoverContent className="w-96" side="right">
                            <ConstituencyPopoverContent 
                                 constituency={constituency}
                                 election={election}
