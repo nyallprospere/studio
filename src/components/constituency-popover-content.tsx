@@ -33,7 +33,7 @@ function CandidateBox({ candidate, party, isWinner, margin, votes, electionStatu
 
     if (!party) {
          return (
-            <div className="flex flex-col items-center gap-2 p-2 rounded-md bg-muted flex-1">
+            <div className="flex flex-col items-center gap-2 p-2 rounded-md bg-muted flex-1 mb-2">
                 <div className="h-10 w-10 rounded-full bg-background flex items-center justify-center">
                     <UserSquare className="h-6 w-6 text-muted-foreground" />
                 </div>
@@ -45,37 +45,41 @@ function CandidateBox({ candidate, party, isWinner, margin, votes, electionStatu
     }
     
     return (
-        <div className="flex-1">
+        <div className="flex-1 mb-2">
             <div className={cn(
-                "flex flex-col items-center gap-2 p-2 rounded-md bg-muted relative h-full",
+                "p-2 rounded-md bg-muted relative h-full",
                 isWinner && "border-2 border-green-600"
             )}>
-                {isWinner && <CheckCircle2 className="absolute -top-2 -right-2 h-5 w-5 text-green-600 bg-white rounded-full" />}
-                <div className="relative h-10 w-10 rounded-full overflow-hidden bg-background">
-                    {candidate?.imageUrl ? (
-                        <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
-                    ) : (
-                        <UserSquare className="h-full w-full text-muted-foreground" />
-                    )}
-                </div>
-                <div className="text-center">
-                    <p className="font-semibold text-xs">{candidateName}</p>
-                     <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
-                        View Profile
-                    </Button>
-                </div>
-                 <div style={{ color: party.color }} className="mt-auto text-center">
-                    <span className="font-bold text-[10px]">{party.acronym} Candidate</span>
-                    {votes !== undefined &&
-                        <p className="text-xs text-muted-foreground">{votes.toLocaleString()} votes</p>
-                    }
-                     {isWinner && margin !== null && 
-                        <div className="mt-1">
-                            <p className="text-[10px] font-bold text-muted-foreground">Won by {margin.toLocaleString()} votes</p>
-                            {electionStatus && <p className="font-bold text-xs text-center" style={{color: statusColor}}>{electionStatus}</p>}
+                 {isWinner && <CheckCircle2 className="absolute -top-2 -right-2 h-5 w-5 text-green-600 bg-white rounded-full" />}
+                 <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-background">
+                            {candidate?.imageUrl ? (
+                                <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
+                            ) : (
+                                <UserSquare className="h-full w-full text-muted-foreground" />
+                            )}
                         </div>
-                    }
+                        <div className="text-left">
+                            <p className="font-semibold text-xs">{candidateName}</p>
+                            <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                                View Profile
+                            </Button>
+                        </div>
+                    </div>
+                     <div style={{ color: party.color }} className="text-right">
+                        <span className="font-bold text-[10px]">{party.acronym} Candidate</span>
+                        {votes !== undefined &&
+                            <p className="text-xs text-muted-foreground">{votes.toLocaleString()} votes</p>
+                        }
+                    </div>
                 </div>
+                 {isWinner && (
+                    <div className="text-center mt-2">
+                        <p className="text-[11px] font-bold text-muted-foreground">Won by {margin?.toLocaleString()} votes</p>
+                        {electionStatus && <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>}
+                    </div>
+                )}
             </div>
             <CandidateProfileDialog candidate={candidate as Candidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />
         </div>
