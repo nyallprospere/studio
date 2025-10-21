@@ -97,22 +97,39 @@ export default function ResultsPage() {
 
 
   const summaryData = useMemo(() => {
-    if (!currentElectionResults || !parties) return [];
-
+    if (!currentElectionResults || !parties || !constituencies) return [];
+  
     const slp = parties.find(p => p.acronym === 'SLP');
     const uwp = parties.find(p => p.acronym === 'UWP');
-
+  
     if (!slp || !uwp) return [];
-
+  
     let slpSeats = 0;
     let uwpSeats = 0;
     let otherSeats = 0;
-
+  
     let slpVotes = 0;
     let uwpVotes = 0;
     let otherVotes = 0;
 
+    const is2021 = currentElection?.year === 2021;
+    const castriesNorth = constituencies.find(c => c.name === 'Castries North');
+    const castriesCentral = constituencies.find(c => c.name === 'Castries Central');
+  
     currentElectionResults.forEach(result => {
+      const constituency = getConstituencyById(result.constituencyId);
+      const isSpecialConstituency = is2021 && (constituency?.id === castriesNorth?.id || constituency?.id === castriesCentral?.id);
+
+      if (isSpecialConstituency) {
+        otherVotes += result.slpVotes; // Add SLP votes to 'Other'
+        uwpVotes += result.uwpVotes;
+        otherVotes += result.otherVotes;
+        if (result.slpVotes > result.uwpVotes) {
+          otherSeats++; // Add SLP seat to 'Other'
+        } else if (result.uwpVotes > result.slpVotes) {
+          uwpSeats++;
+        }
+      } else {
         slpVotes += result.slpVotes;
         uwpVotes += result.uwpVotes;
         otherVotes += result.otherVotes;
@@ -122,8 +139,9 @@ export default function ResultsPage() {
         } else if (result.uwpVotes > result.slpVotes) {
             uwpSeats++;
         }
+      }
     });
-
+  
     const summary = [
         { partyId: slp.id, name: slp.name, acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color, logoUrl: currentElection && currentElection.year < 1997 ? slp.oldLogoUrl || slp.logoUrl : slp.expandedLogoUrl || slp.logoUrl },
         { partyId: uwp.id, name: uwp.name, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color, logoUrl: currentElection && currentElection.year < 1997 ? uwp.oldLogoUrl || uwp.logoUrl : uwp.expandedLogoUrl || uwp.logoUrl },
@@ -135,7 +153,7 @@ export default function ResultsPage() {
 
     return summary.filter(p => p.seats > 0 || p.totalVotes > 0)
      .sort((a,b) => b.seats - a.seats || b.totalVotes - a.totalVotes);
-  }, [currentElectionResults, parties, currentElection]);
+  }, [currentElectionResults, parties, constituencies, currentElection]);
 
 
   const chartConfig = useMemo(() => {
