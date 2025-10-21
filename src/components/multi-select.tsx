@@ -41,8 +41,7 @@ function MultiSelect({
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
 
-  const handleUnselect = (e: React.MouseEvent | React.KeyboardEvent, item: string) => {
-    e.stopPropagation();
+  const handleUnselect = (item: string) => {
     onChange(selected.filter((i) => i !== item));
   };
 
@@ -65,25 +64,34 @@ function MultiSelect({
                     variant="secondary"
                     key={option.value}
                     className="mr-1"
-                    onClick={(e) => handleUnselect(e, option.value)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleUnselect(option.value);
+                    }}
                   >
                     {option.label}
-                    <button
-                      className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Remove ${option.label}`}
+                      className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          handleUnselect(e, option.value);
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleUnselect(option.value);
                         }
                       }}
                       onMouseDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                       }}
-                      onClick={(e) => handleUnselect(e, option.value)}
-                      aria-label={`Remove ${option.label}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleUnselect(option.value);
+                      }}
                     >
                       <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                    </button>
+                    </span>
                   </Badge>
                 ))
             ) : (
@@ -95,7 +103,11 @@ function MultiSelect({
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
         <Command className={className}>
-          {children}
+          <ScrollArea>
+              <div className="max-h-64">
+                {children}
+              </div>
+          </ScrollArea>
         </Command>
       </PopoverContent>
     </Popover>
