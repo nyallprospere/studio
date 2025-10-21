@@ -11,11 +11,17 @@ export interface Party {
   logoUrl?: string; // URL to logo in storage
   expandedLogoUrl?: string; // URL to a larger logo in storage
   oldLogoUrl?: string;
-  description?: string;
-  history?: string;
   manifestoUrl?: string; // URL to PDF in storage
   manifestoSummary?: string;
   website?: string;
+}
+
+export interface PartyLogo {
+  id: string;
+  partyId: string;
+  electionId: string;
+  logoUrl: string;
+  expandedLogoUrl?: string;
 }
 
 export interface Candidate {

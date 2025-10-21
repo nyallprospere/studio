@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, LogIn, LogOut, UserPlus, FilePlus, Calendar, Pencil, Archive, Cat } from 'lucide-react';
+import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, LogIn, LogOut, UserPlus, FilePlus, Calendar, Pencil, Archive, Cat, Image as ImageIcon } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useUser, useAuth, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -43,6 +43,7 @@ const mainNavItems = [
 const adminNavItems = [
     { href: '/admin/elections', icon: Vote, label: 'Manage Elections' },
     { href: '/admin/parties', icon: Shield, label: 'Manage Parties' },
+    { href: '/admin/logos', icon: ImageIcon, label: 'Manage Logos' },
     // { href: '/admin/candidates', icon: Users, label: 'Manage Candidates' },
     { href: '/admin/events', icon: Calendar, label: 'Manage Events'},
     { href: '/admin/results', icon: Landmark, label: 'Manage Election Results' },

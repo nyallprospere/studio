@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -8,7 +9,7 @@ import type { Party, Election } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { PartyForm } from './party-form';
 import Image from 'next/image';
 import { Shield, Pencil, Trash2, Link as LinkIcon, Upload } from 'lucide-react';
@@ -172,28 +173,7 @@ export default function AdminPartiesPage() {
           description="Add, edit, or remove political parties."
         />
         <div className="flex items-center gap-2">
-           <Dialog open={isIndependentLogoFormOpen} onOpenChange={setIsIndependentLogoFormOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline" disabled={!currentElection} onClick={() => setIsIndependentLogoFormOpen(true)}>
-                  <Upload className="mr-2 h-4 w-4" />
-                  Independent Logos
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-xl">
-                <DialogHeader>
-                  <DialogTitle>Independent Party Logos</DialogTitle>
-                  <DialogDescription>
-                    Upload logos for the Independent party for the {currentElection?.name}.
-                  </DialogDescription>
-                </DialogHeader>
-                <IndependentLogoForm
-                  onSubmit={handleIndependentLogoSubmit}
-                  initialData={currentElection}
-                  onCancel={() => setIsIndependentLogoFormOpen(false)}
-                />
-            </DialogContent>
-          </Dialog>
-
+          
           <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => { setEditingParty(null); setIsFormOpen(true)}}>Add New Party</Button>
