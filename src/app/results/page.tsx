@@ -119,14 +119,14 @@ export default function ResultsPage() {
 
         if (result.slpVotes > result.uwpVotes) {
             slpSeats++;
-        } else if (result.uwpVotes > result.slpVotes) {
+        } else if (result.uwpVotes > result.uwpVotes) {
             uwpSeats++;
         }
     });
 
     const summary = [
-        { partyId: slp.id, name: slp.name, acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color, logoUrl: slp.logoUrl },
-        { partyId: uwp.id, name: uwp.name, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color, logoUrl: uwp.logoUrl },
+        { partyId: slp.id, name: slp.name, acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color, logoUrl: slp.expandedLogoUrl || slp.logoUrl },
+        { partyId: uwp.id, name: uwp.name, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color, logoUrl: uwp.expandedLogoUrl || uwp.logoUrl },
     ];
     
     if(otherVotes > 0 || otherSeats > 0) {
@@ -260,7 +260,7 @@ export default function ResultsPage() {
                                                 content={({ value, x, y, width, height }) => 
                                                     value ? (
                                                         <foreignObject x={(x || 0) - 25} y={(y || 0) - 5} width={30} height={30}>
-                                                          <Image src={value} alt="logo" width={30} height={30} className="rounded-full p-1" />
+                                                          <Image src={value} alt="logo" width={30} height={30} className="object-contain bg-transparent" />
                                                         </foreignObject>
                                                     ) : null
                                                 }
@@ -361,5 +361,3 @@ export default function ResultsPage() {
     </div>
   );
 }
-
-    
