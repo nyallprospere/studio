@@ -308,11 +308,10 @@ export default function ResultsPage() {
                                     {summaryItem.seats}
                                     {summaryItem.seatChange !== null && (
                                         <sup className={`text-xs font-semibold ml-1 ${summaryItem.seatChange > 0 ? 'text-green-600' : summaryItem.seatChange < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
-                                          {summaryItem.seatChange > 0 ? `+${summaryItem.seatChange}` : summaryItem.seatChange}
+                                          {summaryItem.seatChange > 0 ? `+${summaryItem.seatChange}` : summaryItem.seatChange} seats
                                         </sup>
                                     )}
                                 </div>
-                                <div className="text-xs text-muted-foreground">Seats</div>
                                 <div className="mt-2">
                                   <div className="font-bold">{summaryItem.votePercentage}%</div>
                                   <div className="text-xs text-muted-foreground">({summaryItem.totalVotes.toLocaleString()} votes)</div>
@@ -322,7 +321,7 @@ export default function ResultsPage() {
                         ))}
                     </div>
                   <div className="grid grid-cols-1 gap-8">
-                     <Card>
+                    <Card>
                         <CardHeader>
                             <CardTitle>Results Map</CardTitle>
                             <CardDescription>Constituency winners for {currentElection.name}.</CardDescription>
@@ -344,20 +343,7 @@ export default function ResultsPage() {
                         </CardHeader>
                         <CardContent>
                             {loadingResults ? <p>Loading results...</p> : (
-                                <Table>
-                                    <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Constituency</TableHead>
-                                        <TableHead>Result</TableHead>
-                                        <TableHead>SLP Votes</TableHead>
-                                        <TableHead>UWP Votes</TableHead>
-                                        <TableHead>Other Votes</TableHead>
-                                        <TableHead className="text-right">Total Votes</TableHead>
-                                        <TableHead className="text-right">Registered Voters</TableHead>
-                                        <TableHead className="text-right">Turnout</TableHead>
-                                    </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
+                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {currentElectionResults && currentElectionResults.length > 0 ? currentElectionResults.map((cr) => {
                                         const constituency = getConstituencyById(cr.constituencyId);
                                         const is2021 = currentElection?.year === 2021;
@@ -391,26 +377,43 @@ export default function ResultsPage() {
                                         const winnerColor = currentWinner === 'SLP' ? slpParty?.color : (currentWinner === 'UWP' ? uwpParty?.color : '#8884d8');
 
                                         return (
-                                        <TableRow key={cr.id} onClick={() => setSelectedConstituencyId(cr.constituencyId)} className={cn("cursor-pointer", selectedConstituencyId === cr.constituencyId ? 'bg-muted' : '')}>
-                                            <TableCell className="font-medium">{constituency?.name || cr.constituencyId}</TableCell>
-                                            <TableCell>
-                                                <span className="font-semibold" style={{ color: winnerColor }}>{resultStatus}</span>
-                                            </TableCell>
-                                            <TableCell>{isSpecialConstituency ? '-' : cr.slpVotes.toLocaleString()}</TableCell>
-                                            <TableCell>{cr.uwpVotes.toLocaleString()}</TableCell>
-                                            <TableCell>{isSpecialConstituency ? cr.slpVotes.toLocaleString() : cr.otherVotes.toLocaleString()}</TableCell>
-                                            <TableCell className="text-right font-semibold">{cr.totalVotes.toLocaleString()}</TableCell>
-                                            <TableCell className="text-right">{cr.registeredVoters === 0 ? 'N/A' : cr.registeredVoters.toLocaleString()}</TableCell>
-                                            <TableCell className="text-right">{cr.turnout === 0 ? 'N/A' : `${cr.turnout}%`}</TableCell>
-                                        </TableRow>
+                                        <Card key={cr.id} onClick={() => setSelectedConstituencyId(cr.constituencyId)} className={cn("cursor-pointer", selectedConstituencyId === cr.constituencyId ? 'border-primary' : '')}>
+                                            <CardHeader className="p-4">
+                                                <div className="flex justify-between items-center">
+                                                    <CardTitle className="text-base">{constituency?.name || cr.constituencyId}</CardTitle>
+                                                    <span className="font-semibold text-sm" style={{ color: winnerColor }}>{resultStatus}</span>
+                                                </div>
+                                            </CardHeader>
+                                            <CardContent className="p-4 pt-0 text-sm">
+                                                <div className="space-y-1">
+                                                    <div className="flex justify-between">
+                                                        <span>SLP</span>
+                                                        <span className="font-medium">{isSpecialConstituency ? '-' : cr.slpVotes.toLocaleString()}</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span>UWP</span>
+                                                        <span className="font-medium">{cr.uwpVotes.toLocaleString()}</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span>Other</span>
+                                                        <span className="font-medium">{isSpecialConstituency ? cr.slpVotes.toLocaleString() : cr.otherVotes.toLocaleString()}</span>
+                                                    </div>
+                                                    <hr className="my-2" />
+                                                    <div className="flex justify-between font-bold">
+                                                        <span>Total</span>
+                                                        <span>{cr.totalVotes.toLocaleString()}</span>
+                                                    </div>
+                                                     <div className="text-xs text-muted-foreground pt-2">
+                                                        Turnout: {cr.turnout === 0 ? 'N/A' : `${cr.turnout}%`}
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
                                         );
                                     }) : (
-                                        <TableRow>
-                                            <TableCell colSpan={8} className="text-center text-muted-foreground h-24">Detailed constituency data not available for this year.</TableCell>
-                                        </TableRow>
+                                        <p className="text-center text-muted-foreground py-8 col-span-full">Detailed constituency data not available for this year.</p>
                                     )}
-                                    </TableBody>
-                                </Table>
+                                </div>
                             )}
                         </CardContent>
                     </Card>
@@ -422,4 +425,3 @@ export default function ResultsPage() {
     </div>
   );
 }
-
