@@ -33,6 +33,22 @@ export default function ManageMapSubmissionsPage() {
     const mapsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'user_maps'), orderBy('createdAt', 'desc')) : null, [firestore]);
     const { data: userMaps, isLoading } = useCollection<UserMap>(mapsQuery);
 
+    const processedMaps = useMemo(() => {
+        if (!userMaps) return [];
+        return userMaps.map(map => {
+            const slpSeats = map.mapData.filter(d => d.politicalLeaning === 'slp').length;
+            const uwpSeats = map.mapData.filter(d => d.politicalLeaning === 'uwp').length;
+            const tossups = map.mapData.filter(d => d.politicalLeaning === 'tossup').length;
+            return {
+                ...map,
+                slpSeats,
+                uwpSeats,
+                tossups,
+            };
+        });
+    }, [userMaps]);
+
+
     const handleDelete = async (mapId: string) => {
         if (!firestore) return;
         try {
@@ -61,16 +77,22 @@ export default function ManageMapSubmissionsPage() {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Creation Date</TableHead>
-                            <TableHead>Map ID</TableHead>
+                            <TableHead>IP Address</TableHead>
+                            <TableHead>SLP Seats</TableHead>
+                            <TableHead>UWP Seats</TableHead>
+                            <TableHead>Tossups</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {userMaps && userMaps.length > 0 ? (
-                            userMaps.map(map => (
+                        {processedMaps && processedMaps.length > 0 ? (
+                            processedMaps.map(map => (
                                 <TableRow key={map.id}>
                                     <TableCell>{new Date(map.createdAt?.toDate()).toLocaleString()}</TableCell>
-                                    <TableCell>{map.id}</TableCell>
+                                    <TableCell>{map.ipAddress || 'N/A'}</TableCell>
+                                    <TableCell>{map.slpSeats}</TableCell>
+                                    <TableCell>{map.uwpSeats}</TableCell>
+                                    <TableCell>{map.tossups}</TableCell>
                                     <TableCell className="text-right">
                                         <Button asChild variant="ghost" size="icon">
                                             <Link href={`/maps/${map.id}`} target="_blank">
@@ -99,7 +121,7 @@ export default function ManageMapSubmissionsPage() {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={3} className="text-center h-24">
+                                <TableCell colSpan={6} className="text-center h-24">
                                     No map submissions yet.
                                 </TableCell>
                             </TableRow>

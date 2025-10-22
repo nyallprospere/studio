@@ -149,5 +149,6 @@ export interface UserMap {
         constituencyId: string;
         politicalLeaning: string;
     }[];
+    ipAddress?: string;
 }
     

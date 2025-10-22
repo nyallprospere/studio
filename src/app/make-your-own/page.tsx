@@ -24,6 +24,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { Copy } from 'lucide-react';
+import { saveUserMap } from '@/lib/actions';
+
 
 const politicalLeaningOptions = [
   { value: 'solid-slp', label: 'Solid SLP', color: 'hsl(var(--chart-5))' },
@@ -34,10 +36,10 @@ const politicalLeaningOptions = [
 ];
 
 const makeYourOwnLeaningOptions = [
-  { value: 'slp', label: 'SLP', color: 'fill-red-500' },
-  { value: 'uwp', label: 'UWP', color: 'fill-yellow-400' },
-  { value: 'tossup', label: 'Toss Up', color: 'fill-purple-500' },
-  { value: 'unselected', label: 'To be selected', color: 'fill-gray-300' },
+  { value: 'slp', label: 'SLP' },
+  { value: 'uwp', label: 'UWP' },
+  { value: 'tossup', label: 'Toss Up' },
+  { value: 'unselected', label: 'To be selected' },
 ];
 
 
@@ -46,8 +48,8 @@ function ConstituenciesPageSkeleton() {
       <div>
         <Skeleton className="h-10 w-3/4" />
         <Skeleton className="h-6 w-1/2 mt-2" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
-            <div className="md:col-span-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+            <div className="md:col-span-1">
                 <Skeleton className="h-[70vh] w-full" />
             </div>
             <div>
@@ -184,7 +186,6 @@ export default function MakeYourOwnPage() {
     }, []);
     
     const handleSaveAndShare = async () => {
-        if (!firestore) return;
         setIsSaving(true);
         try {
             const mapData = myMapConstituencies.map(c => ({
@@ -192,14 +193,18 @@ export default function MakeYourOwnPage() {
                 politicalLeaning: c.politicalLeaning || 'unselected'
             }));
 
-            const docRef = await addDoc(collection(firestore, 'user_maps'), {
-                mapData,
-                createdAt: serverTimestamp(),
-            });
+            const result = await saveUserMap(mapData);
 
-            setSavedMapId(docRef.id);
-            setIsShareDialogOpen(true);
-            toast({ title: 'Map Saved!', description: 'Your prediction map has been saved and is ready to share.' });
+            if(result.error) {
+                toast({ variant: 'destructive', title: 'Error', description: result.error });
+                return;
+            }
+
+            if(result.id) {
+                setSavedMapId(result.id);
+                setIsShareDialogOpen(true);
+                toast({ title: 'Map Saved!', description: 'Your prediction map has been saved and is ready to share.' });
+            }
         } catch (e) {
             console.error('Error saving map:', e);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not save your map. Please try again.' });
@@ -232,7 +237,7 @@ export default function MakeYourOwnPage() {
             name: opt.label,
             value: counts[opt.value] || 0,
             fill: opt.value === 'slp' ? 'hsl(var(--chart-5))' : opt.value === 'uwp' ? 'hsl(var(--chart-1))' : opt.value === 'tossup' ? 'hsl(var(--chart-4))' : '#d1d5db',
-        })).filter(item => item.value > 0);
+        }));
 
         let seatChanges = { slp: null, uwp: null };
         if (allSelected && previousElectionResults.length > 0) {

@@ -4,7 +4,10 @@
 import { generateElectionPredictions } from '@/ai/flows/generate-election-predictions';
 import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
 import { initializeFirebase } from '@/firebase';
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, addDoc, serverTimestamp } from 'firebase/firestore';
+import { headers } from 'next/headers';
+import type { UserMap } from './types';
+
 
 async function getCollectionData(collectionName: string) {
     const { firestore } = initializeFirebase();
@@ -59,4 +62,23 @@ export async function getPrediction(newsSummary: string) {
         error: "An error occurred while generating the prediction. Please try again."
     };
   }
+}
+
+export async function saveUserMap(mapData: UserMap['mapData']) {
+    try {
+        const { firestore } = initializeFirebase();
+        const headersList = headers();
+        const ip = headersList.get('x-forwarded-for') || 'unknown';
+
+        const docRef = await addDoc(collection(firestore, 'user_maps'), {
+            mapData,
+            createdAt: serverTimestamp(),
+            ipAddress: ip,
+        });
+
+        return { id: docRef.id };
+    } catch (e) {
+        console.error('Error saving map:', e);
+        return { error: 'Could not save your map. Please try again.' };
+    }
 }
