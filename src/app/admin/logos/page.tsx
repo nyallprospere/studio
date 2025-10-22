@@ -73,6 +73,20 @@ export default function ManageLogosPage() {
 
     const logosForParty = partyLogos.filter(logo => logo.partyId === partyId);
     
+    if (partyId === 'independent') {
+      return logosForParty.map(logo => {
+        const election = sortedElections.find(e => e.id === logo.electionId);
+        return {
+          logoUrl: logo.logoUrl,
+          expandedLogoUrl: logo.expandedLogoUrl,
+          dateRange: election?.year.toString() || 'N/A',
+          maxYear: election?.year || 0,
+          electionIds: [logo.electionId],
+          key: logo.id
+        };
+      }).sort((a, b) => b.maxYear - a.maxYear);
+    }
+    
     const groupedByLogo = groupBy(logosForParty, logo => `${logo.logoUrl || ''}|${logo.expandedLogoUrl || ''}`);
     
     return Object.entries(groupedByLogo).map(([key, group]) => {
@@ -96,12 +110,19 @@ export default function ManageLogosPage() {
     .sort((a,b) => b.maxYear - a.maxYear);
   };
   
-  const handleDeleteLogos = async (partyId: string, electionIds: string[]) => {
+  const handleDeleteLogos = async (partyId: string, electionIds: string[], logoId?: string) => {
     if (!firestore || !partyLogos) return;
+    
+    let logoDocsToDelete: PartyLogo[] = [];
 
-    const logoDocsToDelete = partyLogos.filter(logo => 
-        logo.partyId === partyId && electionIds.includes(logo.electionId)
-    );
+    if (partyId === 'independent' && logoId) {
+        logoDocsToDelete = partyLogos.filter(logo => logo.id === logoId);
+    } else {
+        logoDocsToDelete = partyLogos.filter(logo => 
+            logo.partyId === partyId && electionIds.includes(logo.electionId)
+        );
+    }
+
 
     if (logoDocsToDelete.length === 0) {
         toast({variant: 'destructive', title: 'Error', description: 'Could not find logo entries to delete.'});
@@ -158,7 +179,7 @@ export default function ManageLogosPage() {
                           <CardHeader className="flex flex-row justify-between items-center">
                               <div>
                                   <CardTitle style={{color: party.color}}>{party.name}</CardTitle>
-                                  <CardDescription>Manage logos for the {party.acronym}.</CardDescription>
+                                  <CardDescription>Manage logos for the {party.name === 'Independent' ? 'Independent candidates' : party.acronym}.</CardDescription>
                               </div>
                               <Button
                                 onClick={() => handleUploadClick(party)}
@@ -227,7 +248,7 @@ export default function ManageLogosPage() {
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
                                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleDeleteLogos(party.id, group.electionIds)}>
+                                                <AlertDialogAction onClick={() => handleDeleteLogos(party.id, group.electionIds, party.id === 'independent' ? group.key : undefined)}>
                                                     Yes, Delete
                                                 </AlertDialogAction>
                                             </AlertDialogFooter>
@@ -253,3 +274,4 @@ export default function ManageLogosPage() {
     </div>
   );
 }
+

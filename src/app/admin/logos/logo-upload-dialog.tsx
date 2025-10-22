@@ -32,8 +32,9 @@ interface LogoUploadDialogProps {
 const uploadSchema = z.object({
   electionIds: z.array(z.string()).min(1, 'Please select at least one election.'),
   standardLogoFile: z.any().optional(),
+  standardLogoFiles: z.any().optional(),
   expandedLogoFile: z.any().optional(),
-}).refine(data => data.standardLogoFile || data.expandedLogoFile, {
+}).refine(data => data.standardLogoFile || data.expandedLogoFile || (data.standardLogoFiles && data.standardLogoFiles.length > 0), {
   message: 'At least one logo file is required.',
   path: ['standardLogoFile'],
 });
@@ -42,6 +43,7 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
   const { firestore } = useFirebase();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const isIndependent = party?.id === 'independent';
 
   const form = useForm<z.infer<typeof uploadSchema>>({
     resolver: zodResolver(uploadSchema),
@@ -65,47 +67,60 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
 
     try {
         const batch = writeBatch(firestore);
+        const standardFiles = isIndependent ? values.standardLogoFiles : (values.standardLogoFile ? [values.standardLogoFile] : []);
 
         for (const electionId of values.electionIds) {
-            const files = {
-                standard: values.standardLogoFile,
-                expanded: values.expandedLogoFile
-            };
-            
-            const existingLogoQuery = query(
-                collection(firestore, 'party_logos'),
-                where('partyId', '==', party.id),
-                where('electionId', '==', electionId)
-            );
-            
-            const existingLogoSnap = await getDocs(existingLogoQuery);
-            const existingLogoDoc = existingLogoSnap.docs[0];
+            for (let i = 0; i < (isIndependent ? standardFiles.length : 1); i++) {
+                const standardFile = isIndependent ? standardFiles[i] : (standardFiles[0] || null);
 
-            let standardUrl = existingLogoDoc?.data()?.logoUrl;
-            let expandedUrl = existingLogoDoc?.data()?.expandedLogoUrl;
+                const files = {
+                    standard: standardFile,
+                    expanded: values.expandedLogoFile
+                };
+                
+                const q = [
+                    where('partyId', '==', party.id),
+                    where('electionId', '==', electionId),
+                ];
+                if(isIndependent && standardFile) {
+                    q.push(where('logoUrl', '==', `logos/${party.id}_${electionId}_std_${i}.png`));
+                }
 
-            if (files.standard) {
-                if (standardUrl) await deleteFile(standardUrl).catch(console.warn);
-                standardUrl = await uploadFile(files.standard, `logos/${party.id}_${electionId}_std.png`);
-            }
-            if (files.expanded) {
-                if (expandedUrl) await deleteFile(expandedUrl).catch(console.warn);
-                expandedUrl = await uploadFile(files.expanded, `logos/${party.id}_${electionId}_exp.png`);
-            }
+                const existingLogoQuery = query(
+                    collection(firestore, 'party_logos'),
+                    ...q
+                );
+                
+                const existingLogoSnap = await getDocs(existingLogoQuery);
+                const existingLogoDoc = existingLogoSnap.docs[0];
 
-            const dataToSave = {
-                partyId: party.id,
-                electionId,
-                logoUrl: standardUrl || '',
-                expandedLogoUrl: expandedUrl || '',
-            };
+                let standardUrl = existingLogoDoc?.data()?.logoUrl;
+                let expandedUrl = existingLogoDoc?.data()?.expandedLogoUrl;
 
-            if (existingLogoDoc) {
-                const docRef = doc(firestore, 'party_logos', existingLogoDoc.id);
-                batch.update(docRef, dataToSave);
-            } else {
-                const newDocRef = doc(collection(firestore, 'party_logos'));
-                batch.set(newDocRef, dataToSave);
+                if (files.standard) {
+                    if (standardUrl) await deleteFile(standardUrl).catch(console.warn);
+                    const path = isIndependent ? `logos/${party.id}_${electionId}_std_${i}.png` : `logos/${party.id}_${electionId}_std.png`;
+                    standardUrl = await uploadFile(files.standard, path);
+                }
+                if (files.expanded && !isIndependent) { // Expanded logo only for non-independents in this logic
+                    if (expandedUrl) await deleteFile(expandedUrl).catch(console.warn);
+                    expandedUrl = await uploadFile(files.expanded, `logos/${party.id}_${electionId}_exp.png`);
+                }
+
+                const dataToSave = {
+                    partyId: party.id,
+                    electionId,
+                    logoUrl: standardUrl || '',
+                    expandedLogoUrl: expandedUrl || '',
+                };
+
+                if (existingLogoDoc) {
+                    const docRef = doc(firestore, 'party_logos', existingLogoDoc.id);
+                    batch.update(docRef, dataToSave);
+                } else {
+                    const newDocRef = doc(collection(firestore, 'party_logos'));
+                    batch.set(newDocRef, dataToSave);
+                }
             }
         }
         
@@ -188,32 +203,50 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
                         </FormItem>
                     )}
                 />
-                 <FormField
-                    control={form.control}
-                    name="standardLogoFile"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Standard Logo (Square)</FormLabel>
-                        <FormControl>
-                            <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
+                 {isIndependent ? (
+                    <FormField
+                        control={form.control}
+                        name="standardLogoFiles"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Standard Logos (Square)</FormLabel>
+                                <FormControl>
+                                    <Input type="file" accept="image/png, image/jpeg" multiple onChange={(e) => field.onChange(e.target.files)} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
                     />
-                 <FormField
-                    control={form.control}
-                    name="expandedLogoFile"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Expanded Logo (Banner)</FormLabel>
-                        <FormControl>
-                            <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
+                 ) : (
+                    <FormField
+                        control={form.control}
+                        name="standardLogoFile"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Standard Logo (Square)</FormLabel>
+                            <FormControl>
+                                <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
                     />
+                 )}
+                 {!isIndependent && (
+                     <FormField
+                        control={form.control}
+                        name="expandedLogoFile"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Expanded Logo (Banner)</FormLabel>
+                            <FormControl>
+                                <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                 )}
 
                 <DialogFooter>
                     <Button type="button" variant="outline" onClick={handleClose}>Cancel</Button>
@@ -228,3 +261,4 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
     </Dialog>
   );
 }
+
