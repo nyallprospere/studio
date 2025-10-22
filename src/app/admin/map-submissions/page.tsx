@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -135,7 +134,8 @@ export default function ManageMapSubmissionsPage() {
                         <TableRow>
                             <TableHead>Creation Date</TableHead>
                             <TableHead>IP Address</TableHead>
-                            <TableHead>Location</TableHead>
+                            <TableHead>City</TableHead>
+                            <TableHead>Country</TableHead>
                             <TableHead>SLP Seats</TableHead>
                             <TableHead>UWP Seats</TableHead>
                             <TableHead>Tossups</TableHead>
@@ -148,7 +148,8 @@ export default function ManageMapSubmissionsPage() {
                                 <TableRow key={map.id}>
                                     <TableCell>{map.createdAt?.toDate ? new Date(map.createdAt.toDate()).toLocaleString() : 'N/A'}</TableCell>
                                     <TableCell>{map.ipAddress || 'N/A'}</TableCell>
-                                    <TableCell>{map.city && map.country ? `${map.city}, ${map.country}` : 'N/A'}</TableCell>
+                                    <TableCell>{map.city || 'N/A'}</TableCell>
+                                    <TableCell>{map.country || 'N/A'}</TableCell>
                                     <TableCell>{map.slpSeats}</TableCell>
                                     <TableCell>{map.uwpSeats}</TableCell>
                                     <TableCell>{map.tossups}</TableCell>
@@ -180,7 +181,7 @@ export default function ManageMapSubmissionsPage() {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center h-24">
+                                <TableCell colSpan={8} className="text-center h-24">
                                     No map submissions in this date range.
                                 </TableCell>
                             </TableRow>
