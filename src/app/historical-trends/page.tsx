@@ -144,6 +144,60 @@ const NationalVoteTrend = ({ elections, results, parties }: { elections: Electio
   );
 };
 
+const VoterTurnoutTrend = ({ elections, results }: { elections: Election[], results: ElectionResult[] }) => {
+  const chartData = useMemo(() => {
+    if (!elections.length || !results.length) return [];
+    
+    return elections
+      .filter(e => e.year < 2026 && e.year !== 1987)
+      .sort((a,b) => a.year - b.year)
+      .map(election => {
+        const electionResults = results.filter(r => r.electionId === election.id);
+        
+        let totalVotes = 0;
+        let registeredVoters = 0;
+
+        electionResults.forEach(r => {
+            if(r.registeredVoters > 0) {
+              totalVotes += r.totalVotes;
+              registeredVoters += r.registeredVoters;
+            }
+        });
+        
+        const turnout = registeredVoters > 0 ? parseFloat(((totalVotes / registeredVoters) * 100).toFixed(1)) : null;
+
+        return { year: election.year, Turnout: turnout };
+    }).filter(d => d.Turnout !== null);
+  }, [elections, results]);
+
+  const chartConfig = {
+    Turnout: { label: 'Turnout', color: 'hsl(var(--primary))' },
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>National Voter Turnout (%) Over Time</CardTitle>
+        <CardDescription>Percentage of registered voters who cast a ballot in past elections.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer config={chartConfig} className="h-[400px] w-full">
+            <ResponsiveContainer>
+                <LineChart data={chartData}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="year" tickLine={false} axisLine={false} tickMargin={8} />
+                    <YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
+                    <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                    <Legend />
+                    <Line dataKey="Turnout" type="monotone" stroke="var(--color-Turnout)" strokeWidth={2} dot={false} />
+                </LineChart>
+            </ResponsiveContainer>
+        </ChartContainer>
+      </CardContent>
+    </Card>
+  );
+};
+
 
 export default function HistoricalTrendsPage() {
   const { firestore } = useFirebase();
@@ -170,6 +224,7 @@ export default function HistoricalTrendsPage() {
         <div className="space-y-8">
           <NationalSeatTrend elections={elections || []} results={results || []} parties={parties || []} />
           <NationalVoteTrend elections={elections || []} results={results || []} parties={parties || []} />
+          <VoterTurnoutTrend elections={elections || []} results={results || []} />
         </div>
       )}
     </div>
