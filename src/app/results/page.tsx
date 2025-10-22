@@ -422,15 +422,34 @@ export default function ResultsPage() {
                                           const slpParty = parties?.find(p => p.acronym === 'SLP');
                                           const uwpParty = parties?.find(p => p.acronym === 'UWP');
                                           const winnerColor = currentWinner === 'SLP' ? slpParty?.color : (currentWinner === 'UWP' ? uwpParty?.color : '#8884d8');
-
+                                          const margin = Math.abs(cr.slpVotes - cr.uwpVotes);
 
                                           return (
                                               <TableRow key={cr.id}>
                                                   <TableCell className="font-medium">{constituency?.name || cr.constituencyId}</TableCell>
                                                   <TableCell className="font-medium" style={{color: winnerColor}}>{resultStatus}</TableCell>
-                                                  <TableCell>{isSpecialConstituency ? '-' : cr.slpVotes.toLocaleString()}</TableCell>
-                                                  <TableCell>{cr.uwpVotes.toLocaleString()}</TableCell>
-                                                  <TableCell>{isSpecialConstituency ? cr.slpVotes.toLocaleString() : cr.otherVotes.toLocaleString()}</TableCell>
+                                                  <TableCell>
+                                                    {isSpecialConstituency ? '-' : (
+                                                      <span>
+                                                        {cr.slpVotes.toLocaleString()}
+                                                        {currentWinner === 'SLP' && <sup> (+{margin.toLocaleString()})</sup>}
+                                                      </span>
+                                                    )}
+                                                  </TableCell>
+                                                  <TableCell>
+                                                    <span>
+                                                      {cr.uwpVotes.toLocaleString()}
+                                                      {currentWinner === 'UWP' && <sup> (+{margin.toLocaleString()})</sup>}
+                                                    </span>
+                                                  </TableCell>
+                                                  <TableCell>
+                                                    {isSpecialConstituency ? (
+                                                      <span>
+                                                        {cr.slpVotes.toLocaleString()}
+                                                        {currentWinner === 'IND' && <sup> (+{margin.toLocaleString()})</sup>}
+                                                      </span>
+                                                    ) : cr.otherVotes.toLocaleString()}
+                                                  </TableCell>
                                                   <TableCell>{cr.totalVotes.toLocaleString()}</TableCell>
                                                   <TableCell>{cr.registeredVoters === 0 ? 'N/A' : cr.registeredVoters.toLocaleString()}</TableCell>
                                                   <TableCell>{cr.turnout === 0 ? 'N/A' : `${cr.turnout}%`}</TableCell>
