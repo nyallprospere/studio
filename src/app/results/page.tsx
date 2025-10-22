@@ -478,10 +478,10 @@ export default function ResultsPage() {
   
   const VoteChangeIndicator = ({ change }: { change: number | null }) => {
     if (change === null || !previousElection) return null;
-    const color = change > 0 ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-muted-foreground';
+    const color = change > 0 ? 'text-green-700' : 'text-red-700' : 'text-muted-foreground';
     const sign = change > 0 ? '+' : '';
     if (change === 0) return <span className={cn('text-xs font-semibold ml-1', color)}>(0)</span>;
-    return <span className={cn('text-xs font-semibold ml-1', color)}>({sign}{change.toLocaleString()})</span>;
+    return <span className={cn('text-xs font-semibold flex items-center', color)}>{change > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}{Math.abs(change).toLocaleString()}</span>;
   };
 
   return (
@@ -610,20 +610,26 @@ export default function ResultsPage() {
                                                 <TableHead>Region</TableHead>
                                                 <TableHead>SLP Votes</TableHead>
                                                 <TableHead>UWP Votes</TableHead>
-                                                <TableHead>Other Votes</TableHead>
+                                                <TableHead>Other</TableHead>
+                                                <TableHead>SLP %</TableHead>
+                                                <TableHead>UWP %</TableHead>
+                                                <TableHead>Other %</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
                                             {regionalVoteResults && regionalVoteResults.length > 0 ? regionalVoteResults.map((region) => (
                                                 <TableRow key={region.id}>
                                                     <TableCell className="font-medium">{region.name}</TableCell>
-                                                    <TableCell>{region.slpVotes.toLocaleString()} <span className="text-xs text-muted-foreground">({region.slpPercentage.toFixed(1)}%)</span><VoteChangeIndicator change={region.slpVoteChange} /></TableCell>
-                                                    <TableCell>{region.uwpVotes.toLocaleString()} <span className="text-xs text-muted-foreground">({region.uwpPercentage.toFixed(1)}%)</span><VoteChangeIndicator change={region.uwpVoteChange} /></TableCell>
-                                                    <TableCell>{region.otherVotes > 0 ? <span>{region.otherVotes.toLocaleString()} <span className="text-xs text-muted-foreground">({region.otherPercentage.toFixed(1)}%)</span></span> : '-'}<VoteChangeIndicator change={region.otherVoteChange} /></TableCell>
+                                                    <TableCell>{region.slpVotes.toLocaleString()}<VoteChangeIndicator change={region.slpVoteChange} /></TableCell>
+                                                    <TableCell>{region.uwpVotes.toLocaleString()}<VoteChangeIndicator change={region.uwpVoteChange} /></TableCell>
+                                                    <TableCell>{region.otherVotes > 0 ? region.otherVotes.toLocaleString() : '-'}<VoteChangeIndicator change={region.otherVoteChange} /></TableCell>
+                                                    <TableCell>{region.slpPercentage.toFixed(1)}%</TableCell>
+                                                    <TableCell>{region.uwpPercentage.toFixed(1)}%</TableCell>
+                                                    <TableCell>{region.otherPercentage > 0 ? `${region.otherPercentage.toFixed(1)}%` : '-'}</TableCell>
                                                 </TableRow>
                                             )) : (
                                                 <TableRow>
-                                                    <TableCell colSpan={4} className="text-center text-muted-foreground h-24">Regional data not available. Please define regions in the admin panel.</TableCell>
+                                                    <TableCell colSpan={7} className="text-center text-muted-foreground h-24">Regional data not available. Please define regions in the admin panel.</TableCell>
                                                 </TableRow>
                                             )}
                                         </TableBody>
