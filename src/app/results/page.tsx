@@ -46,7 +46,7 @@ export default function ResultsPage() {
     // Filter out elections that are in the future, unless they are marked as the current one to work on
     const pastElections = elections.filter(election => {
         const electionYear = election.year;
-        return electionYear <= now.getFullYear() || election.isCurrent;
+        return election.isCurrent ? true : electionYear <= now.getFullYear();
     });
 
     return [...pastElections].sort((a, b) => {
@@ -290,40 +290,42 @@ export default function ResultsPage() {
                   <h3 className="text-2xl font-headline mb-4">
                     {currentElection.name} Election Summary
                   </h3>
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:col-span-2">
-                            {summaryData.map((summaryItem) => (
-                            <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
-                                <CardHeader className="flex flex-col items-center text-center p-4">
-                                <CardTitle className="text-base">{summaryItem.name}</CardTitle>
-                                {summaryItem.logoUrl && (
-                                    <div className="relative h-16 w-16 mt-2">
-                                        <Image src={summaryItem.logoUrl} alt={`${summaryItem.name} logo`} fill className="object-contain" />
-                                    </div>
-                                )}
-                                </CardHeader>
-                                <CardContent className="text-center p-4">
-                                <div className="text-2xl font-bold">{summaryItem.seats} Seats</div>
-                                    {summaryItem.seatChange !== null && (
-                                        <p className={`flex items-center justify-center gap-1 text-xs font-semibold ${summaryItem.seatChange > 0 ? 'text-green-600' : summaryItem.seatChange < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
-                                            {summaryItem.seatChange > 0 ? <ArrowUp className="h-3 w-3" /> : summaryItem.seatChange < 0 ? <ArrowDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
-                                            {summaryItem.seatChange > 0 ? `+${summaryItem.seatChange}` : summaryItem.seatChange} seats
-                                        </p>
+                    <div className="space-y-8 mb-8">
+                       <div>
+                            <h4 className="text-lg font-semibold mb-2">Seat Distribution</h4>
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                                {summaryData.map((summaryItem) => (
+                                <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
+                                    <CardHeader className="flex flex-col items-center text-center p-4">
+                                    <CardTitle className="text-base">{summaryItem.name}</CardTitle>
+                                    {summaryItem.logoUrl && (
+                                        <div className="relative h-16 w-16 mt-2">
+                                            <Image src={summaryItem.logoUrl} alt={`${summaryItem.name} logo`} fill className="object-contain" />
+                                        </div>
                                     )}
-                                </CardContent>
-                            </Card>
-                            ))}
+                                    </CardHeader>
+                                    <CardContent className="text-center p-4">
+                                    <div className="text-2xl font-bold">{summaryItem.seats} Seats</div>
+                                        {summaryItem.seatChange !== null && (
+                                            <p className={`flex items-center justify-center gap-1 text-xs font-semibold ${summaryItem.seatChange > 0 ? 'text-green-600' : summaryItem.seatChange < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
+                                                {summaryItem.seatChange > 0 ? <ArrowUp className="h-3 w-3" /> : summaryItem.seatChange < 0 ? <ArrowDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+                                                {summaryItem.seatChange > 0 ? `+${summaryItem.seatChange}` : summaryItem.seatChange} seats
+                                            </p>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                                ))}
+                            </div>
                         </div>
+                        
                         {summaryData.length > 0 && (
-                            <div className="lg:col-span-1">
+                            <div>
+                                <h4 className="text-lg font-semibold mb-2">Vote Distribution</h4>
                                 <Card>
-                                <CardHeader>
-                                    <CardTitle>Vote Distribution</CardTitle>
-                                </CardHeader>
-                                <CardContent>
+                                <CardContent className="pt-6">
                                     <ChartContainer config={chartConfig} className="h-64 w-full">
                                         <ResponsiveContainer>
-                                            <BarChart data={summaryData} margin={{ top: 20, right: 20, bottom: 40, left: 0 }}>
+                                            <BarChart data={summaryData} margin={{ top: 20, right: 20, bottom: 40, left: 20 }}>
                                                 <CartesianGrid vertical={false} />
                                                 <XAxis
                                                     dataKey="acronym"
