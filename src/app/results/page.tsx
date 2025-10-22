@@ -27,7 +27,7 @@ const constituencyMapOrder = [
     "Castries Central",
     "Castries South",
     "Castries South East",
-    "Anse-La-Raye/Canaries",
+    "Anse-la-Raye/Canaries",
     "Soufriere",
     "Choiseul",
     "Laborie",
