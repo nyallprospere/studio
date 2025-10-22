@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, orderBy, query, getDocs } from 'firebase/firestore';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Cell, LabelList, Tooltip, Legend } from "recharts"
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Cell, LabelList, Tooltip, Legend, CartesianGrid } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -441,8 +441,3 @@ export default function ResultsPage() {
     </div>
   );
 }
-
-    
-
-    
-
