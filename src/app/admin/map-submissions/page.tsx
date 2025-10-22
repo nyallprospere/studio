@@ -4,14 +4,14 @@
 
 import { useState, useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, where, Timestamp } from 'firebase/firestore';
 import type { UserMap } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Eye, Trash2 } from 'lucide-react';
+import { Eye, Trash2, Calendar as CalendarIcon } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,12 +25,31 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
 import { doc, deleteDoc } from 'firebase/firestore';
+import { DateRange } from 'react-day-picker';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 export default function ManageMapSubmissionsPage() {
     const { firestore } = useFirebase();
     const { toast } = useToast();
+    const [date, setDate] = useState<DateRange | undefined>();
 
-    const mapsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'user_maps'), orderBy('createdAt', 'desc')) : null, [firestore]);
+    const mapsQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        let q = query(collection(firestore, 'user_maps'), orderBy('createdAt', 'desc'));
+        if (date?.from) {
+            q = query(q, where('createdAt', '>=', Timestamp.fromDate(date.from)));
+        }
+        if (date?.to) {
+            const toDate = new Date(date.to);
+            toDate.setHours(23, 59, 59, 999);
+            q = query(q, where('createdAt', '<=', Timestamp.fromDate(toDate)));
+        }
+        return q;
+    }, [firestore, date]);
+
     const { data: userMaps, isLoading } = useCollection<UserMap>(mapsQuery);
 
     const processedMaps = useMemo(() => {
@@ -62,10 +81,48 @@ export default function ManageMapSubmissionsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Manage Map Submissions"
-        description="View user-submitted election map predictions."
-      />
+      <div className="flex justify-between items-start mb-8">
+        <PageHeader
+          title="Manage Map Submissions"
+          description="View user-submitted election map predictions."
+        />
+         <Popover>
+            <PopoverTrigger asChild>
+                <Button
+                id="date"
+                variant={"outline"}
+                className={cn(
+                    "w-[300px] justify-start text-left font-normal",
+                    !date && "text-muted-foreground"
+                )}
+                >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {date?.from ? (
+                    date.to ? (
+                    <>
+                        {format(date.from, "LLL dd, y")} -{" "}
+                        {format(date.to, "LLL dd, y")}
+                    </>
+                    ) : (
+                    format(date.from, "LLL dd, y")
+                    )
+                ) : (
+                    <span>Pick a date range</span>
+                )}
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={date?.from}
+                selected={date}
+                onSelect={setDate}
+                numberOfMonths={2}
+                />
+            </PopoverContent>
+        </Popover>
+      </div>
       <Card>
         <CardHeader>
             <CardTitle>User Submissions</CardTitle>
@@ -78,6 +135,7 @@ export default function ManageMapSubmissionsPage() {
                         <TableRow>
                             <TableHead>Creation Date</TableHead>
                             <TableHead>IP Address</TableHead>
+                            <TableHead>Location</TableHead>
                             <TableHead>SLP Seats</TableHead>
                             <TableHead>UWP Seats</TableHead>
                             <TableHead>Tossups</TableHead>
@@ -88,8 +146,9 @@ export default function ManageMapSubmissionsPage() {
                         {processedMaps && processedMaps.length > 0 ? (
                             processedMaps.map(map => (
                                 <TableRow key={map.id}>
-                                    <TableCell>{new Date(map.createdAt?.toDate()).toLocaleString()}</TableCell>
+                                    <TableCell>{map.createdAt?.toDate ? new Date(map.createdAt.toDate()).toLocaleString() : 'N/A'}</TableCell>
                                     <TableCell>{map.ipAddress || 'N/A'}</TableCell>
+                                    <TableCell>{map.city && map.country ? `${map.city}, ${map.country}` : 'N/A'}</TableCell>
                                     <TableCell>{map.slpSeats}</TableCell>
                                     <TableCell>{map.uwpSeats}</TableCell>
                                     <TableCell>{map.tossups}</TableCell>
@@ -121,8 +180,8 @@ export default function ManageMapSubmissionsPage() {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center h-24">
-                                    No map submissions yet.
+                                <TableCell colSpan={7} className="text-center h-24">
+                                    No map submissions in this date range.
                                 </TableCell>
                             </TableRow>
                         )}

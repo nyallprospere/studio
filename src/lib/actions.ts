@@ -69,11 +69,15 @@ export async function saveUserMap(mapData: UserMap['mapData']) {
         const { firestore } = initializeFirebase();
         const headersList = headers();
         const ip = headersList.get('x-forwarded-for') || 'unknown';
+        const city = headersList.get('x-vercel-ip-city') || 'unknown';
+        const country = headersList.get('x-vercel-ip-country') || 'unknown';
 
         const docRef = await addDoc(collection(firestore, 'user_maps'), {
             mapData,
             createdAt: serverTimestamp(),
             ipAddress: ip,
+            city,
+            country,
         });
 
         return { id: docRef.id };

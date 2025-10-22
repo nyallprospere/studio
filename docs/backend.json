@@ -482,6 +482,15 @@
                     },
                     "required": ["constituencyId", "politicalLeaning"]
                 }
+            },
+            "ipAddress": {
+                "type": "string"
+            },
+            "city": {
+                "type": "string"
+            },
+            "country": {
+                "type": "string"
             }
         },
         "required": ["createdAt", "mapData"]

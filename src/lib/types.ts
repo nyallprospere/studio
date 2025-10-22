@@ -150,5 +150,7 @@ export interface UserMap {
         politicalLeaning: string;
     }[];
     ipAddress?: string;
+    city?: string;
+    country?: string;
 }
     
