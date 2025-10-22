@@ -1,39 +1,46 @@
 /**
- * @fileoverview Firestore Security Rules for the Political App Prototype.
+ * @fileOverview Firestore Security Rules for the Revolucianize political data platform.
  *
  * Core Philosophy:
- * This ruleset prioritizes secure data access based on user authentication.
- * All write operations require a logged-in user.
- * Read operations are generally public unless a subcollection contains potentially private user information (like user activity).
+ * This ruleset provides public read access to most data collections while restricting write access.
+ * Only authenticated users can create, update, or delete data, and specific conditions are enforced
+ * to ensure data integrity and ownership (where applicable).
  *
  * Data Structure:
- * The Firestore database is organized into top-level collections representing core entities
- * such as parties, candidates, elections, and constituencies. Each entity has a corresponding schema
- * that defines the expected data structure.
+ * The Firestore database consists of several top-level collections (e.g., /parties, /candidates, /elections).
+ * Each collection stores specific data entities as described in the backend.json.
+ * There is also the settings collection with two documents within (pageLayouts and site).
  *
  * Key Security Decisions:
- * - User listing is disabled.
- * - Schema validation is relaxed to facilitate rapid prototyping, focusing only on
- *   authorization-critical fields.
- * - Public read access is granted to most top-level collections to enable easy data consumption.
- *   Write access is restricted to authenticated users.
- * - User activity is logged but is not secured beyond requiring a valid login to write.
+ * - Public read access is granted to the /regions collection, allowing any user (signed in or not) to read
+ *   the region list.
+ * - All write operations are restricted to authenticated users (`isSignedIn()`).
  *
  * Denormalization for Authorization:
- *  - Not used in this ruleset. In a production environment, consider denormalizing ownership
- *    or role information into documents to avoid costly `get()` operations in security rules.
+ * The current data model does not require denormalization.  All write rules are simple and based on the user being signed in.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Grants public read access and authenticated-user write access to party documents.
+     * @description Grants public read access to regions and restricts writes to authenticated users.
+     * @path /regions/{regionId}
+     * @allow (get, list) Allow anyone to read region data.
+     * @deny (create, update, delete) Deny non-authenticated users from writing region data.
+     * @principle Allows public read access while restricting write access to authenticated users.
+     */
+    match /regions/{regionId} {
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
+    }
+
+    /**
+     * @description Grants public read access to parties and restricts writes to authenticated users.
      * @path /parties/{partyId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create, update, delete): if !isSignedIn()
-     * @principle Allows public read access while requiring authentication for write operations.
+     * @allow (get, list) Allow anyone to read party data.
+     * @deny (create, update, delete) Deny non-authenticated users from writing party data.
+     * @principle Allows public read access while restricting write access to authenticated users.
      */
     match /parties/{partyId} {
       allow get, list: if true;
@@ -41,12 +48,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows any logged in user to upload party logos.
+     * @description Grants public read access to party logos and restricts writes to authenticated users.
      * @path /party_logos/{partyLogoId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create, update, delete): if !isSignedIn()
-     * @principle Public read, authenticated writes for party logos.
+     * @allow (get, list) Allow anyone to read party logo data.
+     * @deny (create, update, delete) Deny non-authenticated users from writing party logo data.
+     * @principle Allows public read access while restricting write access to authenticated users.
      */
     match /party_logos/{partyLogoId} {
       allow get, list: if true;
@@ -54,12 +60,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Grants public read access and authenticated-user write access to event documents.
+     * @description Grants public read access to events and restricts writes to authenticated users.
      * @path /events/{eventId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create, update, delete): if !isSignedIn()
-     * @principle Allows public read access while requiring authentication for write operations.
+     * @allow (get, list) Allow anyone to read event data.
+     * @deny (create, update, delete) Deny non-authenticated users from writing event data.
+     * @principle Allows public read access while restricting write access to authenticated users.
      */
     match /events/{eventId} {
       allow get, list: if true;
@@ -67,12 +72,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Grants public read access and authenticated-user write access to candidate documents.
+     * @description Grants public read access to candidates and restricts writes to authenticated users.
      * @path /candidates/{candidateId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create, update, delete): if !isSignedIn()
-     * @principle Allows public read access while requiring authentication for write operations.
+     * @allow (get, list) Allow anyone to read candidate data.
+     * @deny (create, update, delete) Deny non-authenticated users from writing candidate data.
+     * @principle Allows public read access while restricting write access to authenticated users.
      */
     match /candidates/{candidateId} {
       allow get, list: if true;
@@ -80,12 +84,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Grants public read access and authenticated-user write access to archived candidate documents.
+     * @description Grants public read access to archived candidates and restricts writes to authenticated users.
      * @path /archived_candidates/{archivedCandidateId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create, update, delete): if !isSignedIn()
-     * @principle Allows public read access while requiring authentication for write operations.
+     * @allow (get, list) Allow anyone to read archived candidate data.
+     * @deny (create, update, delete) Deny non-authenticated users from writing archived candidate data.
+     * @principle Allows public read access while restricting write access to authenticated users.
      */
     match /archived_candidates/{archivedCandidateId} {
       allow get, list: if true;
@@ -93,12 +96,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Grants public read access and authenticated-user write access to election documents.
+     * @description Grants public read access to elections and restricts writes to authenticated users.
      * @path /elections/{electionId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create, update, delete): if !isSignedIn()
-     * @principle Allows public read access while requiring authentication for write operations.
+     * @allow (get, list) Allow anyone to read election data.
+     * @deny (create, update, delete) Deny non-authenticated users from writing election data.
+     * @principle Allows public read access while restricting write access to authenticated users.
      */
     match /elections/{electionId} {
       allow get, list: if true;
@@ -106,12 +108,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Grants public read access and authenticated-user write access to polling data documents.
+     * @description Grants public read access to polling data and restricts writes to authenticated users.
      * @path /polling_data/{pollingDataId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create, update, delete): if !isSignedIn()
-     * @principle Allows public read access while requiring authentication for write operations.
+     * @allow (get, list) Allow anyone to read polling data.
+     * @deny (create, update, delete) Deny non-authenticated users from writing polling data.
+     * @principle Allows public read access while restricting write access to authenticated users.
      */
     match /polling_data/{pollingDataId} {
       allow get, list: if true;
@@ -119,12 +120,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Grants public read access and authenticated-user write access to constituency documents.
+     * @description Grants public read access to constituencies and restricts writes to authenticated users.
      * @path /constituencies/{constituencyId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create, update, delete): if !isSignedIn()
-     * @principle Allows public read access while requiring authentication for write operations.
+     * @allow (get, list) Allow anyone to read constituency data.
+     * @deny (create, update, delete) Deny non-authenticated users from writing constituency data.
+     * @principle Allows public read access while restricting write access to authenticated users.
      */
     match /constituencies/{constituencyId} {
       allow get, list: if true;
@@ -132,12 +132,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Grants public read access and authenticated-user write access to election result documents.
+     * @description Grants public read access to election results and restricts writes to authenticated users.
      * @path /election_results/{electionResultId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create, update, delete): if !isSignedIn()
-     * @principle Allows public read access while requiring authentication for write operations.
+     * @allow (get, list) Allow anyone to read election result data.
+     * @deny (create, update, delete) Deny non-authenticated users from writing election result data.
+     * @principle Allows public read access while restricting write access to authenticated users.
      */
     match /election_results/{electionResultId} {
       allow get, list: if true;
@@ -145,61 +144,48 @@ service cloud.firestore {
     }
 
     /**
-     * @description Grants public read access and authenticated-user write access to page layouts settings.
+     * @description Restricts read and write access to page layouts to authenticated users.
      * @path /settings/pageLayouts
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create, update, delete): if !isSignedIn()
-     * @principle Allows public read access while requiring authentication for write operations.
+     * @allow (get) Allow authenticated users to read page layout data.
+     * @deny (list) Listing documents in `/settings` is not permitted.
+     * @allow (create, update, delete) Allow authenticated users to write page layout data.
+     * @principle Restricts access to a single document to authenticated users only.
      */
     match /settings/pageLayouts {
-      allow get, list: if true;
+      allow get: if isSignedIn();
+      allow list: if false;
       allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Grants public read access and authenticated-user write access to site settings.
+     * @description Restricts read and write access to site settings to authenticated users.
      * @path /settings/site
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create, update, delete): if !isSignedIn()
-     * @principle Allows public read access while requiring authentication for write operations.
+     * @allow (get) Allow authenticated users to read site settings.
+     * @deny (list) Listing documents in `/settings` is not permitted.
+     * @allow (create, update, delete) Allow authenticated users to write site settings.
+     * @principle Restricts access to a single document to authenticated users only.
      */
     match /settings/site {
-      allow get, list: if true;
+      allow get: if isSignedIn();
+      allow list: if false;
       allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows any logged in user to create user activity logs. Read access is not secured beyond the top-level requirement of authentication.
+     * @description Grants write access to user activity data for authenticated users.
      * @path /user_activity/{activityId}
-     * @allow (get, list): if isSignedIn()
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create, update, delete): if !isSignedIn()
-     * @principle Requires user authentication for logging activity.
+     * @deny (get, list, update, delete) Deny all other operations.
+     * @allow (create) Allow authenticated users to create user activity data.
+     * @principle Allows only creation of user activity data by authenticated users.
      */
     match /user_activity/{activityId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list, update, delete: if false;
+      allow create: if isSignedIn();
     }
 
-    /**
-     * @description Denies all listing operations at the root to prevent collection discovery.
-     * @path /
-     * @allow list: if false
-     * @deny list: if true
-     * @principle Prevents unauthorized enumeration of collections.
-     */
-     match /{path=**}
-{
-      allow read, write: if false;
-    }
   }
 
-  /**
-   * @description Checks if the user is signed in.
-   * @return {boolean} True if the user is signed in, false otherwise.
-   */
+  // Helper function to determine if a user is signed in.
   function isSignedIn() {
     return request.auth != null;
   }
