@@ -70,28 +70,29 @@ function CandidateBox({
                 "p-2 rounded-md bg-muted relative h-full flex flex-col items-center gap-2 text-center",
                 isWinner && "border-2 border-green-600"
             )}>
-                 {isWinner && (
-                    <div className="absolute -top-5 -right-2 text-center">
+                {isWinner && (
+                    <div className="absolute -top-3 -right-2 text-center">
                          <p className="font-bold text-xs -mb-2" style={{color: statusColor}}>{electionStatus}</p>
                         <CheckCircle2 className="h-5 w-5 text-green-600 bg-white rounded-full mx-auto" />
                     </div>
                 )}
                 
+                <div className="relative h-10 w-10">
+                    {logoUrl ? (
+                        <Image src={logoUrl} alt={party?.name || ''} fill className="object-contain" />
+                    ) : null}
+                </div>
+                
                 <div className="flex w-full items-center gap-2">
                     <div className="w-20 flex-shrink-0 flex flex-col items-center gap-1">
-                        <div className="relative h-10 w-10">
-                            {logoUrl ? (
-                                <Image src={logoUrl} alt={party?.name || ''} fill className="object-contain" />
-                            ) : null}
+                        <div className="relative h-12 w-12 rounded-full overflow-hidden bg-transparent">
+                            {candidate?.imageUrl ? (
+                                <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
+                            ) : (
+                                <UserSquare className="h-full w-full text-gray-400" />
+                            )}
                         </div>
-                        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
-                        {candidate?.imageUrl ? (
-                            <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
-                        ) : (
-                            <UserSquare className="h-full w-full text-gray-400" />
-                        )}
-                        </div>
-                         <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold whitespace-nowrap" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                         <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold whitespace-normal leading-tight" onClick={() => setProfileOpen(true)} disabled={!candidate}>
                            {candidateName}
                         </Button>
                     </div>
@@ -104,12 +105,12 @@ function CandidateBox({
                             {isStriped && barFill === 'blue-red-stripes' && <div className="absolute inset-0 red-stripes-overlay"></div>}
                         </div>
                         <div className="absolute inset-0 flex items-center justify-between px-2">
-                             <span className={cn("font-bold text-xs", textColorClass)}>
+                             <span className={cn("font-bold text-xs", party?.acronym === 'SLP' ? 'text-white' : 'text-black')}>
                                 {votes?.toLocaleString()}
                                 {isWinner && margin ? <sup className="font-semibold"> (+{margin.toLocaleString()})</sup> : null}
                             </span>
                             <div className="flex items-baseline gap-1">
-                                <span className={cn("font-bold text-xs", "text-black")}>
+                                <span className={cn("font-bold text-xs", party?.acronym === 'UWP' ? 'text-black' : 'text-black')}>
                                     {votePercentage.toFixed(1)}%
                                 </span>
                                 {votePercentageChange !== null && typeof votePercentageChange !== 'undefined' && (
