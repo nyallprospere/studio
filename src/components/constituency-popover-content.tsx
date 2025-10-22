@@ -69,7 +69,7 @@ function CandidateBox({
                 isWinner && "border-2 border-green-600"
             )}>
                  {isWinner && (
-                    <div className="absolute -top-[26px] -right-3 text-center">
+                    <div className="absolute -top-3.5 -right-3 text-center">
                          <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
                         <CheckCircle2 className="h-5 w-5 text-green-600 bg-white rounded-full mx-auto" />
                     </div>
@@ -77,11 +77,11 @@ function CandidateBox({
                 
                 <div className="flex w-full items-start gap-2">
                     <div className="flex flex-col items-center gap-1">
-                        {logoUrl && (
-                            <div className="relative h-8 w-8">
+                        <div className="relative h-10 w-10">
+                            {logoUrl ? (
                                 <Image src={logoUrl} alt={party?.name || ''} fill className="object-contain" />
-                            </div>
-                        )}
+                            ) : null}
+                        </div>
                         <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
                         {candidate?.imageUrl ? (
                             <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
@@ -89,7 +89,7 @@ function CandidateBox({
                             <UserSquare className="h-full w-full text-gray-400" />
                         )}
                         </div>
-                        <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold whitespace-nowrap" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                         <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold whitespace-nowrap" onClick={() => setProfileOpen(true)} disabled={!candidate}>
                            {candidateName}
                         </Button>
                     </div>
@@ -106,7 +106,7 @@ function CandidateBox({
                                 {votes?.toLocaleString()}
                             </span>
                             <div className="flex items-baseline gap-1">
-                                <span className="text-white font-bold text-sm">
+                                <span className="text-black font-bold text-sm">
                                     {votePercentage.toFixed(1)}%
                                 </span>
                                 {votePercentageChange !== null && typeof votePercentageChange !== 'undefined' && (
@@ -178,11 +178,11 @@ export function ConstituencyPopoverContent({
 
 
     const { electionStatus, statusColor, margin, totalConstituencyVotes, winnerAcronym, slpVotePercentageChange, uwpVotePercentageChange, slpLogoUrl, uwpLogoUrl } = useMemo(() => {
-        if (!electionResults || !slpParty || !uwpParty) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null, slpVotePercentageChange: null, uwpVotePercentageChange: null };
+        if (!electionResults || !slpParty || !uwpParty) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null, slpVotePercentageChange: null, uwpVotePercentageChange: null, slpLogoUrl: null, uwpLogoUrl: null };
 
         const currentResult = electionResults.find(r => r.constituencyId === constituency.id);
         
-        if (!currentResult) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null, slpVotePercentageChange: null, uwpVotePercentageChange: null };
+        if (!currentResult) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null, slpVotePercentageChange: null, uwpVotePercentageChange: null, slpLogoUrl: null, uwpLogoUrl: null };
         
         const totalVotes = currentResult.slpVotes + currentResult.uwpVotes + currentResult.otherVotes;
         const margin = Math.abs(currentResult.slpVotes - currentResult.uwpVotes);
@@ -271,11 +271,11 @@ export function ConstituencyPopoverContent({
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <div className="flex flex-col items-center p-2 rounded-md bg-muted">
-                            {slpParty?.logoUrl && (
-                                <div className="relative h-8 w-8 mb-2">
+                            <div className="relative h-8 w-8 mb-2">
+                                {slpParty?.logoUrl ? (
                                     <Image src={slpParty.logoUrl} alt={slpParty.name} fill className="object-contain" />
-                                </div>
-                            )}
+                                ): null}
+                            </div>
                             <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
                             {slpCandidate?.imageUrl ? (
                                 <Image src={slpCandidate.imageUrl} alt={slpCandidate?.name || 'SLP Candidate'} fill className="object-cover" />
@@ -288,11 +288,11 @@ export function ConstituencyPopoverContent({
                             </Button>
                         </div>
                         <div className="flex flex-col items-center p-2 rounded-md bg-muted">
-                            {uwpParty?.logoUrl && (
-                                <div className="relative h-8 w-8 mb-2">
+                            <div className="relative h-8 w-8 mb-2">
+                                {uwpParty?.logoUrl ? (
                                     <Image src={uwpParty.logoUrl} alt={uwpParty.name} fill className="object-contain" />
-                                </div>
-                            )}
+                                ): null}
+                            </div>
                             <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
                             {uwpCandidate?.imageUrl ? (
                                 <Image src={uwpCandidate.imageUrl} alt={uwpCandidate?.name || 'UWP Candidate'} fill className="object-cover" />
