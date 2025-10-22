@@ -10,22 +10,24 @@ import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { Party, Election } from '@/lib/types';
+import type { Party, Election, Constituency, Candidate } from '@/lib/types';
 import { MultiSelect } from '@/components/multi-select';
 import { useFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, doc, query, where, getDocs, updateDoc, addDoc, writeBatch } from 'firebase/firestore';
+import { collection, doc, query, where, getDocs, updateDoc, addDoc, writeBatch, setDoc } from 'firebase/firestore';
 import { uploadFile, deleteFile } from '@/firebase/storage';
 import { Loader2 } from 'lucide-react';
 import { Command, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
-import { Check } from 'lucide-react';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface LogoUploadDialogProps {
   isOpen: boolean;
   onClose: () => void;
   party: Party | null;
   elections: Election[];
+  constituencies: Constituency[];
   onSuccess: () => void;
 }
 
@@ -34,12 +36,15 @@ const uploadSchema = z.object({
   standardLogoFile: z.any().optional(),
   standardLogoFiles: z.any().optional(),
   expandedLogoFile: z.any().optional(),
+  // Fields for independent candidate
+  candidateName: z.string().optional(),
+  constituencyId: z.string().optional(),
 }).refine(data => data.standardLogoFile || data.expandedLogoFile || (data.standardLogoFiles && data.standardLogoFiles.length > 0), {
   message: 'At least one logo file is required.',
   path: ['standardLogoFile'],
 });
 
-export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess }: LogoUploadDialogProps) {
+export function LogoUploadDialog({ isOpen, onClose, party, elections, constituencies, onSuccess }: LogoUploadDialogProps) {
   const { firestore } = useFirebase();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -49,6 +54,8 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
     resolver: zodResolver(uploadSchema),
     defaultValues: {
       electionIds: [],
+      candidateName: '',
+      constituencyId: '',
     },
   });
 
@@ -67,72 +74,103 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
 
     try {
         const batch = writeBatch(firestore);
-        const standardFiles = isIndependent ? values.standardLogoFiles : (values.standardLogoFile ? [values.standardLogoFile] : []);
+        
+        if (isIndependent && values.candidateName && values.constituencyId) {
+            // Handle independent candidate creation/update with logo
+            const candidateData: Partial<Candidate> = {
+                name: values.candidateName,
+                firstName: values.candidateName.split(' ')[0] || '',
+                lastName: values.candidateName.split(' ').slice(1).join(' ') || '',
+                partyId: 'independent',
+                constituencyId: values.constituencyId,
+                policyPositions: [],
+            };
+            
+            if (values.standardLogoFile) {
+                const path = `candidates/${values.candidateName.replace(/\s+/g, '_')}_logo.png`;
+                candidateData.imageUrl = await uploadFile(values.standardLogoFile, path);
+            }
 
-        const loopCount = isIndependent ? (standardFiles && standardFiles.length > 0 ? standardFiles.length : 1) : 1;
+            for (const electionId of values.electionIds) {
+                const candidateQuery = query(
+                    collection(firestore, 'candidates'),
+                    where('name', '==', values.candidateName),
+                    where('constituencyId', '==', values.constituencyId),
+                    where('partyId', '==', 'independent')
+                );
 
-        for (const electionId of values.electionIds) {
-            for (let i = 0; i < loopCount; i++) {
-                const standardFile = isIndependent && standardFiles ? (standardFiles[i] || null) : (standardFiles ? standardFiles[0] : null);
-
-                const files = {
-                    standard: standardFile,
-                    expanded: values.expandedLogoFile
-                };
+                const existingCandidatesSnap = await getDocs(candidateQuery);
                 
-                let existingLogoQuery;
+                if (!existingCandidatesSnap.empty) {
+                    const candidateDoc = existingCandidatesSnap.docs[0];
+                    batch.update(candidateDoc.ref, candidateData);
+                } else {
+                    const newCandidateRef = doc(collection(firestore, 'candidates'));
+                    batch.set(newCandidateRef, candidateData);
+                }
+            }
+             toast({ title: 'Independent Candidate Processed', description: 'Independent candidate logo and details have been saved.' });
 
-                if (isIndependent) {
-                     existingLogoQuery = query(
+        } else {
+            // Handle party logo uploads
+            const standardFiles = isIndependent ? values.standardLogoFiles : (values.standardLogoFile ? [values.standardLogoFile] : []);
+
+            const loopCount = isIndependent && standardFiles && standardFiles.length > 0 ? standardFiles.length : 1;
+
+            for (const electionId of values.electionIds) {
+                for (let i = 0; i < loopCount; i++) {
+                    const standardFile = isIndependent && standardFiles ? (standardFiles[i] || null) : (standardFiles ? standardFiles[0] : null);
+
+                    const files = {
+                        standard: standardFile,
+                        expanded: values.expandedLogoFile
+                    };
+                    
+                    const existingLogoQuery = query(
                         collection(firestore, 'party_logos'),
                         where('partyId', '==', party.id),
                         where('electionId', '==', electionId),
                     );
-                } else {
-                     existingLogoQuery = query(
-                        collection(firestore, 'party_logos'),
-                        where('partyId', '==', party.id),
-                        where('electionId', '==', electionId)
-                    );
-                }
-                
-                const existingLogoSnap = await getDocs(existingLogoQuery);
-                const existingLogoDoc = isIndependent ? existingLogoSnap.docs[i] : existingLogoSnap.docs[0];
+                    
+                    const existingLogoSnap = await getDocs(existingLogoQuery);
+                    const existingLogoDoc = isIndependent ? existingLogoSnap.docs[i] : existingLogoSnap.docs[0];
 
-                let standardUrl = existingLogoDoc?.data()?.logoUrl;
-                let expandedUrl = existingLogoDoc?.data()?.expandedLogoUrl;
+                    let standardUrl = existingLogoDoc?.data()?.logoUrl;
+                    let expandedUrl = existingLogoDoc?.data()?.expandedLogoUrl;
 
-                if (files.standard) {
-                    if (standardUrl) await deleteFile(standardUrl).catch(console.warn);
-                    const path = `logos/${party.id}_${electionId}_std_${isIndependent ? i : '0'}.png`;
-                    standardUrl = await uploadFile(files.standard, path);
-                }
-                if (files.expanded) {
-                    if (expandedUrl) await deleteFile(expandedUrl).catch(console.warn);
-                     const path = `logos/${party.id}_${electionId}_exp_${isIndependent ? i : '0'}.png`;
-                    expandedUrl = await uploadFile(files.expanded, path);
-                }
+                    if (files.standard) {
+                        if (standardUrl) await deleteFile(standardUrl).catch(console.warn);
+                        const path = `logos/${party.id}_${electionId}_std_${isIndependent ? i : '0'}.png`;
+                        standardUrl = await uploadFile(files.standard, path);
+                    }
+                    if (files.expanded) {
+                        if (expandedUrl) await deleteFile(expandedUrl).catch(console.warn);
+                         const path = `logos/${party.id}_${electionId}_exp_${isIndependent ? i : '0'}.png`;
+                        expandedUrl = await uploadFile(files.expanded, path);
+                    }
 
-                const dataToSave = {
-                    partyId: party.id,
-                    electionId,
-                    logoUrl: standardUrl || '',
-                    expandedLogoUrl: expandedUrl || '',
-                };
+                    const dataToSave = {
+                        partyId: party.id,
+                        electionId,
+                        logoUrl: standardUrl || '',
+                        expandedLogoUrl: expandedUrl || '',
+                    };
 
-                // Skip saving if there's no logo to save and it's not a multi-file independent upload context
-                if (!dataToSave.logoUrl && !dataToSave.expandedLogoUrl && !isIndependent) {
-                  continue;
-                }
+                    // Skip saving if there's no logo to save and it's not a multi-file independent upload context
+                    if (!dataToSave.logoUrl && !dataToSave.expandedLogoUrl && !(isIndependent && loopCount > 1)) {
+                      continue;
+                    }
 
-                if (existingLogoDoc) {
-                    const docRef = doc(firestore, 'party_logos', existingLogoDoc.id);
-                    batch.update(docRef, dataToSave);
-                } else {
-                    const newDocRef = doc(collection(firestore, 'party_logos'));
-                    batch.set(newDocRef, dataToSave);
+                    if (existingLogoDoc) {
+                        const docRef = doc(firestore, 'party_logos', existingLogoDoc.id);
+                        batch.update(docRef, dataToSave);
+                    } else {
+                        const newDocRef = doc(collection(firestore, 'party_logos'));
+                        batch.set(newDocRef, dataToSave);
+                    }
                 }
             }
+             toast({ title: 'Upload Successful', description: 'Logos have been processed.' });
         }
         
         await batch.commit().catch(error => {
@@ -145,7 +183,6 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
             throw error;
         });
 
-        toast({ title: 'Upload Successful', description: 'Logos have been processed.' });
         onSuccess();
         form.reset();
         onClose();
@@ -218,12 +255,45 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
                      <>
                         <FormField
                             control={form.control}
-                            name="standardLogoFiles"
+                            name="candidateName"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Standard Logos (Square)</FormLabel>
+                                    <FormLabel>Candidate Name (Optional)</FormLabel>
                                     <FormControl>
-                                        <Input type="file" accept="image/png, image/jpeg" multiple onChange={(e) => field.onChange(e.target.files)} />
+                                        <Input {...field} placeholder="e.g., John Doe" />
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="constituencyId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Constituency (Optional)</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                        <SelectValue placeholder="Select a constituency" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {constituencies.map(c => (
+                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                    </Select>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="standardLogoFile"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Standard Logo (Square)</FormLabel>
+                                    <FormControl>
+                                        <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
