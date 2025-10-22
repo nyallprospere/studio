@@ -485,9 +485,9 @@ export default function ResultsPage() {
   const VoteChangeIndicator = ({ change }: { change: number | null }) => {
     if (change === null || !previousElection) return null;
     const color = change > 0 ? 'text-green-700' : change < 0 ? 'text-red-700' : 'text-muted-foreground';
-    const sign = change > 0 ? '+' : change < 0 ? '' : '';
+    const sign = change > 0 ? '+' : change < 0 ? '-' : '';
     if (change === 0) return <span className={cn('text-xs font-semibold flex items-center', color)}>(0)</span>;
-    return <span className={cn('text-xs font-semibold flex items-center', color)}>({sign}{change.toLocaleString()})</span>;
+    return <span className={cn('text-xs font-semibold flex items-center', color)}>({sign}{Math.abs(change).toLocaleString()})</span>;
   };
 
   const VotePercentageChangeIndicator = ({ change }: { change: number | null }) => {
@@ -711,6 +711,7 @@ export default function ResultsPage() {
                                            let slpVotePercentageChange = null;
                                            let uwpVotePercentageChange = null;
                                            let indVotePercentageChange = null;
+                                           let turnoutChange = null;
 
                                            if (previousResult) {
                                                const currentSlpPercent = cr.totalVotes > 0 ? (cr.slpVotes / cr.totalVotes) * 100 : 0;
@@ -733,6 +734,9 @@ export default function ResultsPage() {
                                                   slpVotePercentageChange = currentSlpPercent - prevSlpPercent;
                                                   uwpVotePercentageChange = currentUwpPercent - prevUwpPercent;
                                                   indVotePercentageChange = currentIndPercent - prevIndPercent;
+                                                }
+                                                if (cr.turnout && previousResult.turnout) {
+                                                    turnoutChange = cr.turnout - previousResult.turnout;
                                                 }
                                            }
 
@@ -770,7 +774,12 @@ export default function ResultsPage() {
                                                     </div>
                                                   </TableCell>
                                                   <TableCell>{cr.totalVotes.toLocaleString()}</TableCell>
-                                                  <TableCell>{cr.turnout === 0 ? 'N/A' : `${cr.turnout}%`}</TableCell>
+                                                  <TableCell>
+                                                      <div className="flex flex-col">
+                                                          <span>{cr.turnout === 0 ? 'N/A' : `${cr.turnout}%`}</span>
+                                                          <VotePercentageChangeIndicator change={turnoutChange} />
+                                                      </div>
+                                                  </TableCell>
                                               </TableRow>
                                           );
                                       }) : (
