@@ -152,41 +152,43 @@ export function ConstituencyPopoverContent({
     }, [parties, candidates]);
 
 
-    const { electionStatus, statusColor, margin, totalConstituencyVotes } = useMemo(() => {
-        if (!electionResults) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0 };
+    const { electionStatus, statusColor, margin, totalConstituencyVotes, winnerAcronym } = useMemo(() => {
+        if (!electionResults) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null };
 
         const currentResult = electionResults.find(r => r.constituencyId === constituency.id);
         
-        if (!currentResult) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0 };
+        if (!currentResult) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null };
         
         const totalVotes = currentResult.slpVotes + currentResult.uwpVotes + currentResult.otherVotes;
         const margin = Math.abs(currentResult.slpVotes - currentResult.uwpVotes);
         const currentWinner = currentResult.slpVotes > currentResult.uwpVotes ? slpParty : uwpParty;
-        let status = `${currentWinner?.acronym} Win`;
+        const winnerAcronym = currentWinner?.acronym;
+        let status = `${winnerAcronym} Win`;
         let color = currentWinner?.color;
 
         if (previousElectionResults) {
             const previousResult = previousElectionResults.find(r => r.constituencyId === constituency.id);
             if (previousResult) {
                 const previousWinnerAcronym = previousResult.slpVotes > previousResult.uwpVotes ? 'SLP' : 'UWP';
-                if (currentWinner?.acronym === previousWinnerAcronym) {
-                    status = `${currentWinner?.acronym} Hold`;
+                if (winnerAcronym === previousWinnerAcronym) {
+                    status = `${winnerAcronym} Hold`;
                 } else {
-                    status = `${currentWinner?.acronym} Gain`;
+                    status = `${winnerAcronym} Gain`;
                     color = currentWinner?.color;
                 }
             }
         }
         
-        return { electionStatus: status, statusColor: color, margin: margin, totalConstituencyVotes: totalVotes };
+        return { electionStatus: status, statusColor: color, margin: margin, totalConstituencyVotes: totalVotes, winnerAcronym };
 
     }, [constituency.id, electionResults, previousElectionResults, slpParty, uwpParty]);
 
 
     const isLoading = loadingCandidates || loadingParties;
     const currentResult = electionResults?.find(r => r.constituencyId === constituency.id);
-    const winnerAcronym = currentResult ? (currentResult.slpVotes > currentResult.uwpVotes ? 'SLP' : 'UWP') : null;
-    
+    const slpIsWinner = winnerAcronym === 'SLP';
+    const uwpIsWinner = winnerAcronym === 'UWP';
+
     const isCastriesNorth2021 = election?.year === 2021 && constituency.name === 'Castries North';
     const castriesNorthWinnerAcronym = isCastriesNorth2021 ? (currentResult && currentResult.slpVotes > currentResult.uwpVotes ? 'SLP' : 'UWP') : null;
 
@@ -279,11 +281,11 @@ export function ConstituencyPopoverContent({
                   <CandidateBox 
                       candidate={slpCandidate!} 
                       party={slpParty!} 
-                      isWinner={winnerAcronym === 'SLP'} 
+                      isWinner={slpIsWinner} 
                       votes={currentResult?.slpVotes} 
                       totalVotes={totalConstituencyVotes}
                       margin={margin}
-                      electionStatus={electionStatus}
+                      electionStatus={slpIsWinner ? electionStatus : null}
                       statusColor={statusColor}
                       isStriped={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'SLP'}
                       barFill={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'SLP' ? 'blue-red-stripes' : undefined}
@@ -291,11 +293,11 @@ export function ConstituencyPopoverContent({
                   <CandidateBox 
                       candidate={uwpCandidate!} 
                       party={uwpParty!} 
-                      isWinner={winnerAcronym === 'UWP'} 
+                      isWinner={uwpIsWinner} 
                       votes={currentResult?.uwpVotes}
                       totalVotes={totalConstituencyVotes}
                       margin={margin}
-                      electionStatus={electionStatus}
+                      electionStatus={uwpIsWinner ? electionStatus : null}
                       statusColor={statusColor}
                       isStriped={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'UWP'}
                       barFill={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'UWP' ? 'blue-red-stripes' : undefined}
