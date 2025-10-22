@@ -218,34 +218,34 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
                         )}
                     />
                  ) : (
-                    <FormField
-                        control={form.control}
-                        name="standardLogoFile"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Standard Logo (Square)</FormLabel>
-                            <FormControl>
-                                <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                 )}
-                 {!isIndependent && (
-                     <FormField
-                        control={form.control}
-                        name="expandedLogoFile"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Expanded Logo (Banner)</FormLabel>
-                            <FormControl>
-                                <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
+                    <>
+                        <FormField
+                            control={form.control}
+                            name="standardLogoFile"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Standard Logo (Square)</FormLabel>
+                                <FormControl>
+                                    <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
                         />
+                        <FormField
+                            control={form.control}
+                            name="expandedLogoFile"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Expanded Logo (Banner)</FormLabel>
+                                <FormControl>
+                                    <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </>
                  )}
 
                 <DialogFooter>
@@ -261,4 +261,3 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
     </Dialog>
   );
 }
-
