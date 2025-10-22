@@ -485,7 +485,7 @@ export default function ResultsPage() {
   const VoteChangeIndicator = ({ change }: { change: number | null }) => {
     if (change === null || !previousElection) return null;
     const color = change > 0 ? 'text-green-700' : change < 0 ? 'text-red-700' : 'text-muted-foreground';
-    const sign = change > 0 ? '+' : change < 0 ? '−' : '';
+    const sign = change > 0 ? '+' : change < 0 ? '-' : '';
     if (change === 0) return <span className={cn('text-xs font-semibold ml-1', color)}>(0)</span>;
     return <span className={cn('text-xs font-semibold flex items-center', color)}>{sign}{Math.abs(change).toLocaleString()}</span>;
   };
@@ -707,6 +707,21 @@ export default function ResultsPage() {
                                           const uwpParty = parties?.find(p => p.acronym === 'UWP');
                                           const winnerColor = currentWinner === 'SLP' ? slpParty?.color : (currentWinner === 'UWP' ? uwpParty?.color : '#8884d8');
                                           
+                                           let slpVotePercentageChange = null;
+                                           let uwpVotePercentageChange = null;
+
+                                           if (previousResult) {
+                                               const currentSlpPercent = cr.totalVotes > 0 ? (cr.slpVotes / cr.totalVotes) * 100 : 0;
+                                               const currentUwpPercent = cr.totalVotes > 0 ? (cr.uwpVotes / cr.totalVotes) * 100 : 0;
+                                               const prevTotalVotes = previousResult.totalVotes;
+                                                if (prevTotalVotes > 0) {
+                                                  const prevSlpPercent = (previousResult.slpVotes / prevTotalVotes) * 100;
+                                                  const prevUwpPercent = (previousResult.uwpVotes / prevTotalVotes) * 100;
+                                                  slpVotePercentageChange = currentSlpPercent - prevSlpPercent;
+                                                  uwpVotePercentageChange = currentUwpPercent - prevUwpPercent;
+                                                }
+                                           }
+
                                           return (
                                               <TableRow key={cr.id}>
                                                   <TableCell className="font-medium">{constituency?.name || cr.constituencyId}</TableCell>
@@ -714,11 +729,11 @@ export default function ResultsPage() {
                                                   <TableCell>
                                                     {isSpecialConstituency ? '-' : cr.slpVotes.toLocaleString()}
                                                   </TableCell>
-                                                  <TableCell>{cr.totalVotes > 0 ? `${(cr.slpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%'}</TableCell>
+                                                  <TableCell className="flex items-center gap-1">{cr.totalVotes > 0 ? `${(cr.slpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%'} <VotePercentageChangeIndicator change={slpVotePercentageChange} /></TableCell>
                                                   <TableCell>
                                                     {cr.uwpVotes.toLocaleString()}
                                                   </TableCell>
-                                                  <TableCell>{cr.totalVotes > 0 ? `${(cr.uwpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%'}</TableCell>
+                                                  <TableCell className="flex items-center gap-1">{cr.totalVotes > 0 ? `${(cr.uwpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%'} <VotePercentageChangeIndicator change={uwpVotePercentageChange} /></TableCell>
                                                   <TableCell>
                                                     {isSpecialConstituency ? cr.slpVotes.toLocaleString() : cr.otherVotes > 0 ? cr.otherVotes.toLocaleString() : '-'}
                                                   </TableCell>
