@@ -92,15 +92,18 @@ const NationalVoteTrend = ({ elections, results, parties }: { elections: Electio
         let totalVotes = 0;
         let slpVotes = 0;
         let uwpVotes = 0;
+        let otherVotes = 0;
 
         electionResults.forEach(r => {
           totalVotes += r.totalVotes;
           slpVotes += r.slpVotes;
           uwpVotes += r.uwpVotes;
+          otherVotes += r.otherVotes;
         });
 
         if(slp) yearData[slp.acronym] = totalVotes > 0 ? parseFloat(((slpVotes / totalVotes) * 100).toFixed(1)) : 0;
         if(uwp) yearData[uwp.acronym] = totalVotes > 0 ? parseFloat(((uwpVotes / totalVotes) * 100).toFixed(1)) : 0;
+        yearData['IND'] = totalVotes > 0 ? parseFloat(((otherVotes / totalVotes) * 100).toFixed(1)) : 0;
         
         return yearData;
     });
@@ -113,6 +116,7 @@ const NationalVoteTrend = ({ elections, results, parties }: { elections: Electio
       const uwp = parties.find(p => p.acronym === 'UWP');
       if (slp) config[slp.acronym] = { label: 'SLP', color: slp.color };
       if (uwp) config[uwp.acronym] = { label: 'UWP', color: uwp.color };
+      config['IND'] = { label: 'IND', color: 'hsl(var(--chart-4))' };
     }
     return config;
   }, [parties]);
