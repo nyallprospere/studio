@@ -372,64 +372,70 @@ export default function ResultsPage() {
     if (!regions || !currentElectionResults || !constituencies || !previousElectionResults || !parties) return [];
 
     return regions.map(region => {
-      let slpVotes = 0;
-      let uwpVotes = 0;
-      let otherVotes = 0;
-      let totalVotes = 0;
-      let prevSlpVotes = 0;
-      let prevUwpVotes = 0;
-      let prevOtherVotes = 0;
-      
-      const regionConstituencyIds = new Set(region.constituencyIds);
-      const isCurrent2021 = currentElection?.year === 2021;
-      const isPrev2021 = previousElection?.year === 2021;
+        let slpVotes = 0, uwpVotes = 0, otherVotes = 0, totalVotes = 0;
+        let prevSlpVotes = 0, prevUwpVotes = 0, prevOtherVotes = 0, prevTotalVotes = 0;
+        
+        const regionConstituencyIds = new Set(region.constituencyIds);
+        const isCurrent2021 = currentElection?.year === 2021;
+        const isPrev2021 = previousElection?.year === 2021;
 
-      currentElectionResults.forEach(result => {
-        if (regionConstituencyIds.has(result.constituencyId)) {
-            const constituency = getConstituencyById(result.constituencyId);
-            const isSpecial = isCurrent2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
-            totalVotes += result.totalVotes;
-            if(isSpecial) {
-                otherVotes += result.slpVotes + result.otherVotes;
-                uwpVotes += result.uwpVotes;
-            } else {
-                slpVotes += result.slpVotes;
-                uwpVotes += result.uwpVotes;
-                otherVotes += result.otherVotes;
+        currentElectionResults.forEach(result => {
+            if (regionConstituencyIds.has(result.constituencyId)) {
+                const constituency = getConstituencyById(result.constituencyId);
+                const isSpecial = isCurrent2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+                totalVotes += result.totalVotes;
+                if(isSpecial) {
+                    otherVotes += result.slpVotes + result.otherVotes;
+                    uwpVotes += result.uwpVotes;
+                } else {
+                    slpVotes += result.slpVotes;
+                    uwpVotes += result.uwpVotes;
+                    otherVotes += result.otherVotes;
+                }
             }
-        }
-      });
-      
-      previousElectionResults.forEach(result => {
-        if (regionConstituencyIds.has(result.constituencyId)) {
-            const constituency = getConstituencyById(result.constituencyId);
-            const isSpecial = isPrev2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
-             if(isSpecial) {
-                prevOtherVotes += result.slpVotes + result.otherVotes;
-                prevUwpVotes += result.uwpVotes;
-            } else {
-                prevSlpVotes += result.slpVotes;
-                prevUwpVotes += result.uwpVotes;
-                prevOtherVotes += result.otherVotes;
+        });
+        
+        previousElectionResults.forEach(result => {
+            if (regionConstituencyIds.has(result.constituencyId)) {
+                const constituency = getConstituencyById(result.constituencyId);
+                const isSpecial = isPrev2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+                prevTotalVotes += result.totalVotes;
+                if(isSpecial) {
+                    prevOtherVotes += result.slpVotes + result.otherVotes;
+                    prevUwpVotes += result.uwpVotes;
+                } else {
+                    prevSlpVotes += result.slpVotes;
+                    prevUwpVotes += result.uwpVotes;
+                    prevOtherVotes += result.otherVotes;
+                }
             }
-        }
-      });
-      
-      return {
-        id: region.id,
-        name: region.name,
-        slpVotes,
-        uwpVotes,
-        otherVotes,
-        slpPercentage: totalVotes > 0 ? (slpVotes / totalVotes) * 100 : 0,
-        uwpPercentage: totalVotes > 0 ? (uwpVotes / totalVotes) * 100 : 0,
-        otherPercentage: totalVotes > 0 ? (otherVotes / totalVotes) * 100 : 0,
-        slpVoteChange: slpVotes - prevSlpVotes,
-        uwpVoteChange: uwpVotes - prevUwpVotes,
-        otherVoteChange: otherVotes - prevOtherVotes,
-      };
+        });
+        
+        const slpPercentage = totalVotes > 0 ? (slpVotes / totalVotes) * 100 : 0;
+        const uwpPercentage = totalVotes > 0 ? (uwpVotes / totalVotes) * 100 : 0;
+        const otherPercentage = totalVotes > 0 ? (otherVotes / totalVotes) * 100 : 0;
+
+        const prevSlpPercentage = prevTotalVotes > 0 ? (prevSlpVotes / prevTotalVotes) * 100 : 0;
+        const prevUwpPercentage = prevTotalVotes > 0 ? (prevUwpVotes / prevTotalVotes) * 100 : 0;
+        const prevOtherPercentage = prevTotalVotes > 0 ? (prevOtherVotes / prevTotalVotes) * 100 : 0;
+        
+        return {
+            id: region.id,
+            name: region.name,
+            slpVotes,
+            uwpVotes,
+            otherVotes,
+            slpPercentage,
+            uwpPercentage,
+            otherPercentage,
+            slpVoteChange: slpVotes - prevSlpVotes,
+            uwpVoteChange: uwpVotes - prevUwpVotes,
+            otherVoteChange: otherVotes - prevOtherVotes,
+            slpPercentageChange: slpPercentage - prevSlpPercentage,
+            uwpPercentageChange: uwpPercentage - prevUwpPercentage,
+            otherPercentageChange: otherPercentage - prevOtherPercentage,
+        };
     }).sort((a, b) => a.name.localeCompare(b.name));
-
   }, [regions, currentElectionResults, previousElectionResults, constituencies, currentElection, previousElection, parties]);
 
 
@@ -633,11 +639,11 @@ export default function ResultsPage() {
                                                 <TableRow key={region.id}>
                                                     <TableCell className="font-medium">{region.name}</TableCell>
                                                     <TableCell>{region.slpVotes.toLocaleString()}<VoteChangeIndicator change={region.slpVoteChange} /></TableCell>
-                                                     <TableCell>{region.slpPercentage.toFixed(1)}%</TableCell>
+                                                     <TableCell>{region.slpPercentage.toFixed(1)}% <VotePercentageChangeIndicator change={region.slpPercentageChange} /></TableCell>
                                                     <TableCell>{region.uwpVotes.toLocaleString()}<VoteChangeIndicator change={region.uwpVoteChange} /></TableCell>
-                                                     <TableCell>{region.uwpPercentage.toFixed(1)}%</TableCell>
+                                                     <TableCell>{region.uwpPercentage.toFixed(1)}% <VotePercentageChangeIndicator change={region.uwpPercentageChange} /></TableCell>
                                                     <TableCell>{region.otherVotes > 0 ? region.otherVotes.toLocaleString() : '-'}<VoteChangeIndicator change={region.otherVoteChange} /></TableCell>
-                                                     <TableCell>{region.otherPercentage > 0 ? `${region.otherPercentage.toFixed(1)}%` : '-'}</TableCell>
+                                                     <TableCell>{region.otherPercentage > 0 ? `${region.otherPercentage.toFixed(1)}%` : '-'} <VotePercentageChangeIndicator change={region.otherPercentageChange} /></TableCell>
                                                 </TableRow>
                                             )) : (
                                                 <TableRow>
