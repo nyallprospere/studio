@@ -55,11 +55,18 @@ export default function ManageLogosPage() {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedPartyForUpload, setSelectedPartyForUpload] = useState<Party | null>(null);
   const [deleteLocks, setDeleteLocks] = useState<Record<string, boolean>>({});
-  const [electionFilter, setElectionFilter] = useState<string>('all');
+  const [electionFilter, setElectionFilter] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string>('');
 
-
   const sortedElections = useMemo(() => elections?.sort((a, b) => b.year - a.year) || [], [elections]);
+
+  useMemo(() => {
+    if (sortedElections.length > 0 && electionFilter === '') {
+        const election2026 = sortedElections.find(e => e.year === 2026);
+        setElectionFilter(election2026 ? election2026.id : 'all');
+    }
+  }, [sortedElections, electionFilter]);
+
 
   const allParties = useMemo(() => {
     if (!parties) return [];
@@ -242,9 +249,9 @@ export default function ManageLogosPage() {
                               <div key={group.key} className="p-4 border rounded-md flex flex-col gap-4">
                                 <div className="text-center">
                                   <h4 className="font-semibold">{group.dateRange}</h4>
-                                  {party.id === 'independent' && group.constituencyName && (
+                                  {party.id !== 'independent' ? null : group.constituencyName ? (
                                     <p className="text-sm text-muted-foreground">{group.constituencyName}</p>
-                                  )}
+                                  ) : null}
                                 </div>
                                 
                                 <div className="grid grid-cols-2 gap-4 items-center flex-grow">
@@ -325,10 +332,3 @@ export default function ManageLogosPage() {
     </div>
   );
 }
-
-    
-
-    
-
-
-
