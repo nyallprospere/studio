@@ -319,7 +319,7 @@ export default function ResultsPage() {
     return config;
   }, [summaryData]);
   
-  const regionalResults = useMemo(() => {
+  const regionalSeatResults = useMemo(() => {
     if (!regions || !currentElectionResults || !constituencies || !previousElectionResults || !parties) return [];
 
     return regions.map(region => {
@@ -362,8 +362,66 @@ export default function ResultsPage() {
         otherSeats,
         slpSeatChange: slpSeats - prevSlpSeats,
         uwpSeatChange: uwpSeats - prevUwpSeats,
-        otherSeatChange: otherSeats - prevOtherSeats,
-        totalSeats: slpSeats + uwpSeats + otherSeats
+        otherSeatChange: otherSeats - prevOtherSeats
+      };
+    }).sort((a, b) => a.name.localeCompare(b.name));
+
+  }, [regions, currentElectionResults, previousElectionResults, constituencies, currentElection, previousElection, parties]);
+
+  const regionalVoteResults = useMemo(() => {
+    if (!regions || !currentElectionResults || !constituencies || !previousElectionResults || !parties) return [];
+
+    return regions.map(region => {
+      let slpVotes = 0;
+      let uwpVotes = 0;
+      let otherVotes = 0;
+      let prevSlpVotes = 0;
+      let prevUwpVotes = 0;
+      let prevOtherVotes = 0;
+      
+      const regionConstituencyIds = new Set(region.constituencyIds);
+      const isCurrent2021 = currentElection?.year === 2021;
+      const isPrev2021 = previousElection?.year === 2021;
+
+      currentElectionResults.forEach(result => {
+        if (regionConstituencyIds.has(result.constituencyId)) {
+            const constituency = getConstituencyById(result.constituencyId);
+            const isSpecial = isCurrent2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+            if(isSpecial) {
+                otherVotes += result.slpVotes + result.otherVotes;
+                uwpVotes += result.uwpVotes;
+            } else {
+                slpVotes += result.slpVotes;
+                uwpVotes += result.uwpVotes;
+                otherVotes += result.otherVotes;
+            }
+        }
+      });
+      
+      previousElectionResults.forEach(result => {
+        if (regionConstituencyIds.has(result.constituencyId)) {
+            const constituency = getConstituencyById(result.constituencyId);
+            const isSpecial = isPrev2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+             if(isSpecial) {
+                prevOtherVotes += result.slpVotes + result.otherVotes;
+                prevUwpVotes += result.uwpVotes;
+            } else {
+                prevSlpVotes += result.slpVotes;
+                prevUwpVotes += result.uwpVotes;
+                prevOtherVotes += result.otherVotes;
+            }
+        }
+      });
+      
+      return {
+        id: region.id,
+        name: region.name,
+        slpVotes,
+        uwpVotes,
+        otherVotes,
+        slpVoteChange: slpVotes - prevSlpVotes,
+        uwpVoteChange: uwpVotes - prevUwpVotes,
+        otherVoteChange: otherVotes - prevOtherVotes,
       };
     }).sort((a, b) => a.name.localeCompare(b.name));
 
@@ -411,6 +469,14 @@ export default function ResultsPage() {
     const color = change > 0 ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-muted-foreground';
     const sign = change > 0 ? '+' : '';
     return <span className={cn('text-xs font-semibold ml-1', color)}>({sign}{change})</span>;
+  };
+  
+  const VoteChangeIndicator = ({ change }: { change: number | null }) => {
+    if (change === null || !previousElection) return null;
+    const color = change > 0 ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-muted-foreground';
+    const sign = change > 0 ? '+' : '';
+    if (change === 0) return <span className={cn('text-xs font-semibold ml-1', color)}>(0)</span>;
+    return <span className={cn('text-xs font-semibold ml-1', color)}>({sign}{change.toLocaleString()})</span>;
   };
 
   return (
@@ -493,39 +559,74 @@ export default function ResultsPage() {
                             />
                         </CardContent>
                     </Card>
-                    <Card>
-                      <CardHeader>
-                          <CardTitle>Results by Region</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                          {loadingResults ? <p>Loading results...</p> : (
-                              <Table>
-                                  <TableHeader>
-                                      <TableRow>
-                                          <TableHead>Region</TableHead>
-                                          <TableHead>SLP Seats</TableHead>
-                                          <TableHead>UWP Seats</TableHead>
-                                          <TableHead>Other Seats</TableHead>
-                                      </TableRow>
-                                  </TableHeader>
-                                  <TableBody>
-                                      {regionalResults && regionalResults.length > 0 ? regionalResults.map((region) => (
-                                          <TableRow key={region.id}>
-                                              <TableCell className="font-medium">{region.name}</TableCell>
-                                              <TableCell>{region.slpSeats}<SeatChangeIndicator change={region.slpSeatChange} /></TableCell>
-                                              <TableCell>{region.uwpSeats}<SeatChangeIndicator change={region.uwpSeatChange} /></TableCell>
-                                              <TableCell>{region.otherSeats}<SeatChangeIndicator change={region.otherSeatChange} /></TableCell>
-                                          </TableRow>
-                                      )) : (
-                                        <TableRow>
-                                            <TableCell colSpan={4} className="text-center text-muted-foreground h-24">Regional data not available. Please define regions in the admin panel.</TableCell>
-                                        </TableRow>
-                                      )}
-                                  </TableBody>
-                              </Table>
-                          )}
-                      </CardContent>
-                  </Card>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Seat Count by Region</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {loadingResults ? <p>Loading results...</p> : (
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Region</TableHead>
+                                                <TableHead>SLP Seats</TableHead>
+                                                <TableHead>UWP Seats</TableHead>
+                                                <TableHead>Other Seats</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {regionalSeatResults && regionalSeatResults.length > 0 ? regionalSeatResults.map((region) => (
+                                                <TableRow key={region.id}>
+                                                    <TableCell className="font-medium">{region.name}</TableCell>
+                                                    <TableCell>{region.slpSeats}<SeatChangeIndicator change={region.slpSeatChange} /></TableCell>
+                                                    <TableCell>{region.uwpSeats}<SeatChangeIndicator change={region.uwpSeatChange} /></TableCell>
+                                                    <TableCell>{region.otherSeats}<SeatChangeIndicator change={region.otherSeatChange} /></TableCell>
+                                                </TableRow>
+                                            )) : (
+                                                <TableRow>
+                                                    <TableCell colSpan={4} className="text-center text-muted-foreground h-24">Regional data not available. Please define regions in the admin panel.</TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                )}
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Vote Count by Region</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {loadingResults ? <p>Loading results...</p> : (
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Region</TableHead>
+                                                <TableHead>SLP Votes</TableHead>
+                                                <TableHead>UWP Votes</TableHead>
+                                                <TableHead>Other Votes</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {regionalVoteResults && regionalVoteResults.length > 0 ? regionalVoteResults.map((region) => (
+                                                <TableRow key={region.id}>
+                                                    <TableCell className="font-medium">{region.name}</TableCell>
+                                                    <TableCell>{region.slpVotes.toLocaleString()}<VoteChangeIndicator change={region.slpVoteChange} /></TableCell>
+                                                    <TableCell>{region.uwpVotes.toLocaleString()}<VoteChangeIndicator change={region.uwpVoteChange} /></TableCell>
+                                                    <TableCell>{region.otherVotes > 0 ? region.otherVotes.toLocaleString() : '-'}<VoteChangeIndicator change={region.otherVoteChange} /></TableCell>
+                                                </TableRow>
+                                            )) : (
+                                                <TableRow>
+                                                    <TableCell colSpan={4} className="text-center text-muted-foreground h-24">Regional data not available. Please define regions in the admin panel.</TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
                     <Card>
                       <CardHeader>
                           <CardTitle>Constituency Breakdown</CardTitle>
