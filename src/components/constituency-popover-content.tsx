@@ -55,7 +55,7 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
                 isWinner && "border-2 border-green-600"
             )}>
                  {isWinner && (
-                    <div className="absolute -top-3 -right-3 text-center">
+                    <div className="absolute -top-5 -right-3 text-center">
                          <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
                         <CheckCircle2 className="h-5 w-5 text-green-600 bg-white rounded-full mx-auto" />
                     </div>
@@ -67,7 +67,7 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
                             <Image src={party.logoUrl} alt={party.name} fill className="object-contain" />
                         </div>
                     )}
-                    <div className="relative h-10 w-10 rounded-full overflow-hidden">
+                    <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
                     {candidate?.imageUrl ? (
                         <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
                     ) : (
@@ -241,7 +241,7 @@ export function ConstituencyPopoverContent({
                                     <Image src={slpParty.logoUrl} alt={slpParty.name} fill className="object-contain" />
                                 </div>
                             )}
-                            <div className="relative h-10 w-10 rounded-full overflow-hidden">
+                            <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
                             {slpCandidate?.imageUrl ? (
                                 <Image src={slpCandidate.imageUrl} alt={slpCandidate?.name || 'SLP Candidate'} fill className="object-cover" />
                             ) : (
@@ -258,7 +258,7 @@ export function ConstituencyPopoverContent({
                                     <Image src={uwpParty.logoUrl} alt={uwpParty.name} fill className="object-contain" />
                                 </div>
                             )}
-                            <div className="relative h-10 w-10 rounded-full overflow-hidden">
+                            <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
                             {uwpCandidate?.imageUrl ? (
                                 <Image src={uwpCandidate.imageUrl} alt={uwpCandidate?.name || 'UWP Candidate'} fill className="object-cover" />
                             ) : (
