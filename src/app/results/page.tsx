@@ -338,85 +338,79 @@ export default function ResultsPage() {
                         </CardContent>
                     </Card>
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Constituency Breakdown</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {loadingResults ? <p>Loading results...</p> : (
-                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {currentElectionResults && currentElectionResults.length > 0 ? currentElectionResults.map((cr) => {
-                                        const constituency = getConstituencyById(cr.constituencyId);
-                                        const is2021 = currentElection?.year === 2021;
-                                        const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
-                                        
-                                        let currentWinner = 'TBD';
-                                        if (isSpecialConstituency) {
-                                            currentWinner = 'IND';
-                                        } else if (cr.slpVotes > cr.uwpVotes) {
-                                            currentWinner = 'SLP';
-                                        } else if (cr.uwpVotes > cr.slpVotes) {
-                                            currentWinner = 'UWP';
-                                        }
-                                        
-                                        const previousResult = previousElectionResults?.find(r => r.constituencyId === cr.constituencyId);
-                                        const previousWinner = previousResult ? (previousResult.slpVotes > previousResult.uwpVotes ? 'SLP' : 'UWP') : null;
+                      <CardHeader>
+                          <CardTitle>Constituency Breakdown</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                          {loadingResults ? <p>Loading results...</p> : (
+                              <Table>
+                                  <TableHeader>
+                                      <TableRow>
+                                          <TableHead>Constituency</TableHead>
+                                          <TableHead>Result</TableHead>
+                                          <TableHead>SLP Votes</TableHead>
+                                          <TableHead>UWP Votes</TableHead>
+                                          <TableHead>Other Votes</TableHead>
+                                          <TableHead>Total Votes</TableHead>
+                                          <TableHead>Registered Voters</TableHead>
+                                          <TableHead>Turnout</TableHead>
+                                      </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                      {currentElectionResults && currentElectionResults.length > 0 ? currentElectionResults.map((cr) => {
+                                          const constituency = getConstituencyById(cr.constituencyId);
+                                          const is2021 = currentElection?.year === 2021;
+                                          const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+                                          
+                                          let currentWinner = 'TBD';
+                                          if (isSpecialConstituency) {
+                                              currentWinner = 'IND';
+                                          } else if (cr.slpVotes > cr.uwpVotes) {
+                                              currentWinner = 'SLP';
+                                          } else if (cr.uwpVotes > cr.slpVotes) {
+                                              currentWinner = 'UWP';
+                                          }
 
-                                        let resultStatus = `${currentWinner} Win`;
-                                        if (previousWinner) {
-                                            if (currentWinner === 'IND') {
-                                                resultStatus = 'IND Gain';
-                                            } else if (currentWinner === previousWinner) {
-                                                resultStatus = `${currentWinner} Hold`;
-                                            } else {
-                                                resultStatus = `${currentWinner} Gain`;
-                                            }
-                                        }
+                                          const previousResult = previousElectionResults?.find(r => r.constituencyId === cr.constituencyId);
+                                          const previousWinner = previousResult ? (previousResult.slpVotes > previousResult.uwpVotes ? 'SLP' : 'UWP') : null;
+                                          
+                                          let resultStatus = `${currentWinner} Win`;
+                                          if (previousWinner) {
+                                              if (currentWinner === 'IND') {
+                                                  resultStatus = 'IND Gain';
+                                              } else if (currentWinner === previousWinner) {
+                                                  resultStatus = `${currentWinner} Hold`;
+                                              } else {
+                                                  resultStatus = `${currentWinner} Gain`;
+                                              }
+                                          }
+                                          const slpParty = parties?.find(p => p.acronym === 'SLP');
+                                          const uwpParty = parties?.find(p => p.acronym === 'UWP');
+                                          const winnerColor = currentWinner === 'SLP' ? slpParty?.color : (currentWinner === 'UWP' ? uwpParty?.color : '#8884d8');
 
-                                        const slpParty = parties?.find(p => p.acronym === 'SLP');
-                                        const uwpParty = parties?.find(p => p.acronym === 'UWP');
-                                        const winnerColor = currentWinner === 'SLP' ? slpParty?.color : (currentWinner === 'UWP' ? uwpParty?.color : '#8884d8');
 
-                                        return (
-                                        <Card key={cr.id} onClick={() => setSelectedConstituencyId(cr.constituencyId)} className={cn("cursor-pointer", selectedConstituencyId === cr.constituencyId ? 'border-primary' : '')}>
-                                            <CardHeader className="p-4">
-                                                <div className="flex justify-between items-center">
-                                                    <CardTitle className="text-base">{constituency?.name || cr.constituencyId}</CardTitle>
-                                                    <span className="font-semibold text-sm" style={{ color: winnerColor }}>{resultStatus}</span>
-                                                </div>
-                                            </CardHeader>
-                                            <CardContent className="p-4 pt-0 text-sm">
-                                                <div className="space-y-1">
-                                                    <div className="flex justify-between">
-                                                        <span>SLP</span>
-                                                        <span className="font-medium">{isSpecialConstituency ? '-' : cr.slpVotes.toLocaleString()}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span>UWP</span>
-                                                        <span className="font-medium">{cr.uwpVotes.toLocaleString()}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span>Other</span>
-                                                        <span className="font-medium">{isSpecialConstituency ? cr.slpVotes.toLocaleString() : cr.otherVotes.toLocaleString()}</span>
-                                                    </div>
-                                                    <hr className="my-2" />
-                                                    <div className="flex justify-between font-bold">
-                                                        <span>Total</span>
-                                                        <span>{cr.totalVotes.toLocaleString()}</span>
-                                                    </div>
-                                                     <div className="text-xs text-muted-foreground pt-2">
-                                                        Turnout: {cr.turnout === 0 ? 'N/A' : `${cr.turnout}%`}
-                                                    </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                        );
-                                    }) : (
-                                        <p className="text-center text-muted-foreground py-8 col-span-full">Detailed constituency data not available for this year.</p>
-                                    )}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                                          return (
+                                              <TableRow key={cr.id}>
+                                                  <TableCell className="font-medium" style={{color: winnerColor}}>{constituency?.name || cr.constituencyId}</TableCell>
+                                                  <TableCell>{resultStatus}</TableCell>
+                                                  <TableCell>{isSpecialConstituency ? '-' : cr.slpVotes.toLocaleString()}</TableCell>
+                                                  <TableCell>{cr.uwpVotes.toLocaleString()}</TableCell>
+                                                  <TableCell>{isSpecialConstituency ? cr.slpVotes.toLocaleString() : cr.otherVotes.toLocaleString()}</TableCell>
+                                                  <TableCell>{cr.totalVotes.toLocaleString()}</TableCell>
+                                                  <TableCell>{cr.registeredVoters === 0 ? 'N/A' : cr.registeredVoters.toLocaleString()}</TableCell>
+                                                  <TableCell>{cr.turnout === 0 ? 'N/A' : `${cr.turnout}%`}</TableCell>
+                                              </TableRow>
+                                          );
+                                      }) : (
+                                          <TableRow>
+                                              <TableCell colSpan={8} className="text-center text-muted-foreground h-24">Detailed constituency data not available for this year.</TableCell>
+                                          </TableRow>
+                                      )}
+                                  </TableBody>
+                              </Table>
+                          )}
+                      </CardContent>
+                  </Card>
                   </div>
                 </div>
               )}
@@ -425,3 +419,4 @@ export default function ResultsPage() {
     </div>
   );
 }
+
