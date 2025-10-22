@@ -63,6 +63,45 @@ const DEFAULT_LAYOUT = {
 
 type LayoutConfiguration = typeof DEFAULT_LAYOUT;
 
+const VictoryStatusBar = ({ slpSeats, uwpSeats }: { slpSeats: number, uwpSeats: number }) => {
+  const getStatus = (seats: number) => {
+    if (seats >= 16) return 'SLP Wins a Landslide!';
+    if (seats >= 14) return 'SLP Wins a Decisive Victory';
+    if (seats >= 11) return 'SLP Wins The Election.';
+    if (seats >= 9) return 'SLP Wins Close Victory';
+    return null;
+  };
+  
+  const getUWPStatus = (seats: number) => {
+    if (seats >= 16) return 'UWP Wins a Landslide!';
+    if (seats >= 14) return 'UWP Wins a Decisive Victory';
+    if (seats >= 11) return 'UWP Wins The Election.';
+    if (seats >= 9) return 'UWP Wins Close Victory';
+    return null;
+  }
+
+  const slpStatus = getStatus(slpSeats);
+  const uwpStatus = getUWPStatus(uwpSeats);
+
+  let status = 'Toss Up';
+  let color = 'bg-purple-500';
+
+  if (slpStatus) {
+    status = slpStatus;
+    color = 'bg-red-500';
+  } else if (uwpStatus) {
+    status = uwpStatus;
+    color = 'bg-yellow-400 text-black';
+  }
+
+
+  return (
+    <div className={`p-2 rounded-md text-center text-white font-bold mb-4 ${color}`}>
+        {status}
+    </div>
+  );
+};
+
 export default function MakeYourOwnPage() {
     const { firestore } = useFirebase();
     const { user } = useUser();
@@ -201,8 +240,8 @@ export default function MakeYourOwnPage() {
       {isLoading || !constituencies ? (
           <ConstituenciesPageSkeleton />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="md:col-span-1">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
              <Card>
                 <CardContent className="p-2">
                     <InteractiveSvgMap 
@@ -238,6 +277,7 @@ export default function MakeYourOwnPage() {
                         )}
                     </CardHeader>
                     <CardContent className="flex flex-col items-center">
+                        <VictoryStatusBar slpSeats={seatCounts.slp} uwpSeats={seatCounts.uwp} />
                         <div className="grid grid-cols-3 gap-4 w-full text-center mb-4">
                             <div>
                                 <p className="font-bold text-lg" style={{color: 'hsl(var(--chart-5))'}}>{seatCounts.slp}</p>
@@ -298,6 +338,7 @@ export default function MakeYourOwnPage() {
     </div>
   );
 }
+
 
 
 
