@@ -485,9 +485,9 @@ export default function ResultsPage() {
   const VoteChangeIndicator = ({ change }: { change: number | null }) => {
     if (change === null || !previousElection) return null;
     const color = change > 0 ? 'text-green-700' : change < 0 ? 'text-red-700' : 'text-muted-foreground';
-    const sign = change > 0 ? '+' : change < 0 ? '-' : '';
+    const sign = change > 0 ? '+' : change < 0 ? '' : '';
     if (change === 0) return <span className={cn('text-xs font-semibold flex items-center', color)}>(0)</span>;
-    return <span className={cn('text-xs font-semibold flex items-center', color)}>{sign}{Math.abs(change).toLocaleString()}</span>;
+    return <span className={cn('text-xs font-semibold flex items-center', color)}>{sign}{change.toLocaleString()}</span>;
   };
 
   const VotePercentageChangeIndicator = ({ change }: { change: number | null }) => {
@@ -670,7 +670,8 @@ export default function ResultsPage() {
                                           <TableHead>SLP %</TableHead>
                                           <TableHead>UWP Votes</TableHead>
                                           <TableHead>UWP %</TableHead>
-                                          <TableHead>Other Votes</TableHead>
+                                          <TableHead>IND Votes</TableHead>
+                                          <TableHead>IND %</TableHead>
                                           <TableHead>Total Votes</TableHead>
                                           <TableHead>Turnout</TableHead>
                                       </TableRow>
@@ -747,13 +748,16 @@ export default function ResultsPage() {
                                                   <TableCell>
                                                     {isSpecialConstituency ? cr.slpVotes.toLocaleString() : cr.otherVotes > 0 ? cr.otherVotes.toLocaleString() : '-'}
                                                   </TableCell>
+                                                  <TableCell>
+                                                    {isSpecialConstituency ? (cr.totalVotes > 0 ? `${(cr.slpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%') : (cr.otherVotes > 0 ? `${(cr.otherVotes / cr.totalVotes * 100).toFixed(1)}%` : '-')}
+                                                  </TableCell>
                                                   <TableCell>{cr.totalVotes.toLocaleString()}</TableCell>
                                                   <TableCell>{cr.turnout === 0 ? 'N/A' : `${cr.turnout}%`}</TableCell>
                                               </TableRow>
                                           );
                                       }) : (
                                           <TableRow>
-                                              <TableCell colSpan={9} className="text-center text-muted-foreground h-24">Detailed constituency data not available for this year.</TableCell>
+                                              <TableCell colSpan={10} className="text-center text-muted-foreground h-24">Detailed constituency data not available for this year.</TableCell>
                                           </TableRow>
                                       )}
                                   </TableBody>
