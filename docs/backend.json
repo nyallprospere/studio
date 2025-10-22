@@ -431,6 +431,23 @@
         }
       },
       "required": ["timestamp", "pageVisited"]
+    },
+    "Region": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Region",
+      "type": "object",
+      "description": "Represents a geographical region.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the region."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the region."
+        }
+      },
+      "required": ["id", "name"]
     }
   },
   "auth": {
@@ -510,6 +527,12 @@
         "$ref": "#/entities/UserActivity"
       },
       "description": "Stores user activity events, such as page visits. The `activityId` is used as the document ID."
+    },
+    "/regions/{regionId}": {
+      "schema": {
+        "$ref": "#/entities/Region"
+      },
+      "description": "Stores information about regions. The `regionId` is used as the document ID."
     }
   }
 }

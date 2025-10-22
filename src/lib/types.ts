@@ -134,4 +134,8 @@ export interface SiteSettings {
     mapUrl?: string;
 }
 
+export interface Region {
+  id: string;
+  name: string;
+}
     
