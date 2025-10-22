@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, orderBy, query, getDocs } from 'firebase/firestore';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Cell, LabelList, Tooltip, Legend, CartesianGrid } from "recharts"
+import { Bar, BarChart, ResponsiveContainer, XAxis, LabelList, Tooltip, Legend, CartesianGrid } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -46,8 +46,6 @@ export default function ResultsPage() {
     const now = new Date();
     const pastElections = elections.filter(election => {
         const electionYear = election.year;
-        // A simple check assuming elections happen mid-year. 
-        // A more robust solution would use the full election date.
         return electionYear <= now.getFullYear();
     });
 
@@ -285,86 +283,84 @@ export default function ResultsPage() {
                   <h3 className="text-2xl font-headline mb-4">
                     {currentElection.name} Election Summary
                   </h3>
-
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-                    {summaryData.map((summaryItem) => (
-                      <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
-                        <CardHeader className="flex flex-col items-center text-center">
-                          <CardTitle className="text-lg">{summaryItem.name}</CardTitle>
-                          {summaryItem.logoUrl && (
-                            <div className="relative h-24 w-24 mt-2">
-                                <Image src={summaryItem.logoUrl} alt={`${summaryItem.name} logo`} fill className="object-contain" />
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            {summaryData.map((summaryItem) => (
+                            <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
+                                <CardHeader className="flex flex-col items-center text-center p-4">
+                                <CardTitle className="text-base">{summaryItem.name}</CardTitle>
+                                {summaryItem.logoUrl && (
+                                    <div className="relative h-16 w-16 mt-2">
+                                        <Image src={summaryItem.logoUrl} alt={`${summaryItem.name} logo`} fill className="object-contain" />
+                                    </div>
+                                )}
+                                </CardHeader>
+                                <CardContent className="text-center p-4">
+                                <div className="text-2xl font-bold">{summaryItem.seats} Seats</div>
+                                    {summaryItem.seatChange !== null && (
+                                        <p className={`flex items-center justify-center gap-1 text-xs font-semibold ${summaryItem.seatChange > 0 ? 'text-green-600' : summaryItem.seatChange < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
+                                            {summaryItem.seatChange > 0 ? <ArrowUp className="h-3 w-3" /> : summaryItem.seatChange < 0 ? <ArrowDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+                                            {summaryItem.seatChange > 0 ? `+${summaryItem.seatChange}` : summaryItem.seatChange} seats
+                                        </p>
+                                    )}
+                                </CardContent>
+                            </Card>
+                            ))}
+                        </div>
+                        {summaryData.length > 0 && (
+                            <div className="lg:col-span-1">
+                                <Card>
+                                <CardHeader>
+                                    <CardTitle>Vote Distribution</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <ChartContainer config={chartConfig} className="h-64 w-full">
+                                        <ResponsiveContainer>
+                                            <BarChart data={summaryData} margin={{ top: 20, right: 20, bottom: 40, left: -20 }}>
+                                                <CartesianGrid vertical={false} />
+                                                <XAxis
+                                                    dataKey="acronym"
+                                                    tickLine={false}
+                                                    axisLine={false}
+                                                    tick={<CustomizedAxisTick />}
+                                                    height={50}
+                                                />
+                                                <Tooltip
+                                                    cursor={false}
+                                                    content={<ChartTooltipContent formatter={(value) => [(value as number).toLocaleString(), 'votes']} />}
+                                                />
+                                                <Bar dataKey="totalVotes" radius={8}>
+                                                    {summaryData.map((p) => (
+                                                        <Cell key={p.partyId} fill={p.color} />
+                                                    ))}
+                                                    <LabelList dataKey="totalVotes" position="top" offset={8} className="fill-foreground text-sm" formatter={(value: number) => value.toLocaleString()} />
+                                                </Bar>
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </ChartContainer>
+                                </CardContent>
+                                </Card>
                             </div>
-                          )}
+                        )}
+                    </div>
+
+                  <div className="lg:col-span-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Results Map</CardTitle>
+                            <CardDescription>Constituency winners for {currentElection.name}.</CardDescription>
                         </CardHeader>
-                        <CardContent className="text-center">
-                          <div className="text-3xl font-bold">{summaryItem.seats} Seats</div>
-                            {summaryItem.seatChange !== null && (
-                                <p className={`flex items-center justify-center gap-1 text-sm font-semibold ${summaryItem.seatChange > 0 ? 'text-green-600' : summaryItem.seatChange < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
-                                    {summaryItem.seatChange > 0 ? <ArrowUp className="h-4 w-4" /> : summaryItem.seatChange < 0 ? <ArrowDown className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
-                                    {summaryItem.seatChange > 0 ? `+${summaryItem.seatChange}` : summaryItem.seatChange} seats
-                                </p>
-                            )}
+                        <CardContent className="p-2">
+                            <InteractiveSvgMap 
+                                constituencies={resultsMapConstituencies}
+                                selectedConstituencyId={selectedConstituencyId}
+                                onConstituencyClick={setSelectedConstituencyId}
+                                election={currentElection}
+                                electionResults={currentElectionResults}
+                                previousElectionResults={previousElectionResults}
+                            />
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
-
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                    {summaryData.length > 0 && (
-                      <div className="lg:col-span-1">
-                        <Card>
-                          <CardHeader>
-                              <CardTitle>Vote Distribution</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <ChartContainer config={chartConfig} className="h-64 w-full">
-                                <ResponsiveContainer>
-                                    <BarChart data={summaryData} margin={{ top: 20, right: 20, bottom: 40, left: -20 }}>
-                                        <CartesianGrid vertical={false} />
-                                        <XAxis
-                                            dataKey="acronym"
-                                            tickLine={false}
-                                            axisLine={false}
-                                            tick={<CustomizedAxisTick />}
-                                            height={50}
-                                        />
-                                        <YAxis hide={true} />
-                                        <Tooltip
-                                            cursor={false}
-                                            content={<ChartTooltipContent formatter={(value) => [(value as number).toLocaleString(), 'votes']} />}
-                                        />
-                                        <Bar dataKey="totalVotes" radius={8}>
-                                            {summaryData.map((p) => (
-                                                <Cell key={p.partyId} fill={p.color} />
-                                            ))}
-                                            <LabelList dataKey="totalVotes" position="top" offset={8} className="fill-foreground text-sm" formatter={(value: number) => value.toLocaleString()} />
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </ChartContainer>
-                          </CardContent>
-                        </Card>
-                      </div>
-                    )}
-                    <div className="lg:col-span-2">
-                      <Card>
-                          <CardHeader>
-                              <CardTitle>Results Map</CardTitle>
-                              <CardDescription>Constituency winners for {currentElection.name}.</CardDescription>
-                          </CardHeader>
-                          <CardContent className="p-2">
-                              <InteractiveSvgMap 
-                                  constituencies={resultsMapConstituencies}
-                                  selectedConstituencyId={selectedConstituencyId}
-                                  onConstituencyClick={setSelectedConstituencyId}
-                                  election={currentElection}
-                                  electionResults={currentElectionResults}
-                                  previousElectionResults={previousElectionResults}
-                              />
-                          </CardContent>
-                        </Card>
-                    </div>
                   </div>
 
                   <h3 className="text-2xl font-headline my-6">Constituency Breakdown</h3>
@@ -390,7 +386,13 @@ export default function ResultsPage() {
                               
                               const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
                               
-                              const currentWinner = isSpecialConstituency && cr.slpVotes > cr.uwpVotes ? 'IND' : (cr.slpVotes > cr.uwpVotes ? 'SLP' : 'UWP');
+                              let currentWinner = 'UWP';
+                                if (isSpecialConstituency && cr.slpVotes > cr.uwpVotes) {
+                                    currentWinner = 'IND';
+                                } else if (cr.slpVotes > cr.uwpVotes) {
+                                    currentWinner = 'SLP';
+                                }
+
                               
                               const previousResult = previousElectionResults?.find(r => r.constituencyId === cr.constituencyId);
                               const previousWinner = previousResult ? (previousResult.slpVotes > previousResult.uwpVotes ? 'SLP' : 'UWP') : null;
