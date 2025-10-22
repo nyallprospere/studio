@@ -51,30 +51,30 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
     return (
         <>
             <div className={cn(
-                "p-2 rounded-md bg-muted relative h-full flex items-center gap-2",
+                "p-2 rounded-md bg-muted relative h-full flex flex-col items-center gap-2 text-center",
                 isWinner && "border-2 border-green-600"
             )}>
                  {isWinner && (
-                    <div className="absolute -top-[10px] -right-3 text-center">
+                    <div className="absolute -top-[26px] -right-3 text-center">
                          <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
                         <CheckCircle2 className="h-5 w-5 text-green-600 bg-white rounded-full mx-auto" />
                     </div>
                 )}
                 
-                <div className="flex flex-col items-center gap-1 text-center">
+                <div className="flex flex-col items-center gap-1">
                      {party?.logoUrl && (
-                        <div className="relative h-8 w-8 flex-shrink-0">
+                        <div className="relative h-8 w-8">
                             <Image src={party.logoUrl} alt={party.name} fill className="object-contain" />
                         </div>
                     )}
-                    <div className="relative h-10 w-10 rounded-full overflow-hidden flex-shrink-0 bg-transparent">
+                    <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
                     {candidate?.imageUrl ? (
                         <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
                     ) : (
                         <UserSquare className="h-full w-full text-gray-400" />
                     )}
                     </div>
-                    <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold whitespace-nowrap" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                     <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold whitespace-nowrap" onClick={() => setProfileOpen(true)} disabled={!candidate}>
                         {candidateName}
                     </Button>
                 </div>
@@ -95,7 +95,7 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
                                 {votePercentage.toFixed(1)}%
                             </span>
                             {votePercentageChange !== null && typeof votePercentageChange !== 'undefined' && (
-                                <div className={cn("text-xs font-bold flex items-center text-white/90", votePercentageChange > 0 ? 'text-green-300' : 'text-red-300')}>
+                                <div className={cn("text-xs font-bold flex items-center text-black", votePercentageChange > 0 ? 'text-green-700' : 'text-red-700')}>
                                     {votePercentageChange > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
                                     {Math.abs(votePercentageChange).toFixed(1)}%
                                 </div>
