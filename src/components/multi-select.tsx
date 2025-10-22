@@ -43,6 +43,16 @@ function MultiSelect({
   const handleUnselect = (item: string) => {
     onChange(selected.filter((i) => i !== item));
   };
+  
+  const getLabel = () => {
+    if (placeholder?.includes('elections')) {
+        return selected.length === 1 ? 'year' : 'years';
+    }
+    if (placeholder?.includes('constituencies')) {
+        return selected.length === 1 ? 'constituency' : 'constituencies';
+    }
+    return 'items';
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen} {...props}>
@@ -56,7 +66,7 @@ function MultiSelect({
           <div className="flex gap-1 flex-wrap">
             {selected.length > 0 ? (
                <span className="text-sm">
-                {selected.length} {selected.length === 1 ? 'year' : 'years'} selected
+                {selected.length} {getLabel()} selected
               </span>
             ) : (
               <span className="text-muted-foreground">{placeholder}</span>

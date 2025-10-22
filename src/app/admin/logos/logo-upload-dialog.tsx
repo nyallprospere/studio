@@ -36,11 +36,11 @@ const uploadSchema = z.object({
   standardLogoFile: z.any().optional(),
   standardLogoFiles: z.any().optional(),
   expandedLogoFile: z.any().optional(),
-  // Fields for independent candidate
+  expandedLogoFiles: z.any().optional(),
   candidateName: z.string().optional(),
-  constituencyId: z.string().optional(),
+  constituencyIds: z.array(z.string()).optional(),
 }).refine(data => {
-    if(data.candidateName || data.constituencyId) return true; // allow saving candidate info without logo
+    if(data.candidateName || data.constituencyIds) return true; // allow saving candidate info without logo
     return data.standardLogoFile || data.expandedLogoFile || (data.standardLogoFiles && data.standardLogoFiles.length > 0)
 }, {
   message: 'At least one logo file is required.',
@@ -58,7 +58,7 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
     defaultValues: {
       electionIds: [],
       candidateName: '',
-      constituencyId: '',
+      constituencyIds: [],
     },
   });
 
@@ -66,6 +66,11 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
     value: e.id, 
     label: e.name.replace(' General Election', '').replace('(April 6th)', '(Apr 6)').replace('(April 30th)', '(Apr 30)') 
   })).sort((a,b) => b.label.localeCompare(a.label));
+  
+  const constituencyOptions = constituencies.map(c => ({
+    value: c.id,
+    label: c.name,
+  })).sort((a,b) => a.label.localeCompare(b.label));
 
   const handleFormSubmit = async (values: z.infer<typeof uploadSchema>) => {
     if (!firestore || !party) {
@@ -78,70 +83,72 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
     try {
         const batch = writeBatch(firestore);
         
-        if (isIndependent && values.constituencyId) {
+        if (isIndependent && values.constituencyIds && values.constituencyIds.length > 0) {
              for (const electionId of values.electionIds) {
+                for (const constituencyId of values.constituencyIds) {
                 
-                const logoData: Omit<PartyLogo, 'id'> = {
-                    partyId: 'independent',
-                    electionId,
-                    constituencyId: values.constituencyId,
-                    logoUrl: '', // Will be updated if a file is provided
-                    expandedLogoUrl: '',
-                }
-
-                if (values.standardLogoFile) {
-                    const path = `logos/ind_${electionId}_${values.constituencyId}_std.png`;
-                    logoData.logoUrl = await uploadFile(values.standardLogoFile, path);
-                }
-                 if (values.expandedLogoFile) {
-                    const path = `logos/ind_${electionId}_${values.constituencyId}_exp.png`;
-                    logoData.expandedLogoUrl = await uploadFile(values.expandedLogoFile, path);
-                }
-
-                // Check for existing logo for this election/constituency
-                const q = query(
-                    collection(firestore, 'party_logos'),
-                    where('electionId', '==', electionId),
-                    where('constituencyId', '==', values.constituencyId)
-                );
-                const existingLogoSnap = await getDocs(q);
-
-                if(!existingLogoSnap.empty) {
-                    const docRef = existingLogoSnap.docs[0].ref;
-                    const existingData = existingLogoSnap.docs[0].data();
-                    if (values.standardLogoFile && existingData.logoUrl) await deleteFile(existingData.logoUrl);
-                    if (values.expandedLogoFile && existingData.expandedLogoUrl) await deleteFile(existingData.expandedLogoUrl);
-                    
-                    batch.update(docRef, { 
-                        logoUrl: logoData.logoUrl || existingData.logoUrl, 
-                        expandedLogoUrl: logoData.expandedLogoUrl || existingData.expandedLogoUrl,
-                    });
-                } else if (logoData.logoUrl || logoData.expandedLogoUrl) {
-                     const newLogoRef = doc(collection(firestore, 'party_logos'));
-                     batch.set(newLogoRef, logoData);
-                }
-
-                if (values.candidateName) {
-                    const candQuery = query(
-                        collection(firestore, 'candidates'),
-                        where('constituencyId', '==', values.constituencyId),
-                        where('partyId', '==', 'independent')
-                    );
-                    const existingCandSnap = await getDocs(candQuery);
-                    
-                    const candidateData = {
-                        name: values.candidateName,
-                        firstName: values.candidateName.split(' ')[0] || '',
-                        lastName: values.candidateName.split(' ').slice(1).join(' ') || '',
-                        constituencyId: values.constituencyId,
+                    const logoData: Omit<PartyLogo, 'id'> = {
                         partyId: 'independent',
-                    };
+                        electionId,
+                        constituencyId: constituencyId,
+                        logoUrl: '', // Will be updated if a file is provided
+                        expandedLogoUrl: '',
+                    }
 
-                    if(!existingCandSnap.empty) {
-                         batch.update(existingCandSnap.docs[0].ref, candidateData);
-                    } else {
-                         const newCandRef = doc(collection(firestore, 'candidates'));
-                         batch.set(newCandRef, candidateData);
+                    if (values.standardLogoFile) {
+                        const path = `logos/ind_${electionId}_${constituencyId}_std.png`;
+                        logoData.logoUrl = await uploadFile(values.standardLogoFile, path);
+                    }
+                    if (values.expandedLogoFile) {
+                        const path = `logos/ind_${electionId}_${constituencyId}_exp.png`;
+                        logoData.expandedLogoUrl = await uploadFile(values.expandedLogoFile, path);
+                    }
+
+                    // Check for existing logo for this election/constituency
+                    const q = query(
+                        collection(firestore, 'party_logos'),
+                        where('electionId', '==', electionId),
+                        where('constituencyId', '==', constituencyId)
+                    );
+                    const existingLogoSnap = await getDocs(q);
+
+                    if(!existingLogoSnap.empty) {
+                        const docRef = existingLogoSnap.docs[0].ref;
+                        const existingData = existingLogoSnap.docs[0].data();
+                        if (values.standardLogoFile && existingData.logoUrl) await deleteFile(existingData.logoUrl);
+                        if (values.expandedLogoFile && existingData.expandedLogoUrl) await deleteFile(existingData.expandedLogoUrl);
+                        
+                        batch.update(docRef, { 
+                            logoUrl: logoData.logoUrl || existingData.logoUrl, 
+                            expandedLogoUrl: logoData.expandedLogoUrl || existingData.expandedLogoUrl,
+                        });
+                    } else if (logoData.logoUrl || logoData.expandedLogoUrl) {
+                        const newLogoRef = doc(collection(firestore, 'party_logos'));
+                        batch.set(newLogoRef, logoData);
+                    }
+
+                    if (values.candidateName) {
+                        const candQuery = query(
+                            collection(firestore, 'candidates'),
+                            where('constituencyId', '==', constituencyId),
+                            where('partyId', '==', 'independent')
+                        );
+                        const existingCandSnap = await getDocs(candQuery);
+                        
+                        const candidateData = {
+                            name: values.candidateName,
+                            firstName: values.candidateName.split(' ')[0] || '',
+                            lastName: values.candidateName.split(' ').slice(1).join(' ') || '',
+                            constituencyId: constituencyId,
+                            partyId: 'independent',
+                        };
+
+                        if(!existingCandSnap.empty) {
+                            batch.update(existingCandSnap.docs[0].ref, candidateData);
+                        } else {
+                            const newCandRef = doc(collection(firestore, 'candidates'));
+                            batch.set(newCandRef, candidateData);
+                        }
                     }
                 }
             }
@@ -283,22 +290,53 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                      <>
                         <FormField
                             control={form.control}
-                            name="constituencyId"
+                            name="constituencyIds"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Constituency</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                        <SelectValue placeholder="Select a constituency" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {constituencies.map(c => (
-                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                    </Select>
+                                    <div className="flex items-center justify-between">
+                                      <FormLabel>Constituencies</FormLabel>
+                                      <Button
+                                        type="button"
+                                        variant="link"
+                                        size="sm"
+                                        className="p-0 h-auto"
+                                        onClick={() => field.onChange(constituencies.map(c => c.id))}
+                                      >
+                                        Select All
+                                      </Button>
+                                    </div>
+                                    <MultiSelect
+                                      options={constituencyOptions}
+                                      selected={field.value || []}
+                                      onChange={field.onChange}
+                                      placeholder="Select constituencies..."
+                                    >
+                                       <CommandInput placeholder="Search constituencies..." />
+                                        <ScrollArea className="h-48">
+                                          <CommandGroup>
+                                          {constituencyOptions.map((option) => (
+                                              <CommandItem
+                                                  key={option.value}
+                                                  onSelect={() => {
+                                                      const newValue = field.value?.includes(option.value)
+                                                      ? field.value?.filter((v) => v !== option.value)
+                                                      : [...(field.value || []), option.value];
+                                                      field.onChange(newValue);
+                                                  }}
+                                                  className="flex items-center justify-between"
+                                                  >
+                                                  <span>{option.label}</span>
+                                                  <Check
+                                                      className={cn(
+                                                      'h-4 w-4',
+                                                      field.value?.includes(option.value) ? 'opacity-100' : 'opacity-0'
+                                                      )}
+                                                  />
+                                              </CommandItem>
+                                          ))}
+                                          </CommandGroup>
+                                        </ScrollArea>
+                                    </MultiSelect>
                                 </FormItem>
                             )}
                         />
@@ -327,7 +365,7 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                                 </FormItem>
                             )}
                         />
-                         <FormField
+                        <FormField
                             control={form.control}
                             name="expandedLogoFile"
                             render={({ field }) => (
