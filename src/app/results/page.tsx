@@ -626,8 +626,11 @@ export default function ResultsPage() {
                                             <TableRow>
                                                 <TableHead>Region</TableHead>
                                                 <TableHead>SLP Votes</TableHead>
+                                                <TableHead>SLP %</TableHead>
                                                 <TableHead>UWP Votes</TableHead>
+                                                <TableHead>UWP %</TableHead>
                                                 <TableHead>IND Votes</TableHead>
+                                                <TableHead>IND %</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -636,15 +639,30 @@ export default function ResultsPage() {
                                                     <TableCell className="font-medium">{region.name}</TableCell>
                                                     <TableCell>
                                                         <div>{region.slpVotes.toLocaleString()}</div>
-                                                        <div className="text-xs text-muted-foreground">{region.slpPercentage.toFixed(1)}% <VotePercentageChangeIndicator change={region.slpPercentageChange} /></div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex flex-col">
+                                                            <span>{region.slpPercentage.toFixed(1)}%</span>
+                                                            <VotePercentageChangeIndicator change={region.slpPercentageChange} />
+                                                        </div>
                                                     </TableCell>
                                                     <TableCell>
                                                         <div>{region.uwpVotes.toLocaleString()}</div>
-                                                        <div className="text-xs text-muted-foreground">{region.uwpPercentage.toFixed(1)}% <VotePercentageChangeIndicator change={region.uwpPercentageChange} /></div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                         <div className="flex flex-col">
+                                                           <span>{region.uwpPercentage.toFixed(1)}%</span>
+                                                           <VotePercentageChangeIndicator change={region.uwpPercentageChange} />
+                                                        </div>
                                                     </TableCell>
                                                     <TableCell>
                                                          <div>{region.otherVotes > 0 ? region.otherVotes.toLocaleString() : '—'}</div>
-                                                         <div className="text-xs text-muted-foreground">{region.otherPercentage > 0 ? `${region.otherPercentage.toFixed(1)}%` : '—'} <VotePercentageChangeIndicator change={region.otherPercentageChange} /></div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex flex-col">
+                                                            <span>{region.otherPercentage > 0 ? `${region.otherPercentage.toFixed(1)}%` : '—'}</span>
+                                                            <VotePercentageChangeIndicator change={region.otherPercentageChange} />
+                                                        </div>
                                                     </TableCell>
                                                 </TableRow>
                                             )) : (
