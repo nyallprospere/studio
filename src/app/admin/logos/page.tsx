@@ -212,7 +212,9 @@ export default function ManageLogosPage() {
                               <div key={group.key} className="p-4 border rounded-md flex flex-col gap-4">
                                 <div className="text-center">
                                   <h4 className="font-semibold">{group.candidateName ? group.candidateName : group.dateRange}</h4>
-                                  <p className="text-sm text-muted-foreground">{group.constituencyName ? group.constituencyName : 'Year of election'}</p>
+                                  {party.id === 'independent' && (
+                                    <p className="text-sm text-muted-foreground">{group.constituencyName ? group.constituencyName : 'Year of election'}</p>
+                                  )}
                                 </div>
                                 
                                 <div className="grid grid-cols-2 gap-4 items-center flex-grow">
