@@ -485,7 +485,7 @@ export default function ResultsPage() {
   const VoteChangeIndicator = ({ change }: { change: number | null }) => {
     if (change === null || !previousElection) return null;
     const color = change > 0 ? 'text-green-700' : change < 0 ? 'text-red-700' : 'text-muted-foreground';
-    const sign = change > 0 ? '+' : change < 0 ? '-' : '';
+    const sign = change > 0 ? '+' : change < 0 ? '−' : '';
     if (change === 0) return <span className={cn('text-xs font-semibold ml-1', color)}>(0)</span>;
     return <span className={cn('text-xs font-semibold flex items-center', color)}>{sign}{Math.abs(change).toLocaleString()}</span>;
   };
@@ -583,7 +583,7 @@ export default function ResultsPage() {
                         </CardContent>
                     </Card>
                     <div className="grid grid-cols-1 gap-8">
-                        <Card>
+                         <Card>
                             <CardHeader>
                                 <CardTitle>Seat Count by Region</CardTitle>
                             </CardHeader>
@@ -616,7 +616,7 @@ export default function ResultsPage() {
                                 )}
                             </CardContent>
                         </Card>
-                         <Card>
+                        <Card>
                             <CardHeader>
                                 <CardTitle>Vote Count by Region</CardTitle>
                             </CardHeader>
@@ -639,11 +639,11 @@ export default function ResultsPage() {
                                                 <TableRow key={region.id}>
                                                     <TableCell className="font-medium">{region.name}</TableCell>
                                                     <TableCell>{region.slpVotes.toLocaleString()}<VoteChangeIndicator change={region.slpVoteChange} /></TableCell>
-                                                     <TableCell>{region.slpPercentage.toFixed(1)}% <VotePercentageChangeIndicator change={region.slpPercentageChange} /></TableCell>
+                                                    <TableCell>{region.slpPercentage.toFixed(1)}% <VotePercentageChangeIndicator change={region.slpPercentageChange} /></TableCell>
                                                     <TableCell>{region.uwpVotes.toLocaleString()}<VoteChangeIndicator change={region.uwpVoteChange} /></TableCell>
-                                                     <TableCell>{region.uwpPercentage.toFixed(1)}% <VotePercentageChangeIndicator change={region.uwpPercentageChange} /></TableCell>
-                                                    <TableCell>{region.otherVotes > 0 ? region.otherVotes.toLocaleString() : '-'}<VoteChangeIndicator change={region.otherVoteChange} /></TableCell>
-                                                     <TableCell>{region.otherPercentage > 0 ? `${region.otherPercentage.toFixed(1)}%` : '-'} <VotePercentageChangeIndicator change={region.otherPercentageChange} /></TableCell>
+                                                    <TableCell>{region.uwpPercentage.toFixed(1)}% <VotePercentageChangeIndicator change={region.uwpPercentageChange} /></TableCell>
+                                                    <TableCell>{region.otherVotes > 0 ? region.otherVotes.toLocaleString() : '—'}<VoteChangeIndicator change={region.otherVoteChange} /></TableCell>
+                                                    <TableCell>{region.otherPercentage > 0 ? `${region.otherPercentage.toFixed(1)}%` : '—'} <VotePercentageChangeIndicator change={region.otherPercentageChange} /></TableCell>
                                                 </TableRow>
                                             )) : (
                                                 <TableRow>
@@ -668,10 +668,11 @@ export default function ResultsPage() {
                                           <TableHead>Constituency</TableHead>
                                           <TableHead>Result</TableHead>
                                           <TableHead>SLP Votes</TableHead>
+                                          <TableHead>SLP %</TableHead>
                                           <TableHead>UWP Votes</TableHead>
+                                          <TableHead>UWP %</TableHead>
                                           <TableHead>Other Votes</TableHead>
                                           <TableHead>Total Votes</TableHead>
-                                          <TableHead>Registered Voters</TableHead>
                                           <TableHead>Turnout</TableHead>
                                       </TableRow>
                                   </TableHeader>
@@ -720,12 +721,14 @@ export default function ResultsPage() {
                                                       </span>
                                                     )}
                                                   </TableCell>
+                                                  <TableCell>{cr.totalVotes > 0 ? `${(cr.slpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%'}</TableCell>
                                                   <TableCell>
                                                     <span>
                                                       {cr.uwpVotes.toLocaleString()}
                                                       {currentWinner === 'UWP' && <sup> (+{margin.toLocaleString()})</sup>}
                                                     </span>
                                                   </TableCell>
+                                                  <TableCell>{cr.totalVotes > 0 ? `${(cr.uwpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%'}</TableCell>
                                                   <TableCell>
                                                     {isSpecialConstituency ? (
                                                       <span>
@@ -735,13 +738,12 @@ export default function ResultsPage() {
                                                     ) : cr.otherVotes > 0 ? cr.otherVotes.toLocaleString() : '-'}
                                                   </TableCell>
                                                   <TableCell>{cr.totalVotes.toLocaleString()}</TableCell>
-                                                  <TableCell>{cr.registeredVoters === 0 ? 'N/A' : cr.registeredVoters.toLocaleString()}</TableCell>
                                                   <TableCell>{cr.turnout === 0 ? 'N/A' : `${cr.turnout}%`}</TableCell>
                                               </TableRow>
                                           );
                                       }) : (
                                           <TableRow>
-                                              <TableCell colSpan={8} className="text-center text-muted-foreground h-24">Detailed constituency data not available for this year.</TableCell>
+                                              <TableCell colSpan={9} className="text-center text-muted-foreground h-24">Detailed constituency data not available for this year.</TableCell>
                                           </TableRow>
                                       )}
                                   </TableBody>
