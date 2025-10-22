@@ -619,15 +619,24 @@ export default function ArchivePage() {
                                     return (
                                         <div key={c.id} className="flex items-center justify-between p-3 border rounded-md text-sm">
                                             <div className="flex items-center gap-3">
-                                                <div className="relative h-10 w-10 flex-shrink-0 rounded-full overflow-hidden bg-muted">
-                                                    {c.imageUrl ? (
-                                                        <Image src={c.imageUrl} alt={`${c.firstName} ${c.lastName}`} fill className="object-cover" />
-                                                    ) : party?.logoUrl ? (
-                                                        <Image src={party.logoUrl} alt={`${party.name} logo`} fill className="object-contain p-1" />
-                                                    ) : (
-                                                        <UserSquare className="h-6 w-6 text-muted-foreground m-auto" />
+                                                <Dialog>
+                                                    <DialogTrigger asChild>
+                                                        <div className="relative h-10 w-10 flex-shrink-0 rounded-full overflow-hidden bg-muted cursor-pointer">
+                                                            {c.imageUrl ? (
+                                                                <Image src={c.imageUrl} alt={`${c.firstName} ${c.lastName}`} fill className="object-cover" />
+                                                            ) : party?.logoUrl ? (
+                                                                <Image src={party.logoUrl} alt={`${party.name} logo`} fill className="object-contain p-1" />
+                                                            ) : (
+                                                                <UserSquare className="h-6 w-6 text-muted-foreground m-auto" />
+                                                            )}
+                                                        </div>
+                                                    </DialogTrigger>
+                                                    {c.imageUrl && (
+                                                        <DialogContent className="p-0 border-0 max-w-fit bg-transparent">
+                                                            <Image src={c.imageUrl} alt={`${c.firstName} ${c.lastName}`} width={512} height={512} className="object-contain" />
+                                                        </DialogContent>
                                                     )}
-                                                </div>
+                                                </Dialog>
                                                 <div>
                                                     <p className="font-medium flex items-center gap-2">
                                                         {c.firstName} {c.lastName}
@@ -639,16 +648,6 @@ export default function ArchivePage() {
                                             <div className="flex items-center gap-4">
                                                 <div className="w-40 flex items-center gap-2">
                                                     <CustomUploadButton onFileSelect={handlePhotoUpload} candidate={c} isLoading={uploadingPhotoId === c.id} />
-                                                     {c.imageUrl && (
-                                                        <Dialog>
-                                                            <DialogTrigger asChild>
-                                                                <Button size="sm" variant="outline"><Eye className="mr-2 h-4 w-4" />Preview</Button>
-                                                            </DialogTrigger>
-                                                            <DialogContent className="p-0 border-0 max-w-fit bg-transparent">
-                                                                <Image src={c.imageUrl} alt={`${c.firstName} ${c.lastName}`} width={512} height={512} className="object-contain" />
-                                                            </DialogContent>
-                                                        </Dialog>
-                                                    )}
                                                 </div>
                                                 <Checkbox
                                                     checked={c.isIncumbent}
