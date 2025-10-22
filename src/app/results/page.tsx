@@ -313,31 +313,34 @@ export default function ResultsPage() {
                   </div>
 
                   {summaryData.length > 0 && (
-                    <div className="grid md:grid-cols-1 gap-8 mb-8">
+                     <div className="grid md:grid-cols-1 gap-8 mb-8">
                         <Card>
                           <CardHeader>
                               <CardTitle>Vote Distribution</CardTitle>
                           </CardHeader>
                           <CardContent>
-                            <ChartContainer config={chartConfig} className="h-64 w-full">
+                            <ChartContainer config={chartConfig} className="h-96 w-full">
                                 <ResponsiveContainer>
-                                    <BarChart data={[{name: 'Votes', ...summaryData.reduce((acc, p) => ({...acc, [p.acronym]: p.totalVotes}), {})}]} layout="vertical" stackOffset="expand">
-                                        <XAxis type="number" hide domain={[0, 1]} />
-                                        <YAxis type="category" dataKey="name" hide />
-                                        <Tooltip content={<ChartTooltipContent formatter={(value, name) => [`${(value as number).toLocaleString()} votes`, name]} indicator="dot" />} />
-                                        <Legend content={({ payload }) => (
-                                          <div className="flex justify-center gap-4 mt-4">
-                                            {payload?.map((entry, index) => (
-                                              <div key={`item-${index}`} className="flex items-center gap-2">
-                                                <div className="w-3 h-3" style={{backgroundColor: entry.color}}></div>
-                                                <span className="text-sm">{entry.value}</span>
-                                              </div>
+                                    <BarChart data={summaryData} margin={{ top: 20, right: 20, bottom: 40, left: 20 }}>
+                                        <CartesianGrid vertical={false} />
+                                        <XAxis
+                                            dataKey="acronym"
+                                            tickLine={false}
+                                            axisLine={false}
+                                            tick={<CustomizedAxisTick />}
+                                            height={50}
+                                        />
+                                        <YAxis tickFormatter={(value) => value.toLocaleString()} />
+                                        <Tooltip
+                                            cursor={false}
+                                            content={<ChartTooltipContent formatter={(value) => [(value as number).toLocaleString(), 'votes']} />}
+                                        />
+                                        <Bar dataKey="totalVotes" radius={8}>
+                                            {summaryData.map((p) => (
+                                                <Cell key={p.partyId} fill={p.color} />
                                             ))}
-                                          </div>
-                                        )} />
-                                        {summaryData.map(p => (
-                                            <Bar key={p.partyId} dataKey={p.acronym} fill={p.color} stackId="a" />
-                                        ))}
+                                            <LabelList dataKey="totalVotes" position="top" offset={8} className="fill-foreground text-sm" formatter={(value: number) => value.toLocaleString()} />
+                                        </Bar>
                                     </BarChart>
                                 </ResponsiveContainer>
                             </ChartContainer>
@@ -367,8 +370,8 @@ export default function ResultsPage() {
                                     {currentElectionResults && currentElectionResults.length > 0 ? currentElectionResults.map((cr) => {
                                         const constituency = getConstituencyById(cr.constituencyId);
                                         const is2021 = currentElection?.year === 2021;
-                                        const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
                                         
+                                        const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
                                         const currentWinner = isSpecialConstituency && cr.slpVotes > cr.uwpVotes ? 'IND' : (cr.slpVotes > cr.uwpVotes ? 'SLP' : 'UWP');
                                         
                                         const previousResult = previousElectionResults?.find(r => r.constituencyId === cr.constituencyId);
@@ -442,3 +445,4 @@ export default function ResultsPage() {
     
 
     
+
