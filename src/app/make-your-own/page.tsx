@@ -3,10 +3,10 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import type { Constituency, UserMap } from '@/lib/types';
+import type { Constituency, UserMap, ElectionResult, Election } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirebase, useMemoFirebase, useUser, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, doc, setDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, addDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Pie, PieChart, ResponsiveContainer, Cell, Label } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -124,6 +124,28 @@ export default function MakeYourOwnPage() {
     const siteSettingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'site') : null, [firestore]);
     const { data: siteSettings } = useDoc(siteSettingsRef);
 
+    const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
+    const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
+    
+    const [previousElectionResults, setPreviousElectionResults] = useState<ElectionResult[]>([]);
+
+    useEffect(() => {
+        if (!firestore || !elections || elections.length < 2) return;
+        
+        const previousElection = elections.find(e => e.year === 2021);
+        if (!previousElection) return;
+        
+        const resultsRef = collection(firestore, 'election_results');
+        const q = query(resultsRef, where('electionId', '==', previousElection.id));
+        
+        getDocs(q).then(snapshot => {
+            const results = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ElectionResult));
+            setPreviousElectionResults(results);
+        });
+
+    }, [firestore, elections]);
+    
+
     const [pageTitle, setPageTitle] = useState(DEFAULT_LAYOUT.pageTitle);
     const [pageDescription, setPageDescription] = useState(DEFAULT_LAYOUT.pageDescription);
     const [seatCountTitle, setSeatCountTitle] = useState(DEFAULT_LAYOUT.seatCountTitle);
@@ -186,10 +208,10 @@ export default function MakeYourOwnPage() {
         }
     }
 
-    const isLoading = loadingConstituencies || loadingLayout;
+    const isLoading = loadingConstituencies || loadingLayout || loadingElections;
 
-    const { myMapChartData, seatCounts, allSelected } = useMemo(() => {
-        if (!myMapConstituencies) return { myMapChartData: [], seatCounts: {}, allSelected: false };
+    const { myMapChartData, seatCounts, allSelected, seatChanges } = useMemo(() => {
+        if (!myMapConstituencies) return { myMapChartData: [], seatCounts: {}, allSelected: false, seatChanges: {} };
 
         const counts = myMapConstituencies.reduce((acc, constituency) => {
             const leaning = constituency.politicalLeaning || 'unselected';
@@ -212,8 +234,18 @@ export default function MakeYourOwnPage() {
             fill: opt.value === 'slp' ? 'hsl(var(--chart-5))' : opt.value === 'uwp' ? 'hsl(var(--chart-1))' : opt.value === 'tossup' ? 'hsl(var(--chart-4))' : '#d1d5db',
         })).filter(item => item.value > 0);
 
-        return { myMapChartData: chartData, seatCounts, allSelected };
-    }, [myMapConstituencies]);
+        let seatChanges = { slp: null, uwp: null };
+        if (allSelected && previousElectionResults.length > 0) {
+            const prevSlpSeats = previousElectionResults.filter(r => r.slpVotes > r.uwpVotes).length;
+            const prevUwpSeats = previousElectionResults.filter(r => r.uwpVotes > r.slpVotes).length;
+            seatChanges = {
+                slp: seatCounts.slp - prevSlpSeats,
+                uwp: seatCounts.uwp - prevUwpSeats,
+            }
+        }
+
+        return { myMapChartData: chartData, seatCounts, allSelected, seatChanges };
+    }, [myMapConstituencies, previousElectionResults]);
 
     const chartConfig = politicalLeaningOptions.reduce((acc, option) => {
         // @ts-ignore
@@ -233,6 +265,13 @@ export default function MakeYourOwnPage() {
     const copyToClipboard = () => {
         navigator.clipboard.writeText(shareUrl);
         toast({ title: 'Link Copied!', description: 'The shareable link has been copied to your clipboard.' });
+    };
+
+    const SeatChangeIndicator = ({ change }: { change: number | null }) => {
+        if (change === null) return null;
+        const color = change > 0 ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-muted-foreground';
+        const sign = change > 0 ? '+' : '';
+        return <span className={`text-xs font-semibold ml-1 ${color}`}>({sign}{change})</span>;
     };
 
   return (
@@ -272,7 +311,7 @@ export default function MakeYourOwnPage() {
                         <div className="grid grid-cols-3 gap-4 w-full text-center mb-4">
                             <div>
                                 <p className="font-bold text-lg" style={{color: 'hsl(var(--chart-5))'}}>{seatCounts.slp}</p>
-                                <p className="text-muted-foreground font-semibold text-sm">SLP Seats</p>
+                                <p className="text-muted-foreground font-semibold text-sm">SLP Seats {allSelected && <SeatChangeIndicator change={seatChanges.slp} />}</p>
                             </div>
                             <div>
                                 <p className="font-bold text-lg" style={{color: 'hsl(var(--chart-4))'}}>{seatCounts.tossup}</p>
@@ -280,7 +319,7 @@ export default function MakeYourOwnPage() {
                             </div>
                             <div>
                                 <p className="font-bold text-lg" style={{color: 'hsl(var(--chart-1))'}}>{seatCounts.uwp}</p>
-                                <p className="text-muted-foreground font-semibold text-sm">UWP Seats</p>
+                                <p className="text-muted-foreground font-semibold text-sm">UWP Seats {allSelected && <SeatChangeIndicator change={seatChanges.uwp} />}</p>
                             </div>
                         </div>
                         <ChartContainer config={chartConfig} className="h-40 w-full">
@@ -364,4 +403,3 @@ export default function MakeYourOwnPage() {
     </div>
   );
 }
-
