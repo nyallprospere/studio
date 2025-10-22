@@ -360,10 +360,15 @@ export default function ResultsPage() {
                                     {currentElectionResults && currentElectionResults.length > 0 ? currentElectionResults.map((cr) => {
                                         const constituency = getConstituencyById(cr.constituencyId);
                                         const is2021 = currentElection?.year === 2021;
+                                        const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
                                         
-                                        let currentWinner = cr.slpVotes > cr.uwpVotes ? 'SLP' : 'UWP';
-                                        if (is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central')) {
+                                        let currentWinner = 'TBD';
+                                        if (isSpecialConstituency) {
                                             currentWinner = 'IND';
+                                        } else if (cr.slpVotes > cr.uwpVotes) {
+                                            currentWinner = 'SLP';
+                                        } else if (cr.uwpVotes > cr.slpVotes) {
+                                            currentWinner = 'UWP';
                                         }
                                         
                                         const previousResult = previousElectionResults?.find(r => r.constituencyId === cr.constituencyId);
@@ -390,9 +395,9 @@ export default function ResultsPage() {
                                             <TableCell>
                                                 <span className="font-semibold" style={{ color: winnerColor }}>{resultStatus}</span>
                                             </TableCell>
-                                            <TableCell>{cr.slpVotes.toLocaleString()}</TableCell>
+                                            <TableCell>{isSpecialConstituency ? '-' : cr.slpVotes.toLocaleString()}</TableCell>
                                             <TableCell>{cr.uwpVotes.toLocaleString()}</TableCell>
-                                            <TableCell>{cr.otherVotes.toLocaleString()}</TableCell>
+                                            <TableCell>{isSpecialConstituency ? cr.slpVotes.toLocaleString() : cr.otherVotes.toLocaleString()}</TableCell>
                                             <TableCell className="text-right font-semibold">{cr.totalVotes.toLocaleString()}</TableCell>
                                             <TableCell className="text-right">{cr.registeredVoters === 0 ? 'N/A' : cr.registeredVoters.toLocaleString()}</TableCell>
                                             <TableCell className="text-right">{cr.turnout === 0 ? 'N/A' : `${cr.turnout}%`}</TableCell>
