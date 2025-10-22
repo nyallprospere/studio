@@ -10,6 +10,6 @@ export const UwpLogo = (props: React.SVGProps<SVGSVGElement>) => (
 
 export const SlpLogo = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" {...props}>
-    <polygon points="50,5 61,35 95,35 68,55 78,85 50,65 22,85 32,55 5,35 39,35" fill="#E53935"/>
+    <polygon points="50,5 61,40 98,40 68,62 79,96 50,75 21,96 32,62 2,40 39,40" fill="#E53935"/>
   </svg>
 );
