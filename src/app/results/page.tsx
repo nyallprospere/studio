@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, orderBy, query, getDocs } from 'firebase/firestore';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Bar, BarChart, ResponsiveContainer, XAxis, LabelList, Tooltip, Legend, CartesianGrid, Cell } from "recharts"
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, LabelList, Tooltip, Legend, CartesianGrid, Cell } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -42,7 +42,6 @@ export default function ResultsPage() {
   const sortedElections = useMemo(() => {
     if (!elections) return [];
     
-    // Filter out future elections
     const now = new Date();
     const pastElections = elections.filter(election => {
         const electionYear = election.year;
@@ -152,7 +151,6 @@ export default function ResultsPage() {
 
         let logoUrl = electionLogo?.expandedLogoUrl || electionLogo?.logoUrl || party?.expandedLogoUrl || party?.logoUrl;
 
-        // Use old logo for elections before 1997
         if (currentElection && currentElection.year < 1997) {
             logoUrl = electionLogo?.logoUrl || party?.oldLogoUrl || party?.logoUrl;
         }
@@ -184,7 +182,6 @@ export default function ResultsPage() {
     
     if(otherVotes > 0 || otherSeats > 0) {
         const independentLogo = partyLogos.find(logo => logo.partyId === 'independent' && logo.electionId === currentElection?.id);
-        // Seat change for independents is not tracked across elections
         summary.push({ partyId: 'other', name: 'INDEPENDENTS', acronym: 'IND', seats: otherSeats, totalVotes: otherVotes, color: '#8884d8', logoUrl: independentLogo?.expandedLogoUrl || independentLogo?.logoUrl || currentElection?.independentExpandedLogoUrl || currentElection?.independentLogoUrl, seatChange: null });
     }
 
