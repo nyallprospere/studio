@@ -186,7 +186,7 @@ export default function ManageLogosPage() {
                                                 <DialogTrigger asChild>
                                                     <Image src={group.logoUrl} alt="Standard Logo" fill className="object-contain cursor-pointer" />
                                                 </DialogTrigger>
-                                                <DialogContent className="p-0 border-0 max-w-fit">
+                                                <DialogContent className="p-0 border-0 max-w-fit bg-transparent">
                                                     <Image src={group.logoUrl} alt="Standard Logo" width={512} height={512} className="object-contain" />
                                                 </DialogContent>
                                             </Dialog>
@@ -201,7 +201,7 @@ export default function ManageLogosPage() {
                                                 <DialogTrigger asChild>
                                                   <Image src={group.expandedLogoUrl} alt="Expanded Logo" fill className="object-contain cursor-pointer"/>
                                                 </DialogTrigger>
-                                                <DialogContent className="p-0 border-0 max-w-fit">
+                                                <DialogContent className="p-0 border-0 max-w-fit bg-transparent">
                                                     <Image src={group.expandedLogoUrl} alt="Expanded Logo" width={800} height={400} className="object-contain" />
                                                 </DialogContent>
                                               </Dialog>
