@@ -4,7 +4,7 @@
 import { useState, useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { collection, addDoc, updateDoc, doc, query, where, getDocs, writeBatch, deleteDoc } from 'firebase/firestore';
-import type { Party, Election, PartyLogo } from '@/lib/types';
+import type { Party, Election, PartyLogo, Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -41,10 +41,12 @@ export default function ManageLogosPage() {
   const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const electionsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'elections') : null, [firestore]);
   const partyLogosQuery = useMemoFirebase(() => firestore ? collection(firestore, 'party_logos') : null, [firestore]);
+  const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
 
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
   const { data: partyLogos, isLoading: loadingLogos, error } = useCollection<PartyLogo>(partyLogosQuery);
+  const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
   
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedPartyForUpload, setSelectedPartyForUpload] = useState<Party | null>(null);
@@ -145,7 +147,7 @@ export default function ManageLogosPage() {
   }
 
 
-  const isLoading = loadingParties || loadingElections || loadingLogos;
+  const isLoading = loadingParties || loadingElections || loadingLogos || loadingConstituencies;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -163,6 +165,7 @@ export default function ManageLogosPage() {
             onClose={() => setIsUploadDialogOpen(false)}
             party={selectedPartyForUpload}
             elections={elections || []}
+            constituencies={constituencies || []}
             onSuccess={handleUploadSuccess}
           />
           <Tabs defaultValue={allParties[0]?.id} className="w-full">
@@ -274,4 +277,3 @@ export default function ManageLogosPage() {
     </div>
   );
 }
-
