@@ -61,6 +61,7 @@ function CandidateBox({
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}${isIncumbent ? '*' : ''}` : 'Candidate TBD';
 
     const votePercentage = totalVotes && votes ? (votes / totalVotes) * 100 : 0;
+    const textColorClass = party?.acronym === 'SLP' ? 'text-white' : 'text-black';
 
     return (
         <>
@@ -69,7 +70,7 @@ function CandidateBox({
                 isWinner && "border-2 border-green-600"
             )}>
                  {isWinner && (
-                    <div className="absolute -top-6 -right-2 text-center">
+                    <div className="absolute -top-7 -right-2 text-center">
                          <p className="font-bold text-xs -mb-1" style={{color: statusColor}}>{electionStatus}</p>
                         <CheckCircle2 className="h-5 w-5 text-green-600 bg-white rounded-full mx-auto" />
                     </div>
@@ -102,12 +103,12 @@ function CandidateBox({
                             {isStriped && barFill === 'blue-red-stripes' && <div className="absolute inset-0 red-stripes-overlay"></div>}
                         </div>
                         <div className="absolute inset-0 flex items-center justify-between px-2">
-                             <span className="text-black font-bold text-xs">
+                             <span className={cn("font-bold text-xs", textColorClass)}>
                                 {votes?.toLocaleString()}
-                                {isWinner && margin ? <sup> (+{margin.toLocaleString()})</sup> : null}
+                                {isWinner && margin ? <sup className="font-semibold"> (+{margin.toLocaleString()})</sup> : null}
                             </span>
                             <div className="flex items-baseline gap-1">
-                                <span className="text-black font-bold text-xs">
+                                <span className={cn("font-bold text-xs", textColorClass)}>
                                     {votePercentage.toFixed(1)}%
                                 </span>
                                 {votePercentageChange !== null && typeof votePercentageChange !== 'undefined' && (
