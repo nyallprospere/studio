@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, orderBy, query, getDocs } from 'firebase/firestore';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, Cell, LabelList } from "recharts"
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, LabelList } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -204,6 +204,18 @@ export default function ResultsPage() {
     return config;
   }, [summaryData]);
   
+  const voteDistributionData = useMemo(() => {
+    const totalVotes = summaryData.reduce((acc, p) => acc + p.totalVotes, 0);
+    if(totalVotes === 0) return [];
+    return [{
+        name: 'Votes',
+        ...summaryData.reduce((acc, p) => {
+            acc[p.acronym] = p.totalVotes;
+            return acc;
+        }, {} as Record<string, number>)
+    }];
+  }, [summaryData]);
+  
   const handleYearChange = (electionId: string) => {
     setSelectedElectionId(electionId);
     router.push(`/results?year=${electionId}`);
@@ -230,26 +242,6 @@ export default function ResultsPage() {
         return { ...con, politicalLeaning: 'tossup' }; // Default for no result
     });
   }, [constituencies, currentElectionResults, currentElection]);
-
-  const CustomizedAxisTick = (props: any) => {
-    const { x, y, payload } = props;
-    const partyAcronym = payload.value;
-    const partyData = summaryData.find(p => p.acronym === partyAcronym);
-  
-    if (!partyData) return null;
-  
-    return (
-      <g transform={`translate(${x},${y})`}>
-        <text x={0} y={0} dy={16} textAnchor="middle" fill="#666" fontWeight="bold">
-          {partyAcronym}
-        </text>
-        {partyData.logoUrl && (
-          <image href={partyData.logoUrl} x={-18} y={20} height="36" width="36" />
-        )}
-      </g>
-    );
-  };
-
 
   if (loading) {
     return (
@@ -290,10 +282,10 @@ export default function ResultsPage() {
                   <h3 className="text-2xl font-headline mb-4">
                     {currentElection.name} Election Summary
                   </h3>
-                    <div className="space-y-8 mb-8">
-                       <div>
+                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+                       <div className="xl:col-span-2">
                             <h4 className="text-lg font-semibold mb-2">Seat Distribution</h4>
-                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                 {summaryData.map((summaryItem) => (
                                 <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
                                     <CardHeader className="flex flex-col items-center text-center p-4">
@@ -323,29 +315,36 @@ export default function ResultsPage() {
                                 <h4 className="text-lg font-semibold mb-2">Vote Distribution</h4>
                                 <Card>
                                 <CardContent className="pt-6">
-                                    <ChartContainer config={chartConfig} className="h-64 w-full">
+                                     <ChartContainer config={chartConfig} className="h-32 w-full">
                                         <ResponsiveContainer>
-                                            <BarChart data={summaryData} margin={{ top: 20, right: 20, bottom: 40, left: 20 }}>
-                                                <CartesianGrid vertical={false} />
-                                                <XAxis
-                                                    dataKey="acronym"
-                                                    tickLine={false}
-                                                    axisLine={false}
-                                                    tick={<CustomizedAxisTick />}
-                                                    height={50}
-                                                />
-                                                <YAxis hide={true} />
-                                                <Tooltip
-                                                    cursor={false}
-                                                    content={<ChartTooltipContent formatter={(value) => [(value as number).toLocaleString(), 'votes']} />}
-                                                />
-                                                <Bar dataKey="totalVotes" radius={8}>
-                                                    {summaryData.map((p) => (
-                                                        <Cell key={p.partyId} fill={p.color} />
-                                                    ))}
-                                                    <LabelList dataKey="totalVotes" position="top" offset={8} className="fill-foreground text-sm" formatter={(value: number) => value.toLocaleString()} />
+                                        <BarChart layout="vertical" data={voteDistributionData} stackOffset="expand">
+                                            <XAxis type="number" hide />
+                                            <YAxis type="category" dataKey="name" hide />
+                                            <Tooltip
+                                                cursor={false}
+                                                content={<ChartTooltipContent 
+                                                    hideLabel 
+                                                    formatter={(value, name, item) => (
+                                                        <div className="flex items-center gap-2">
+                                                           <div className="h-2 w-2 rounded-full" style={{backgroundColor: item.color}}/>
+                                                           <div className="flex justify-between w-full">
+                                                                <span>{name}</span>
+                                                                <span className="font-bold ml-4">{(value as number).toLocaleString()}</span>
+                                                           </div>
+                                                        </div>
+                                                    )}
+                                                />}
+                                            />
+                                            {summaryData.map(p => (
+                                                <Bar key={p.partyId} dataKey={p.acronym} fill={p.color} stackId="a" radius={0}>
+                                                   <LabelList 
+                                                        position="inside"
+                                                        valueAccessor={(props: any) => `${Math.round(props.width)}%`}
+                                                        className="fill-white font-bold text-sm"
+                                                    />
                                                 </Bar>
-                                            </BarChart>
+                                            ))}
+                                        </BarChart>
                                         </ResponsiveContainer>
                                     </ChartContainer>
                                 </CardContent>
