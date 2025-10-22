@@ -71,7 +71,7 @@ export function ImportDialog({ isOpen, onClose, onImport, elections, constituenc
             const matchingField = REQUIRED_HEADERS.find(h => h.toLowerCase() === normalizedHeader);
             if (matchingField) {
                 initialMapping[header] = matchingField;
-            } else if (normalizedHeader === 'other' || normalizedHeader === 'othervotes') {
+            } else if (normalizedHeader === 'other' || normalizedHeader === 'othervotes' || normalizedHeader === 'indvotes') {
                 initialMapping[header] = 'otherVotes';
             } else if (normalizedHeader.includes('registered')) {
                  initialMapping[header] = 'registeredVoters';
@@ -177,7 +177,7 @@ export function ImportDialog({ isOpen, onClose, onImport, elections, constituenc
                                                 <SelectItem value="constituency">Constituency Name</SelectItem>
                                                 <SelectItem value="slpVotes">SLP Votes</SelectItem>
                                                 <SelectItem value="uwpVotes">UWP Votes</SelectItem>
-                                                <SelectItem value="otherVotes">Other Votes</SelectItem>
+                                                <SelectItem value="otherVotes">IND Votes</SelectItem>
                                                 <SelectItem value="registeredVoters">Registered Voters</SelectItem>
                                             </SelectContent>
                                         </Select>

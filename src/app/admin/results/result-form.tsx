@@ -181,7 +181,7 @@ export function ResultForm({ onSubmit, initialData, onCancel, elections, constit
                 name="otherVotes"
                 render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Other Votes</FormLabel>
+                    <FormLabel>IND Votes</FormLabel>
                     <FormControl>
                     <Input type="number" {...field} />
                     </FormControl>

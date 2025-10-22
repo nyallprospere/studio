@@ -428,7 +428,7 @@ export default function AdminResultsPage() {
                         <TableHead>Registered Voters</TableHead>
                         <TableHead>SLP Votes</TableHead>
                         <TableHead>UWP Votes</TableHead>
-                        <TableHead>Other Votes</TableHead>
+                        <TableHead>IND Votes</TableHead>
                         <TableHead>Total Votes</TableHead>
                         <TableHead>Turnout</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
