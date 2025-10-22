@@ -56,14 +56,19 @@ export default function ManageLogosPage() {
   const [selectedPartyForUpload, setSelectedPartyForUpload] = useState<Party | null>(null);
   const [deleteLocks, setDeleteLocks] = useState<Record<string, boolean>>({});
   const [electionFilter, setElectionFilter] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<string>('');
 
 
   const sortedElections = useMemo(() => elections?.sort((a, b) => b.year - a.year) || [], [elections]);
 
   const allParties = useMemo(() => {
     if (!parties) return [];
-    return [...parties, { id: 'independent', name: 'Independent', acronym: 'IND', color: '#808080' } as Party];
-  }, [parties]);
+    const partyList = [...parties, { id: 'independent', name: 'Independent', acronym: 'IND', color: '#808080' } as Party];
+    if (!activeTab && partyList.length > 0) {
+      setActiveTab(partyList[0].id);
+    }
+    return partyList;
+  }, [parties, activeTab]);
   
   const handleUploadClick = (party: Party) => {
     setSelectedPartyForUpload(party);
@@ -80,8 +85,10 @@ export default function ManageLogosPage() {
 
     const logosForParty = partyLogos.filter(logo => {
         if (logo.partyId !== partyId) return false;
-        if (partyId !== 'independent' || electionFilter === 'all') return true;
-        return logo.electionId === electionFilter;
+        if (partyId === 'independent' && activeTab === 'independent' && electionFilter !== 'all') {
+             return logo.electionId === electionFilter;
+        }
+        return true;
     });
     
     if (partyId === 'independent') {
@@ -177,17 +184,19 @@ export default function ManageLogosPage() {
             description="Assign specific logos to parties for each election."
         />
         <div className="flex items-center gap-2">
-            <Select value={electionFilter} onValueChange={setElectionFilter}>
-                <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Filter by year" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">All Years</SelectItem>
-                    {sortedElections.map(e => (
-                        <SelectItem key={e.id} value={e.id}>{e.year}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            {activeTab === 'independent' && (
+                <Select value={electionFilter} onValueChange={setElectionFilter}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Filter by year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Years</SelectItem>
+                        {sortedElections.map(e => (
+                            <SelectItem key={e.id} value={e.id}>{e.year}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            )}
         </div>
       </div>
 
@@ -203,7 +212,7 @@ export default function ManageLogosPage() {
             constituencies={constituencies || []}
             onSuccess={handleUploadSuccess}
           />
-          <Tabs defaultValue={allParties[0]?.id} className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList>
                   {allParties.map(party => (
                       <TabsTrigger key={party.id} value={party.id} style={{ color: party.color }}>{party.name}</TabsTrigger>
@@ -320,5 +329,6 @@ export default function ManageLogosPage() {
     
 
     
+
 
 
