@@ -123,7 +123,7 @@ function CandidateBox({
                 </div>
 
                 {candidate?.isIncumbent && (
-                    <div className="absolute bottom-1 right-2 text-xs font-semibold text-muted-foreground">
+                    <div className="absolute top-1 right-2 text-xs font-semibold text-muted-foreground">
                         Incumbent
                     </div>
                 )}
