@@ -138,20 +138,28 @@ export default function MakeYourOwnPage() {
 
     const isLoading = loadingConstituencies || loadingLayout;
 
-    const myMapChartData = useMemo(() => {
-        if (!myMapConstituencies) return [];
+    const { myMapChartData, seatCounts } = useMemo(() => {
+        if (!myMapConstituencies) return { myMapChartData: [], seatCounts: {} };
 
         const counts = myMapConstituencies.reduce((acc, constituency) => {
             const leaning = constituency.politicalLeaning || 'unselected';
             acc[leaning] = (acc[leaning] || 0) + 1;
             return acc;
         }, {} as Record<string, number>);
+        
+        const seatCounts = {
+            slp: counts['slp'] || 0,
+            uwp: counts['uwp'] || 0,
+            tossup: counts['tossup'] || 0,
+        };
 
-        return makeYourOwnLeaningOptions.map(opt => ({
+        const chartData = makeYourOwnLeaningOptions.map(opt => ({
             name: opt.label,
             value: counts[opt.value] || 0,
             fill: opt.value === 'slp' ? 'hsl(var(--chart-5))' : opt.value === 'uwp' ? 'hsl(var(--chart-1))' : opt.value === 'tossup' ? 'hsl(var(--chart-4))' : '#d1d5db',
         })).filter(item => item.value > 0);
+
+        return { myMapChartData: chartData, seatCounts };
     }, [myMapConstituencies]);
 
     const chartConfig = politicalLeaningOptions.reduce((acc, option) => {
@@ -195,13 +203,17 @@ export default function MakeYourOwnPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="md:col-span-1">
-            <InteractiveSvgMap 
-                constituencies={myMapConstituencies} 
-                selectedConstituencyId={selectedMyMapConstituencyId}
-                onConstituencyClick={setSelectedMyMapConstituencyId}
-                onLeaningChange={handleMyMapLeaningChange}
-                isMakeYourOwn={true}
-            />
+             <Card>
+                <CardContent className="p-2">
+                    <InteractiveSvgMap 
+                        constituencies={myMapConstituencies} 
+                        selectedConstituencyId={selectedMyMapConstituencyId}
+                        onConstituencyClick={setSelectedMyMapConstituencyId}
+                        onLeaningChange={handleMyMapLeaningChange}
+                        isMakeYourOwn={true}
+                    />
+                </CardContent>
+            </Card>
           </div>
             <div>
                 <Card>
@@ -226,6 +238,20 @@ export default function MakeYourOwnPage() {
                         )}
                     </CardHeader>
                     <CardContent className="flex flex-col items-center">
+                        <div className="grid grid-cols-3 gap-4 w-full text-center mb-4">
+                            <div>
+                                <p className="font-bold text-lg" style={{color: 'hsl(var(--chart-5))'}}>{seatCounts.slp}</p>
+                                <p className="text-muted-foreground font-semibold text-sm">SLP Seats</p>
+                            </div>
+                            <div>
+                                <p className="font-bold text-lg" style={{color: 'hsl(var(--chart-4))'}}>{seatCounts.tossup}</p>
+                                <p className="text-muted-foreground font-semibold text-sm">Tossups</p>
+                            </div>
+                            <div>
+                                <p className="font-bold text-lg" style={{color: 'hsl(var(--chart-1))'}}>{seatCounts.uwp}</p>
+                                <p className="text-muted-foreground font-semibold text-sm">UWP Seats</p>
+                            </div>
+                        </div>
                         <ChartContainer config={chartConfig} className="h-40 w-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
@@ -272,5 +298,6 @@ export default function MakeYourOwnPage() {
     </div>
   );
 }
+
 
 
