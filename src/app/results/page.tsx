@@ -721,7 +721,15 @@ export default function ResultsPage() {
                                                 if (prevTotalVotes > 0) {
                                                   const prevSlpPercent = (previousResult.slpVotes / prevTotalVotes) * 100;
                                                   const prevUwpPercent = (previousResult.uwpVotes / prevTotalVotes) * 100;
-                                                  const prevIndPercent = (previousResult.otherVotes / prevTotalVotes) * 100;
+                                                  
+                                                  const prevIsSpecial = previousElection?.year === 2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+                                                  let prevIndPercent = 0;
+                                                  if(prevIsSpecial) {
+                                                      prevIndPercent = (previousResult.slpVotes / prevTotalVotes) * 100;
+                                                  } else {
+                                                      prevIndPercent = (previousResult.otherVotes / prevTotalVotes) * 100;
+                                                  }
+                                                  
                                                   slpVotePercentageChange = currentSlpPercent - prevSlpPercent;
                                                   uwpVotePercentageChange = currentUwpPercent - prevUwpPercent;
                                                   indVotePercentageChange = currentIndPercent - prevIndPercent;
@@ -758,7 +766,7 @@ export default function ResultsPage() {
                                                         <span>
                                                         {isSpecialConstituency ? (cr.totalVotes > 0 ? `${(cr.slpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%') : (cr.otherVotes > 0 ? `${(cr.otherVotes / cr.totalVotes * 100).toFixed(1)}%` : '-')}
                                                         </span>
-                                                        {isSpecialConstituency && <VotePercentageChangeIndicator change={indVotePercentageChange} />}
+                                                        <VotePercentageChangeIndicator change={indVotePercentageChange} />
                                                     </div>
                                                   </TableCell>
                                                   <TableCell>{cr.totalVotes.toLocaleString()}</TableCell>
