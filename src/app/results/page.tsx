@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, orderBy, query, getDocs } from 'firebase/firestore';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Bar, BarChart, ResponsiveContainer, XAxis, Tooltip, CartesianGrid, LabelList, Cell } from "recharts"
+import { Bar, BarChart, ResponsiveContainer, XAxis, Tooltip, CartesianGrid, LabelList, Cell, YAxis } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -162,14 +162,28 @@ export default function ResultsPage() {
     }
 
     const calculatePreviousSeats = (partyId: string) => {
-      if (!previousElectionResults) return 0;
-      return previousElectionResults.reduce((acc, result) => {
+        if (!previousElectionResults || !parties) return 0;
+
+        if (partyId === 'other') {
+            const slpParty = parties.find(p => p.acronym === 'SLP');
+            const uwpParty = parties.find(p => p.acronym === 'UWP');
+            if (!slpParty || !uwpParty) return 0;
+            return previousElectionResults.reduce((acc, result) => {
+                if (result.slpVotes > result.uwpVotes || result.uwpVotes > result.slpVotes) {
+                    return acc;
+                }
+                return acc +1;
+            }, 0);
+        }
+        
         const party = getPartyById(partyId);
-        if (!party) return acc;
-        if (party.acronym === 'SLP' && result.slpVotes > result.uwpVotes) return acc + 1;
-        if (party.acronym === 'UWP' && result.uwpVotes > result.slpVotes) return acc + 1;
-        return acc;
-      }, 0);
+        if (!party) return 0;
+
+        return previousElectionResults.reduce((acc, result) => {
+            if (party.acronym === 'SLP' && result.slpVotes > result.uwpVotes) return acc + 1;
+            if (party.acronym === 'UWP' && result.uwpVotes > result.slpVotes) return acc + 1;
+            return acc;
+        }, 0);
     }
 
     const getSeatChange = (partyId: string, currentSeats: number) => {
@@ -185,7 +199,7 @@ export default function ResultsPage() {
     
     if(otherVotes > 0 || otherSeats > 0) {
         const independentLogo = partyLogos.find(logo => logo.partyId === 'independent' && logo.electionId === currentElection?.id);
-        summary.push({ partyId: 'other', name: 'INDEPENDENTS', acronym: 'IND', seats: otherSeats, totalVotes: otherVotes, color: '#8884d8', logoUrl: independentLogo?.expandedLogoUrl || independentLogo?.logoUrl || currentElection?.independentExpandedLogoUrl || currentElection?.independentLogoUrl, seatChange: null });
+        summary.push({ partyId: 'other', name: 'INDEPENDENTS', acronym: 'IND', seats: otherSeats, totalVotes: otherVotes, color: '#8884d8', logoUrl: independentLogo?.expandedLogoUrl || independentLogo?.logoUrl || currentElection?.independentExpandedLogoUrl || currentElection?.independentLogoUrl, seatChange: getSeatChange('other', otherSeats) });
     }
 
     return summary
@@ -209,18 +223,6 @@ export default function ResultsPage() {
         });
     }
     return config;
-  }, [summaryData]);
-  
-  const voteDistributionData = useMemo(() => {
-    const totalVotes = summaryData.reduce((acc, p) => acc + p.totalVotes, 0);
-    if(totalVotes === 0) return [];
-    return [{
-        name: 'Votes',
-        ...summaryData.reduce((acc, p) => {
-            acc[p.acronym] = p.totalVotes;
-            return acc;
-        }, {} as Record<string, number>)
-    }];
   }, [summaryData]);
   
   const handleYearChange = (electionId: string) => {
@@ -289,31 +291,25 @@ export default function ResultsPage() {
                   <h3 className="text-2xl font-headline mb-4">
                     {currentElection.name} Election Summary
                   </h3>
-                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                         {summaryData.map((summaryItem) => (
                         <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
-                            <CardHeader className="flex flex-col items-center p-4">
-                            <CardTitle className="text-base">{summaryItem.name}</CardTitle>
-                            {summaryItem.logoUrl && (
-                                <div className="relative h-12 w-24 mt-2">
-                                    <Image src={summaryItem.logoUrl} alt={`${summaryItem.name} logo`} fill className="object-contain" />
-                                </div>
-                            )}
+                            <CardHeader className="flex flex-row items-center justify-between p-4">
+                                <CardTitle className="text-base">{summaryItem.name}</CardTitle>
+                                {summaryItem.logoUrl && (
+                                    <div className="relative h-12 w-24">
+                                        <Image src={summaryItem.logoUrl} alt={`${summaryItem.name} logo`} fill className="object-contain" />
+                                    </div>
+                                )}
                             </CardHeader>
                             <CardContent className="text-center p-4 pt-0">
-                                <div>
-                                    <div className="text-2xl font-bold">{summaryItem.seats} Seats</div>
-                                    {summaryItem.seatChange !== null && (
-                                        <p className={`flex items-center justify-center gap-1 text-xs font-semibold ${summaryItem.seatChange > 0 ? 'text-green-600' : summaryItem.seatChange < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
-                                            {summaryItem.seatChange > 0 ? <ArrowUp className="h-3 w-3" /> : summaryItem.seatChange < 0 ? <ArrowDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
-                                            {summaryItem.seatChange > 0 ? `+${summaryItem.seatChange}` : summaryItem.seatChange} seats
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="mt-2">
-                                    <div className="font-bold">{summaryItem.votePercentage}%</div>
-                                    <div className="text-xs text-muted-foreground">({summaryItem.totalVotes.toLocaleString()} votes)</div>
-                                </div>
+                                <div className="text-2xl font-bold">{summaryItem.seats} Seats</div>
+                                {summaryItem.seatChange !== null && (
+                                    <p className={`flex items-center justify-center gap-1 text-xs font-semibold ${summaryItem.seatChange > 0 ? 'text-green-600' : summaryItem.seatChange < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
+                                        {summaryItem.seatChange > 0 ? <ArrowUp className="h-3 w-3" /> : summaryItem.seatChange < 0 ? <ArrowDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+                                        {summaryItem.seatChange > 0 ? `+${summaryItem.seatChange}` : summaryItem.seatChange} seats
+                                    </p>
+                                )}
                             </CardContent>
                         </Card>
                         ))}
