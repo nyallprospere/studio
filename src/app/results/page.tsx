@@ -486,7 +486,7 @@ export default function ResultsPage() {
     if (change === null || !previousElection) return null;
     const color = change > 0 ? 'text-green-700' : change < 0 ? 'text-red-700' : 'text-muted-foreground';
     const sign = change > 0 ? '+' : change < 0 ? '-' : '';
-    if (change === 0) return <span className={cn('text-xs font-semibold ml-1', color)}>(0)</span>;
+    if (change === 0) return <span className={cn('text-xs font-semibold flex items-center', color)}>(0)</span>;
     return <span className={cn('text-xs font-semibold flex items-center', color)}>{sign}{Math.abs(change).toLocaleString()}</span>;
   };
 
@@ -637,12 +637,12 @@ export default function ResultsPage() {
                                             {regionalVoteResults && regionalVoteResults.length > 0 ? regionalVoteResults.map((region) => (
                                                 <TableRow key={region.id}>
                                                     <TableCell className="font-medium">{region.name}</TableCell>
-                                                    <TableCell>{region.slpVotes.toLocaleString()}<VoteChangeIndicator change={region.slpVoteChange} /></TableCell>
-                                                    <TableCell>{region.slpPercentage.toFixed(1)}% <VotePercentageChangeIndicator change={region.slpPercentageChange} /></TableCell>
-                                                    <TableCell>{region.uwpVotes.toLocaleString()}<VoteChangeIndicator change={region.uwpVoteChange} /></TableCell>
-                                                    <TableCell>{region.uwpPercentage.toFixed(1)}% <VotePercentageChangeIndicator change={region.uwpPercentageChange} /></TableCell>
-                                                    <TableCell>{region.otherVotes > 0 ? region.otherVotes.toLocaleString() : '—'}<VoteChangeIndicator change={region.otherVoteChange} /></TableCell>
-                                                    <TableCell>{region.otherPercentage > 0 ? `${region.otherPercentage.toFixed(1)}%` : '—'} <VotePercentageChangeIndicator change={region.otherPercentageChange} /></TableCell>
+                                                    <TableCell><div className="flex items-center gap-1">{region.slpVotes.toLocaleString()}<VoteChangeIndicator change={region.slpVoteChange} /></div></TableCell>
+                                                    <TableCell><div className="flex items-center gap-1">{region.slpPercentage.toFixed(1)}% <VotePercentageChangeIndicator change={region.slpPercentageChange} /></div></TableCell>
+                                                    <TableCell><div className="flex items-center gap-1">{region.uwpVotes.toLocaleString()}<VoteChangeIndicator change={region.uwpVoteChange} /></div></TableCell>
+                                                    <TableCell><div className="flex items-center gap-1">{region.uwpPercentage.toFixed(1)}% <VotePercentageChangeIndicator change={region.uwpPercentageChange} /></div></TableCell>
+                                                    <TableCell><div className="flex items-center gap-1">{region.otherVotes > 0 ? region.otherVotes.toLocaleString() : '—'}<VoteChangeIndicator change={region.otherVoteChange} /></div></TableCell>
+                                                    <TableCell><div className="flex items-center gap-1">{region.otherPercentage > 0 ? `${region.otherPercentage.toFixed(1)}%` : '—'} <VotePercentageChangeIndicator change={region.otherPercentageChange} /></div></TableCell>
                                                 </TableRow>
                                             )) : (
                                                 <TableRow>
@@ -729,11 +729,21 @@ export default function ResultsPage() {
                                                   <TableCell>
                                                     {isSpecialConstituency ? '-' : cr.slpVotes.toLocaleString()}
                                                   </TableCell>
-                                                  <TableCell className="flex items-center gap-1">{cr.totalVotes > 0 ? `${(cr.slpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%'} <VotePercentageChangeIndicator change={slpVotePercentageChange} /></TableCell>
+                                                  <TableCell>
+                                                    <div className="flex flex-col">
+                                                      <span>{cr.totalVotes > 0 ? `${(cr.slpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%'}</span>
+                                                      <VotePercentageChangeIndicator change={slpVotePercentageChange} />
+                                                    </div>
+                                                  </TableCell>
                                                   <TableCell>
                                                     {cr.uwpVotes.toLocaleString()}
                                                   </TableCell>
-                                                  <TableCell className="flex items-center gap-1">{cr.totalVotes > 0 ? `${(cr.uwpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%'} <VotePercentageChangeIndicator change={uwpVotePercentageChange} /></TableCell>
+                                                  <TableCell>
+                                                    <div className="flex flex-col">
+                                                      <span>{cr.totalVotes > 0 ? `${(cr.uwpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%'}</span>
+                                                      <VotePercentageChangeIndicator change={uwpVotePercentageChange} />
+                                                    </div>
+                                                  </TableCell>
                                                   <TableCell>
                                                     {isSpecialConstituency ? cr.slpVotes.toLocaleString() : cr.otherVotes > 0 ? cr.otherVotes.toLocaleString() : '-'}
                                                   </TableCell>
