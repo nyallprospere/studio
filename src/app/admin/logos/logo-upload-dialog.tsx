@@ -158,6 +158,7 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
                                 placeholder="Select elections..."
                             >
                                 <CommandInput placeholder="Search elections..." />
+                                <ScrollArea className="h-48">
                                   <CommandGroup className="grid grid-cols-3 gap-1">
                                   {electionOptions.map((option) => (
                                       <CommandItem
@@ -181,6 +182,7 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
                                       </CommandItem>
                                   ))}
                                   </CommandGroup>
+                                </ScrollArea>
                             </MultiSelect>
                             <FormMessage />
                         </FormItem>
