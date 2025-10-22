@@ -215,7 +215,7 @@ export default function ResultsPage() {
   
     const summary = [
         { partyId: slp.id, name: "Saint Lucia Labour Party", acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color, logoUrl: getElectionLogo(slp.id), seatChange: getSeatChange(slp.id, slpSeats) },
-        { partyId: uwp.id, name: uwp.name, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color, logoUrl: getElectionLogo(uwp.id), seatChange: getSeatChange(uwp.id, uwpSeats) },
+        { partyId: uwp.id, name: "United Workers Party", acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color, logoUrl: getElectionLogo(uwp.id), seatChange: getSeatChange(uwp.id, uwpSeats) },
     ];
     
     if(otherVotes > 0 || otherSeats > 0) {
