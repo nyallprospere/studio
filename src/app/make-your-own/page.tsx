@@ -193,8 +193,8 @@ export default function MakeYourOwnPage() {
       {isLoading || !constituencies ? (
           <ConstituenciesPageSkeleton />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="md:col-span-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="md:col-span-1">
             <InteractiveSvgMap 
                 constituencies={myMapConstituencies} 
                 selectedConstituencyId={selectedMyMapConstituencyId}
@@ -218,7 +218,7 @@ export default function MakeYourOwnPage() {
                         )}
                         {isEditingSeatCountDescription && user ? (
                             <div className="flex items-center gap-2">
-                            <Input value={seatCountDescription} onChange={(e) => setSeatCountDescription(e.target.value)} />
+                            <Input value={pageDescription} onChange={(e) => setSeatCountDescription(e.target.value)} />
                             <Button size="sm" onClick={() => setIsEditingSeatCountDescription(false)}>Save</Button>
                             </div>
                         ) : (
@@ -272,4 +272,5 @@ export default function MakeYourOwnPage() {
     </div>
   );
 }
+
 
