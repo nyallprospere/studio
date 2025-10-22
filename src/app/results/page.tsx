@@ -46,7 +46,7 @@ export default function ResultsPage() {
     // Filter out future elections, except for 2026 if we're past the hardcoded election date
     const pastElections = elections.filter(election => {
         if (election.year > now.getFullYear()) {
-            if (election.year === 2026 && now > new Date('2026-07-26T00:00:00')) {
+             if (election.year === 2026 && now > new Date('2026-07-26T00:00:00')) {
                 return true;
             }
             return false;
@@ -136,11 +136,11 @@ export default function ResultsPage() {
       const isSpecialConstituency = is2021 && (constituency?.id === castriesNorth?.id || constituency?.id === castriesCentral?.id);
 
       if (isSpecialConstituency) {
-        otherVotes += result.slpVotes; // Add SLP votes to 'Other'
+        otherVotes += result.slpVotes; // Add SLP votes to 'Other' for IND
         uwpVotes += result.uwpVotes;
         otherVotes += result.otherVotes;
         if (result.slpVotes > result.uwpVotes) {
-          otherSeats++; // Add SLP seat to 'Other'
+          otherSeats++; // Add SLP seat to 'Other' for IND
         } else if (result.uwpVotes > result.slpVotes) {
           uwpSeats++;
         }
@@ -280,45 +280,81 @@ export default function ResultsPage() {
                   </div>
 
                   {summaryData.length > 0 && (
-                    <Card className="mb-8">
-                        <CardHeader>
-                            <CardTitle>Seat Distribution</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ChartContainer config={chartConfig} className="h-40 w-full">
+                    <div className="grid md:grid-cols-2 gap-8 mb-8">
+                      <Card>
+                          <CardHeader>
+                              <CardTitle>Seat Distribution</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                              <ChartContainer config={chartConfig} className="h-40 w-full">
+                                  <ResponsiveContainer>
+                                      <BarChart data={summaryData} layout="vertical" margin={{left: 30}}>
+                                          <XAxis type="number" hide />
+                                          <YAxis dataKey="acronym" type="category" hide/>
+                                          <ChartTooltip 
+                                              cursor={false}
+                                              content={<ChartTooltipContent 
+                                                  formatter={(value, name) => [`${value} seats`, name]}
+                                                  indicator="dot" 
+                                              />}
+                                          />
+                                          <Bar dataKey="seats" stackId="a" radius={[0, 4, 4, 0]}>
+                                              {summaryData.map((entry, index) => (
+                                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                              ))}
+                                              <LabelList
+                                                  dataKey="logoUrl"
+                                                  position="insideLeft"
+                                                  offset={10}
+                                                  content={({ value, x, y, width, height }) => 
+                                                      value ? (
+                                                          <foreignObject x={(x || 0) - 25} y={(y || 0) - 5} width={30} height={30}>
+                                                            <Image src={value} alt="logo" width={30} height={30} className="object-contain bg-transparent" />
+                                                          </foreignObject>
+                                                      ) : null
+                                                  }
+                                              />
+                                          </Bar>
+                                      </BarChart>
+                                  </ResponsiveContainer>
+                              </ChartContainer>
+                          </CardContent>
+                      </Card>
+                       <Card>
+                          <CardHeader>
+                              <CardTitle>Vote Distribution</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                               <ChartContainer config={chartConfig} className="h-40 w-full">
                                 <ResponsiveContainer>
-                                    <BarChart data={summaryData} layout="vertical" margin={{left: 30}}>
-                                        <XAxis type="number" hide />
-                                        <YAxis dataKey="acronym" type="category" hide/>
-                                        <ChartTooltip 
+                                    <BarChart data={summaryData} layout="horizontal" margin={{ top: 20 }}>
+                                        <XAxis dataKey="acronym" tickLine={false} axisLine={false} />
+                                        <YAxis hide />
+                                        <ChartTooltip
                                             cursor={false}
-                                            content={<ChartTooltipContent 
-                                                formatter={(value, name) => [`${value} seats`, name]}
-                                                indicator="dot" 
+                                            content={<ChartTooltipContent
+                                                formatter={(value) => `${(value as number).toLocaleString()} votes`}
+                                                indicator="dot"
                                             />}
                                         />
-                                        <Bar dataKey="seats" stackId="a" radius={[0, 4, 4, 0]}>
-                                            {summaryData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                        <Bar dataKey="totalVotes" radius={[4, 4, 0, 0]}>
+                                             {summaryData.map((entry) => (
+                                                <Cell key={`cell-${entry.acronym}`} fill={entry.color} />
                                             ))}
-                                            <LabelList
-                                                dataKey="logoUrl"
-                                                position="insideLeft"
-                                                offset={10}
-                                                content={({ value, x, y, width, height }) => 
-                                                    value ? (
-                                                        <foreignObject x={(x || 0) - 25} y={(y || 0) - 5} width={30} height={30}>
-                                                          <Image src={value} alt="logo" width={30} height={30} className="object-contain bg-transparent" />
-                                                        </foreignObject>
-                                                    ) : null
-                                                }
+                                            <LabelList 
+                                                dataKey="totalVotes" 
+                                                position="top" 
+                                                offset={8} 
+                                                className="fill-foreground text-xs" 
+                                                formatter={(value: number) => value.toLocaleString()}
                                             />
                                         </Bar>
                                     </BarChart>
                                 </ResponsiveContainer>
                             </ChartContainer>
-                        </CardContent>
-                    </Card>
+                          </CardContent>
+                      </Card>
+                    </div>
                   )}
 
                   <h3 className="text-2xl font-headline my-6">Constituency Breakdown</h3>
@@ -350,7 +386,9 @@ export default function ResultsPage() {
 
                                         let resultStatus = `${currentWinner} Win`;
                                         if (previousWinner) {
-                                            if (currentWinner === previousWinner || (currentWinner === 'IND' && previousWinner === 'SLP' && isSpecialConstituency)) {
+                                            if (currentWinner === 'IND') {
+                                                resultStatus = 'IND Gain';
+                                            } else if (currentWinner === previousWinner) {
                                                 resultStatus = `${currentWinner} Hold`;
                                             } else {
                                                 resultStatus = `${currentWinner} Gain`;
