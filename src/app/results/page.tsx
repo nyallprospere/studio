@@ -200,7 +200,7 @@ export default function ResultsPage() {
     
     if(otherVotes > 0 || otherSeats > 0) {
         const independentLogo = partyLogos.find(logo => logo.partyId === 'independent' && logo.electionId === currentElection?.id);
-        summary.push({ partyId: 'other', name: 'INDEPENDENTS', acronym: 'IND', seats: otherSeats, totalVotes: otherVotes, color: '#8884d8', logoUrl: independentLogo?.expandedLogoUrl || independentLogo?.logoUrl || currentElection?.independentExpandedLogoUrl || currentElection?.independentLogoUrl, seatChange: getSeatChange('other', otherSeats) });
+        summary.push({ partyId: 'other', name: 'IND', acronym: 'IND', seats: otherSeats, totalVotes: otherVotes, color: '#8884d8', logoUrl: independentLogo?.expandedLogoUrl || independentLogo?.logoUrl || currentElection?.independentExpandedLogoUrl || currentElection?.independentLogoUrl, seatChange: getSeatChange('other', otherSeats) });
     }
 
     return summary
@@ -305,13 +305,14 @@ export default function ResultsPage() {
                             </CardHeader>
                             <CardContent className="text-center p-4 pt-0">
                                 <div className="text-2xl font-bold">
-                                    {summaryItem.seats} Seats
+                                    {summaryItem.seats}
                                     {summaryItem.seatChange !== null && (
                                         <sup className={`text-xs font-semibold ml-1 ${summaryItem.seatChange > 0 ? 'text-green-600' : summaryItem.seatChange < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
                                           {summaryItem.seatChange > 0 ? `+${summaryItem.seatChange}` : summaryItem.seatChange}
                                         </sup>
                                     )}
                                 </div>
+                                <div className="text-xs text-muted-foreground">Seats</div>
                                 <div className="mt-2">
                                   <div className="font-bold">{summaryItem.votePercentage}%</div>
                                   <div className="text-xs text-muted-foreground">({summaryItem.totalVotes.toLocaleString()} votes)</div>
@@ -421,3 +422,4 @@ export default function ResultsPage() {
     </div>
   );
 }
+
