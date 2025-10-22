@@ -70,20 +70,20 @@ function CandidateBox({
                 isWinner && "border-2 border-green-600"
             )}>
                  {isWinner && (
-                    <div className="absolute -top-7 -right-2 text-center">
+                    <div className="absolute -top-3 -right-2 text-center">
                          <p className="font-bold text-xs -mb-1" style={{color: statusColor}}>{electionStatus}</p>
                         <CheckCircle2 className="h-5 w-5 text-green-600 bg-white rounded-full mx-auto" />
                     </div>
                 )}
                 
                 <div className="flex w-full items-center gap-2">
-                    <div className="flex flex-col items-center gap-1 w-20">
+                    <div className="w-20 flex-shrink-0 flex flex-col items-center gap-1">
                         <div className="relative h-10 w-10">
                             {logoUrl ? (
                                 <Image src={logoUrl} alt={party?.name || ''} fill className="object-contain" />
                             ) : null}
                         </div>
-                        <div className="relative h-10 w-10 rounded-full overflow-hidden">
+                        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
                         {candidate?.imageUrl ? (
                             <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
                         ) : (
@@ -108,7 +108,7 @@ function CandidateBox({
                                 {isWinner && margin ? <sup className="font-semibold"> (+{margin.toLocaleString()})</sup> : null}
                             </span>
                             <div className="flex items-baseline gap-1">
-                                <span className={cn("font-bold text-xs", textColorClass)}>
+                                <span className={cn("font-bold text-xs", party?.acronym === 'SLP' ? 'text-black' : textColorClass)}>
                                     {votePercentage.toFixed(1)}%
                                 </span>
                                 {votePercentageChange !== null && typeof votePercentageChange !== 'undefined' && (
