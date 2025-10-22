@@ -138,7 +138,7 @@ export default function ResultsPage() {
 
         if (result.slpVotes > result.uwpVotes) {
             slpSeats++;
-        } else if (result.uwpVotes > result.uwpVotes) {
+        } else if (result.uwpVotes > result.slpVotes) {
             uwpSeats++;
         }
       }
@@ -328,14 +328,16 @@ export default function ResultsPage() {
                                     <TableBody>
                                     {currentElectionResults && currentElectionResults.length > 0 ? currentElectionResults.map((cr) => {
                                         const constituency = getConstituencyById(cr.constituencyId);
-                                        const currentWinner = cr.slpVotes > cr.uwpVotes ? 'SLP' : 'UWP';
+                                        const is2021 = currentElection?.year === 2021;
+                                        const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+                                        const currentWinner = isSpecialConstituency && cr.slpVotes > cr.uwpVotes ? 'IND' : (cr.slpVotes > cr.uwpVotes ? 'SLP' : 'UWP');
                                         
                                         const previousResult = previousElectionResults?.find(r => r.constituencyId === cr.constituencyId);
                                         const previousWinner = previousResult ? (previousResult.slpVotes > previousResult.uwpVotes ? 'SLP' : 'UWP') : null;
 
                                         let resultStatus = `${currentWinner} Win`;
                                         if (previousWinner) {
-                                            if (currentWinner === previousWinner) {
+                                            if (currentWinner === previousWinner || (currentWinner === 'IND' && previousWinner === 'SLP' && isSpecialConstituency)) {
                                                 resultStatus = `${currentWinner} Hold`;
                                             } else {
                                                 resultStatus = `${currentWinner} Gain`;
@@ -344,11 +346,7 @@ export default function ResultsPage() {
 
                                         const slpParty = parties?.find(p => p.acronym === 'SLP');
                                         const uwpParty = parties?.find(p => p.acronym === 'UWP');
-                                        const winnerColor = currentWinner === 'SLP' ? slpParty?.color : uwpParty?.color;
-                                        
-                                        const is2021 = currentElection?.year === 2021;
-                                        const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
-
+                                        const winnerColor = currentWinner === 'SLP' ? slpParty?.color : (currentWinner === 'UWP' ? uwpParty?.color : '#8884d8');
 
                                         return (
                                         <TableRow key={cr.id} onClick={() => setSelectedConstituencyId(cr.constituencyId)} className={selectedConstituencyId === cr.constituencyId ? 'bg-muted' : ''}>
