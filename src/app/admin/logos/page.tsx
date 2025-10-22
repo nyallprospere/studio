@@ -211,7 +211,7 @@ export default function ManageLogosPage() {
                             return (
                               <div key={group.key} className="p-4 border rounded-md flex flex-col gap-4">
                                 <div className="text-center">
-                                  <h4 className="font-semibold">{group.candidateName ? group.candidateName : 'Election Year'}</h4>
+                                  <h4 className="font-semibold">{group.candidateName ? group.candidateName : 'Year of election'}</h4>
                                   <p className="text-sm text-muted-foreground">{group.constituencyName ? group.constituencyName : group.dateRange}</p>
                                 </div>
                                 
@@ -293,3 +293,5 @@ export default function ManageLogosPage() {
     </div>
   );
 }
+
+    
