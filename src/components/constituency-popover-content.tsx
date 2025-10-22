@@ -74,7 +74,10 @@ function CandidateBox({
                 )}
                 
                 <div className="flex w-full items-center gap-2">
-                    <div className="w-20 flex-shrink-0 flex flex-col items-center gap-1">
+                    <div className={cn(
+                        "w-20 flex-shrink-0 flex flex-col items-center gap-1 p-1 rounded-md",
+                        isWinner && "ring-2 ring-green-500"
+                        )}>
                         <div className="relative h-12 w-12 rounded-full overflow-hidden bg-transparent">
                             {candidate?.imageUrl ? (
                                 <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
