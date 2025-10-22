@@ -391,8 +391,8 @@ export default function ResultsPage() {
 
                                           return (
                                               <TableRow key={cr.id}>
-                                                  <TableCell className="font-medium" style={{color: winnerColor}}>{constituency?.name || cr.constituencyId}</TableCell>
-                                                  <TableCell>{resultStatus}</TableCell>
+                                                  <TableCell className="font-medium">{constituency?.name || cr.constituencyId}</TableCell>
+                                                  <TableCell className="font-medium" style={{color: winnerColor}}>{resultStatus}</TableCell>
                                                   <TableCell>{isSpecialConstituency ? '-' : cr.slpVotes.toLocaleString()}</TableCell>
                                                   <TableCell>{cr.uwpVotes.toLocaleString()}</TableCell>
                                                   <TableCell>{isSpecialConstituency ? cr.slpVotes.toLocaleString() : cr.otherVotes.toLocaleString()}</TableCell>
@@ -419,4 +419,5 @@ export default function ResultsPage() {
     </div>
   );
 }
+
 
