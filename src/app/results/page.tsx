@@ -194,8 +194,8 @@ export default function ResultsPage() {
     }
   
     const summary = [
-        { partyId: slp.id, name: slp.acronym, acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color, logoUrl: getElectionLogo(slp.id), seatChange: getSeatChange(slp.id, slpSeats) },
-        { partyId: uwp.id, name: uwp.acronym, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color, logoUrl: getElectionLogo(uwp.id), seatChange: getSeatChange(uwp.id, uwpSeats) },
+        { partyId: slp.id, name: slp.name, acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color, logoUrl: getElectionLogo(slp.id), seatChange: getSeatChange(slp.id, slpSeats) },
+        { partyId: uwp.id, name: uwp.name, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color, logoUrl: getElectionLogo(uwp.id), seatChange: getSeatChange(uwp.id, uwpSeats) },
     ];
     
     if(otherVotes > 0 || otherSeats > 0) {
@@ -295,8 +295,8 @@ export default function ResultsPage() {
                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                         {summaryData.map((summaryItem) => (
                         <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
-                            <CardHeader className="flex flex-row items-center justify-between p-4">
-                                <CardTitle className="text-base">{summaryItem.name}</CardTitle>
+                            <CardHeader className="flex flex-col items-center p-4">
+                                <CardTitle className="text-base mb-2">{summaryItem.name}</CardTitle>
                                 {summaryItem.logoUrl && (
                                     <div className="relative h-12 w-24">
                                         <Image src={summaryItem.logoUrl} alt={`${summaryItem.name} logo`} fill className="object-contain" />
@@ -419,5 +419,6 @@ export default function ResultsPage() {
     </div>
   );
 }
+
 
 
