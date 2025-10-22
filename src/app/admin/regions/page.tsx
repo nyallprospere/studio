@@ -104,21 +104,23 @@ export default function AdminRegionsPage() {
           title="Manage Regions"
           description="Add, edit, or remove regions."
         />
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger asChild>
-              <Button onClick={() => { setEditingRegion(null); setIsFormOpen(true)}}>Add New Region</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-              <DialogTitle>{editingRegion ? 'Edit Region' : 'Add New Region'}</DialogTitle>
-              </DialogHeader>
-              <RegionForm
-              onSubmit={handleFormSubmit}
-              initialData={editingRegion}
-              onCancel={() => setIsFormOpen(false)}
-              />
-          </DialogContent>
-        </Dialog>
+        <div className="flex justify-end" style={{ width: '300px' }}>
+          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogTrigger asChild>
+                <Button onClick={() => { setEditingRegion(null); setIsFormOpen(true)}}>Add New Region</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                <DialogTitle>{editingRegion ? 'Edit Region' : 'Add New Region'}</DialogTitle>
+                </DialogHeader>
+                <RegionForm
+                onSubmit={handleFormSubmit}
+                initialData={editingRegion}
+                onCancel={() => setIsFormOpen(false)}
+                />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Card>
