@@ -2,7 +2,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { Constituency, Candidate, Party, ArchivedCandidate, ElectionResult, Election } from '@/lib/types';
+import type { Constituency, Candidate, Party, ArchivedCandidate, ElectionResult, Election, PartyLogo } from '@/lib/types';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
@@ -29,7 +29,20 @@ const getLeaningLabel = (leaningValue?: string) => {
     return politicalLeaningOptions.find(opt => opt.value === leaningValue)?.label || 'Tossup';
 };
 
-function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, electionStatus, statusColor, isStriped, barFill, votePercentageChange }: { 
+function CandidateBox({ 
+    candidate, 
+    party, 
+    isWinner, 
+    votes, 
+    totalVotes, 
+    margin, 
+    electionStatus, 
+    statusColor, 
+    isStriped, 
+    barFill, 
+    votePercentageChange,
+    logoUrl
+}: { 
     candidate: Candidate | ArchivedCandidate | null;
     party: Party | null;
     isWinner: boolean;
@@ -41,6 +54,7 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
     isStriped?: boolean;
     barFill?: string;
     votePercentageChange?: number | null;
+    logoUrl?: string;
 }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const isIncumbent = candidate?.isIncumbent;
@@ -50,7 +64,7 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
 
     return (
         <>
-            <div className={cn(
+             <div className={cn(
                 "p-2 rounded-md bg-muted relative h-full flex flex-col items-center gap-2 text-center",
                 isWinner && "border-2 border-green-600"
             )}>
@@ -61,45 +75,47 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
                     </div>
                 )}
                 
-                <div className="flex flex-col items-center gap-1">
-                     {party?.logoUrl && (
-                        <div className="relative h-8 w-8">
-                            <Image src={party.logoUrl} alt={party.name} fill className="object-contain" />
+                <div className="flex w-full items-start gap-2">
+                    <div className="flex flex-col items-center gap-1">
+                        {logoUrl && (
+                            <div className="relative h-8 w-8">
+                                <Image src={logoUrl} alt={party?.name || ''} fill className="object-contain" />
+                            </div>
+                        )}
+                        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
+                        {candidate?.imageUrl ? (
+                            <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
+                        ) : (
+                            <UserSquare className="h-full w-full text-gray-400" />
+                        )}
                         </div>
-                    )}
-                    <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
-                    {candidate?.imageUrl ? (
-                        <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
-                    ) : (
-                        <UserSquare className="h-full w-full text-gray-400" />
-                    )}
+                        <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold whitespace-nowrap" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                           {candidateName}
+                        </Button>
                     </div>
-                     <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold whitespace-nowrap" onClick={() => setProfileOpen(true)} disabled={!candidate}>
-                        {candidateName}
-                    </Button>
-                </div>
 
-                <div className="relative w-full h-8 bg-gray-200 rounded overflow-hidden">
-                    <div 
-                        className={cn("absolute top-0 left-0 h-full rounded", isStriped && barFill === 'blue-red-stripes' && 'bg-blue-600')}
-                        style={{ width: `${votePercentage}%`, backgroundColor: (isStriped && barFill === 'blue-red-stripes') ? '' : party?.color }}
-                    >
-                         {isStriped && barFill === 'blue-red-stripes' && <div className="absolute inset-0 red-stripes-overlay"></div>}
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-between px-2">
-                        <span className="text-white font-bold text-sm">
-                            {votes?.toLocaleString()}
-                        </span>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-white font-bold text-sm">
-                                {votePercentage.toFixed(1)}%
+                    <div className="relative w-full h-8 bg-gray-200 rounded overflow-hidden self-center">
+                        <div 
+                            className={cn("absolute top-0 left-0 h-full rounded", isStriped && barFill === 'blue-red-stripes' && 'bg-blue-600')}
+                            style={{ width: `${votePercentage}%`, backgroundColor: (isStriped && barFill === 'blue-red-stripes') ? '' : party?.color }}
+                        >
+                            {isStriped && barFill === 'blue-red-stripes' && <div className="absolute inset-0 red-stripes-overlay"></div>}
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-between px-2">
+                             <span className="text-white font-bold text-sm">
+                                {votes?.toLocaleString()}
                             </span>
-                            {votePercentageChange !== null && typeof votePercentageChange !== 'undefined' && (
-                                <div className={cn("text-xs font-bold flex items-center text-black", votePercentageChange > 0 ? 'text-green-700' : 'text-red-700')}>
-                                    {votePercentageChange > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
-                                    {Math.abs(votePercentageChange).toFixed(1)}%
-                                </div>
-                            )}
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-white font-bold text-sm">
+                                    {votePercentage.toFixed(1)}%
+                                </span>
+                                {votePercentageChange !== null && typeof votePercentageChange !== 'undefined' && (
+                                    <div className={cn("text-xs font-bold flex items-center text-black", votePercentageChange > 0 ? 'text-green-700' : 'text-red-700')}>
+                                        {votePercentageChange > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                                        {Math.abs(votePercentageChange).toFixed(1)}%
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -117,7 +133,8 @@ export function ConstituencyPopoverContent({
     onLeaningChange,
     onPredictionChange,
     electionResults,
-    previousElectionResults
+    previousElectionResults,
+    partyLogos
 }: { 
     constituency: Constituency,
     election?: Election | null;
@@ -125,6 +142,7 @@ export function ConstituencyPopoverContent({
     onPredictionChange?: (slp: number, uwp: number) => void;
     electionResults?: ElectionResult[];
     previousElectionResults?: ElectionResult[];
+    partyLogos?: PartyLogo[];
 }) {
     const { firestore } = useFirebase();
 
@@ -159,7 +177,7 @@ export function ConstituencyPopoverContent({
     }, [parties, candidates]);
 
 
-    const { electionStatus, statusColor, margin, totalConstituencyVotes, winnerAcronym, slpVotePercentageChange, uwpVotePercentageChange } = useMemo(() => {
+    const { electionStatus, statusColor, margin, totalConstituencyVotes, winnerAcronym, slpVotePercentageChange, uwpVotePercentageChange, slpLogoUrl, uwpLogoUrl } = useMemo(() => {
         if (!electionResults || !slpParty || !uwpParty) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null, slpVotePercentageChange: null, uwpVotePercentageChange: null };
 
         const currentResult = electionResults.find(r => r.constituencyId === constituency.id);
@@ -200,9 +218,26 @@ export function ConstituencyPopoverContent({
             }
         }
         
-        return { electionStatus: status, statusColor: color, margin: margin, totalConstituencyVotes: totalVotes, winnerAcronym, slpVotePercentageChange, uwpVotePercentageChange };
+        const getLogo = (partyId: string) => {
+            const electionLogo = partyLogos?.find(logo => logo.partyId === partyId && logo.electionId === election?.id);
+            const party = parties?.find(p => p.id === partyId);
+            return electionLogo?.logoUrl || party?.logoUrl;
+        }
 
-    }, [constituency.id, electionResults, previousElectionResults, slpParty, uwpParty]);
+
+        return { 
+            electionStatus: status, 
+            statusColor: color, 
+            margin: margin, 
+            totalConstituencyVotes: totalVotes, 
+            winnerAcronym, 
+            slpVotePercentageChange, 
+            uwpVotePercentageChange,
+            slpLogoUrl: getLogo(slpParty.id),
+            uwpLogoUrl: getLogo(uwpParty.id),
+        };
+
+    }, [constituency.id, electionResults, previousElectionResults, slpParty, uwpParty, partyLogos, election, parties]);
 
 
     const isLoading = loadingCandidates || loadingParties;
@@ -311,6 +346,7 @@ export function ConstituencyPopoverContent({
                       isStriped={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'SLP'}
                       barFill={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'SLP' ? 'blue-red-stripes' : undefined}
                       votePercentageChange={slpVotePercentageChange}
+                      logoUrl={slpLogoUrl}
                   />
                   <CandidateBox 
                       candidate={uwpCandidate!} 
@@ -324,6 +360,7 @@ export function ConstituencyPopoverContent({
                       isStriped={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'UWP'}
                       barFill={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'UWP' ? 'blue-red-stripes' : undefined}
                       votePercentageChange={uwpVotePercentageChange}
+                      logoUrl={uwpLogoUrl}
                   />
               </div>
             )}

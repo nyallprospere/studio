@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -404,7 +405,7 @@ export default function ResultsPage() {
                                   <div className="font-bold">{summaryItem.votePercentage}%</div>
                                    {summaryItem.votePercentageChange !== null && (
                                         <div className={cn("text-xs font-semibold flex items-center justify-center", summaryItem.votePercentageChange > 0 ? 'text-green-600' : summaryItem.votePercentageChange < 0 ? 'text-red-600' : 'text-muted-foreground')}>
-                                            {summaryItem.votePercentageChange > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                                            {summaryItem.votePercentageChange > 0 ? <ArrowUp className="h-3 w-3" /> : summaryItem.votePercentageChange < 0 ? <ArrowDown className="h-3 w-3" /> : null}
                                             {Math.abs(summaryItem.votePercentageChange).toFixed(1)}%
                                         </div>
                                     )}
@@ -428,6 +429,7 @@ export default function ResultsPage() {
                                 election={currentElection}
                                 electionResults={currentElectionResults}
                                 previousElectionResults={previousElectionResults}
+                                partyLogos={partyLogos}
                             />
                         </CardContent>
                     </Card>
