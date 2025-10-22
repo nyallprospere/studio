@@ -487,7 +487,7 @@ export default function ResultsPage() {
     const color = change > 0 ? 'text-green-700' : change < 0 ? 'text-red-700' : 'text-muted-foreground';
     const sign = change > 0 ? '+' : change < 0 ? '' : '';
     if (change === 0) return <span className={cn('text-xs font-semibold flex items-center', color)}>(0)</span>;
-    return <span className={cn('text-xs font-semibold flex items-center', color)}>{sign}{change.toLocaleString()}</span>;
+    return <span className={cn('text-xs font-semibold flex items-center', color)}>({sign}{change.toLocaleString()})</span>;
   };
 
   const VotePercentageChangeIndicator = ({ change }: { change: number | null }) => {
@@ -710,16 +710,21 @@ export default function ResultsPage() {
                                           
                                            let slpVotePercentageChange = null;
                                            let uwpVotePercentageChange = null;
+                                           let indVotePercentageChange = null;
 
                                            if (previousResult) {
                                                const currentSlpPercent = cr.totalVotes > 0 ? (cr.slpVotes / cr.totalVotes) * 100 : 0;
                                                const currentUwpPercent = cr.totalVotes > 0 ? (cr.uwpVotes / cr.totalVotes) * 100 : 0;
+                                               const currentIndPercent = cr.totalVotes > 0 ? (isSpecialConstituency ? cr.slpVotes / cr.totalVotes : cr.otherVotes / cr.totalVotes) * 100 : 0;
+
                                                const prevTotalVotes = previousResult.totalVotes;
                                                 if (prevTotalVotes > 0) {
                                                   const prevSlpPercent = (previousResult.slpVotes / prevTotalVotes) * 100;
                                                   const prevUwpPercent = (previousResult.uwpVotes / prevTotalVotes) * 100;
+                                                  const prevIndPercent = (previousResult.otherVotes / prevTotalVotes) * 100;
                                                   slpVotePercentageChange = currentSlpPercent - prevSlpPercent;
                                                   uwpVotePercentageChange = currentUwpPercent - prevUwpPercent;
+                                                  indVotePercentageChange = currentIndPercent - prevIndPercent;
                                                 }
                                            }
 
@@ -732,8 +737,8 @@ export default function ResultsPage() {
                                                   </TableCell>
                                                   <TableCell>
                                                     <div className="flex flex-col">
-                                                      <span>{cr.totalVotes > 0 ? `${(cr.slpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%'}</span>
-                                                      <VotePercentageChangeIndicator change={slpVotePercentageChange} />
+                                                      <span>{isSpecialConstituency ? '-' : (cr.totalVotes > 0 ? `${(cr.slpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%')}</span>
+                                                      {!isSpecialConstituency && <VotePercentageChangeIndicator change={slpVotePercentageChange} />}
                                                     </div>
                                                   </TableCell>
                                                   <TableCell>
@@ -749,7 +754,12 @@ export default function ResultsPage() {
                                                     {isSpecialConstituency ? cr.slpVotes.toLocaleString() : cr.otherVotes > 0 ? cr.otherVotes.toLocaleString() : '-'}
                                                   </TableCell>
                                                   <TableCell>
-                                                    {isSpecialConstituency ? (cr.totalVotes > 0 ? `${(cr.slpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%') : (cr.otherVotes > 0 ? `${(cr.otherVotes / cr.totalVotes * 100).toFixed(1)}%` : '-')}
+                                                    <div className="flex flex-col">
+                                                        <span>
+                                                        {isSpecialConstituency ? (cr.totalVotes > 0 ? `${(cr.slpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%') : (cr.otherVotes > 0 ? `${(cr.otherVotes / cr.totalVotes * 100).toFixed(1)}%` : '-')}
+                                                        </span>
+                                                        {isSpecialConstituency && <VotePercentageChangeIndicator change={indVotePercentageChange} />}
+                                                    </div>
                                                   </TableCell>
                                                   <TableCell>{cr.totalVotes.toLocaleString()}</TableCell>
                                                   <TableCell>{cr.turnout === 0 ? 'N/A' : `${cr.turnout}%`}</TableCell>
