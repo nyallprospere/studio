@@ -158,7 +158,7 @@ export default function ManageLogosPage() {
                           <CardHeader className="flex flex-row justify-between items-center">
                               <div>
                                   <CardTitle style={{color: party.color}}>{party.name}</CardTitle>
-                                  <CardDescription>Manage logos for the {party.name}.</CardDescription>
+                                  <CardDescription>Manage logos for the {party.acronym}.</CardDescription>
                               </div>
                               <Button
                                 onClick={() => handleUploadClick(party)}
