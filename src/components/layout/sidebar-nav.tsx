@@ -182,7 +182,7 @@ export function SidebarNav() {
   const sortedSlpCandidates = useMemo(() => slpCandidates ? [...slpCandidates].sort(candidateSorter) : [], [slpCandidates]);
 
   useEffect(() => {
-    setIsResultsOpen(pathname.startsWith('/results'));
+    setIsResultsOpen(pathname.startsWith('/results') || pathname.startsWith('/historical-trends'));
     setIsManageCandidatesOpen(pathname.startsWith('/admin/candidates') || pathname.startsWith('/archive'));
 
     const isUwpRelated = uwpParty && (
@@ -238,7 +238,7 @@ export function SidebarNav() {
           <SidebarMenuItem>
               <Collapsible open={isResultsOpen} onOpenChange={setIsResultsOpen}>
                   <CollapsibleTrigger asChild>
-                      <Button variant={pathname.startsWith('/results') ? 'secondary' : 'ghost'} className="w-full justify-between">
+                      <Button variant={(pathname.startsWith('/results') || pathname.startsWith('/historical-trends')) ? 'secondary' : 'ghost'} className="w-full justify-between">
                           <div className="flex items-center gap-2">
                               <Landmark className="mr-2 h-4 w-4" />
                               Past Results
@@ -249,6 +249,13 @@ export function SidebarNav() {
                   <CollapsibleContent>
                     <ScrollArea className="h-64">
                       <SidebarMenuSub>
+                           <SidebarMenuItem>
+                              <SidebarMenuSubButton asChild isActive={pathname.startsWith('/historical-trends')}>
+                                  <Link href={`/historical-trends`}>
+                                      Historical Trends
+                                  </Link>
+                              </SidebarMenuSubButton>
+                          </SidebarMenuItem>
                           {loadingElections ? <p className="p-2 text-xs text-muted-foreground">Loading years...</p> : sortedElections.map(election => (
                               <SidebarMenuItem key={election.id}>
                                   <SidebarMenuSubButton asChild isActive={pathname.includes(`year=${election.id}`)}>
