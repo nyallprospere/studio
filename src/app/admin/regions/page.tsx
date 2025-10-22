@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { RegionForm } from './region-form';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Lock, Unlock } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +38,7 @@ export default function AdminRegionsPage() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRegion, setEditingRegion] = useState<Region | null>(null);
+  const [isLocked, setIsLocked] = useState(true);
 
   const sortedRegions = useMemo(() => {
     if (!regions) return [];
@@ -120,7 +121,15 @@ export default function AdminRegionsPage() {
           title="Manage Regions"
           description="Add, edit, or remove regions."
         />
-        <div className="flex justify-end" style={{ width: '300px' }}>
+        <div className="flex items-center gap-2">
+            <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={() => setIsLocked(!isLocked)}
+                disabled={!regions || regions.length === 0}
+            >
+                {isLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+            </Button>
           <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
             <DialogTrigger asChild>
                 <Button onClick={() => { setEditingRegion(null); setIsFormOpen(true)}}>Add New Region</Button>
@@ -168,12 +177,12 @@ export default function AdminRegionsPage() {
                         </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                       <Button variant="ghost" size="icon" onClick={() => { setEditingRegion(region); setIsFormOpen(true);}}>
+                       <Button variant="ghost" size="icon" onClick={() => { setEditingRegion(region); setIsFormOpen(true);}} disabled={isLocked}>
                            <Pencil className="h-4 w-4" />
                        </Button>
                        <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={isLocked}>
                                 <Trash2 className="h-4 w-4" />
                             </Button>
                           </AlertDialogTrigger>
