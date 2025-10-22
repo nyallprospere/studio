@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, orderBy, query, getDocs } from 'firebase/firestore';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, LabelList, Cell } from "recharts"
+import { Bar, BarChart, ResponsiveContainer, XAxis, Tooltip, CartesianGrid, LabelList, Cell } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -292,7 +292,7 @@ export default function ResultsPage() {
                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                         {summaryData.map((summaryItem) => (
                         <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
-                            <CardHeader className="flex flex-col items-center text-center p-4">
+                            <CardHeader className="flex flex-col items-center p-4">
                             <CardTitle className="text-base">{summaryItem.name}</CardTitle>
                             {summaryItem.logoUrl && (
                                 <div className="relative h-12 w-24 mt-2">
@@ -300,7 +300,7 @@ export default function ResultsPage() {
                                 </div>
                             )}
                             </CardHeader>
-                            <CardContent className="text-center p-4 space-y-2">
+                            <CardContent className="text-center p-4 pt-0">
                                 <div>
                                     <div className="text-2xl font-bold">{summaryItem.seats} Seats</div>
                                     {summaryItem.seatChange !== null && (
@@ -310,7 +310,7 @@ export default function ResultsPage() {
                                         </p>
                                     )}
                                 </div>
-                                <div className="text-center">
+                                <div className="mt-2">
                                     <div className="font-bold">{summaryItem.votePercentage}%</div>
                                     <div className="text-xs text-muted-foreground">({summaryItem.totalVotes.toLocaleString()} votes)</div>
                                 </div>
