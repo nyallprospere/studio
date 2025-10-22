@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { uploadFile, deleteFile } from '@/firebase/storage';
 import Image from 'next/image';
-import { Upload, Shield, Pencil, Trash2 } from 'lucide-react';
+import { Upload, Shield, Pencil, Trash2, Lock, Unlock } from 'lucide-react';
 import { LogoUploadDialog } from './logo-upload-dialog';
 import { groupBy } from 'lodash';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,8 @@ export default function ManageLogosPage() {
   
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedPartyForUpload, setSelectedPartyForUpload] = useState<Party | null>(null);
+  const [deleteLocks, setDeleteLocks] = useState<Record<string, boolean>>({});
+
 
   const sortedElections = useMemo(() => elections?.sort((a, b) => b.year - a.year) || [], [elections]);
 
@@ -58,7 +60,6 @@ export default function ManageLogosPage() {
   const handleUploadSuccess = () => {
     setIsUploadDialogOpen(false);
     toast({ title: 'Logos Updated Successfully' });
-    if(refetchLogos) refetchLogos();
   }
   
   const getLogoGroups = (partyId: string) => {
@@ -68,7 +69,7 @@ export default function ManageLogosPage() {
     
     const groupedByLogo = groupBy(logosForParty, logo => `${logo.logoUrl || ''}|${logo.expandedLogoUrl || ''}`);
     
-    return Object.values(groupedByLogo).map(group => {
+    return Object.entries(groupedByLogo).map(([key, group]) => {
       const first = group[0];
       const electionIds = group.map(g => g.electionId);
       const groupElections = sortedElections.filter(e => electionIds.includes(e.id));
@@ -83,7 +84,7 @@ export default function ManageLogosPage() {
         dateRange: years.join(', '),
         maxYear: Math.max(...years),
         electionIds: electionIds,
-        key: `${first.logoUrl || ''}|${first.expandedLogoUrl || ''}`
+        key: key
       };
     }).filter((g): g is NonNullable<typeof g> => g !== null)
     .sort((a,b) => b.maxYear - a.maxYear);
@@ -162,6 +163,7 @@ export default function ManageLogosPage() {
                           </CardHeader>
                           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {logoGroups.length > 0 ? logoGroups.map(group => {
+                            const isLocked = deleteLocks[group.key] !== false;
                             return (
                               <div key={group.key} className="p-4 border rounded-md flex flex-col gap-4">
                                 <div className="text-center">
@@ -184,28 +186,33 @@ export default function ManageLogosPage() {
                                   </div>
                                 </div>
 
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" size="sm" className="w-full mt-auto">
-                                            <Trash2 className="mr-2 h-4 w-4" />
-                                            Delete
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                This will delete the logo entries for the years: {group.dateRange}. This action cannot be undone.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleDeleteLogos(party.id, group.electionIds)}>
-                                                Yes, Delete
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
+                                <div className="flex items-center gap-1 mt-auto">
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="destructive" size="sm" className="w-full" disabled={isLocked}>
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Delete
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will delete the logo entries for the years: {group.dateRange}. This action cannot be undone.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDeleteLogos(party.id, group.electionIds)}>
+                                                    Yes, Delete
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                    <Button variant="outline" size="icon" onClick={() => setDeleteLocks(prev => ({...prev, [group.key]: !prev[group.key]}))}>
+                                        {isLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                                    </Button>
+                                </div>
                               </div>
                             )
                           }) : (
