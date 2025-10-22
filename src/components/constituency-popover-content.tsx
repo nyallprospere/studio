@@ -51,38 +51,35 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
     return (
         <>
             <div className={cn(
-                "p-2 rounded-md bg-muted relative h-full flex flex-col",
+                "p-2 rounded-md bg-muted relative h-full flex items-center gap-2",
                 isWinner && "border-2 border-green-600"
             )}>
                  {isWinner && (
-                    <div className="absolute -top-5 -right-3 text-center">
+                    <div className="absolute -top-[25px] -right-3 text-center">
                          <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
                         <CheckCircle2 className="h-5 w-5 text-green-600 bg-white rounded-full mx-auto" />
                     </div>
                 )}
                 
-                <div className="flex flex-col items-center gap-2 mb-2">
+                <div className="flex items-center gap-2">
                      {party?.logoUrl && (
-                        <div className="relative h-10 w-10">
+                        <div className="relative h-8 w-8 flex-shrink-0">
                             <Image src={party.logoUrl} alt={party.name} fill className="object-contain" />
                         </div>
                     )}
-                    <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
+                    <div className="relative h-10 w-10 rounded-full overflow-hidden flex-shrink-0 bg-transparent">
                     {candidate?.imageUrl ? (
                         <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
                     ) : (
                         <UserSquare className="h-full w-full text-gray-400" />
                     )}
                     </div>
-                    <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                    <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold whitespace-nowrap" onClick={() => setProfileOpen(true)} disabled={!candidate}>
                         {candidateName}
                     </Button>
-                     <div className="flex-grow text-center">
-                        
-                    </div>
                 </div>
 
-                 <div className="relative w-full h-8 bg-gray-200 rounded overflow-hidden mt-auto">
+                <div className="relative w-full h-8 bg-gray-200 rounded overflow-hidden">
                     <div 
                         className={cn("absolute top-0 left-0 h-full rounded", isStriped && barFill === 'blue-red-stripes' && 'bg-blue-600')}
                         style={{ width: `${votePercentage}%`, backgroundColor: (isStriped && barFill === 'blue-red-stripes') ? '' : party?.color }}
