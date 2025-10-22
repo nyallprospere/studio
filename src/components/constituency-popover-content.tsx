@@ -274,22 +274,12 @@ export function ConstituencyPopoverContent({
     const isCastriesNorth2021 = election?.year === 2021 && constituency.name === 'Castries North';
     const castriesNorthWinnerAcronym = isCastriesNorth2021 ? (currentResult && currentResult.slpVotes > currentResult.uwpVotes ? 'SLP' : 'UWP') : null;
 
-    const predictionChartData = useMemo(() => {
-      if (!slpParty || !uwpParty) return [];
-      const slpPercent = constituency.predictedSlpPercentage || 50;
-      const uwpPercent = constituency.predictedUwpPercentage || 50;
-      return [
-        { name: slpParty.acronym, value: slpPercent, fill: slpParty.color },
-        { name: uwpParty.acronym, value: uwpPercent, fill: uwpParty.color },
-      ];
-    }, [constituency, slpParty, uwpParty]);
-
     if (isLoading) {
         return <Skeleton className="h-40 w-full" />;
     }
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-3 w-80">
             <h4 className="font-bold leading-none text-center text-xl">{constituency.name}</h4>
             
             {(election?.isCurrent || !election) && !isMakeYourOwn ? (
@@ -329,32 +319,6 @@ export function ConstituencyPopoverContent({
                             {uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'TBD'}
                             </Button>
                         </div>
-                    </div>
-                    <div className="flex flex-col justify-center text-center space-y-2 py-2">
-                        <div>
-                            <p className="text-xs font-semibold text-muted-foreground">STATUS</p>
-                            <p className="font-bold">{getLeaningLabel(constituency.politicalLeaning)}</p>
-                        </div>
-                         <ChartContainer config={{}} className="h-24 w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={predictionChartData}
-                                        dataKey="value"
-                                        startAngle={180}
-                                        endAngle={0}
-                                        innerRadius="60%"
-                                        outerRadius="100%"
-                                        cy="100%"
-                                        paddingAngle={2}
-                                    >
-                                        {predictionChartData.map((entry) => (
-                                            <Cell key={entry.name} fill={entry.fill} />
-                                        ))}
-                                    </Pie>
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </ChartContainer>
                     </div>
                 </div>
             ) : !isMakeYourOwn ? (
@@ -398,7 +362,7 @@ export function ConstituencyPopoverContent({
                             <SelectValue placeholder="Select leaning" />
                         </SelectTrigger>
                         <SelectContent>
-                            {makeYourOwnLeaningOptions.map(opt => (
+                            {makeYourOwnLeaningOptions.filter(opt => opt.value !== 'unselected').map(opt => (
                                 <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                             ))}
                         </SelectContent>
