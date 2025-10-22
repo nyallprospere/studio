@@ -564,7 +564,7 @@ export default function ResultsPage() {
                             />
                         </CardContent>
                     </Card>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 gap-8">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Seat Count by Region</CardTitle>
@@ -609,10 +609,10 @@ export default function ResultsPage() {
                                             <TableRow>
                                                 <TableHead>Region</TableHead>
                                                 <TableHead>SLP Votes</TableHead>
-                                                <TableHead>UWP Votes</TableHead>
-                                                <TableHead>Other</TableHead>
                                                 <TableHead>SLP %</TableHead>
+                                                <TableHead>UWP Votes</TableHead>
                                                 <TableHead>UWP %</TableHead>
+                                                <TableHead>Other</TableHead>
                                                 <TableHead>Other %</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -621,10 +621,10 @@ export default function ResultsPage() {
                                                 <TableRow key={region.id}>
                                                     <TableCell className="font-medium">{region.name}</TableCell>
                                                     <TableCell>{region.slpVotes.toLocaleString()}<VoteChangeIndicator change={region.slpVoteChange} /></TableCell>
-                                                    <TableCell>{region.uwpVotes.toLocaleString()}<VoteChangeIndicator change={region.uwpVoteChange} /></TableCell>
-                                                    <TableCell>{region.otherVotes > 0 ? region.otherVotes.toLocaleString() : '-'}<VoteChangeIndicator change={region.otherVoteChange} /></TableCell>
                                                     <TableCell>{region.slpPercentage.toFixed(1)}%</TableCell>
+                                                    <TableCell>{region.uwpVotes.toLocaleString()}<VoteChangeIndicator change={region.uwpVoteChange} /></TableCell>
                                                     <TableCell>{region.uwpPercentage.toFixed(1)}%</TableCell>
+                                                    <TableCell>{region.otherVotes > 0 ? region.otherVotes.toLocaleString() : '-'}<VoteChangeIndicator change={region.otherVoteChange} /></TableCell>
                                                     <TableCell>{region.otherPercentage > 0 ? `${region.otherPercentage.toFixed(1)}%` : '-'}</TableCell>
                                                 </TableRow>
                                             )) : (
