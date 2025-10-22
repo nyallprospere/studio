@@ -66,7 +66,6 @@ export default function ManageLogosPage() {
 
     const logosForParty = partyLogos.filter(logo => logo.partyId === partyId);
     
-    // Create a unique key for each logo combination
     const groupedByLogo = groupBy(logosForParty, logo => `${logo.logoUrl || ''}|${logo.expandedLogoUrl || ''}`);
     
     return Object.values(groupedByLogo).map(group => {
@@ -76,17 +75,18 @@ export default function ManageLogosPage() {
       
       if (groupElections.length === 0) return null;
 
-      // Create a display string for all years
-      const years = groupElections.map(e => e.year).sort((a,b) => b - a).join(', ');
+      const years = groupElections.map(e => e.year).sort((a,b) => b - a);
       
       return {
         logoUrl: first.logoUrl,
         expandedLogoUrl: first.expandedLogoUrl,
-        dateRange: years,
+        dateRange: years.join(', '),
+        maxYear: Math.max(...years),
         electionIds: electionIds,
         key: `${first.logoUrl || ''}|${first.expandedLogoUrl || ''}`
       };
-    }).filter((g): g is NonNullable<typeof g> => g !== null);
+    }).filter((g): g is NonNullable<typeof g> => g !== null)
+    .sort((a,b) => b.maxYear - a.maxYear);
   };
   
   const handleDeleteLogos = async (partyId: string, electionIds: string[]) => {
@@ -104,9 +104,6 @@ export default function ManageLogosPage() {
     try {
         const batch = writeBatch(firestore);
         for(const logoDoc of logoDocsToDelete) {
-            // Optionally delete from storage, but be careful if URLs are shared
-            // if (logoDoc.logoUrl) await deleteFile(logoDoc.logoUrl);
-            // if (logoDoc.expandedLogoUrl) await deleteFile(logoDoc.expandedLogoUrl);
             const docRef = doc(firestore, 'party_logos', logoDoc.id);
             batch.delete(docRef);
         }
