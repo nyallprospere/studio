@@ -80,7 +80,7 @@ export default function ManageLogosPage() {
 
     const logosForParty = partyLogos.filter(logo => {
         if (logo.partyId !== partyId) return false;
-        if (electionFilter === 'all') return true;
+        if (partyId !== 'independent' || electionFilter === 'all') return true;
         return logo.electionId === electionFilter;
     });
     
@@ -232,7 +232,7 @@ export default function ManageLogosPage() {
                             return (
                               <div key={group.key} className="p-4 border rounded-md flex flex-col gap-4">
                                 <div className="text-center">
-                                  <h4 className="font-semibold">{group.candidateName || group.dateRange}</h4>
+                                  <h4 className="font-semibold">{group.dateRange}</h4>
                                   {party.id === 'independent' && group.constituencyName && (
                                     <p className="text-sm text-muted-foreground">{group.constituencyName}</p>
                                   )}
@@ -285,7 +285,7 @@ export default function ManageLogosPage() {
                                             <AlertDialogHeader>
                                                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    This will delete the logo entries for {group.candidateName || `the years: ${group.dateRange}`}. This action cannot be undone.
+                                                    This will delete the logo entries for {group.dateRange}. This action cannot be undone.
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
@@ -320,4 +320,5 @@ export default function ManageLogosPage() {
     
 
     
+
 
