@@ -38,7 +38,7 @@ export default function ManageLogosPage() {
 
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
-  const { data: partyLogos, isLoading: loadingLogos, error, refetch: refetchLogos } = useCollection<PartyLogo>(partyLogosQuery);
+  const { data: partyLogos, isLoading: loadingLogos, error } = useCollection<PartyLogo>(partyLogosQuery);
   
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedPartyForUpload, setSelectedPartyForUpload] = useState<Party | null>(null);
@@ -174,14 +174,14 @@ export default function ManageLogosPage() {
                                 <div className="grid grid-cols-2 gap-4 items-center flex-grow">
                                   <div className="flex flex-col items-center gap-2 text-center">
                                       <p className="text-sm font-medium">Standard Logo</p>
-                                      <div className="h-20 w-20 flex items-center justify-center">
-                                          {group.logoUrl ? <Image src={group.logoUrl} alt="Standard Logo" width={80} height={80} className="object-contain" /> : <Shield className="h-8 w-8 text-muted-foreground" />}
+                                      <div className="relative h-20 w-20 flex items-center justify-center">
+                                          {group.logoUrl ? <Image src={group.logoUrl} alt="Standard Logo" fill className="object-contain" /> : <Shield className="h-8 w-8 text-muted-foreground" />}
                                       </div>
                                   </div>
                                   <div className="flex flex-col items-center gap-2 text-center">
                                       <p className="text-sm font-medium">Expanded Logo</p>
-                                      <div className="h-20 w-32 flex items-center justify-center">
-                                          {group.expandedLogoUrl ? <Image src={group.expandedLogoUrl} alt="Expanded Logo" width={128} height={80} className="object-contain"/> : <Shield className="h-8 w-8 text-muted-foreground" />}
+                                      <div className="relative h-20 w-32 flex items-center justify-center">
+                                          {group.expandedLogoUrl ? <Image src={group.expandedLogoUrl} alt="Expanded Logo" fill className="object-contain"/> : <Shield className="h-8 w-8 text-muted-foreground" />}
                                       </div>
                                   </div>
                                 </div>
