@@ -69,51 +69,61 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
         const batch = writeBatch(firestore);
         const standardFiles = isIndependent ? values.standardLogoFiles : (values.standardLogoFile ? [values.standardLogoFile] : []);
 
+        const loopCount = isIndependent ? (standardFiles && standardFiles.length > 0 ? standardFiles.length : 1) : 1;
+
         for (const electionId of values.electionIds) {
-            for (let i = 0; i < (isIndependent ? (standardFiles?.length > 0 ? standardFiles.length : 1) : 1); i++) {
-                const standardFile = isIndependent ? (standardFiles?.[i] || null) : (standardFiles?.[0] || null);
+            for (let i = 0; i < loopCount; i++) {
+                const standardFile = isIndependent && standardFiles ? (standardFiles[i] || null) : (standardFiles ? standardFiles[0] : null);
 
                 const files = {
                     standard: standardFile,
                     expanded: values.expandedLogoFile
                 };
                 
-                const q = [
-                    where('partyId', '==', party.id),
-                    where('electionId', '==', electionId),
-                ];
-                if(isIndependent && standardFile) {
-                    q.push(where('logoUrl', 'like', `logos/${party.id}_${electionId}_std_%`));
-                }
+                let existingLogoQuery;
 
-                const existingLogoQuery = query(
-                    collection(firestore, 'party_logos'),
-                    ...q
-                );
+                if (isIndependent) {
+                     existingLogoQuery = query(
+                        collection(firestore, 'party_logos'),
+                        where('partyId', '==', party.id),
+                        where('electionId', '==', electionId),
+                    );
+                } else {
+                     existingLogoQuery = query(
+                        collection(firestore, 'party_logos'),
+                        where('partyId', '==', party.id),
+                        where('electionId', '==', electionId)
+                    );
+                }
                 
                 const existingLogoSnap = await getDocs(existingLogoQuery);
-                const existingLogoDoc = existingLogoSnap.docs[i] || existingLogoSnap.docs[0];
+                const existingLogoDoc = isIndependent ? existingLogoSnap.docs[i] : existingLogoSnap.docs[0];
 
                 let standardUrl = existingLogoDoc?.data()?.logoUrl;
                 let expandedUrl = existingLogoDoc?.data()?.expandedLogoUrl;
 
                 if (files.standard) {
                     if (standardUrl) await deleteFile(standardUrl).catch(console.warn);
-                    const path = isIndependent ? `logos/${party.id}_${electionId}_std_${i}.png` : `logos/${party.id}_${electionId}_std.png`;
+                    const path = `logos/${party.id}_${electionId}_std_${isIndependent ? i : '0'}.png`;
                     standardUrl = await uploadFile(files.standard, path);
                 }
                 if (files.expanded) {
                     if (expandedUrl) await deleteFile(expandedUrl).catch(console.warn);
-                     const path = isIndependent ? `logos/${party.id}_${electionId}_exp_${i}.png` : `logos/${party.id}_${electionId}_exp.png`;
+                     const path = `logos/${party.id}_${electionId}_exp_${isIndependent ? i : '0'}.png`;
                     expandedUrl = await uploadFile(files.expanded, path);
                 }
 
                 const dataToSave = {
                     partyId: party.id,
                     electionId,
-                    logoUrl: standardUrl || existingLogoDoc?.data()?.logoUrl || '',
-                    expandedLogoUrl: expandedUrl || existingLogoDoc?.data()?.expandedLogoUrl || '',
+                    logoUrl: standardUrl || '',
+                    expandedLogoUrl: expandedUrl || '',
                 };
+
+                // Skip saving if there's no logo to save and it's not a multi-file independent upload context
+                if (!dataToSave.logoUrl && !dataToSave.expandedLogoUrl && !isIndependent) {
+                  continue;
+                }
 
                 if (existingLogoDoc) {
                     const docRef = doc(firestore, 'party_logos', existingLogoDoc.id);
@@ -141,7 +151,8 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
         onClose();
 
     } catch (error) {
-        toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload logos due to a permission issue.' });
+        console.error("Upload failed", error);
+        toast({ variant: 'destructive', title: 'Upload Failed', description: 'An unexpected error occurred during upload. Please check the console.' });
     } finally {
         setIsLoading(false);
     }
@@ -175,7 +186,7 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
                             >
                                 <CommandInput placeholder="Search elections..." />
                                 <ScrollArea className="h-48">
-                                  <CommandGroup className="grid grid-cols-3 gap-1">
+                                  <CommandGroup>
                                   {electionOptions.map((option) => (
                                       <CommandItem
                                           key={option.value}
@@ -185,16 +196,15 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
                                               : [...field.value, option.value];
                                               field.onChange(newValue);
                                           }}
-                                          className="flex-col items-start p-2 h-auto"
+                                          className="flex items-center justify-between"
                                           >
+                                          <span>{option.label}</span>
                                           <Check
                                               className={cn(
-                                              'absolute top-2 right-2 h-4 w-4',
+                                              'h-4 w-4',
                                               field.value.includes(option.value) ? 'opacity-100' : 'opacity-0'
                                               )}
                                           />
-                                          <span className="font-bold">{option.label}</span>
-                                          <span className="text-xs text-muted-foreground">Election</span>
                                       </CommandItem>
                                   ))}
                                   </CommandGroup>
