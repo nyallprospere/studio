@@ -481,8 +481,20 @@ export default function ResultsPage() {
     const color = change > 0 ? 'text-green-700' : 'text-red-700' : 'text-muted-foreground';
     const sign = change > 0 ? '+' : '';
     if (change === 0) return <span className={cn('text-xs font-semibold ml-1', color)}>(0)</span>;
-    return <span className={cn('text-xs font-semibold flex items-center', color)}>{change > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}{Math.abs(change).toLocaleString()}</span>;
+    return <span className={cn('text-xs font-semibold flex items-center', color)}>{sign}{Math.abs(change).toLocaleString()}</span>;
   };
+
+  const VotePercentageChangeIndicator = ({ change }: { change: number | null }) => {
+    if (change === null || !previousElection) return null;
+    const color = change > 0 ? 'text-green-700' : 'text-red-700';
+    if (Math.abs(change) < 0.01) return null;
+    return (
+        <span className={cn('text-xs font-semibold flex items-center', color)}>
+            {change > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+            {Math.abs(change).toFixed(1)}%
+        </span>
+    );
+};
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -598,7 +610,7 @@ export default function ResultsPage() {
                                 )}
                             </CardContent>
                         </Card>
-                        <Card>
+                         <Card>
                             <CardHeader>
                                 <CardTitle>Vote Count by Region</CardTitle>
                             </CardHeader>
@@ -621,11 +633,11 @@ export default function ResultsPage() {
                                                 <TableRow key={region.id}>
                                                     <TableCell className="font-medium">{region.name}</TableCell>
                                                     <TableCell>{region.slpVotes.toLocaleString()}<VoteChangeIndicator change={region.slpVoteChange} /></TableCell>
-                                                    <TableCell>{region.slpPercentage.toFixed(1)}%</TableCell>
+                                                     <TableCell>{region.slpPercentage.toFixed(1)}%</TableCell>
                                                     <TableCell>{region.uwpVotes.toLocaleString()}<VoteChangeIndicator change={region.uwpVoteChange} /></TableCell>
-                                                    <TableCell>{region.uwpPercentage.toFixed(1)}%</TableCell>
+                                                     <TableCell>{region.uwpPercentage.toFixed(1)}%</TableCell>
                                                     <TableCell>{region.otherVotes > 0 ? region.otherVotes.toLocaleString() : '-'}<VoteChangeIndicator change={region.otherVoteChange} /></TableCell>
-                                                    <TableCell>{region.otherPercentage > 0 ? `${region.otherPercentage.toFixed(1)}%` : '-'}</TableCell>
+                                                     <TableCell>{region.otherPercentage > 0 ? `${region.otherPercentage.toFixed(1)}%` : '-'}</TableCell>
                                                 </TableRow>
                                             )) : (
                                                 <TableRow>
