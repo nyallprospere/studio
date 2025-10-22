@@ -303,13 +303,14 @@ export default function ResultsPage() {
                                 )}
                             </CardHeader>
                             <CardContent className="text-center p-4 pt-0">
-                                <div className="text-2xl font-bold">{summaryItem.seats} Seats</div>
-                                {summaryItem.seatChange !== null && (
-                                    <p className={`flex items-center justify-center gap-1 text-xs font-semibold ${summaryItem.seatChange > 0 ? 'text-green-600' : summaryItem.seatChange < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
-                                        {summaryItem.seatChange > 0 ? <ArrowUp className="h-3 w-3" /> : summaryItem.seatChange < 0 ? <ArrowDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
-                                        {summaryItem.seatChange > 0 ? `+${summaryItem.seatChange}` : summaryItem.seatChange} seats
-                                    </p>
-                                )}
+                                <div className="text-2xl font-bold">
+                                    {summaryItem.seats} Seats
+                                    {summaryItem.seatChange !== null && (
+                                        <sup className={`text-xs font-semibold ml-1 ${summaryItem.seatChange > 0 ? 'text-green-600' : summaryItem.seatChange < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
+                                          {summaryItem.seatChange > 0 ? `+${summaryItem.seatChange}` : summaryItem.seatChange}
+                                        </sup>
+                                    )}
+                                </div>
                                 <div className="mt-2">
                                   <div className="font-bold">{summaryItem.votePercentage}%</div>
                                   <div className="text-xs text-muted-foreground">({summaryItem.totalVotes.toLocaleString()} votes)</div>
