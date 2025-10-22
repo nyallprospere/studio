@@ -33,6 +33,7 @@ import {
   DialogTrigger,
   DialogTitle as VisuallyHiddenTitle,
 } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 export default function ManageLogosPage() {
@@ -54,6 +55,7 @@ export default function ManageLogosPage() {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedPartyForUpload, setSelectedPartyForUpload] = useState<Party | null>(null);
   const [deleteLocks, setDeleteLocks] = useState<Record<string, boolean>>({});
+  const [electionFilter, setElectionFilter] = useState<string>('all');
 
 
   const sortedElections = useMemo(() => elections?.sort((a, b) => b.year - a.year) || [], [elections]);
@@ -76,7 +78,11 @@ export default function ManageLogosPage() {
   const getLogoGroups = (partyId: string) => {
     if (!partyLogos || !sortedElections || !candidates || !constituencies) return [];
 
-    const logosForParty = partyLogos.filter(logo => logo.partyId === partyId);
+    const logosForParty = partyLogos.filter(logo => {
+        if (logo.partyId !== partyId) return false;
+        if (electionFilter === 'all') return true;
+        return logo.electionId === electionFilter;
+    });
     
     if (partyId === 'independent') {
        return logosForParty.map(logo => {
@@ -165,10 +171,25 @@ export default function ManageLogosPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Manage Party Logos"
-        description="Assign specific logos to parties for each election."
-      />
+      <div className="flex justify-between items-start mb-8">
+        <PageHeader
+            title="Manage Party Logos"
+            description="Assign specific logos to parties for each election."
+        />
+        <div className="flex items-center gap-2">
+            <Select value={electionFilter} onValueChange={setElectionFilter}>
+                <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by year" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">All Years</SelectItem>
+                    {sortedElections.map(e => (
+                        <SelectItem key={e.id} value={e.id}>{e.year}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
+      </div>
 
       {isLoading ? <p>Loading...</p> : 
        error ? <p className="text-destructive">Error loading logos: {error.message}</p> :
@@ -211,9 +232,9 @@ export default function ManageLogosPage() {
                             return (
                               <div key={group.key} className="p-4 border rounded-md flex flex-col gap-4">
                                 <div className="text-center">
-                                  <h4 className="font-semibold">{group.candidateName ? group.candidateName : group.dateRange}</h4>
-                                  {party.id === 'independent' && (
-                                    <p className="text-sm text-muted-foreground">{group.constituencyName ? group.constituencyName : 'Year of election'}</p>
+                                  <h4 className="font-semibold">{group.candidateName || group.dateRange}</h4>
+                                  {party.id === 'independent' && group.constituencyName && (
+                                    <p className="text-sm text-muted-foreground">{group.constituencyName}</p>
                                   )}
                                 </div>
                                 
@@ -299,3 +320,4 @@ export default function ManageLogosPage() {
     
 
     
+
