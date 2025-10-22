@@ -18,6 +18,26 @@ import { InteractiveSvgMap } from '@/components/interactive-svg-map';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+const constituencyMapOrder = [
+    "Gros Islet",
+    "Babonneau",
+    "Castries North",
+    "Castries East",
+    "Castries Central",
+    "Castries South",
+    "Castries South East",
+    "Anse-La-Raye/Canaries",
+    "Soufriere",
+    "Choiseul",
+    "Laborie",
+    "Vieux-Fort South",
+    "Vieux-Fort North",
+    "Micoud South",
+    "Micoud North",
+    "Dennery North",
+    "Dennery South",
+];
+
 
 export default function ResultsPage() {
   const { firestore } = useFirebase();
@@ -212,6 +232,21 @@ export default function ResultsPage() {
       .sort((a,b) => b.seats - a.seats || b.totalVotes - a.totalVotes);
   }, [currentElectionResults, parties, constituencies, currentElection, partyLogos, previousElectionResults, previousElection]);
 
+    const sortedConstituencyResults = useMemo(() => {
+        if (!currentElectionResults || !constituencies) return [];
+
+        return [...currentElectionResults].sort((a, b) => {
+            const nameA = getConstituencyById(a.constituencyId)?.name || '';
+            const nameB = getConstituencyById(b.constituencyId)?.name || '';
+            const indexA = constituencyMapOrder.indexOf(nameA);
+            const indexB = constituencyMapOrder.indexOf(nameB);
+
+            if (indexA === -1 && indexB === -1) return nameA.localeCompare(nameB);
+            if (indexA === -1) return 1;
+            if (indexB === -1) return -1;
+            return indexA - indexB;
+        });
+    }, [currentElectionResults, constituencies]);
 
   const chartConfig = useMemo(() => {
     const config: ChartConfig = {};
@@ -357,7 +392,7 @@ export default function ResultsPage() {
                                       </TableRow>
                                   </TableHeader>
                                   <TableBody>
-                                      {currentElectionResults && currentElectionResults.length > 0 ? currentElectionResults.map((cr) => {
+                                      {sortedConstituencyResults && sortedConstituencyResults.length > 0 ? sortedConstituencyResults.map((cr) => {
                                           const constituency = getConstituencyById(cr.constituencyId);
                                           const is2021 = currentElection?.year === 2021;
                                           const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
