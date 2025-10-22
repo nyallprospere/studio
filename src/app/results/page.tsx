@@ -491,9 +491,8 @@ export default function ResultsPage() {
   };
 
   const VotePercentageChangeIndicator = ({ change }: { change: number | null }) => {
-    if (change === null || !previousElection) return null;
+    if (change === null || !previousElection || Math.abs(change) < 0.01) return null;
     const color = change > 0 ? 'text-green-700' : 'text-red-700';
-    if (Math.abs(change) < 0.01) return null;
     return (
         <span className={cn('text-xs font-semibold flex items-center', color)}>
             {change > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
@@ -707,35 +706,21 @@ export default function ResultsPage() {
                                           const slpParty = parties?.find(p => p.acronym === 'SLP');
                                           const uwpParty = parties?.find(p => p.acronym === 'UWP');
                                           const winnerColor = currentWinner === 'SLP' ? slpParty?.color : (currentWinner === 'UWP' ? uwpParty?.color : '#8884d8');
-                                          const margin = Math.abs(cr.slpVotes - cr.uwpVotes);
-
+                                          
                                           return (
                                               <TableRow key={cr.id}>
                                                   <TableCell className="font-medium">{constituency?.name || cr.constituencyId}</TableCell>
                                                   <TableCell className="font-medium" style={{color: winnerColor}}>{resultStatus}</TableCell>
                                                   <TableCell>
-                                                    {isSpecialConstituency ? '-' : (
-                                                      <span>
-                                                        {cr.slpVotes.toLocaleString()}
-                                                        {currentWinner === 'SLP' && <sup> (+{margin.toLocaleString()})</sup>}
-                                                      </span>
-                                                    )}
+                                                    {isSpecialConstituency ? '-' : cr.slpVotes.toLocaleString()}
                                                   </TableCell>
                                                   <TableCell>{cr.totalVotes > 0 ? `${(cr.slpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%'}</TableCell>
                                                   <TableCell>
-                                                    <span>
-                                                      {cr.uwpVotes.toLocaleString()}
-                                                      {currentWinner === 'UWP' && <sup> (+{margin.toLocaleString()})</sup>}
-                                                    </span>
+                                                    {cr.uwpVotes.toLocaleString()}
                                                   </TableCell>
                                                   <TableCell>{cr.totalVotes > 0 ? `${(cr.uwpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%'}</TableCell>
                                                   <TableCell>
-                                                    {isSpecialConstituency ? (
-                                                      <span>
-                                                        {cr.slpVotes.toLocaleString()}
-                                                        {currentWinner === 'IND' && <sup> (+{margin.toLocaleString()})</sup>}
-                                                      </span>
-                                                    ) : cr.otherVotes > 0 ? cr.otherVotes.toLocaleString() : '-'}
+                                                    {isSpecialConstituency ? cr.slpVotes.toLocaleString() : cr.otherVotes > 0 ? cr.otherVotes.toLocaleString() : '-'}
                                                   </TableCell>
                                                   <TableCell>{cr.totalVotes.toLocaleString()}</TableCell>
                                                   <TableCell>{cr.turnout === 0 ? 'N/A' : `${cr.turnout}%`}</TableCell>
