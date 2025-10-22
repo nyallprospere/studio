@@ -15,6 +15,7 @@ import type { ChartConfig } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Image from 'next/image';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
+import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
 
 
 export default function ResultsPage() {
@@ -169,20 +170,38 @@ export default function ResultsPage() {
 
         return logoUrl;
     }
+
+    const calculatePreviousSeats = (partyId: string) => {
+      if (!previousElectionResults) return 0;
+      return previousElectionResults.reduce((acc, result) => {
+        const party = getPartyById(partyId);
+        if (!party) return acc;
+        if (party.acronym === 'SLP' && result.slpVotes > result.uwpVotes) return acc + 1;
+        if (party.acronym === 'UWP' && result.uwpVotes > result.slpVotes) return acc + 1;
+        return acc;
+      }, 0);
+    }
+
+    const getSeatChange = (partyId: string, currentSeats: number) => {
+        if (!previousElection) return null;
+        const prevSeats = calculatePreviousSeats(partyId);
+        return currentSeats - prevSeats;
+    }
   
     const summary = [
-        { partyId: slp.id, name: slp.acronym, acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color, logoUrl: getElectionLogo(slp.id) },
-        { partyId: uwp.id, name: uwp.acronym, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color, logoUrl: getElectionLogo(uwp.id) },
+        { partyId: slp.id, name: slp.acronym, acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color, logoUrl: getElectionLogo(slp.id), seatChange: getSeatChange(slp.id, slpSeats) },
+        { partyId: uwp.id, name: uwp.acronym, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color, logoUrl: getElectionLogo(uwp.id), seatChange: getSeatChange(uwp.id, uwpSeats) },
     ];
     
     if(otherVotes > 0 || otherSeats > 0) {
         const independentLogo = partyLogos.find(logo => logo.partyId === 'independent' && logo.electionId === currentElection?.id);
-        summary.push({ partyId: 'other', name: 'INDEPENDENTS', acronym: 'IND', seats: otherSeats, totalVotes: otherVotes, color: '#8884d8', logoUrl: independentLogo?.expandedLogoUrl || independentLogo?.logoUrl || currentElection?.independentExpandedLogoUrl || currentElection?.independentLogoUrl });
+        // Seat change for independents is not tracked across elections
+        summary.push({ partyId: 'other', name: 'INDEPENDENTS', acronym: 'IND', seats: otherSeats, totalVotes: otherVotes, color: '#8884d8', logoUrl: independentLogo?.expandedLogoUrl || independentLogo?.logoUrl || currentElection?.independentExpandedLogoUrl || currentElection?.independentLogoUrl, seatChange: null });
     }
 
     return summary.filter(p => p.seats > 0 || p.totalVotes > 0)
      .sort((a,b) => b.seats - a.seats || b.totalVotes - a.totalVotes);
-  }, [currentElectionResults, parties, constituencies, currentElection, partyLogos]);
+  }, [currentElectionResults, parties, constituencies, currentElection, partyLogos, previousElectionResults, previousElection]);
 
 
   const chartConfig = useMemo(() => {
@@ -289,9 +308,12 @@ export default function ResultsPage() {
                         </CardHeader>
                         <CardContent className="text-center">
                           <div className="text-3xl font-bold">{summaryItem.seats} Seats</div>
-                          <p className="text-sm text-muted-foreground">
-                            {summaryItem.totalVotes.toLocaleString()} votes
-                          </p>
+                            {summaryItem.seatChange !== null && (
+                                <p className={`flex items-center justify-center gap-1 text-sm font-semibold ${summaryItem.seatChange > 0 ? 'text-green-600' : summaryItem.seatChange < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
+                                    {summaryItem.seatChange > 0 ? <ArrowUp className="h-4 w-4" /> : summaryItem.seatChange < 0 ? <ArrowDown className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
+                                    {summaryItem.seatChange > 0 ? `+${summaryItem.seatChange}` : summaryItem.seatChange} seats
+                                </p>
+                            )}
                         </CardContent>
                       </Card>
                     ))}
@@ -397,6 +419,7 @@ export default function ResultsPage() {
                                         const constituency = getConstituencyById(cr.constituencyId);
                                         const is2021 = currentElection?.year === 2021;
                                         const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+                                        
                                         const currentWinner = isSpecialConstituency && cr.slpVotes > cr.uwpVotes ? 'IND' : (cr.slpVotes > cr.uwpVotes ? 'SLP' : 'UWP');
                                         
                                         const previousResult = previousElectionResults?.find(r => r.constituencyId === cr.constituencyId);
