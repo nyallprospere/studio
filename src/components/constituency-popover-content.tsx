@@ -72,11 +72,13 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
                         {candidateName}
                     </Button>
                      <div className="flex-grow text-center">
-                        <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
+                        {isWinner && (
+                            <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
+                        )}
                     </div>
                 </div>
 
-                 <div className="relative w-full h-8 bg-gray-200 rounded overflow-hidden">
+                 <div className="relative w-full h-8 bg-gray-200 rounded overflow-hidden mt-auto">
                     <div 
                         className={cn("absolute top-0 left-0 h-full rounded", isStriped && barFill === 'blue-red-stripes' && 'bg-blue-600')}
                         style={{ width: `${votePercentage}%`, backgroundColor: (isStriped && barFill === 'blue-red-stripes') ? '' : party?.color }}
@@ -86,7 +88,7 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
                     <div className="absolute inset-0 flex items-center justify-start px-2">
                         <div className="flex items-baseline">
                             <span className="text-white font-bold text-sm">
-                                {votes !== undefined && votes.toLocaleString()}
+                                {votePercentage.toFixed(1)}%
                             </span>
                             {isWinner && margin !== null && (
                                 <sup className="text-white text-[11px] font-bold ml-1">
@@ -285,7 +287,7 @@ export function ConstituencyPopoverContent({
                       votes={currentResult?.slpVotes} 
                       totalVotes={totalConstituencyVotes}
                       margin={margin}
-                      electionStatus={slpIsWinner ? electionStatus : null}
+                      electionStatus={electionStatus}
                       statusColor={statusColor}
                       isStriped={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'SLP'}
                       barFill={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'SLP' ? 'blue-red-stripes' : undefined}
@@ -297,7 +299,7 @@ export function ConstituencyPopoverContent({
                       votes={currentResult?.uwpVotes}
                       totalVotes={totalConstituencyVotes}
                       margin={margin}
-                      electionStatus={uwpIsWinner ? electionStatus : null}
+                      electionStatus={electionStatus}
                       statusColor={statusColor}
                       isStriped={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'UWP'}
                       barFill={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'UWP' ? 'blue-red-stripes' : undefined}
