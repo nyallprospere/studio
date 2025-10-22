@@ -229,7 +229,7 @@ export default function ResultsPage() {
           {partyAcronym}
         </text>
         {partyData.logoUrl && (
-          <image href={partyData.logoUrl} x={-12} y={20} height="24" width="24" />
+          <image href={partyData.logoUrl} x={-18} y={20} height="36" width="36" />
         )}
       </g>
     );
@@ -345,8 +345,8 @@ export default function ResultsPage() {
                           <CardContent>
                                <ChartContainer config={chartConfig} className="h-40 w-full">
                                 <ResponsiveContainer>
-                                    <BarChart data={summaryData} layout="horizontal" margin={{ top: 20, bottom: 30 }}>
-                                        <XAxis dataKey="acronym" tickLine={false} axisLine={false} tick={<CustomizedAxisTick />} height={50} />
+                                    <BarChart data={summaryData} layout="horizontal" margin={{ top: 20, bottom: 40 }}>
+                                        <XAxis dataKey="acronym" tickLine={false} axisLine={false} tick={<CustomizedAxisTick />} height={60} />
                                         <YAxis hide />
                                         <ChartTooltip
                                             cursor={false}
@@ -466,5 +466,7 @@ export default function ResultsPage() {
     </div>
   );
 }
+
+    
 
     
