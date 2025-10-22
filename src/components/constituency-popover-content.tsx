@@ -69,7 +69,7 @@ function CandidateBox({
             )}>
                 {isWinner && (
                     <div className="absolute -top-3 -right-2 text-center">
-                         <p className="font-bold text-xs -mb-3" style={{color: statusColor}}>{electionStatus}</p>
+                         <p className="font-bold text-xs -mb-5" style={{color: statusColor}}>{electionStatus}</p>
                         
                     </div>
                 )}
