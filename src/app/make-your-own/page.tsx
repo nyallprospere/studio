@@ -280,7 +280,7 @@ export default function MakeYourOwnPage() {
                         </ChartContainer>
                         <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-xs">
                             {myMapChartData.map((option) => {
-                                if (option.value === 0) return null;
+                                if (option.value === 0 || option.name !== 'To be selected') return null;
                                 return (
                                     <div key={option.name} className="flex items-center gap-1.5">
                                         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: option.fill }}></span>
@@ -298,6 +298,7 @@ export default function MakeYourOwnPage() {
     </div>
   );
 }
+
 
 
 
