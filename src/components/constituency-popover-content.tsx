@@ -55,13 +55,13 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
                 isWinner && "border-2 border-green-600"
             )}>
                  {isWinner && (
-                    <div className="absolute -top-[25px] -right-3 text-center">
+                    <div className="absolute -top-[10px] -right-3 text-center">
                          <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
                         <CheckCircle2 className="h-5 w-5 text-green-600 bg-white rounded-full mx-auto" />
                     </div>
                 )}
                 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col items-center gap-1 text-center">
                      {party?.logoUrl && (
                         <div className="relative h-8 w-8 flex-shrink-0">
                             <Image src={party.logoUrl} alt={party.name} fill className="object-contain" />
