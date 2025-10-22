@@ -27,6 +27,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+
 
 export default function ManageLogosPage() {
   const { firestore } = useFirebase();
@@ -175,13 +181,31 @@ export default function ManageLogosPage() {
                                   <div className="flex flex-col items-center gap-2 text-center">
                                       <p className="text-sm font-medium">Standard Logo</p>
                                       <div className="relative h-20 w-20 flex items-center justify-center">
-                                          {group.logoUrl ? <Image src={group.logoUrl} alt="Standard Logo" fill className="object-contain" /> : <Shield className="h-8 w-8 text-muted-foreground" />}
+                                          {group.logoUrl ? (
+                                             <Dialog>
+                                                <DialogTrigger asChild>
+                                                    <Image src={group.logoUrl} alt="Standard Logo" fill className="object-contain cursor-pointer" />
+                                                </DialogTrigger>
+                                                <DialogContent className="p-0 border-0 max-w-fit">
+                                                    <Image src={group.logoUrl} alt="Standard Logo" width={512} height={512} className="object-contain" />
+                                                </DialogContent>
+                                            </Dialog>
+                                          ) : <Shield className="h-8 w-8 text-muted-foreground" />}
                                       </div>
                                   </div>
                                   <div className="flex flex-col items-center gap-2 text-center">
                                       <p className="text-sm font-medium">Expanded Logo</p>
                                       <div className="relative h-20 w-32 flex items-center justify-center">
-                                          {group.expandedLogoUrl ? <Image src={group.expandedLogoUrl} alt="Expanded Logo" fill className="object-contain"/> : <Shield className="h-8 w-8 text-muted-foreground" />}
+                                          {group.expandedLogoUrl ? (
+                                              <Dialog>
+                                                <DialogTrigger asChild>
+                                                  <Image src={group.expandedLogoUrl} alt="Expanded Logo" fill className="object-contain cursor-pointer"/>
+                                                </DialogTrigger>
+                                                <DialogContent className="p-0 border-0 max-w-fit">
+                                                    <Image src={group.expandedLogoUrl} alt="Expanded Logo" width={800} height={400} className="object-contain" />
+                                                </DialogContent>
+                                              </Dialog>
+                                          ) : <Shield className="h-8 w-8 text-muted-foreground" />}
                                       </div>
                                   </div>
                                 </div>
