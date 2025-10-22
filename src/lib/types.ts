@@ -137,5 +137,6 @@ export interface SiteSettings {
 export interface Region {
   id: string;
   name: string;
+  constituencyIds?: string[];
 }
     

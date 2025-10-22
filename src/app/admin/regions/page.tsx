@@ -3,8 +3,8 @@
 
 import { useState, useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
-import type { Region } from '@/lib/types';
+import { collection, addDoc, updateDoc, deleteDoc, doc, writeBatch, getDocs, query } from 'firebase/firestore';
+import type { Region, Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -23,13 +23,18 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function AdminRegionsPage() {
   const { firestore } = useFirebase();
   const { toast } = useToast();
   
   const regionsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'regions') : null, [firestore]);
-  const { data: regions, isLoading } = useCollection<Region>(regionsCollection);
+  const constituenciesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
+  
+  const { data: regions, isLoading: loadingRegions } = useCollection<Region>(regionsCollection);
+  const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesCollection);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRegion, setEditingRegion] = useState<Region | null>(null);
@@ -39,15 +44,20 @@ export default function AdminRegionsPage() {
     return [...regions].sort((a, b) => a.name.localeCompare(b.name));
   }, [regions]);
 
-  const handleFormSubmit = async (values: { name: string }) => {
+  const handleFormSubmit = async (values: { name: string, constituencyIds?: string[] }) => {
     if (!firestore || !regionsCollection) {
       toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available.' });
       return;
     }
+
+    const dataToSave = {
+        name: values.name,
+        constituencyIds: values.constituencyIds || []
+    };
     
     if (editingRegion) {
       const regionDoc = doc(firestore, 'regions', editingRegion.id);
-      updateDoc(regionDoc, values)
+      updateDoc(regionDoc, dataToSave)
         .then(() => {
           toast({ title: "Region Updated", description: `The region "${values.name}" has been successfully updated.` });
         })
@@ -55,12 +65,12 @@ export default function AdminRegionsPage() {
           const contextualError = new FirestorePermissionError({
             path: regionDoc.path,
             operation: 'update',
-            requestResourceData: values,
+            requestResourceData: dataToSave,
           });
           errorEmitter.emit('permission-error', contextualError);
         });
     } else {
-        addDoc(regionsCollection, values)
+        addDoc(regionsCollection, dataToSave)
             .then(() => {
             toast({ title: "Region Added", description: `The region "${values.name}" has been successfully added.` });
             })
@@ -68,7 +78,7 @@ export default function AdminRegionsPage() {
             const contextualError = new FirestorePermissionError({
                 path: regionsCollection.path,
                 operation: 'create',
-                requestResourceData: values,
+                requestResourceData: dataToSave,
             });
             errorEmitter.emit('permission-error', contextualError);
         });
@@ -97,6 +107,12 @@ export default function AdminRegionsPage() {
       });
   };
 
+  const getConstituencyName = (id: string) => {
+    return constituencies?.find(c => c.id === id)?.name || 'Unknown';
+  };
+
+  const isLoading = loadingRegions || loadingConstituencies;
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-start mb-8">
@@ -109,15 +125,19 @@ export default function AdminRegionsPage() {
             <DialogTrigger asChild>
                 <Button onClick={() => { setEditingRegion(null); setIsFormOpen(true)}}>Add New Region</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-xl h-[80vh]">
                 <DialogHeader>
                 <DialogTitle>{editingRegion ? 'Edit Region' : 'Add New Region'}</DialogTitle>
                 </DialogHeader>
-                <RegionForm
-                onSubmit={handleFormSubmit}
-                initialData={editingRegion}
-                onCancel={() => setIsFormOpen(false)}
-                />
+                 <ScrollArea className="h-full pr-6">
+                    <RegionForm
+                        onSubmit={handleFormSubmit}
+                        initialData={editingRegion}
+                        onCancel={() => setIsFormOpen(false)}
+                        allConstituencies={constituencies || []}
+                        allRegions={regions || []}
+                    />
+                </ScrollArea>
             </DialogContent>
           </Dialog>
         </div>
@@ -135,9 +155,19 @@ export default function AdminRegionsPage() {
             <div className="space-y-4">
               {sortedRegions && sortedRegions.length > 0 ? (
                 sortedRegions.map((region) => (
-                  <div key={region.id} className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50">
-                    <p className="font-semibold">{region.name}</p>
-                    <div className="flex items-center gap-2">
+                  <div key={region.id} className="flex items-start justify-between p-4 border rounded-md hover:bg-muted/50">
+                    <div>
+                        <p className="font-semibold">{region.name}</p>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                            {region.constituencyIds && region.constituencyIds.map(cId => (
+                                <Badge key={cId} variant="secondary">{getConstituencyName(cId)}</Badge>
+                            ))}
+                             {(!region.constituencyIds || region.constituencyIds.length === 0) && (
+                                <p className="text-xs text-muted-foreground">No constituencies assigned.</p>
+                             )}
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
                        <Button variant="ghost" size="icon" onClick={() => { setEditingRegion(region); setIsFormOpen(true);}}>
                            <Pencil className="h-4 w-4" />
                        </Button>
