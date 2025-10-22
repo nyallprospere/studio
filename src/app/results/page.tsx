@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, orderBy, query, getDocs } from 'firebase/firestore';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, LabelList, Cell } from "recharts"
+import { Bar, BarChart, ResponsiveContainer, XAxis, Tooltip, CartesianGrid, LabelList, Cell } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -145,6 +145,8 @@ export default function ResultsPage() {
         }
       }
     });
+    
+    const grandTotalVotes = slpVotes + uwpVotes + otherVotes;
 
     const getElectionLogo = (partyId: string) => {
         const electionLogo = partyLogos.find(logo => logo.partyId === partyId && logo.electionId === currentElection?.id);
@@ -186,8 +188,13 @@ export default function ResultsPage() {
         summary.push({ partyId: 'other', name: 'INDEPENDENTS', acronym: 'IND', seats: otherSeats, totalVotes: otherVotes, color: '#8884d8', logoUrl: independentLogo?.expandedLogoUrl || independentLogo?.logoUrl || currentElection?.independentExpandedLogoUrl || currentElection?.independentLogoUrl, seatChange: null });
     }
 
-    return summary.filter(p => p.seats > 0 || p.totalVotes > 0)
-     .sort((a,b) => b.seats - a.seats || b.totalVotes - a.totalVotes);
+    return summary
+      .filter(p => p.seats > 0 || p.totalVotes > 0)
+      .map(p => ({
+          ...p,
+          votePercentage: grandTotalVotes > 0 ? ((p.totalVotes / grandTotalVotes) * 100).toFixed(1) : '0.0',
+      }))
+      .sort((a,b) => b.seats - a.seats || b.totalVotes - a.totalVotes);
   }, [currentElectionResults, parties, constituencies, currentElection, partyLogos, previousElectionResults, previousElection]);
 
 
@@ -304,6 +311,10 @@ export default function ResultsPage() {
                                                 {summaryItem.seatChange > 0 ? `+${summaryItem.seatChange}` : summaryItem.seatChange} seats
                                             </p>
                                         )}
+                                        <div className="mt-2 text-xs text-muted-foreground">
+                                            <p className="font-semibold">{summaryItem.votePercentage}%</p>
+                                            <p>({summaryItem.totalVotes.toLocaleString()} votes)</p>
+                                        </div>
                                     </CardContent>
                                 </Card>
                                 ))}
@@ -454,3 +465,5 @@ export default function ResultsPage() {
     </div>
   );
 }
+
+    
