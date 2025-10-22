@@ -476,7 +476,7 @@ export default function ResultsPage() {
   }
 
   const SeatChangeIndicator = ({ change }: { change: number | null }) => {
-    if (change === null) return null;
+    if (change === null || !previousElection) return null;
     const color = change > 0 ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-muted-foreground';
     const sign = change > 0 ? '+' : '';
     return <span className={cn('text-xs font-semibold ml-1', color)}>({sign}{change})</span>;
@@ -484,8 +484,8 @@ export default function ResultsPage() {
   
   const VoteChangeIndicator = ({ change }: { change: number | null }) => {
     if (change === null || !previousElection) return null;
-    const color = change > 0 ? 'text-green-700' : 'text-red-700' : 'text-muted-foreground';
-    const sign = change > 0 ? '+' : '';
+    const color = change > 0 ? 'text-green-700' : change < 0 ? 'text-red-700' : 'text-muted-foreground';
+    const sign = change > 0 ? '+' : change < 0 ? '-' : '';
     if (change === 0) return <span className={cn('text-xs font-semibold ml-1', color)}>(0)</span>;
     return <span className={cn('text-xs font-semibold flex items-center', color)}>{sign}{Math.abs(change).toLocaleString()}</span>;
   };
