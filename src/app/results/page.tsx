@@ -291,7 +291,7 @@ export default function ResultsPage() {
                   <h3 className="text-2xl font-headline mb-4">
                     {currentElection.name} Election Summary
                   </h3>
-                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                         {summaryData.map((summaryItem) => (
                         <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
                             <CardHeader className="flex flex-row items-center justify-between p-4">
@@ -310,6 +310,10 @@ export default function ResultsPage() {
                                         {summaryItem.seatChange > 0 ? `+${summaryItem.seatChange}` : summaryItem.seatChange} seats
                                     </p>
                                 )}
+                                <div className="mt-2">
+                                  <div className="font-bold">{summaryItem.votePercentage}%</div>
+                                  <div className="text-xs text-muted-foreground">({summaryItem.totalVotes.toLocaleString()} votes)</div>
+                                </div>
                             </CardContent>
                         </Card>
                         ))}
