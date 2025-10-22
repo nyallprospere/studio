@@ -194,7 +194,7 @@ export default function ResultsPage() {
     }
   
     const summary = [
-        { partyId: slp.id, name: slp.name, acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color, logoUrl: getElectionLogo(slp.id), seatChange: getSeatChange(slp.id, slpSeats) },
+        { partyId: slp.id, name: "Saint Lucia Labour Party", acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color, logoUrl: getElectionLogo(slp.id), seatChange: getSeatChange(slp.id, slpSeats) },
         { partyId: uwp.id, name: uwp.name, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color, logoUrl: getElectionLogo(uwp.id), seatChange: getSeatChange(uwp.id, uwpSeats) },
     ];
     
@@ -292,7 +292,7 @@ export default function ResultsPage() {
                   <h3 className="text-2xl font-headline mb-4">
                     {currentElection.name} Election Summary
                   </h3>
-                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                         {summaryData.map((summaryItem) => (
                         <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
                             <CardHeader className="flex flex-col items-center p-4">
@@ -308,7 +308,7 @@ export default function ResultsPage() {
                                     {summaryItem.seats}
                                     {summaryItem.seatChange !== null && (
                                         <sup className={cn("text-xs font-semibold ml-1", summaryItem.seatChange > 0 ? 'text-green-600' : summaryItem.seatChange < 0 ? 'text-red-600' : 'text-muted-foreground')}>
-                                          {summaryItem.seatChange > 0 ? `+${summaryItem.seatChange}` : summaryItem.seatChange} seats
+                                          {summaryItem.seatChange > 0 ? `+${summaryItem.seatChange}` : summaryItem.seatChange} Seats
                                         </sup>
                                     )}
                                 </div>
