@@ -506,7 +506,6 @@ export default function ResultsPage() {
                                           <TableHead>SLP Seats</TableHead>
                                           <TableHead>UWP Seats</TableHead>
                                           <TableHead>Other Seats</TableHead>
-                                          <TableHead>Total Seats</TableHead>
                                       </TableRow>
                                   </TableHeader>
                                   <TableBody>
@@ -516,11 +515,10 @@ export default function ResultsPage() {
                                               <TableCell>{region.slpSeats}<SeatChangeIndicator change={region.slpSeatChange} /></TableCell>
                                               <TableCell>{region.uwpSeats}<SeatChangeIndicator change={region.uwpSeatChange} /></TableCell>
                                               <TableCell>{region.otherSeats}<SeatChangeIndicator change={region.otherSeatChange} /></TableCell>
-                                              <TableCell className="font-semibold">{region.totalSeats}</TableCell>
                                           </TableRow>
                                       )) : (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="text-center text-muted-foreground h-24">Regional data not available. Please define regions in the admin panel.</TableCell>
+                                            <TableCell colSpan={4} className="text-center text-muted-foreground h-24">Regional data not available. Please define regions in the admin panel.</TableCell>
                                         </TableRow>
                                       )}
                                   </TableBody>
