@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, orderBy, query, getDocs } from 'firebase/firestore';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Bar, BarChart, ResponsiveContainer, XAxis, LabelList, Tooltip, Legend, CartesianGrid } from "recharts"
+import { Bar, BarChart, ResponsiveContainer, XAxis, LabelList, Tooltip, Legend, CartesianGrid, Cell } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -217,12 +217,23 @@ export default function ResultsPage() {
     return constituencies.map(con => {
         const result = currentElectionResults.find(r => r.constituencyId === con.id);
         if (result) {
-            const winner = result.slpVotes > result.uwpVotes ? 'solid-slp' : 'solid-uwp';
-            return { ...con, politicalLeaning: winner };
+            let winner = 'tossup';
+
+             if (currentElection?.year === 2021) {
+                if(con.name === 'Castries North' || con.name === 'Castries Central') {
+                    winner = result.slpVotes > result.uwpVotes ? 'solid-slp' : 'solid-uwp'; // SLP votes are IND here
+                }
+             }
+            
+            if (winner === 'tossup') {
+              winner = result.slpVotes > result.uwpVotes ? 'solid-slp' : 'solid-uwp';
+            }
+
+            return { ...con, politicalLeaning: winner as Constituency['politicalLeaning'] };
         }
         return { ...con, politicalLeaning: 'tossup' }; // Default for no result
     });
-  }, [constituencies, currentElectionResults]);
+  }, [constituencies, currentElectionResults, currentElection]);
 
   const CustomizedAxisTick = (props: any) => {
     const { x, y, payload } = props;
@@ -284,7 +295,7 @@ export default function ResultsPage() {
                     {currentElection.name} Election Summary
                   </h3>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {summaryData.map((summaryItem) => (
                             <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
                                 <CardHeader className="flex flex-col items-center text-center p-4">
@@ -316,7 +327,7 @@ export default function ResultsPage() {
                                 <CardContent>
                                     <ChartContainer config={chartConfig} className="h-64 w-full">
                                         <ResponsiveContainer>
-                                            <BarChart data={summaryData} margin={{ top: 20, right: 20, bottom: 40, left: -20 }}>
+                                            <BarChart data={summaryData} margin={{ top: 20, right: 20, bottom: 40, left: 20 }}>
                                                 <CartesianGrid vertical={false} />
                                                 <XAxis
                                                     dataKey="acronym"
@@ -325,6 +336,7 @@ export default function ResultsPage() {
                                                     tick={<CustomizedAxisTick />}
                                                     height={50}
                                                 />
+                                                <YAxis hide={true} />
                                                 <Tooltip
                                                     cursor={false}
                                                     content={<ChartTooltipContent formatter={(value) => [(value as number).toLocaleString(), 'votes']} />}
@@ -384,15 +396,10 @@ export default function ResultsPage() {
                               const constituency = getConstituencyById(cr.constituencyId);
                               const is2021 = currentElection?.year === 2021;
                               
-                              const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
-                              
-                              let currentWinner = 'UWP';
-                                if (isSpecialConstituency && cr.slpVotes > cr.uwpVotes) {
-                                    currentWinner = 'IND';
-                                } else if (cr.slpVotes > cr.uwpVotes) {
-                                    currentWinner = 'SLP';
-                                }
-
+                              let currentWinner = cr.slpVotes > cr.uwpVotes ? 'SLP' : 'UWP';
+                              if (is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central')) {
+                                  currentWinner = 'IND';
+                              }
                               
                               const previousResult = previousElectionResults?.find(r => r.constituencyId === cr.constituencyId);
                               const previousWinner = previousResult ? (previousResult.slpVotes > previousResult.uwpVotes ? 'SLP' : 'UWP') : null;
@@ -418,9 +425,9 @@ export default function ResultsPage() {
                                   <TableCell>
                                       <span className="font-semibold" style={{ color: winnerColor }}>{resultStatus}</span>
                                   </TableCell>
-                                  <TableCell>{isSpecialConstituency ? '-' : cr.slpVotes.toLocaleString()}</TableCell>
+                                  <TableCell>{cr.slpVotes.toLocaleString()}</TableCell>
                                   <TableCell>{cr.uwpVotes.toLocaleString()}</TableCell>
-                                  <TableCell>{isSpecialConstituency ? (cr.slpVotes + cr.otherVotes).toLocaleString() : cr.otherVotes.toLocaleString()}</TableCell>
+                                  <TableCell>{cr.otherVotes.toLocaleString()}</TableCell>
                                   <TableCell className="text-right font-semibold">{cr.totalVotes.toLocaleString()}</TableCell>
                                   <TableCell className="text-right">{cr.registeredVoters === 0 ? 'N/A' : cr.registeredVoters.toLocaleString()}</TableCell>
                                   <TableCell className="text-right">{cr.turnout === 0 ? 'N/A' : `${cr.turnout}%`}</TableCell>
