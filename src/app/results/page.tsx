@@ -41,7 +41,20 @@ export default function ResultsPage() {
 
   const sortedElections = useMemo(() => {
     if (!elections) return [];
-    return [...elections].sort((a, b) => {
+    
+    const now = new Date();
+    // Filter out future elections, except for 2026 if we're past the hardcoded election date
+    const pastElections = elections.filter(election => {
+        if (election.year > now.getFullYear()) {
+            if (election.year === 2026 && now > new Date('2026-07-26T00:00:00')) {
+                return true;
+            }
+            return false;
+        }
+        return true;
+    });
+
+    return [...pastElections].sort((a, b) => {
         if (a.year !== b.year) {
             return b.year - a.year;
         }
