@@ -7,7 +7,7 @@ import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import Image from 'next/image';
-import { UserSquare, CheckCircle2 } from 'lucide-react';
+import { UserSquare, CheckCircle2, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from './ui/button';
 import { CandidateProfileDialog } from './candidate-profile-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -29,7 +29,7 @@ const getLeaningLabel = (leaningValue?: string) => {
     return politicalLeaningOptions.find(opt => opt.value === leaningValue)?.label || 'Tossup';
 };
 
-function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, electionStatus, statusColor, isStriped, barFill }: { 
+function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, electionStatus, statusColor, isStriped, barFill, votePercentageChange }: { 
     candidate: Candidate | ArchivedCandidate | null;
     party: Party | null;
     isWinner: boolean;
@@ -40,6 +40,7 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
     statusColor?: string | undefined;
     isStriped?: boolean;
     barFill?: string;
+    votePercentageChange?: number | null;
 }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const isIncumbent = candidate?.isIncumbent;
@@ -86,14 +87,15 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
                          {isStriped && barFill === 'blue-red-stripes' && <div className="absolute inset-0 red-stripes-overlay"></div>}
                     </div>
                     <div className="absolute inset-0 flex items-center justify-start px-2">
-                        <div className="flex items-baseline">
+                        <div className="flex items-baseline gap-1">
                             <span className="text-white font-bold text-sm">
                                 {votePercentage.toFixed(1)}%
                             </span>
-                            {isWinner && margin !== null && (
-                                <sup className="text-white text-[11px] font-bold ml-1">
-                                    (+{margin.toLocaleString()})
-                                </sup>
+                            {votePercentageChange !== null && typeof votePercentageChange !== 'undefined' && (
+                                <div className={cn("text-xs font-bold flex items-center text-white/90", votePercentageChange > 0 ? 'text-green-300' : 'text-red-300')}>
+                                    {votePercentageChange > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                                    {Math.abs(votePercentageChange).toFixed(1)}%
+                                </div>
                             )}
                         </div>
                     </div>
@@ -154,12 +156,12 @@ export function ConstituencyPopoverContent({
     }, [parties, candidates]);
 
 
-    const { electionStatus, statusColor, margin, totalConstituencyVotes, winnerAcronym } = useMemo(() => {
-        if (!electionResults) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null };
+    const { electionStatus, statusColor, margin, totalConstituencyVotes, winnerAcronym, slpVotePercentageChange, uwpVotePercentageChange } = useMemo(() => {
+        if (!electionResults || !slpParty || !uwpParty) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null, slpVotePercentageChange: null, uwpVotePercentageChange: null };
 
         const currentResult = electionResults.find(r => r.constituencyId === constituency.id);
         
-        if (!currentResult) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null };
+        if (!currentResult) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null, slpVotePercentageChange: null, uwpVotePercentageChange: null };
         
         const totalVotes = currentResult.slpVotes + currentResult.uwpVotes + currentResult.otherVotes;
         const margin = Math.abs(currentResult.slpVotes - currentResult.uwpVotes);
@@ -167,6 +169,9 @@ export function ConstituencyPopoverContent({
         const winnerAcronym = currentWinner?.acronym;
         let status = `${winnerAcronym} Win`;
         let color = currentWinner?.color;
+
+        let slpVotePercentageChange = null;
+        let uwpVotePercentageChange = null;
 
         if (previousElectionResults) {
             const previousResult = previousElectionResults.find(r => r.constituencyId === constituency.id);
@@ -178,10 +183,21 @@ export function ConstituencyPopoverContent({
                     status = `${winnerAcronym} Gain`;
                     color = currentWinner?.color;
                 }
+                if (totalVotes > 0) {
+                    const currentSlpPercent = (currentResult.slpVotes / totalVotes) * 100;
+                    const currentUwpPercent = (currentResult.uwpVotes / totalVotes) * 100;
+                    const prevTotalVotes = previousResult.slpVotes + previousResult.uwpVotes + previousResult.otherVotes;
+                    if (prevTotalVotes > 0) {
+                        const prevSlpPercent = (previousResult.slpVotes / prevTotalVotes) * 100;
+                        const prevUwpPercent = (previousResult.uwpVotes / prevTotalVotes) * 100;
+                        slpVotePercentageChange = currentSlpPercent - prevSlpPercent;
+                        uwpVotePercentageChange = currentUwpPercent - prevUwpPercent;
+                    }
+                }
             }
         }
         
-        return { electionStatus: status, statusColor: color, margin: margin, totalConstituencyVotes: totalVotes, winnerAcronym };
+        return { electionStatus: status, statusColor: color, margin: margin, totalConstituencyVotes: totalVotes, winnerAcronym, slpVotePercentageChange, uwpVotePercentageChange };
 
     }, [constituency.id, electionResults, previousElectionResults, slpParty, uwpParty]);
 
@@ -291,6 +307,7 @@ export function ConstituencyPopoverContent({
                       statusColor={statusColor}
                       isStriped={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'SLP'}
                       barFill={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'SLP' ? 'blue-red-stripes' : undefined}
+                      votePercentageChange={slpVotePercentageChange}
                   />
                   <CandidateBox 
                       candidate={uwpCandidate!} 
@@ -303,6 +320,7 @@ export function ConstituencyPopoverContent({
                       statusColor={statusColor}
                       isStriped={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'UWP'}
                       barFill={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'UWP' ? 'blue-red-stripes' : undefined}
+                      votePercentageChange={uwpVotePercentageChange}
                   />
               </div>
             )}
