@@ -113,7 +113,6 @@ const VictoryStatusBar = ({ slpSeats, uwpSeats }: { slpSeats: number, uwpSeats: 
 
 export default function MakeYourOwnPage() {
     const { firestore } = useFirebase();
-    const { user } = useUser();
     const { toast } = useToast();
 
     const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
@@ -189,8 +188,8 @@ export default function MakeYourOwnPage() {
 
     const isLoading = loadingConstituencies || loadingLayout;
 
-    const { myMapChartData, seatCounts } = useMemo(() => {
-        if (!myMapConstituencies) return { myMapChartData: [], seatCounts: {} };
+    const { myMapChartData, seatCounts, allSelected } = useMemo(() => {
+        if (!myMapConstituencies) return { myMapChartData: [], seatCounts: {}, allSelected: false };
 
         const counts = myMapConstituencies.reduce((acc, constituency) => {
             const leaning = constituency.politicalLeaning || 'unselected';
@@ -205,13 +204,15 @@ export default function MakeYourOwnPage() {
             unselected: counts['unselected'] || 0
         };
 
+        const allSelected = seatCounts.unselected === 0;
+
         const chartData = makeYourOwnLeaningOptions.map(opt => ({
             name: opt.label,
             value: counts[opt.value] || 0,
             fill: opt.value === 'slp' ? 'hsl(var(--chart-5))' : opt.value === 'uwp' ? 'hsl(var(--chart-1))' : opt.value === 'tossup' ? 'hsl(var(--chart-4))' : '#d1d5db',
         })).filter(item => item.value > 0);
 
-        return { myMapChartData: chartData, seatCounts };
+        return { myMapChartData: chartData, seatCounts, allSelected };
     }, [myMapConstituencies]);
 
     const chartConfig = politicalLeaningOptions.reduce((acc, option) => {
@@ -246,8 +247,8 @@ export default function MakeYourOwnPage() {
       {isLoading || !constituencies ? (
           <ConstituenciesPageSkeleton />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="lg:col-span-1">
              <Card>
                 <CardContent className="p-2">
                     <InteractiveSvgMap 
@@ -320,7 +321,7 @@ export default function MakeYourOwnPage() {
                                 )
                             })}
                         </div>
-                        <Button onClick={handleSaveAndShare} disabled={isSaving} className="w-full mt-6">
+                        <Button onClick={handleSaveAndShare} disabled={isSaving || !allSelected} className="w-full mt-6">
                             <Share2 className="mr-2 h-4 w-4" />
                             {isSaving ? 'Saving...' : 'Save & Share'}
                         </Button>
@@ -363,3 +364,4 @@ export default function MakeYourOwnPage() {
     </div>
   );
 }
+
