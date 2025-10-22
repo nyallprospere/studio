@@ -86,7 +86,10 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
                     >
                          {isStriped && barFill === 'blue-red-stripes' && <div className="absolute inset-0 red-stripes-overlay"></div>}
                     </div>
-                    <div className="absolute inset-0 flex items-center justify-start px-2">
+                    <div className="absolute inset-0 flex items-center justify-between px-2">
+                        <span className="text-white font-bold text-sm">
+                            {votes?.toLocaleString()}
+                        </span>
                         <div className="flex items-baseline gap-1">
                             <span className="text-white font-bold text-sm">
                                 {votePercentage.toFixed(1)}%
