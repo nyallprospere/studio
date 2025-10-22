@@ -42,13 +42,13 @@ export default function ResultsPage() {
   const sortedElections = useMemo(() => {
     if (!elections) return [];
     
+    // Filter out future elections
     const now = new Date();
-    // Filter out future elections, except for 2026 if we're past the hardcoded election date
     const pastElections = elections.filter(election => {
-        const electionDate = new Date(election.year, 6, 26); // Assuming July 26 for simplicity
-        if (election.year > now.getFullYear()) return false;
-        if (election.year === now.getFullYear() && electionDate > now) return false;
-        return true;
+        const electionYear = election.year;
+        // A simple check assuming elections happen mid-year. 
+        // A more robust solution would use the full election date.
+        return electionYear <= now.getFullYear();
     });
 
     return [...pastElections].sort((a, b) => {
@@ -125,12 +125,10 @@ export default function ResultsPage() {
     let otherVotes = 0;
 
     const is2021 = currentElection?.year === 2021;
-    const castriesNorth = constituencies.find(c => c.name === 'Castries North');
-    const castriesCentral = constituencies.find(c => c.name === 'Castries Central');
   
     currentElectionResults.forEach(result => {
       const constituency = getConstituencyById(result.constituencyId);
-      const isSpecialConstituency = is2021 && (constituency?.id === castriesNorth?.id || constituency?.id === castriesCentral?.id);
+      const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
 
       if (isSpecialConstituency && result.slpVotes > result.uwpVotes) {
         otherVotes += result.slpVotes; // Add SLP votes to 'Other' for IND
@@ -330,7 +328,7 @@ export default function ResultsPage() {
                                             tick={<CustomizedAxisTick />}
                                             height={50}
                                         />
-                                        <YAxis tickFormatter={(value) => value.toLocaleString()} />
+                                        
                                         <Tooltip
                                             cursor={false}
                                             content={<ChartTooltipContent formatter={(value) => [(value as number).toLocaleString(), 'votes']} />}
