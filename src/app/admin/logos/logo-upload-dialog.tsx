@@ -16,7 +16,7 @@ import { useFirebase, errorEmitter, FirestorePermissionError } from '@/firebase'
 import { collection, doc, query, where, getDocs, updateDoc, addDoc, writeBatch } from 'firebase/firestore';
 import { uploadFile, deleteFile } from '@/firebase/storage';
 import { Loader2 } from 'lucide-react';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { Command, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -70,8 +70,8 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
         const standardFiles = isIndependent ? values.standardLogoFiles : (values.standardLogoFile ? [values.standardLogoFile] : []);
 
         for (const electionId of values.electionIds) {
-            for (let i = 0; i < (isIndependent ? standardFiles.length : 1); i++) {
-                const standardFile = isIndependent ? standardFiles[i] : (standardFiles[0] || null);
+            for (let i = 0; i < (isIndependent ? (standardFiles?.length > 0 ? standardFiles.length : 1) : 1); i++) {
+                const standardFile = isIndependent ? (standardFiles?.[i] || null) : (standardFiles?.[0] || null);
 
                 const files = {
                     standard: standardFile,
@@ -83,7 +83,7 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
                     where('electionId', '==', electionId),
                 ];
                 if(isIndependent && standardFile) {
-                    q.push(where('logoUrl', '==', `logos/${party.id}_${electionId}_std_${i}.png`));
+                    q.push(where('logoUrl', 'like', `logos/${party.id}_${electionId}_std_%`));
                 }
 
                 const existingLogoQuery = query(
@@ -92,7 +92,7 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
                 );
                 
                 const existingLogoSnap = await getDocs(existingLogoQuery);
-                const existingLogoDoc = existingLogoSnap.docs[0];
+                const existingLogoDoc = existingLogoSnap.docs[i] || existingLogoSnap.docs[0];
 
                 let standardUrl = existingLogoDoc?.data()?.logoUrl;
                 let expandedUrl = existingLogoDoc?.data()?.expandedLogoUrl;
@@ -102,16 +102,17 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
                     const path = isIndependent ? `logos/${party.id}_${electionId}_std_${i}.png` : `logos/${party.id}_${electionId}_std.png`;
                     standardUrl = await uploadFile(files.standard, path);
                 }
-                if (files.expanded && !isIndependent) { // Expanded logo only for non-independents in this logic
+                if (files.expanded) {
                     if (expandedUrl) await deleteFile(expandedUrl).catch(console.warn);
-                    expandedUrl = await uploadFile(files.expanded, `logos/${party.id}_${electionId}_exp.png`);
+                     const path = isIndependent ? `logos/${party.id}_${electionId}_exp_${i}.png` : `logos/${party.id}_${electionId}_exp.png`;
+                    expandedUrl = await uploadFile(files.expanded, path);
                 }
 
                 const dataToSave = {
                     partyId: party.id,
                     electionId,
-                    logoUrl: standardUrl || '',
-                    expandedLogoUrl: expandedUrl || '',
+                    logoUrl: standardUrl || existingLogoDoc?.data()?.logoUrl || '',
+                    expandedLogoUrl: expandedUrl || existingLogoDoc?.data()?.expandedLogoUrl || '',
                 };
 
                 if (existingLogoDoc) {
@@ -204,19 +205,34 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, onSuccess 
                     )}
                 />
                  {isIndependent ? (
-                    <FormField
-                        control={form.control}
-                        name="standardLogoFiles"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Standard Logos (Square)</FormLabel>
+                     <>
+                        <FormField
+                            control={form.control}
+                            name="standardLogoFiles"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Standard Logos (Square)</FormLabel>
+                                    <FormControl>
+                                        <Input type="file" accept="image/png, image/jpeg" multiple onChange={(e) => field.onChange(e.target.files)} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name="expandedLogoFile"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Expanded Logo (Banner)</FormLabel>
                                 <FormControl>
-                                    <Input type="file" accept="image/png, image/jpeg" multiple onChange={(e) => field.onChange(e.target.files)} />
+                                    <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
                                 </FormControl>
                                 <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                                </FormItem>
+                            )}
+                        />
+                    </>
                  ) : (
                     <>
                         <FormField
