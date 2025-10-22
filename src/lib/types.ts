@@ -20,6 +20,7 @@ export interface PartyLogo {
   id: string;
   partyId: string;
   electionId: string;
+  constituencyId?: string;
   logoUrl: string;
   expandedLogoUrl?: string;
 }

@@ -4,7 +4,7 @@
 import { useState, useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { collection, addDoc, updateDoc, doc, query, where, getDocs, writeBatch, deleteDoc } from 'firebase/firestore';
-import type { Party, Election, PartyLogo, Constituency } from '@/lib/types';
+import type { Party, Election, PartyLogo, Constituency, Candidate } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -32,7 +32,6 @@ import {
   DialogContent,
   DialogTrigger,
   DialogTitle as VisuallyHiddenTitle,
-  DialogDescription,
 } from "@/components/ui/dialog"
 
 
@@ -44,11 +43,13 @@ export default function ManageLogosPage() {
   const electionsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'elections') : null, [firestore]);
   const partyLogosQuery = useMemoFirebase(() => firestore ? collection(firestore, 'party_logos') : null, [firestore]);
   const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
+  const candidatesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'candidates') : null, [firestore]);
 
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
   const { data: partyLogos, isLoading: loadingLogos, error } = useCollection<PartyLogo>(partyLogosQuery);
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
+  const { data: candidates, isLoading: loadingCandidates } = useCollection<Candidate>(candidatesQuery);
   
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedPartyForUpload, setSelectedPartyForUpload] = useState<Party | null>(null);
@@ -73,20 +74,27 @@ export default function ManageLogosPage() {
   }
   
   const getLogoGroups = (partyId: string) => {
-    if (!partyLogos || !sortedElections) return [];
+    if (!partyLogos || !sortedElections || !candidates || !constituencies) return [];
 
     const logosForParty = partyLogos.filter(logo => logo.partyId === partyId);
     
     if (partyId === 'independent') {
-      return logosForParty.map(logo => {
+       return logosForParty.map(logo => {
         const election = sortedElections.find(e => e.id === logo.electionId);
+        // Find the candidate associated with this logo's electionId and constituencyId
+        const candidate = candidates.find(c => c.partyId === 'independent' && c.constituencyId === logo.constituencyId);
+        const constituency = constituencies.find(c => c.id === logo.constituencyId);
+
         return {
           logoUrl: logo.logoUrl,
           expandedLogoUrl: logo.expandedLogoUrl,
           dateRange: election?.year.toString() || 'N/A',
           maxYear: election?.year || 0,
           electionIds: [logo.electionId],
-          key: logo.id
+          key: logo.id,
+          candidateName: candidate?.name,
+          constituencyName: constituency?.name,
+          constituencyId: logo.constituencyId
         };
       }).sort((a, b) => b.maxYear - a.maxYear);
     }
@@ -108,7 +116,9 @@ export default function ManageLogosPage() {
         dateRange: years.join(', '),
         maxYear: Math.max(...years),
         electionIds: electionIds,
-        key: key
+        key: key,
+        candidateName: null,
+        constituencyName: null,
       };
     }).filter((g): g is NonNullable<typeof g> => g !== null)
     .sort((a,b) => b.maxYear - a.maxYear);
@@ -136,6 +146,8 @@ export default function ManageLogosPage() {
     try {
         const batch = writeBatch(firestore);
         for(const logoDoc of logoDocsToDelete) {
+            if (logoDoc.logoUrl) await deleteFile(logoDoc.logoUrl).catch(console.warn);
+            if (logoDoc.expandedLogoUrl) await deleteFile(logoDoc.expandedLogoUrl).catch(console.warn);
             const docRef = doc(firestore, 'party_logos', logoDoc.id);
             batch.delete(docRef);
         }
@@ -149,7 +161,7 @@ export default function ManageLogosPage() {
   }
 
 
-  const isLoading = loadingParties || loadingElections || loadingLogos || loadingConstituencies;
+  const isLoading = loadingParties || loadingElections || loadingLogos || loadingConstituencies || loadingCandidates;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -199,8 +211,8 @@ export default function ManageLogosPage() {
                             return (
                               <div key={group.key} className="p-4 border rounded-md flex flex-col gap-4">
                                 <div className="text-center">
-                                  <h4 className="font-semibold">Election Year</h4>
-                                  <p className="text-sm text-muted-foreground">{group.dateRange}</p>
+                                  <h4 className="font-semibold">{group.candidateName ? group.candidateName : 'Election Year'}</h4>
+                                  <p className="text-sm text-muted-foreground">{group.constituencyName ? group.constituencyName : group.dateRange}</p>
                                 </div>
                                 
                                 <div className="grid grid-cols-2 gap-4 items-center flex-grow">
@@ -250,7 +262,7 @@ export default function ManageLogosPage() {
                                             <AlertDialogHeader>
                                                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    This will delete the logo entries for the years: {group.dateRange}. This action cannot be undone.
+                                                    This will delete the logo entries for {group.candidateName || `the years: ${group.dateRange}`}. This action cannot be undone.
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
