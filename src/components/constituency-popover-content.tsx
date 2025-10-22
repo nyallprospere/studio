@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -24,6 +25,14 @@ const politicalLeaningOptions = [
     { value: 'lean-slp', label: 'Lean SLP' },
     { value: 'solid-slp', label: 'Solid SLP' },
 ];
+
+const makeYourOwnLeaningOptions = [
+  { value: 'unselected', label: 'To be selected' },
+  { value: 'slp', label: 'SLP' },
+  { value: 'uwp', label: 'UWP' },
+  { value: 'tossup', label: 'Toss Up' },
+];
+
 
 const getLeaningLabel = (leaningValue?: string) => {
     return politicalLeaningOptions.find(opt => opt.value === leaningValue)?.label || 'Tossup';
@@ -144,7 +153,8 @@ export function ConstituencyPopoverContent({
     onPredictionChange,
     electionResults,
     previousElectionResults,
-    partyLogos
+    partyLogos,
+    isMakeYourOwn
 }: { 
     constituency: Constituency,
     election?: Election | null;
@@ -153,6 +163,7 @@ export function ConstituencyPopoverContent({
     electionResults?: ElectionResult[];
     previousElectionResults?: ElectionResult[];
     partyLogos?: PartyLogo[];
+    isMakeYourOwn?: boolean;
 }) {
     const { firestore } = useFirebase();
 
@@ -281,7 +292,7 @@ export function ConstituencyPopoverContent({
         <div className="space-y-3">
             <h4 className="font-bold leading-none text-center text-xl">{constituency.name}</h4>
             
-            {election?.isCurrent || !election ? (
+            {(election?.isCurrent || !election) && !isMakeYourOwn ? (
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <div className="flex flex-col items-center p-2 rounded-md bg-muted">
@@ -346,7 +357,7 @@ export function ConstituencyPopoverContent({
                         </ChartContainer>
                     </div>
                 </div>
-            ) : (
+            ) : !isMakeYourOwn ? (
               <div className="space-y-2">
                   <CandidateBox 
                       candidate={slpCandidate!} 
@@ -377,17 +388,17 @@ export function ConstituencyPopoverContent({
                       logoUrl={uwpLogoUrl}
                   />
               </div>
-            )}
+            ) : null}
             
             {onLeaningChange && (
                 <div className="space-y-2 pt-2">
-                    <h5 className="text-xs font-medium text-muted-foreground">Edit Leaning</h5>
+                    <h5 className="text-xs font-medium text-muted-foreground">Select Leaning</h5>
                      <Select value={constituency.politicalLeaning} onValueChange={onLeaningChange}>
                         <SelectTrigger className="w-full h-8 text-xs">
                             <SelectValue placeholder="Select leaning" />
                         </SelectTrigger>
                         <SelectContent>
-                            {politicalLeaningOptions.map(opt => (
+                            {makeYourOwnLeaningOptions.map(opt => (
                                 <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                             ))}
                         </SelectContent>
