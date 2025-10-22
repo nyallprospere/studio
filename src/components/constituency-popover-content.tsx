@@ -70,7 +70,7 @@ function CandidateBox({
                 {isWinner && (
                     <div className="absolute -top-3 -right-2 text-center">
                          <p className="font-bold text-xs -mb-3" style={{color: statusColor}}>{electionStatus}</p>
-                        <CheckCircle2 className="h-5 w-5 text-green-600 bg-white rounded-full mx-auto" />
+                        
                     </div>
                 )}
                 
