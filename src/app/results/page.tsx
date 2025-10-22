@@ -375,6 +375,7 @@ export default function ResultsPage() {
       let slpVotes = 0;
       let uwpVotes = 0;
       let otherVotes = 0;
+      let totalVotes = 0;
       let prevSlpVotes = 0;
       let prevUwpVotes = 0;
       let prevOtherVotes = 0;
@@ -387,6 +388,7 @@ export default function ResultsPage() {
         if (regionConstituencyIds.has(result.constituencyId)) {
             const constituency = getConstituencyById(result.constituencyId);
             const isSpecial = isCurrent2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+            totalVotes += result.totalVotes;
             if(isSpecial) {
                 otherVotes += result.slpVotes + result.otherVotes;
                 uwpVotes += result.uwpVotes;
@@ -419,6 +421,9 @@ export default function ResultsPage() {
         slpVotes,
         uwpVotes,
         otherVotes,
+        slpPercentage: totalVotes > 0 ? (slpVotes / totalVotes) * 100 : 0,
+        uwpPercentage: totalVotes > 0 ? (uwpVotes / totalVotes) * 100 : 0,
+        otherPercentage: totalVotes > 0 ? (otherVotes / totalVotes) * 100 : 0,
         slpVoteChange: slpVotes - prevSlpVotes,
         uwpVoteChange: uwpVotes - prevUwpVotes,
         otherVoteChange: otherVotes - prevOtherVotes,
@@ -612,9 +617,9 @@ export default function ResultsPage() {
                                             {regionalVoteResults && regionalVoteResults.length > 0 ? regionalVoteResults.map((region) => (
                                                 <TableRow key={region.id}>
                                                     <TableCell className="font-medium">{region.name}</TableCell>
-                                                    <TableCell>{region.slpVotes.toLocaleString()}<VoteChangeIndicator change={region.slpVoteChange} /></TableCell>
-                                                    <TableCell>{region.uwpVotes.toLocaleString()}<VoteChangeIndicator change={region.uwpVoteChange} /></TableCell>
-                                                    <TableCell>{region.otherVotes > 0 ? region.otherVotes.toLocaleString() : '-'}<VoteChangeIndicator change={region.otherVoteChange} /></TableCell>
+                                                    <TableCell>{region.slpVotes.toLocaleString()} <span className="text-xs text-muted-foreground">({region.slpPercentage.toFixed(1)}%)</span><VoteChangeIndicator change={region.slpVoteChange} /></TableCell>
+                                                    <TableCell>{region.uwpVotes.toLocaleString()} <span className="text-xs text-muted-foreground">({region.uwpPercentage.toFixed(1)}%)</span><VoteChangeIndicator change={region.uwpVoteChange} /></TableCell>
+                                                    <TableCell>{region.otherVotes > 0 ? <span>{region.otherVotes.toLocaleString()} <span className="text-xs text-muted-foreground">({region.otherPercentage.toFixed(1)}%)</span></span> : '-'}<VoteChangeIndicator change={region.otherVoteChange} /></TableCell>
                                                 </TableRow>
                                             )) : (
                                                 <TableRow>
