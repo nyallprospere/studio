@@ -67,7 +67,7 @@ function CandidateBox({ candidate, party, isWinner, votes, totalVotes, margin, e
                             <Image src={party.logoUrl} alt={party.name} fill className="object-contain" />
                         </div>
                     )}
-                    <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
+                    <div className="relative h-10 w-10 rounded-full overflow-hidden">
                     {candidate?.imageUrl ? (
                         <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
                     ) : (
@@ -241,7 +241,7 @@ export function ConstituencyPopoverContent({
                                     <Image src={slpParty.logoUrl} alt={slpParty.name} fill className="object-contain" />
                                 </div>
                             )}
-                            <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
+                            <div className="relative h-10 w-10 rounded-full overflow-hidden">
                             {slpCandidate?.imageUrl ? (
                                 <Image src={slpCandidate.imageUrl} alt={slpCandidate?.name || 'SLP Candidate'} fill className="object-cover" />
                             ) : (
@@ -258,7 +258,7 @@ export function ConstituencyPopoverContent({
                                     <Image src={uwpParty.logoUrl} alt={uwpParty.name} fill className="object-contain" />
                                 </div>
                             )}
-                            <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
+                            <div className="relative h-10 w-10 rounded-full overflow-hidden">
                             {uwpCandidate?.imageUrl ? (
                                 <Image src={uwpCandidate.imageUrl} alt={uwpCandidate?.name || 'UWP Candidate'} fill className="object-cover" />
                             ) : (

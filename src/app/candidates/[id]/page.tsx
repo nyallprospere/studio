@@ -94,7 +94,7 @@ export default function CandidateDetailPage() {
                   <div className="flex items-center gap-2 pt-2">
                      <div className="relative h-8 w-8 flex-shrink-0">
                         {party.logoUrl ? (
-                            <Image src={party.logoUrl} alt={`${party.name} logo`} fill className="rounded-full object-contain" />
+                            <Image src={party.logoUrl} alt={`${party.name} logo`} fill className="object-contain" />
                         ) : (
                              <Shield className="w-8 h-8 text-muted-foreground" />
                         )}
