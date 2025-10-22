@@ -70,13 +70,13 @@ function CandidateBox({
             )}>
                  {isWinner && (
                     <div className="absolute -top-3.5 -right-3 text-center">
-                         <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
+                         <p className="font-bold text-xs -mb-1.5" style={{color: statusColor}}>{electionStatus}</p>
                         <CheckCircle2 className="h-5 w-5 text-green-600 bg-white rounded-full mx-auto" />
                     </div>
                 )}
                 
-                <div className="flex w-full items-start gap-2">
-                    <div className="flex flex-col items-center gap-1">
+                <div className="flex w-full items-center gap-2">
+                    <div className="flex flex-col items-center gap-1 w-20">
                         <div className="relative h-10 w-10">
                             {logoUrl ? (
                                 <Image src={logoUrl} alt={party?.name || ''} fill className="object-contain" />
@@ -102,15 +102,15 @@ function CandidateBox({
                             {isStriped && barFill === 'blue-red-stripes' && <div className="absolute inset-0 red-stripes-overlay"></div>}
                         </div>
                         <div className="absolute inset-0 flex items-center justify-between px-2">
-                             <span className="text-white font-bold text-sm">
+                             <span className="text-black font-bold text-xs">
                                 {votes?.toLocaleString()}
                             </span>
                             <div className="flex items-baseline gap-1">
-                                <span className="text-black font-bold text-sm">
+                                <span className="text-black font-bold text-xs">
                                     {votePercentage.toFixed(1)}%
                                 </span>
                                 {votePercentageChange !== null && typeof votePercentageChange !== 'undefined' && (
-                                    <div className={cn("text-xs font-bold flex items-center text-black", votePercentageChange > 0 ? 'text-green-700' : 'text-red-700')}>
+                                    <div className={cn("text-xs font-bold flex items-center", votePercentageChange > 0 ? 'text-green-700' : 'text-red-700')}>
                                         {votePercentageChange > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
                                         {Math.abs(votePercentageChange).toFixed(1)}%
                                     </div>
@@ -221,7 +221,12 @@ export function ConstituencyPopoverContent({
         const getLogo = (partyId: string) => {
             const electionLogo = partyLogos?.find(logo => logo.partyId === partyId && logo.electionId === election?.id);
             const party = parties?.find(p => p.id === partyId);
-            return electionLogo?.logoUrl || party?.logoUrl;
+
+            let logoUrl = electionLogo?.logoUrl || party?.logoUrl;
+            if (election && election.year < 1997) {
+                logoUrl = party?.oldLogoUrl || logoUrl;
+            }
+            return logoUrl;
         }
 
 
