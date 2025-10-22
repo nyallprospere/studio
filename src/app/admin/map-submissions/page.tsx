@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Eye, Trash2, Calendar as CalendarIcon } from 'lucide-react';
+import { Eye, Trash2, Calendar as CalendarIcon, Download } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,11 +29,15 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import * as XLSX from 'xlsx';
 
 export default function ManageMapSubmissionsPage() {
     const { firestore } = useFirebase();
     const { toast } = useToast();
     const [date, setDate] = useState<DateRange | undefined>();
+    const [countryFilter, setCountryFilter] = useState('');
+    const [cityFilter, setCityFilter] = useState('');
 
     const mapsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -63,9 +67,36 @@ export default function ManageMapSubmissionsPage() {
                 uwpSeats,
                 tossups,
             };
+        }).filter(map => {
+            const countryMatch = countryFilter ? map.country?.toLowerCase().includes(countryFilter.toLowerCase()) : true;
+            const cityMatch = cityFilter ? map.city?.toLowerCase().includes(cityFilter.toLowerCase()) : true;
+            return countryMatch && cityMatch;
         });
-    }, [userMaps]);
+    }, [userMaps, countryFilter, cityFilter]);
 
+    const handleExport = () => {
+        if (!processedMaps || processedMaps.length === 0) {
+            toast({ variant: 'destructive', title: 'No data to export' });
+            return;
+        }
+
+        const dataToExport = processedMaps.map(map => ({
+            'Creation Date': map.createdAt?.toDate ? new Date(map.createdAt.toDate()).toLocaleString() : 'N/A',
+            'IP Address': map.ipAddress || 'N/A',
+            'City': map.city || 'N/A',
+            'Country': map.country || 'N/A',
+            'SLP Seats': map.slpSeats,
+            'UWP Seats': map.uwpSeats,
+            'Tossups': map.tossups,
+            'Map URL': `${window.location.origin}/maps/${map.id}`
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Map Submissions");
+        XLSX.writeFile(workbook, `map_submissions_${new Date().toISOString().split('T')[0]}.xlsx`);
+        toast({ title: 'Export Successful', description: 'Map submissions have been exported.' });
+    };
 
     const handleDelete = async (mapId: string) => {
         if (!firestore) return;
@@ -85,42 +116,60 @@ export default function ManageMapSubmissionsPage() {
           title="Manage Map Submissions"
           description="View user-submitted election map predictions."
         />
-         <Popover>
-            <PopoverTrigger asChild>
-                <Button
-                id="date"
-                variant={"outline"}
-                className={cn(
-                    "w-[300px] justify-start text-left font-normal",
-                    !date && "text-muted-foreground"
-                )}
-                >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {date?.from ? (
-                    date.to ? (
-                    <>
-                        {format(date.from, "LLL dd, y")} -{" "}
-                        {format(date.to, "LLL dd, y")}
-                    </>
+        <div className="flex items-center gap-2">
+            <Input 
+                placeholder="Filter by city..."
+                value={cityFilter}
+                onChange={(e) => setCityFilter(e.target.value)}
+                className="w-48"
+            />
+            <Input 
+                placeholder="Filter by country..."
+                value={countryFilter}
+                onChange={(e) => setCountryFilter(e.target.value)}
+                className="w-48"
+            />
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button
+                    id="date"
+                    variant={"outline"}
+                    className={cn(
+                        "w-[300px] justify-start text-left font-normal",
+                        !date && "text-muted-foreground"
+                    )}
+                    >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date?.from ? (
+                        date.to ? (
+                        <>
+                            {format(date.from, "LLL dd, y")} -{" "}
+                            {format(date.to, "LLL dd, y")}
+                        </>
+                        ) : (
+                        format(date.from, "LLL dd, y")
+                        )
                     ) : (
-                    format(date.from, "LLL dd, y")
-                    )
-                ) : (
-                    <span>Pick a date range</span>
-                )}
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-                <Calendar
-                initialFocus
-                mode="range"
-                defaultMonth={date?.from}
-                selected={date}
-                onSelect={setDate}
-                numberOfMonths={2}
-                />
-            </PopoverContent>
-        </Popover>
+                        <span>Pick a date range</span>
+                    )}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                    initialFocus
+                    mode="range"
+                    defaultMonth={date?.from}
+                    selected={date}
+                    onSelect={setDate}
+                    numberOfMonths={2}
+                    />
+                </PopoverContent>
+            </Popover>
+            <Button variant="outline" onClick={handleExport}>
+                <Download className="mr-2 h-4 w-4" />
+                Export
+            </Button>
+        </div>
       </div>
       <Card>
         <CardHeader>
@@ -182,7 +231,7 @@ export default function ManageMapSubmissionsPage() {
                         ) : (
                             <TableRow>
                                 <TableCell colSpan={8} className="text-center h-24">
-                                    No map submissions in this date range.
+                                    No map submissions match the current filters.
                                 </TableCell>
                             </TableRow>
                         )}
