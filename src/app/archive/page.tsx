@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Download, Trash2, History, Lock, Unlock, Pencil, Upload, Eraser, Star, Save, ArrowUpDown, ImageIcon, UserSquare } from 'lucide-react';
+import { Download, Trash2, History, Lock, Unlock, Pencil, Upload, Eraser, Star, Save, ArrowUpDown, ImageIcon, UserSquare, Eye } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,7 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectLabel } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { CandidateForm } from './candidate-form';
 import { uploadFile, deleteFile } from '@/firebase/storage';
 import { ImportDialog } from '../admin/candidates/import-dialog';
@@ -609,7 +609,7 @@ export default function ArchivePage() {
                                         </Select>
                                     </div>
                                     <div className="flex items-center gap-4">
-                                        <p className="w-24 text-center">Photo</p>
+                                        <p className="w-40 text-center">Photo</p>
                                         <p className="w-12 text-center">Inc.</p>
                                         <p>Actions</p>
                                     </div>
@@ -637,8 +637,18 @@ export default function ArchivePage() {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-4">
-                                                <div className="w-40">
+                                                <div className="w-40 flex items-center gap-2">
                                                     <CustomUploadButton onFileSelect={handlePhotoUpload} candidate={c} isLoading={uploadingPhotoId === c.id} />
+                                                     {c.imageUrl && (
+                                                        <Dialog>
+                                                            <DialogTrigger asChild>
+                                                                <Button size="sm" variant="outline"><Eye className="mr-2 h-4 w-4" />Preview</Button>
+                                                            </DialogTrigger>
+                                                            <DialogContent className="p-0 border-0 max-w-fit bg-transparent">
+                                                                <Image src={c.imageUrl} alt={`${c.firstName} ${c.lastName}`} width={512} height={512} className="object-contain" />
+                                                            </DialogContent>
+                                                        </Dialog>
+                                                    )}
                                                 </div>
                                                 <Checkbox
                                                     checked={c.isIncumbent}
