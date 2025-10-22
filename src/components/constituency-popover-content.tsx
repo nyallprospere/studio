@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -27,10 +26,10 @@ const politicalLeaningOptions = [
 ];
 
 const makeYourOwnLeaningOptions = [
-  { value: 'unselected', label: 'To be selected' },
   { value: 'slp', label: 'SLP' },
   { value: 'uwp', label: 'UWP' },
   { value: 'tossup', label: 'Toss Up' },
+  { value: 'unselected', label: 'To be selected' },
 ];
 
 
@@ -356,7 +355,7 @@ export function ConstituencyPopoverContent({
             
             {onLeaningChange && (
                 <div className="space-y-2 pt-2">
-                    <h5 className="text-xs font-medium text-muted-foreground">Select Leaning</h5>
+                    <h5 className="text-xs font-medium text-muted-foreground">Choose Your Pick</h5>
                      <Select value={constituency.politicalLeaning} onValueChange={onLeaningChange}>
                         <SelectTrigger className="w-full h-8 text-xs">
                             <SelectValue placeholder="Select leaning" />
