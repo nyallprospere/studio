@@ -67,7 +67,7 @@ function CandidateBox({
                 "p-2 rounded-md bg-muted relative h-full flex flex-col items-center gap-2 text-center"
             )}>
                 {isWinner && (
-                    <div className="absolute -top-3 -right-2 text-center">
+                    <div className="absolute -top-3 right-0 text-center">
                          <p className="font-bold text-xs -mb-5" style={{color: statusColor}}>{electionStatus}</p>
                         
                     </div>
@@ -101,7 +101,10 @@ function CandidateBox({
                                 {isStriped && barFill === 'blue-red-stripes' && <div className="absolute inset-0 red-stripes-overlay"></div>}
                             </div>
                             <div className="absolute inset-0 flex items-center justify-between px-2">
-                                <span className={cn("font-bold text-xs", party?.acronym === 'UWP' ? 'text-green-600' : 'text-white')}>
+                                <span className={cn(
+                                    "font-bold text-xs",
+                                    party?.acronym === 'SLP' ? 'text-white' : 'text-green-600'
+                                )}>
                                     {votes?.toLocaleString()}
                                     {isWinner && margin ? <sup className="font-semibold"> (+{margin.toLocaleString()})</sup> : null}
                                 </span>
@@ -109,7 +112,6 @@ function CandidateBox({
                                     <span className="font-bold text-xs text-black">
                                         {votePercentage.toFixed(1)}%
                                     </span>
-                                    {isWinner && <CheckCircle2 className="h-4 w-4 text-green-600" />}
                                     {votePercentageChange !== null && typeof votePercentageChange !== 'undefined' && (
                                         <div className={cn("text-xs font-bold flex items-center", votePercentageChange > 0 ? 'text-green-700' : 'text-red-700')}>
                                             {votePercentageChange > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
@@ -118,6 +120,7 @@ function CandidateBox({
                                     )}
                                 </div>
                             </div>
+                            {isWinner && <CheckCircle2 className="h-4 w-4 text-green-600 absolute top-[-4px] right-[-4px] bg-white rounded-full" />}
                         </div>
                     </div>
                 </div>
