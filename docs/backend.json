@@ -391,6 +391,14 @@
           "type": "string",
           "format": "uri",
           "description": "URL of the main constituency map image."
+        },
+        "defaultShareTitle": {
+            "type": "string",
+            "description": "Default title for social media sharing."
+        },
+        "defaultShareDescription": {
+            "type": "string",
+            "description": "Default description for social media sharing."
         }
       }
     },
@@ -455,6 +463,28 @@
         }
       },
       "required": ["id", "name"]
+    },
+    "UserMap": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "User Map",
+        "type": "object",
+        "description": "A user-created prediction map.",
+        "properties": {
+            "id": { "type": "string" },
+            "createdAt": { "type": "string", "format": "date-time" },
+            "mapData": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "constituencyId": { "type": "string" },
+                        "politicalLeaning": { "type": "string" }
+                    },
+                    "required": ["constituencyId", "politicalLeaning"]
+                }
+            }
+        },
+        "required": ["createdAt", "mapData"]
     }
   },
   "auth": {
@@ -540,6 +570,13 @@
         "$ref": "#/entities/Region"
       },
       "description": "Stores information about regions. The `regionId` is used as the document ID."
+    },
+    "/user_maps/{userMapId}": {
+      "schema": {
+        "$ref": "#/entities/UserMap"
+      },
+      "description": "Stores user-created prediction maps."
     }
   }
 }
+

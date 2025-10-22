@@ -3,11 +3,10 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import type { Constituency } from '@/lib/types';
-import { PageHeader } from '@/components/page-header';
+import type { Constituency, UserMap } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirebase, useMemoFirebase, useUser, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, doc, setDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Pie, PieChart, ResponsiveContainer, Cell, Label } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -15,6 +14,16 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { debounce } from 'lodash';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
+import { Save, Share2, Twitter, Facebook } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
+import { Copy } from 'lucide-react';
 
 const politicalLeaningOptions = [
   { value: 'solid-slp', label: 'Solid SLP', color: 'hsl(var(--chart-5))' },
@@ -55,10 +64,10 @@ function ConstituenciesPageSkeleton() {
 }
 
 const DEFAULT_LAYOUT = {
-    pageTitle: 'Constituencies',
-    pageDescription: 'Explore the 17 electoral districts of St. Lucia.',
-    seatCountTitle: 'Seat Count',
-    seatCountDescription: 'Current political leaning of the 17 constituencies.',
+    pageTitle: 'Make Your Own Map',
+    pageDescription: 'Create and share your 2026 election prediction.',
+    seatCountTitle: 'Your Prediction',
+    seatCountDescription: 'Assign a winner to each constituency.',
 };
 
 type LayoutConfiguration = typeof DEFAULT_LAYOUT;
@@ -105,6 +114,7 @@ const VictoryStatusBar = ({ slpSeats, uwpSeats }: { slpSeats: number, uwpSeats: 
 export default function MakeYourOwnPage() {
     const { firestore } = useFirebase();
     const { user } = useUser();
+    const { toast } = useToast();
 
     const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
     const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
@@ -112,50 +122,27 @@ export default function MakeYourOwnPage() {
     const layoutRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'pageLayouts') : null, [firestore]);
     const { data: savedLayouts, isLoading: loadingLayout } = useDoc(layoutRef);
 
+    const siteSettingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'site') : null, [firestore]);
+    const { data: siteSettings } = useDoc(siteSettingsRef);
+
     const [pageTitle, setPageTitle] = useState(DEFAULT_LAYOUT.pageTitle);
     const [pageDescription, setPageDescription] = useState(DEFAULT_LAYOUT.pageDescription);
     const [seatCountTitle, setSeatCountTitle] = useState(DEFAULT_LAYOUT.seatCountTitle);
     const [seatCountDescription, setSeatCountDescription] = useState(DEFAULT_LAYOUT.seatCountDescription);
     
-    const [isEditingPageTitle, setIsEditingPageTitle] = useState(false);
-    const [isEditingPageDescription, setIsEditingPageDescription] = useState(false);
-    const [isEditingSeatCountTitle, setIsEditingSeatCountTitle] = useState(false);
-    const [isEditingSeatCountDescription, setIsEditingSeatCountDescription] = useState(false);
-    
     const [myMapConstituencies, setMyMapConstituencies] = useState<Constituency[]>([]);
     const [selectedMyMapConstituencyId, setSelectedMyMapConstituencyId] = useState<string | null>(null);
+
+    const [isSaving, setIsSaving] = useState(false);
+    const [savedMapId, setSavedMapId] = useState<string | null>(null);
+    const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+
 
     useEffect(() => {
         if(constituencies) {
             setMyMapConstituencies(constituencies.map(c => ({...c, politicalLeaning: 'unselected'})))
         }
     }, [constituencies])
-
-
-    const debouncedSaveLayout = useCallback(
-        debounce((layout: Partial<LayoutConfiguration>) => {
-            if (firestore && user) {
-                const docRef = doc(firestore, 'settings', 'pageLayouts');
-                const layoutData = { constituenciesPage: layout };
-                setDoc(docRef, layoutData, { merge: true })
-                  .catch((error) => {
-                    const contextualError = new FirestorePermissionError({
-                      path: docRef.path,
-                      operation: 'update',
-                      requestResourceData: layoutData,
-                    });
-                    errorEmitter.emit('permission-error', contextualError);
-                  });
-            }
-        }, 1000), [firestore, user]
-    );
-
-    useEffect(() => {
-        if (!user) return; // Only save layout if a user is logged in.
-        const layoutState = { pageTitle, pageDescription, seatCountTitle, seatCountDescription };
-        debouncedSaveLayout(layoutState);
-    }, [pageTitle, pageDescription, seatCountTitle, seatCountDescription, debouncedSaveLayout, user]);
-
 
     useEffect(() => {
         const savedConstituenciesLayout = savedLayouts?.constituenciesPage as LayoutConfiguration | undefined;
@@ -174,6 +161,31 @@ export default function MakeYourOwnPage() {
             )
         );
     }, []);
+    
+    const handleSaveAndShare = async () => {
+        if (!firestore) return;
+        setIsSaving(true);
+        try {
+            const mapData = myMapConstituencies.map(c => ({
+                constituencyId: c.id,
+                politicalLeaning: c.politicalLeaning || 'unselected'
+            }));
+
+            const docRef = await addDoc(collection(firestore, 'user_maps'), {
+                mapData,
+                createdAt: serverTimestamp(),
+            });
+
+            setSavedMapId(docRef.id);
+            setIsShareDialogOpen(true);
+            toast({ title: 'Map Saved!', description: 'Your prediction map has been saved and is ready to share.' });
+        } catch (e) {
+            console.error('Error saving map:', e);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not save your map. Please try again.' });
+        } finally {
+            setIsSaving(false);
+        }
+    }
 
     const isLoading = loadingConstituencies || loadingLayout;
 
@@ -190,6 +202,7 @@ export default function MakeYourOwnPage() {
             slp: counts['slp'] || 0,
             uwp: counts['uwp'] || 0,
             tossup: counts['tossup'] || 0,
+            unselected: counts['unselected'] || 0
         };
 
         const chartData = makeYourOwnLeaningOptions.map(opt => ({
@@ -210,31 +223,24 @@ export default function MakeYourOwnPage() {
         return acc;
     }, {});
 
+    const shareUrl = savedMapId ? `${window.location.origin}/maps/${savedMapId}` : '';
+    const shareTitle = siteSettings?.defaultShareTitle || "Check out my St. Lucia election prediction!";
+    const shareDescription = siteSettings?.defaultShareDescription || "I made my own 2026 election prediction on LucianVotes. See my map and create your own!";
+    const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`;
+    const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareDescription)}`;
+    
+    const copyToClipboard = () => {
+        navigator.clipboard.writeText(shareUrl);
+        toast({ title: 'Link Copied!', description: 'The shareable link has been copied to your clipboard.' });
+    };
+
   return (
     <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-            <div onClick={() => user && setIsEditingPageTitle(true)}>
-                {isEditingPageTitle && user ? (
-                     <div className="flex items-center gap-2 max-w-lg">
-                        <Input value={pageTitle} onChange={e => setPageTitle(e.target.value)} className="text-3xl md:text-4xl font-bold tracking-tight font-headline" />
-                        <Button onClick={(e) => {e.stopPropagation(); setIsEditingPageTitle(false);}}>Save</Button>
-                    </div>
-                ) : (
-                    <h1 className="text-3xl font-bold tracking-tight font-headline text-primary md:text-4xl">
-                        {pageTitle}
-                    </h1>
-                )}
-            </div>
-             <div onClick={() => user && setIsEditingPageDescription(true)}>
-                {isEditingPageDescription && user ? (
-                    <div className="flex items-center gap-2 max-w-lg mt-2">
-                        <Input value={pageDescription} onChange={e => setPageDescription(e.target.value)} className="text-lg" />
-                        <Button onClick={(e) => {e.stopPropagation(); setIsEditingPageDescription(false);}}>Save</Button>
-                    </div>
-                ) : (
-                    <p className="mt-2 text-lg text-muted-foreground">{pageDescription}</p>
-                )}
-            </div>
+            <h1 className="text-3xl font-bold tracking-tight font-headline text-primary md:text-4xl">
+                {pageTitle}
+            </h1>
+            <p className="mt-2 text-lg text-muted-foreground">{pageDescription}</p>
         </div>
 
       {isLoading || !constituencies ? (
@@ -257,24 +263,8 @@ export default function MakeYourOwnPage() {
             <div>
                 <Card>
                     <CardHeader>
-                        {isEditingSeatCountTitle && user ? (
-                            <div className="flex items-center gap-2">
-                                <Input value={seatCountTitle} onChange={(e) => setSeatCountTitle(e.target.value)} className="font-headline" />
-                                <Button size="sm" onClick={() => setIsEditingSeatCountTitle(false)}>Save</Button>
-                            </div>
-                        ) : (
-                            <CardTitle className="font-headline" onClick={() => user && setIsEditingSeatCountTitle(true)}>
-                                {seatCountTitle}
-                            </CardTitle>
-                        )}
-                        {isEditingSeatCountDescription && user ? (
-                            <div className="flex items-center gap-2">
-                            <Input value={pageDescription} onChange={(e) => setSeatCountDescription(e.target.value)} />
-                            <Button size="sm" onClick={() => setIsEditingSeatCountDescription(false)}>Save</Button>
-                            </div>
-                        ) : (
-                            <CardDescription onClick={() => user && setIsEditingSeatCountDescription(true)}>{seatCountDescription}</CardDescription>
-                        )}
+                        <CardTitle className="font-headline">{seatCountTitle}</CardTitle>
+                        <CardDescription>{seatCountDescription}</CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col items-center">
                         <VictoryStatusBar slpSeats={seatCounts.slp} uwpSeats={seatCounts.uwp} />
@@ -330,16 +320,46 @@ export default function MakeYourOwnPage() {
                                 )
                             })}
                         </div>
+                        <Button onClick={handleSaveAndShare} disabled={isSaving} className="w-full mt-6">
+                            <Share2 className="mr-2 h-4 w-4" />
+                            {isSaving ? 'Saving...' : 'Save & Share'}
+                        </Button>
                     </CardContent>
                 </Card>
             </div>
         </div>
       )}
+
+      <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+          <DialogContent>
+              <DialogHeader>
+                  <DialogTitle>Share Your Prediction Map</DialogTitle>
+                  <DialogDescription>
+                      Your custom map has been saved. Share it with your friends!
+                  </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                        <Input value={shareUrl} readOnly />
+                        <Button type="button" size="icon" onClick={copyToClipboard}>
+                            <Copy className="h-4 w-4" />
+                        </Button>
+                    </div>
+                  <div className="flex justify-center gap-4">
+                      <Button asChild>
+                          <a href={twitterShareUrl} target="_blank" rel="noopener noreferrer">
+                            <Twitter className="mr-2 h-4 w-4" /> Share on Twitter
+                          </a>
+                      </Button>
+                       <Button asChild>
+                          <a href={facebookShareUrl} target="_blank" rel="noopener noreferrer">
+                            <Facebook className="mr-2 h-4 w-4" /> Share on Facebook
+                          </a>
+                      </Button>
+                  </div>
+              </div>
+          </DialogContent>
+      </Dialog>
     </div>
   );
 }
-
-
-
-
-

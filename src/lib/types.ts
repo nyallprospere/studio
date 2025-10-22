@@ -60,7 +60,7 @@ export interface Constituency {
     top: string;
     left: string;
   };
-  politicalLeaning?: 'solid-slp' | 'lean-slp' | 'tossup' | 'lean-uwp' | 'solid-uwp';
+  politicalLeaning?: 'solid-slp' | 'lean-slp' | 'tossup' | 'lean-uwp' | 'solid-uwp' | 'slp' | 'uwp' | 'unselected';
   predictedSlpPercentage?: number;
   predictedUwpPercentage?: number;
 }
@@ -132,11 +132,22 @@ export interface ElectionYearResult {
 
 export interface SiteSettings {
     mapUrl?: string;
+    defaultShareTitle: string;
+    defaultShareDescription: string;
 }
 
 export interface Region {
   id: string;
   name: string;
   constituencyIds?: string[];
+}
+
+export interface UserMap {
+    id: string;
+    createdAt: any;
+    mapData: {
+        constituencyId: string;
+        politicalLeaning: string;
+    }[];
 }
     

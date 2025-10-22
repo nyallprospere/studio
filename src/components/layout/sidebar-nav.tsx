@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import {
@@ -16,7 +17,7 @@ import {
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, LogIn, LogOut, UserPlus, FilePlus, Calendar, Pencil, Archive, Cat, Image as ImageIcon, Globe } from 'lucide-react';
+import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, LogIn, LogOut, UserPlus, FilePlus, Calendar, Pencil, Archive, Cat, ImageIcon, Globe, Share2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useUser, useAuth, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -49,6 +50,7 @@ const adminNavItems = [
     { href: '/admin/results', icon: Landmark, label: 'Manage Election Results' },
     { href: '/admin/constituencies', icon: FilePlus, label: 'Manage Constituencies' },
     { href: '/admin/regions', icon: Globe, label: 'Manage Regions' },
+    { href: '/admin/map-submissions', icon: Share2, label: 'Map Submissions' },
     { href: '/admin/map', icon: Map, label: 'Manage Map' },
     { href: '/admin/settings', icon: Settings, label: 'Manage Settings' },
 ];

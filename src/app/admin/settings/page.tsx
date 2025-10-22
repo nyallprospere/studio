@@ -1,14 +1,23 @@
 
+
 'use client';
 
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useFirebase } from '@/firebase';
-import { collection, getDocs, writeBatch, doc } from 'firebase/firestore';
+import { useFirebase, useDoc, useMemoFirebase } from '@/firebase';
+import { collection, getDocs, writeBatch, doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
-import { Loader2, Database } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Loader2, Database, Share2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import type { SiteSettings } from '@/lib/types';
+
 
 const electionYearsToSeed = [
   { year: 2021, name: '2021 General Election' },
@@ -24,10 +33,35 @@ const electionYearsToSeed = [
   { year: 1979, name: '1979 General Election' },
 ];
 
+const shareSettingsSchema = z.object({
+  defaultShareTitle: z.string().min(1, 'Title is required'),
+  defaultShareDescription: z.string().min(1, 'Description is required'),
+});
+
 export default function SettingsPage() {
     const { firestore } = useFirebase();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
+
+    const siteSettingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'site') : null, [firestore]);
+    const { data: siteSettings, isLoading: loadingSiteSettings } = useDoc<SiteSettings>(siteSettingsRef);
+
+    const form = useForm<z.infer<typeof shareSettingsSchema>>({
+        resolver: zodResolver(shareSettingsSchema),
+        defaultValues: {
+            defaultShareTitle: '',
+            defaultShareDescription: '',
+        },
+    });
+
+    useEffect(() => {
+        if (siteSettings) {
+            form.reset({
+                defaultShareTitle: siteSettings.defaultShareTitle || '',
+                defaultShareDescription: siteSettings.defaultShareDescription || '',
+            });
+        }
+    }, [siteSettings, form]);
 
     const handleSeedElections = async () => {
         if (!firestore) {
@@ -75,6 +109,17 @@ export default function SettingsPage() {
             setIsLoading(false);
         }
     };
+    
+    const handleShareSettingsSubmit = async (values: z.infer<typeof shareSettingsSchema>) => {
+        if (!firestore || !siteSettingsRef) return;
+        try {
+            await setDoc(siteSettingsRef, values, { merge: true });
+            toast({ title: 'Settings Updated', description: 'Default share settings have been saved.' });
+        } catch (error) {
+            console.error('Error saving share settings:', error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not save share settings.' });
+        }
+    }
 
 
   return (
@@ -107,19 +152,55 @@ export default function SettingsPage() {
             </p>
             </CardContent>
         </Card>
-
+        
         <Card>
             <CardHeader>
-            <CardTitle>Site Settings</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+                <Share2 className="w-5 h-5" /> Social Sharing
+            </CardTitle>
             <CardDescription>
-                More options will be available here in the future.
+                Set the default text for social media posts when users share their maps.
             </CardDescription>
             </CardHeader>
             <CardContent>
-            <p className="text-muted-foreground">Settings management interface is under construction.</p>
+                {loadingSiteSettings ? <p>Loading...</p> : (
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(handleShareSettingsSubmit)} className="space-y-4">
+                            <FormField
+                                control={form.control}
+                                name="defaultShareTitle"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Default Share Title</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="defaultShareDescription"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Default Share Description</FormLabel>
+                                        <FormControl>
+                                            <Textarea {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <Button type="submit">Save Share Settings</Button>
+                        </form>
+                    </Form>
+                )}
             </CardContent>
         </Card>
+
       </div>
     </div>
   );
 }
+
