@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import type { Election, ElectionResult, Party, Constituency } from '@/lib/types';
+import type { Election, ElectionResult, Party, Constituency, PartyLogo } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -27,10 +27,12 @@ export default function ResultsPage() {
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
   const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
-  
+  const partyLogosQuery = useMemoFirebase(() => firestore ? collection(firestore, 'party_logos') : null, [firestore]);
+
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
+  const { data: partyLogos, isLoading: loadingLogos } = useCollection<PartyLogo>(partyLogosQuery);
   
   const [selectedElectionId, setSelectedElectionId] = useState<string | undefined>(undefined);
   const [resultsByYear, setResultsByYear] = useState<Record<string, ElectionResult[]>>({});
@@ -82,7 +84,7 @@ export default function ResultsPage() {
   const getPartyById = (id: string) => parties?.find(p => p.id === id);
   const getConstituencyById = (id: string) => constituencies?.find(c => c.id === id);
   
-  const loading = loadingElections || loadingParties || loadingConstituencies;
+  const loading = loadingElections || loadingParties || loadingConstituencies || loadingLogos;
 
   const currentElectionResults = selectedElectionId ? resultsByYear[selectedElectionId] : [];
   const currentElection = useMemo(() => sortedElections.find(e => e.id === selectedElectionId), [selectedElectionId, sortedElections]);
@@ -97,7 +99,7 @@ export default function ResultsPage() {
 
 
   const summaryData = useMemo(() => {
-    if (!currentElectionResults || !parties || !constituencies) return [];
+    if (!currentElectionResults || !parties || !constituencies || !partyLogos) return [];
   
     const slp = parties.find(p => p.acronym === 'SLP');
     const uwp = parties.find(p => p.acronym === 'UWP');
@@ -136,24 +138,39 @@ export default function ResultsPage() {
 
         if (result.slpVotes > result.uwpVotes) {
             slpSeats++;
-        } else if (result.uwpVotes > result.slpVotes) {
+        } else if (result.uwpVotes > result.uwpVotes) {
             uwpSeats++;
         }
       }
     });
+
+    const getElectionLogo = (partyId: string) => {
+        const electionLogo = partyLogos.find(logo => logo.partyId === partyId && logo.electionId === currentElection?.id);
+        const party = getPartyById(partyId);
+
+        let logoUrl = electionLogo?.expandedLogoUrl || electionLogo?.logoUrl || party?.expandedLogoUrl || party?.logoUrl;
+
+        // Use old logo for elections before 1997
+        if (currentElection && currentElection.year < 1997) {
+            logoUrl = electionLogo?.logoUrl || party?.oldLogoUrl || party?.logoUrl;
+        }
+
+        return logoUrl;
+    }
   
     const summary = [
-        { partyId: slp.id, name: slp.acronym, acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color, logoUrl: currentElection && currentElection.year < 1997 ? slp.oldLogoUrl || slp.logoUrl : slp.expandedLogoUrl || slp.logoUrl },
-        { partyId: uwp.id, name: uwp.acronym, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color, logoUrl: currentElection && currentElection.year < 1997 ? uwp.oldLogoUrl || uwp.logoUrl : uwp.expandedLogoUrl || uwp.logoUrl },
+        { partyId: slp.id, name: slp.acronym, acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color, logoUrl: getElectionLogo(slp.id) },
+        { partyId: uwp.id, name: uwp.acronym, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color, logoUrl: getElectionLogo(uwp.id) },
     ];
     
     if(otherVotes > 0 || otherSeats > 0) {
-        summary.push({ partyId: 'other', name: 'INDEPENDENTS', acronym: 'IND', seats: otherSeats, totalVotes: otherVotes, color: '#8884d8', logoUrl: undefined });
+        const independentLogo = partyLogos.find(logo => logo.partyId === 'independent' && logo.electionId === currentElection?.id);
+        summary.push({ partyId: 'other', name: 'INDEPENDENTS', acronym: 'IND', seats: otherSeats, totalVotes: otherVotes, color: '#8884d8', logoUrl: independentLogo?.expandedLogoUrl || independentLogo?.logoUrl || currentElection?.independentExpandedLogoUrl || currentElection?.independentLogoUrl });
     }
 
     return summary.filter(p => p.seats > 0 || p.totalVotes > 0)
      .sort((a,b) => b.seats - a.seats || b.totalVotes - a.totalVotes);
-  }, [currentElectionResults, parties, constituencies, currentElection]);
+  }, [currentElectionResults, parties, constituencies, currentElection, partyLogos]);
 
 
   const chartConfig = useMemo(() => {
