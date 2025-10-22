@@ -64,8 +64,7 @@ function CandidateBox({
     return (
         <>
              <div className={cn(
-                "p-2 rounded-md bg-muted relative h-full flex flex-col items-center gap-2 text-center",
-                isWinner && "border-2 border-green-600"
+                "p-2 rounded-md bg-muted relative h-full flex flex-col items-center gap-2 text-center"
             )}>
                 {isWinner && (
                     <div className="absolute -top-3 -right-2 text-center">
@@ -110,6 +109,7 @@ function CandidateBox({
                                     <span className="font-bold text-xs text-black">
                                         {votePercentage.toFixed(1)}%
                                     </span>
+                                    {isWinner && <CheckCircle2 className="h-4 w-4 text-green-600" />}
                                     {votePercentageChange !== null && typeof votePercentageChange !== 'undefined' && (
                                         <div className={cn("text-xs font-bold flex items-center", votePercentageChange > 0 ? 'text-green-700' : 'text-red-700')}>
                                             {votePercentageChange > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
@@ -195,7 +195,7 @@ export function ConstituencyPopoverContent({
         const margin = Math.abs(currentResult.slpVotes - currentResult.uwpVotes);
         const currentWinner = currentResult.slpVotes > currentResult.uwpVotes ? slpParty : uwpParty;
         const winnerAcronym = currentWinner?.acronym;
-        let status = `${winnerAcronym} Win`;
+        let status = `${''}${winnerAcronym} Win`;
         let color = currentWinner?.color;
 
         let slpVotePercentageChange = null;
