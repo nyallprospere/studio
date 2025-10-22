@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, orderBy, query, getDocs } from 'firebase/firestore';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Cell, LabelList } from "recharts"
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Cell, LabelList, Tooltip, Legend } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -45,12 +45,9 @@ export default function ResultsPage() {
     const now = new Date();
     // Filter out future elections, except for 2026 if we're past the hardcoded election date
     const pastElections = elections.filter(election => {
-        if (election.year > now.getFullYear()) {
-             if (election.year === 2026 && now > new Date('2026-07-26T00:00:00')) {
-                return true;
-            }
-            return false;
-        }
+        const electionDate = new Date(election.year, 6, 26); // Assuming July 26 for simplicity
+        if (election.year > now.getFullYear()) return false;
+        if (election.year === now.getFullYear() && electionDate > now) return false;
         return true;
     });
 
@@ -135,15 +132,11 @@ export default function ResultsPage() {
       const constituency = getConstituencyById(result.constituencyId);
       const isSpecialConstituency = is2021 && (constituency?.id === castriesNorth?.id || constituency?.id === castriesCentral?.id);
 
-      if (isSpecialConstituency) {
+      if (isSpecialConstituency && result.slpVotes > result.uwpVotes) {
         otherVotes += result.slpVotes; // Add SLP votes to 'Other' for IND
         uwpVotes += result.uwpVotes;
         otherVotes += result.otherVotes;
-        if (result.slpVotes > result.uwpVotes) {
-          otherSeats++; // Add SLP seat to 'Other' for IND
-        } else if (result.uwpVotes > result.slpVotes) {
-          uwpSeats++;
-        }
+        otherSeats++; // Add SLP seat to 'Other' for IND
       } else {
         slpVotes += result.slpVotes;
         uwpVotes += result.uwpVotes;
@@ -320,75 +313,31 @@ export default function ResultsPage() {
                   </div>
 
                   {summaryData.length > 0 && (
-                    <div className="grid md:grid-cols-2 gap-8 mb-8">
-                      <Card>
-                          <CardHeader>
-                              <CardTitle>Seat Distribution</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                              <ChartContainer config={chartConfig} className="h-40 w-full">
-                                  <ResponsiveContainer>
-                                      <BarChart data={summaryData} layout="vertical" margin={{left: 30}}>
-                                          <XAxis type="number" hide />
-                                          <YAxis dataKey="acronym" type="category" hide/>
-                                          <ChartTooltip 
-                                              cursor={false}
-                                              content={<ChartTooltipContent 
-                                                  formatter={(value, name) => [`${value} seats`, name]}
-                                                  indicator="dot" 
-                                              />}
-                                          />
-                                          <Bar dataKey="seats" stackId="a" radius={[0, 4, 4, 0]}>
-                                              {summaryData.map((entry, index) => (
-                                                  <Cell key={`cell-${index}`} fill={entry.color} />
-                                              ))}
-                                              <LabelList
-                                                  dataKey="logoUrl"
-                                                  position="insideLeft"
-                                                  offset={10}
-                                                  content={({ value, x, y, width, height }) => 
-                                                      value ? (
-                                                          <foreignObject x={(x || 0) - 25} y={(y || 0) - 5} width={30} height={30}>
-                                                            <Image src={value} alt="logo" width={30} height={30} className="object-contain bg-transparent" />
-                                                          </foreignObject>
-                                                      ) : null
-                                                  }
-                                              />
-                                          </Bar>
-                                      </BarChart>
-                                  </ResponsiveContainer>
-                              </ChartContainer>
-                          </CardContent>
-                      </Card>
-                       <Card>
+                    <div className="grid md:grid-cols-1 gap-8 mb-8">
+                        <Card>
                           <CardHeader>
                               <CardTitle>Vote Distribution</CardTitle>
                           </CardHeader>
                           <CardContent>
-                               <ChartContainer config={chartConfig} className="h-40 w-full">
+                            <ChartContainer config={chartConfig} className="h-64 w-full">
                                 <ResponsiveContainer>
-                                    <BarChart data={summaryData} layout="horizontal" margin={{ top: 20, bottom: 40 }}>
-                                        <XAxis dataKey="acronym" tickLine={false} axisLine={false} tick={<CustomizedAxisTick />} height={60} />
-                                        <YAxis hide />
-                                        <ChartTooltip
-                                            cursor={false}
-                                            content={<ChartTooltipContent
-                                                formatter={(value) => `${(value as number).toLocaleString()} votes`}
-                                                indicator="dot"
-                                            />}
-                                        />
-                                        <Bar dataKey="totalVotes" radius={[4, 4, 0, 0]}>
-                                             {summaryData.map((entry) => (
-                                                <Cell key={`cell-${entry.acronym}`} fill={entry.color} />
+                                    <BarChart data={[{name: 'Votes', ...summaryData.reduce((acc, p) => ({...acc, [p.acronym]: p.totalVotes}), {})}]} layout="vertical" stackOffset="expand">
+                                        <XAxis type="number" hide domain={[0, 1]} />
+                                        <YAxis type="category" dataKey="name" hide />
+                                        <Tooltip content={<ChartTooltipContent formatter={(value, name) => [`${(value as number).toLocaleString()} votes`, name]} indicator="dot" />} />
+                                        <Legend content={({ payload }) => (
+                                          <div className="flex justify-center gap-4 mt-4">
+                                            {payload?.map((entry, index) => (
+                                              <div key={`item-${index}`} className="flex items-center gap-2">
+                                                <div className="w-3 h-3" style={{backgroundColor: entry.color}}></div>
+                                                <span className="text-sm">{entry.value}</span>
+                                              </div>
                                             ))}
-                                            <LabelList 
-                                                dataKey="totalVotes" 
-                                                position="top" 
-                                                offset={8} 
-                                                className="fill-foreground text-xs" 
-                                                formatter={(value: number) => value.toLocaleString()}
-                                            />
-                                        </Bar>
+                                          </div>
+                                        )} />
+                                        {summaryData.map(p => (
+                                            <Bar key={p.partyId} dataKey={p.acronym} fill={p.color} stackId="a" />
+                                        ))}
                                     </BarChart>
                                 </ResponsiveContainer>
                             </ChartContainer>
