@@ -310,16 +310,17 @@ export default function ResultsPage() {
                     ))}
                   </div>
 
-                  {summaryData.length > 0 && (
-                     <div className="grid md:grid-cols-1 gap-8 mb-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                    {summaryData.length > 0 && (
+                      <div className="lg:col-span-1">
                         <Card>
                           <CardHeader>
                               <CardTitle>Vote Distribution</CardTitle>
                           </CardHeader>
                           <CardContent>
-                            <ChartContainer config={chartConfig} className="h-96 w-full">
+                            <ChartContainer config={chartConfig} className="h-64 w-full">
                                 <ResponsiveContainer>
-                                    <BarChart data={summaryData} margin={{ top: 20, right: 20, bottom: 40, left: 20 }}>
+                                    <BarChart data={summaryData} margin={{ top: 20, right: 20, bottom: 40, left: -20 }}>
                                         <CartesianGrid vertical={false} />
                                         <XAxis
                                             dataKey="acronym"
@@ -328,7 +329,7 @@ export default function ResultsPage() {
                                             tick={<CustomizedAxisTick />}
                                             height={50}
                                         />
-                                        
+                                        <YAxis hide={true} />
                                         <Tooltip
                                             cursor={false}
                                             content={<ChartTooltipContent formatter={(value) => [(value as number).toLocaleString(), 'votes']} />}
@@ -343,95 +344,95 @@ export default function ResultsPage() {
                                 </ResponsiveContainer>
                             </ChartContainer>
                           </CardContent>
-                      </Card>
+                        </Card>
+                      </div>
+                    )}
+                    <div className="lg:col-span-2">
+                      <Card>
+                          <CardHeader>
+                              <CardTitle>Results Map</CardTitle>
+                              <CardDescription>Constituency winners for {currentElection.name}.</CardDescription>
+                          </CardHeader>
+                          <CardContent className="p-2">
+                              <InteractiveSvgMap 
+                                  constituencies={resultsMapConstituencies}
+                                  selectedConstituencyId={selectedConstituencyId}
+                                  onConstituencyClick={setSelectedConstituencyId}
+                                  election={currentElection}
+                                  electionResults={currentElectionResults}
+                                  previousElectionResults={previousElectionResults}
+                              />
+                          </CardContent>
+                        </Card>
                     </div>
-                  )}
+                  </div>
 
                   <h3 className="text-2xl font-headline my-6">Constituency Breakdown</h3>
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-2">
-                           {loadingResults ? <p>Loading results...</p> : (
-                                <Table>
-                                    <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Constituency</TableHead>
-                                        <TableHead>Result</TableHead>
-                                        <TableHead>SLP Votes</TableHead>
-                                        <TableHead>UWP Votes</TableHead>
-                                        <TableHead>Other Votes</TableHead>
-                                        <TableHead className="text-right">Total Votes</TableHead>
-                                        <TableHead className="text-right">Registered Voters</TableHead>
-                                        <TableHead className="text-right">Turnout</TableHead>
-                                    </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                    {currentElectionResults && currentElectionResults.length > 0 ? currentElectionResults.map((cr) => {
-                                        const constituency = getConstituencyById(cr.constituencyId);
-                                        const is2021 = currentElection?.year === 2021;
-                                        
-                                        const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
-                                        const currentWinner = isSpecialConstituency && cr.slpVotes > cr.uwpVotes ? 'IND' : (cr.slpVotes > cr.uwpVotes ? 'SLP' : 'UWP');
-                                        
-                                        const previousResult = previousElectionResults?.find(r => r.constituencyId === cr.constituencyId);
-                                        const previousWinner = previousResult ? (previousResult.slpVotes > previousResult.uwpVotes ? 'SLP' : 'UWP') : null;
+                  
+                  {loadingResults ? <p>Loading results...</p> : (
+                      <Table>
+                          <TableHeader>
+                          <TableRow>
+                              <TableHead>Constituency</TableHead>
+                              <TableHead>Result</TableHead>
+                              <TableHead>SLP Votes</TableHead>
+                              <TableHead>UWP Votes</TableHead>
+                              <TableHead>Other Votes</TableHead>
+                              <TableHead className="text-right">Total Votes</TableHead>
+                              <TableHead className="text-right">Registered Voters</TableHead>
+                              <TableHead className="text-right">Turnout</TableHead>
+                          </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                          {currentElectionResults && currentElectionResults.length > 0 ? currentElectionResults.map((cr) => {
+                              const constituency = getConstituencyById(cr.constituencyId);
+                              const is2021 = currentElection?.year === 2021;
+                              
+                              const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+                              
+                              const currentWinner = isSpecialConstituency && cr.slpVotes > cr.uwpVotes ? 'IND' : (cr.slpVotes > cr.uwpVotes ? 'SLP' : 'UWP');
+                              
+                              const previousResult = previousElectionResults?.find(r => r.constituencyId === cr.constituencyId);
+                              const previousWinner = previousResult ? (previousResult.slpVotes > previousResult.uwpVotes ? 'SLP' : 'UWP') : null;
 
-                                        let resultStatus = `${currentWinner} Win`;
-                                        if (previousWinner) {
-                                            if (currentWinner === 'IND') {
-                                                resultStatus = 'IND Gain';
-                                            } else if (currentWinner === previousWinner) {
-                                                resultStatus = `${currentWinner} Hold`;
-                                            } else {
-                                                resultStatus = `${currentWinner} Gain`;
-                                            }
-                                        }
+                              let resultStatus = `${currentWinner} Win`;
+                              if (previousWinner) {
+                                  if (currentWinner === 'IND') {
+                                      resultStatus = 'IND Gain';
+                                  } else if (currentWinner === previousWinner) {
+                                      resultStatus = `${currentWinner} Hold`;
+                                  } else {
+                                      resultStatus = `${currentWinner} Gain`;
+                                  }
+                              }
 
-                                        const slpParty = parties?.find(p => p.acronym === 'SLP');
-                                        const uwpParty = parties?.find(p => p.acronym === 'UWP');
-                                        const winnerColor = currentWinner === 'SLP' ? slpParty?.color : (currentWinner === 'UWP' ? uwpParty?.color : '#8884d8');
+                              const slpParty = parties?.find(p => p.acronym === 'SLP');
+                              const uwpParty = parties?.find(p => p.acronym === 'UWP');
+                              const winnerColor = currentWinner === 'SLP' ? slpParty?.color : (currentWinner === 'UWP' ? uwpParty?.color : '#8884d8');
 
-                                        return (
-                                        <TableRow key={cr.id} onClick={() => setSelectedConstituencyId(cr.constituencyId)} className={selectedConstituencyId === cr.constituencyId ? 'bg-muted' : ''}>
-                                            <TableCell className="font-medium">{constituency?.name || cr.constituencyId}</TableCell>
-                                            <TableCell>
-                                                <span className="font-semibold" style={{ color: winnerColor }}>{resultStatus}</span>
-                                            </TableCell>
-                                            <TableCell>{isSpecialConstituency ? '-' : cr.slpVotes.toLocaleString()}</TableCell>
-                                            <TableCell>{cr.uwpVotes.toLocaleString()}</TableCell>
-                                            <TableCell>{isSpecialConstituency ? (cr.slpVotes + cr.otherVotes).toLocaleString() : cr.otherVotes.toLocaleString()}</TableCell>
-                                            <TableCell className="text-right font-semibold">{cr.totalVotes.toLocaleString()}</TableCell>
-                                            <TableCell className="text-right">{cr.registeredVoters === 0 ? 'N/A' : cr.registeredVoters.toLocaleString()}</TableCell>
-                                            <TableCell className="text-right">{cr.turnout === 0 ? 'N/A' : `${cr.turnout}%`}</TableCell>
-                                        </TableRow>
-                                        );
-                                    }) : (
-                                        <TableRow>
-                                            <TableCell colSpan={8} className="text-center text-muted-foreground h-24">Detailed constituency data not available for this year.</TableCell>
-                                        </TableRow>
-                                    )}
-                                    </TableBody>
-                                </Table>
-                           )}
-                        </div>
-                        <div>
-                             <Card>
-                                <CardHeader>
-                                    <CardTitle>Results Map</CardTitle>
-                                    <CardDescription>Constituency winners for {currentElection.name}.</CardDescription>
-                                </CardHeader>
-                                <CardContent className="p-2">
-                                    <InteractiveSvgMap 
-                                        constituencies={resultsMapConstituencies}
-                                        selectedConstituencyId={selectedConstituencyId}
-                                        onConstituencyClick={setSelectedConstituencyId}
-                                        election={currentElection}
-                                        electionResults={currentElectionResults}
-                                        previousElectionResults={previousElectionResults}
-                                    />
-                                </CardContent>
-                             </Card>
-                        </div>
-                  </div>
+                              return (
+                              <TableRow key={cr.id} onClick={() => setSelectedConstituencyId(cr.constituencyId)} className={selectedConstituencyId === cr.constituencyId ? 'bg-muted' : ''}>
+                                  <TableCell className="font-medium">{constituency?.name || cr.constituencyId}</TableCell>
+                                  <TableCell>
+                                      <span className="font-semibold" style={{ color: winnerColor }}>{resultStatus}</span>
+                                  </TableCell>
+                                  <TableCell>{isSpecialConstituency ? '-' : cr.slpVotes.toLocaleString()}</TableCell>
+                                  <TableCell>{cr.uwpVotes.toLocaleString()}</TableCell>
+                                  <TableCell>{isSpecialConstituency ? (cr.slpVotes + cr.otherVotes).toLocaleString() : cr.otherVotes.toLocaleString()}</TableCell>
+                                  <TableCell className="text-right font-semibold">{cr.totalVotes.toLocaleString()}</TableCell>
+                                  <TableCell className="text-right">{cr.registeredVoters === 0 ? 'N/A' : cr.registeredVoters.toLocaleString()}</TableCell>
+                                  <TableCell className="text-right">{cr.turnout === 0 ? 'N/A' : `${cr.turnout}%`}</TableCell>
+                              </TableRow>
+                              );
+                          }) : (
+                              <TableRow>
+                                  <TableCell colSpan={8} className="text-center text-muted-foreground h-24">Detailed constituency data not available for this year.</TableCell>
+                              </TableRow>
+                          )}
+                          </TableBody>
+                      </Table>
+                  )}
+                        
                 </div>
               )}
         </CardContent>
