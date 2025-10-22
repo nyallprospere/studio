@@ -594,7 +594,7 @@ export default function ResultsPage() {
                                                 <TableHead>Region</TableHead>
                                                 <TableHead>SLP Seats</TableHead>
                                                 <TableHead>UWP Seats</TableHead>
-                                                <TableHead>Other Seats</TableHead>
+                                                <TableHead>IND Seats</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -629,8 +629,8 @@ export default function ResultsPage() {
                                                 <TableHead>SLP %</TableHead>
                                                 <TableHead>UWP Votes</TableHead>
                                                 <TableHead>UWP %</TableHead>
-                                                <TableHead>Other</TableHead>
-                                                <TableHead>Other %</TableHead>
+                                                <TableHead>IND Votes</TableHead>
+                                                <TableHead>IND %</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
