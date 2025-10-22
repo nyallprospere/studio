@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -217,6 +216,25 @@ export default function ResultsPage() {
     });
   }, [constituencies, currentElectionResults]);
 
+  const CustomizedAxisTick = (props: any) => {
+    const { x, y, payload } = props;
+    const partyAcronym = payload.value;
+    const partyData = summaryData.find(p => p.acronym === partyAcronym);
+  
+    if (!partyData) return null;
+  
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text x={0} y={0} dy={16} textAnchor="middle" fill="#666" fontWeight="bold">
+          {partyAcronym}
+        </text>
+        {partyData.logoUrl && (
+          <image href={partyData.logoUrl} x={-12} y={20} height="24" width="24" />
+        )}
+      </g>
+    );
+  };
+
 
   if (loading) {
     return (
@@ -327,8 +345,8 @@ export default function ResultsPage() {
                           <CardContent>
                                <ChartContainer config={chartConfig} className="h-40 w-full">
                                 <ResponsiveContainer>
-                                    <BarChart data={summaryData} layout="horizontal" margin={{ top: 20 }}>
-                                        <XAxis dataKey="acronym" tickLine={false} axisLine={false} />
+                                    <BarChart data={summaryData} layout="horizontal" margin={{ top: 20, bottom: 30 }}>
+                                        <XAxis dataKey="acronym" tickLine={false} axisLine={false} tick={<CustomizedAxisTick />} height={50} />
                                         <YAxis hide />
                                         <ChartTooltip
                                             cursor={false}
@@ -448,3 +466,5 @@ export default function ResultsPage() {
     </div>
   );
 }
+
+    
