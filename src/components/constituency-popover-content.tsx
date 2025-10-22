@@ -108,7 +108,7 @@ function CandidateBox({
                                 {isWinner && margin ? <sup className="font-semibold"> (+{margin.toLocaleString()})</sup> : null}
                             </span>
                             <div className="flex items-baseline gap-1">
-                                <span className={cn("font-bold text-xs", party?.acronym === 'SLP' ? 'text-black' : textColorClass)}>
+                                <span className={cn("font-bold text-xs", textColorClass)}>
                                     {votePercentage.toFixed(1)}%
                                 </span>
                                 {votePercentageChange !== null && typeof votePercentageChange !== 'undefined' && (
@@ -373,6 +373,7 @@ export function ConstituencyPopoverContent({
                       votePercentageChange={uwpVotePercentageChange}
                       logoUrl={uwpLogoUrl}
                   />
+                  <p className="text-xs text-muted-foreground text-center pt-1">* Incumbent</p>
               </div>
             )}
             
