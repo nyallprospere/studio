@@ -69,8 +69,8 @@ function CandidateBox({
                 isWinner && "border-2 border-green-600"
             )}>
                  {isWinner && (
-                    <div className="absolute -top-3.5 -right-3 text-center">
-                         <p className="font-bold text-xs -mb-1.5" style={{color: statusColor}}>{electionStatus}</p>
+                    <div className="absolute -top-3 -right-2 text-center">
+                         <p className="font-bold text-xs -mb-1" style={{color: statusColor}}>{electionStatus}</p>
                         <CheckCircle2 className="h-5 w-5 text-green-600 bg-white rounded-full mx-auto" />
                     </div>
                 )}
@@ -82,7 +82,7 @@ function CandidateBox({
                                 <Image src={logoUrl} alt={party?.name || ''} fill className="object-contain" />
                             ) : null}
                         </div>
-                        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
+                        <div className="relative h-10 w-10 rounded-full overflow-hidden">
                         {candidate?.imageUrl ? (
                             <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
                         ) : (
@@ -104,6 +104,7 @@ function CandidateBox({
                         <div className="absolute inset-0 flex items-center justify-between px-2">
                              <span className="text-black font-bold text-xs">
                                 {votes?.toLocaleString()}
+                                {isWinner && margin ? <sup> (+{margin.toLocaleString()})</sup> : null}
                             </span>
                             <div className="flex items-baseline gap-1">
                                 <span className="text-black font-bold text-xs">
@@ -403,3 +404,5 @@ export function ConstituencyPopoverContent({
         </div>
     );
 }
+
+    
