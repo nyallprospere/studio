@@ -320,44 +320,54 @@ export default function ResultsPage() {
   }, [summaryData]);
   
   const regionalResults = useMemo(() => {
-    if (!regions || !currentElectionResults || !constituencies) return [];
+    if (!regions || !currentElectionResults || !constituencies || !previousElectionResults || !parties) return [];
 
     return regions.map(region => {
-        let slpSeats = 0;
-        let uwpSeats = 0;
-        let otherSeats = 0;
+      let slpSeats = 0;
+      let uwpSeats = 0;
+      let otherSeats = 0;
+      let prevSlpSeats = 0;
+      let prevUwpSeats = 0;
+      let prevOtherSeats = 0;
 
-        const regionConstituencyIds = new Set(region.constituencyIds);
+      const regionConstituencyIds = new Set(region.constituencyIds);
+      const isCurrent2021 = currentElection?.year === 2021;
+      const isPrev2021 = previousElection?.year === 2021;
 
-        currentElectionResults.forEach(result => {
-            if (regionConstituencyIds.has(result.constituencyId)) {
-                const constituency = getConstituencyById(result.constituencyId);
-                const is2021 = currentElection?.year === 2021;
-                const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
-                
-                if (isSpecialConstituency) {
-                  otherSeats++;
-                } else {
-                  if (result.slpVotes > result.uwpVotes) {
-                      slpSeats++;
-                  } else if (result.uwpVotes > result.slpVotes) {
-                      uwpSeats++;
-                  }
-                }
-            }
-        });
+      currentElectionResults.forEach(result => {
+        if (regionConstituencyIds.has(result.constituencyId)) {
+          const constituency = getConstituencyById(result.constituencyId);
+          const isSpecial = isCurrent2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+          if (isSpecial) otherSeats++;
+          else if (result.slpVotes > result.uwpVotes) slpSeats++;
+          else if (result.uwpVotes > result.slpVotes) uwpSeats++;
+        }
+      });
+      
+      previousElectionResults.forEach(result => {
+        if (regionConstituencyIds.has(result.constituencyId)) {
+            const constituency = getConstituencyById(result.constituencyId);
+            const isSpecial = isPrev2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+            if (isSpecial) prevOtherSeats++;
+            else if (result.slpVotes > result.uwpVotes) prevSlpSeats++;
+            else if (result.uwpVotes > result.slpVotes) prevUwpSeats++;
+        }
+      });
+      
+      return {
+        id: region.id,
+        name: region.name,
+        slpSeats,
+        uwpSeats,
+        otherSeats,
+        slpSeatChange: slpSeats - prevSlpSeats,
+        uwpSeatChange: uwpSeats - prevUwpSeats,
+        otherSeatChange: otherSeats - prevOtherSeats,
+        totalSeats: slpSeats + uwpSeats + otherSeats
+      };
+    }).sort((a, b) => a.name.localeCompare(b.name));
 
-        return {
-            id: region.id,
-            name: region.name,
-            slpSeats,
-            uwpSeats,
-            otherSeats,
-            totalSeats: slpSeats + uwpSeats + otherSeats
-        };
-    }).sort((a,b) => a.name.localeCompare(b.name));
-
-  }, [regions, currentElectionResults, constituencies, currentElection]);
+  }, [regions, currentElectionResults, previousElectionResults, constituencies, currentElection, previousElection, parties]);
 
 
   const handleYearChange = (electionId: string) => {
@@ -395,6 +405,13 @@ export default function ResultsPage() {
       </div>
     );
   }
+
+  const SeatChangeIndicator = ({ change }: { change: number | null }) => {
+    if (change === null) return null;
+    const color = change > 0 ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-muted-foreground';
+    const sign = change > 0 ? '+' : '';
+    return <span className={cn('text-xs font-semibold ml-1', color)}>({sign}{change})</span>;
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -496,9 +513,9 @@ export default function ResultsPage() {
                                       {regionalResults && regionalResults.length > 0 ? regionalResults.map((region) => (
                                           <TableRow key={region.id}>
                                               <TableCell className="font-medium">{region.name}</TableCell>
-                                              <TableCell>{region.slpSeats}</TableCell>
-                                              <TableCell>{region.uwpSeats}</TableCell>
-                                              <TableCell>{region.otherSeats}</TableCell>
+                                              <TableCell>{region.slpSeats}<SeatChangeIndicator change={region.slpSeatChange} /></TableCell>
+                                              <TableCell>{region.uwpSeats}<SeatChangeIndicator change={region.uwpSeatChange} /></TableCell>
+                                              <TableCell>{region.otherSeats}<SeatChangeIndicator change={region.otherSeatChange} /></TableCell>
                                               <TableCell className="font-semibold">{region.totalSeats}</TableCell>
                                           </TableRow>
                                       )) : (
