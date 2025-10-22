@@ -150,10 +150,10 @@ export default function ResultsPage() {
       const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
 
       if (isSpecialConstituency) {
-        otherVotes += result.slpVotes; // Add SLP votes to 'Other' for IND
+        otherVotes += result.slpVotes;
         uwpVotes += result.uwpVotes;
         otherVotes += result.otherVotes;
-        otherSeats++; // Add SLP seat to 'Other' for IND
+        otherSeats++;
       } else {
         slpVotes += result.slpVotes;
         uwpVotes += result.uwpVotes;
@@ -186,15 +186,16 @@ export default function ResultsPage() {
         if (!previousElectionResults || !parties) return 0;
 
         if (partyId === 'other') {
-            const slpParty = parties.find(p => p.acronym === 'SLP');
-            const uwpParty = parties.find(p => p.acronym === 'UWP');
-            if (!slpParty || !uwpParty) return 0;
-            return previousElectionResults.reduce((acc, result) => {
-                if (result.slpVotes > result.uwpVotes || result.uwpVotes > result.slpVotes) {
-                    return acc;
+             const prevOtherSeats = previousElectionResults.reduce((acc, result) => {
+                const constituency = getConstituencyById(result.constituencyId);
+                const prevIs2021 = previousElection?.year === 2021;
+                 const prevIsSpecial = prevIs2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+                if (prevIsSpecial) {
+                    if (result.slpVotes > result.uwpVotes) return acc + 1;
                 }
-                return acc +1;
+                return acc;
             }, 0);
+            return prevOtherSeats;
         }
         
         const party = getPartyById(partyId);
@@ -206,29 +207,83 @@ export default function ResultsPage() {
             return acc;
         }, 0);
     }
+    
+    const getVotePercentage = (partyId: string, totalVotes: number) => {
+        if (grandTotalVotes === 0) return 0;
+        return (totalVotes / grandTotalVotes) * 100;
+    }
+
+    const getPreviousVotePercentage = (partyId: string) => {
+        if (!previousElectionResults || !parties) return 0;
+        
+        let prevVotes = 0;
+        let prevTotalVotes = 0;
+
+        previousElectionResults.forEach(r => {
+            prevTotalVotes += r.totalVotes;
+        });
+
+        if (partyId === 'other') {
+             previousElectionResults.forEach(r => {
+                 const constituency = getConstituencyById(r.constituencyId);
+                 const prevIs2021 = previousElection?.year === 2021;
+                 const prevIsSpecial = prevIs2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+                if (prevIsSpecial) {
+                    prevVotes += r.slpVotes + r.otherVotes;
+                } else {
+                    prevVotes += r.otherVotes;
+                }
+            });
+
+        } else {
+            const party = getPartyById(partyId);
+            if (!party) return 0;
+            previousElectionResults.forEach(r => {
+                 const constituency = getConstituencyById(r.constituencyId);
+                 const prevIs2021 = previousElection?.year === 2021;
+                 const prevIsSpecial = prevIs2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+                if (party.acronym === 'SLP' && !prevIsSpecial) prevVotes += r.slpVotes;
+                if (party.acronym === 'UWP') prevVotes += r.uwpVotes;
+            });
+        }
+
+        if (prevTotalVotes === 0) return 0;
+        return (prevVotes / prevTotalVotes) * 100;
+    }
 
     const getSeatChange = (partyId: string, currentSeats: number) => {
         if (!previousElection) return null;
         const prevSeats = calculatePreviousSeats(partyId);
         return currentSeats - prevSeats;
     }
+    
+    const getVotePercentageChange = (partyId: string, currentPercentage: number) => {
+        if (!previousElection) return null;
+        const prevPercentage = getPreviousVotePercentage(partyId);
+        return currentPercentage - prevPercentage;
+    }
   
     const summary = [
-        { partyId: slp.id, name: "Saint Lucia Labour Party", acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color, logoUrl: getElectionLogo(slp.id), seatChange: getSeatChange(slp.id, slpSeats) },
-        { partyId: uwp.id, name: "United Workers Party", acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color, logoUrl: getElectionLogo(uwp.id), seatChange: getSeatChange(uwp.id, uwpSeats) },
+        { partyId: slp.id, name: slp.name, acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color, logoUrl: getElectionLogo(slp.id) },
+        { partyId: uwp.id, name: uwp.name, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color, logoUrl: getElectionLogo(uwp.id) },
     ];
     
     if(otherVotes > 0 || otherSeats > 0) {
         const independentLogo = partyLogos.find(logo => logo.partyId === 'independent' && logo.electionId === currentElection?.id);
-        summary.push({ partyId: 'other', name: 'Independents', acronym: 'IND', seats: otherSeats, totalVotes: otherVotes, color: '#8884d8', logoUrl: independentLogo?.expandedLogoUrl || independentLogo?.logoUrl || currentElection?.independentExpandedLogoUrl || currentElection?.independentLogoUrl, seatChange: getSeatChange('other', otherSeats) });
+        summary.push({ partyId: 'other', name: 'Independents', acronym: 'IND', seats: otherSeats, totalVotes: otherVotes, color: '#8884d8', logoUrl: independentLogo?.expandedLogoUrl || independentLogo?.logoUrl || currentElection?.independentExpandedLogoUrl || currentElection?.independentLogoUrl });
     }
 
     return summary
       .filter(p => p.seats > 0 || p.totalVotes > 0)
-      .map(p => ({
-          ...p,
-          votePercentage: grandTotalVotes > 0 ? ((p.totalVotes / grandTotalVotes) * 100).toFixed(1) : '0.0',
-      }))
+      .map(p => {
+          const votePercentage = getVotePercentage(p.partyId, p.totalVotes);
+          return {
+            ...p,
+            seatChange: getSeatChange(p.partyId, p.seats),
+            votePercentage: votePercentage.toFixed(1),
+            votePercentageChange: getVotePercentageChange(p.partyId, votePercentage)
+          }
+      })
       .sort((a,b) => b.seats - a.seats || b.totalVotes - a.totalVotes);
   }, [currentElectionResults, parties, constituencies, currentElection, partyLogos, previousElectionResults, previousElection]);
 
@@ -275,16 +330,14 @@ export default function ResultsPage() {
             let winner = 'tossup';
              const is2021 = currentElection?.year === 2021;
              if (is2021 && (con.name === 'Castries North' || con.name === 'Castries Central')) {
-                winner = result.slpVotes > result.uwpVotes ? 'solid-slp' : 'solid-uwp'; // SLP votes are IND here
+                winner = 'solid-slp';
+             } else {
+                winner = result.slpVotes > result.uwpVotes ? 'solid-slp' : 'solid-uwp';
              }
-            
-            if (winner === 'tossup') {
-              winner = result.slpVotes > result.uwpVotes ? 'solid-slp' : 'solid-uwp';
-            }
 
             return { ...con, politicalLeaning: winner as Constituency['politicalLeaning'] };
         }
-        return { ...con, politicalLeaning: 'tossup' }; // Default for no result
+        return { ...con, politicalLeaning: 'tossup' };
     });
   }, [constituencies, currentElectionResults, currentElection]);
 
@@ -350,6 +403,12 @@ export default function ResultsPage() {
                                 <div className="mt-2">
                                   <div className="font-bold">{summaryItem.votePercentage}%</div>
                                   <div className="text-xs text-muted-foreground">({summaryItem.totalVotes.toLocaleString()} votes)</div>
+                                   {summaryItem.votePercentageChange !== null && (
+                                        <div className={cn("text-xs font-semibold flex items-center justify-center", summaryItem.votePercentageChange > 0 ? 'text-green-600' : summaryItem.votePercentageChange < 0 ? 'text-red-600' : 'text-muted-foreground')}>
+                                            {summaryItem.votePercentageChange > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                                            {Math.abs(summaryItem.votePercentageChange).toFixed(1)}%
+                                        </div>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
@@ -448,7 +507,7 @@ export default function ResultsPage() {
                                                         {cr.slpVotes.toLocaleString()}
                                                         {currentWinner === 'IND' && <sup> (+{margin.toLocaleString()})</sup>}
                                                       </span>
-                                                    ) : cr.otherVotes.toLocaleString()}
+                                                    ) : cr.otherVotes > 0 ? cr.otherVotes.toLocaleString() : '-'}
                                                   </TableCell>
                                                   <TableCell>{cr.totalVotes.toLocaleString()}</TableCell>
                                                   <TableCell>{cr.registeredVoters === 0 ? 'N/A' : cr.registeredVoters.toLocaleString()}</TableCell>
