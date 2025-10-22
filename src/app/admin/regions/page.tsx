@@ -132,7 +132,7 @@ export default function AdminRegionsPage() {
             </Button>
           <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
             <DialogTrigger asChild>
-                <Button onClick={() => { setEditingRegion(null); setIsFormOpen(true)}}>Add New Region</Button>
+                <Button onClick={() => { setEditingRegion(null); setIsFormOpen(true)}} disabled={isLocked}>Add New Region</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-xl h-[80vh]">
                 <DialogHeader>
