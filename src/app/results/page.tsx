@@ -402,13 +402,13 @@ export default function ResultsPage() {
                                 </div>
                                 <div className="mt-2">
                                   <div className="font-bold">{summaryItem.votePercentage}%</div>
-                                  <div className="text-xs text-muted-foreground">({summaryItem.totalVotes.toLocaleString()} votes)</div>
                                    {summaryItem.votePercentageChange !== null && (
                                         <div className={cn("text-xs font-semibold flex items-center justify-center", summaryItem.votePercentageChange > 0 ? 'text-green-600' : summaryItem.votePercentageChange < 0 ? 'text-red-600' : 'text-muted-foreground')}>
                                             {summaryItem.votePercentageChange > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
                                             {Math.abs(summaryItem.votePercentageChange).toFixed(1)}%
                                         </div>
                                     )}
+                                  <div className="text-xs text-muted-foreground">({summaryItem.totalVotes.toLocaleString()} votes)</div>
                                 </div>
                             </CardContent>
                         </Card>
