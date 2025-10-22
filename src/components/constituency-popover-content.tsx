@@ -74,11 +74,8 @@ function CandidateBox({
                 )}
                 
                 <div className="flex w-full items-center gap-2">
-                    <div className={cn(
-                        "w-20 flex-shrink-0 flex flex-col items-center gap-1 p-1 rounded-md",
-                        isWinner && "ring-2 ring-green-500"
-                        )}>
-                        <div className="relative h-12 w-12 rounded-full overflow-hidden bg-transparent">
+                    <div className="relative w-20 flex-shrink-0 flex flex-col items-center gap-1 p-1 rounded-md">
+                        <div className={cn("relative h-12 w-12 rounded-full overflow-hidden bg-transparent", isWinner && "ring-2 ring-green-500")}>
                             {candidate?.imageUrl ? (
                                 <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
                             ) : (
@@ -88,6 +85,7 @@ function CandidateBox({
                          <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold whitespace-normal leading-tight" onClick={() => setProfileOpen(true)} disabled={!candidate}>
                            {candidateName}
                         </Button>
+                        {isWinner && <CheckCircle2 className="h-4 w-4 text-green-600 absolute top-0 right-3 bg-white rounded-full" />}
                     </div>
 
                      <div className="flex-grow flex flex-col items-center gap-2">
@@ -123,7 +121,6 @@ function CandidateBox({
                                     )}
                                 </div>
                             </div>
-                            {isWinner && <CheckCircle2 className="h-4 w-4 text-green-600 absolute top-[-4px] right-[-4px] bg-white rounded-full" />}
                         </div>
                     </div>
                 </div>
