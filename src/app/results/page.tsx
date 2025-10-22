@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, orderBy, query, getDocs } from 'firebase/firestore';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Bar, BarChart, ResponsiveContainer, XAxis, Tooltip, CartesianGrid, LabelList, Cell } from "recharts"
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, LabelList, Cell } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -285,20 +285,20 @@ export default function ResultsPage() {
             {!selectedElectionId || !currentElection ? (
                 <div className="text-center py-12 text-muted-foreground">Please select an election to view results.</div>
             ) : (
-                <div className="mt-6">
+                <div>
                   <h3 className="text-2xl font-headline mb-4">
                     {currentElection.name} Election Summary
                   </h3>
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                         <div>
                             <h4 className="text-lg font-semibold mb-2">Seat Distribution</h4>
-                             <div className="grid gap-4" style={{gridTemplateColumns: `repeat(${summaryData.length}, minmax(0, 1fr))`}}>
+                            <div className="grid gap-4" style={{gridTemplateColumns: `repeat(${summaryData.length}, minmax(0, 1fr))`}}>
                                 {summaryData.map((summaryItem) => (
                                 <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
                                     <CardHeader className="flex flex-col items-center text-center p-4">
                                     <CardTitle className="text-base">{summaryItem.name}</CardTitle>
                                     {summaryItem.logoUrl && (
-                                        <div className="relative h-12 w-12 mt-2">
+                                        <div className="relative h-12 w-24 mt-2">
                                             <Image src={summaryItem.logoUrl} alt={`${summaryItem.name} logo`} fill className="object-contain" />
                                         </div>
                                     )}
@@ -320,41 +320,40 @@ export default function ResultsPage() {
                                 ))}
                             </div>
                         </div>
-                        
                         {summaryData.length > 0 && (
                             <div>
                                 <h4 className="text-lg font-semibold mb-2">Vote Distribution</h4>
                                 <Card>
                                 <CardContent className="pt-6">
-                                    <ChartContainer config={chartConfig} className="h-12 w-full">
+                                    <ChartContainer config={chartConfig} className="h-28 w-full">
                                         <ResponsiveContainer>
-                                        <BarChart layout="vertical" data={voteDistributionData} stackOffset="expand">
-                                            <YAxis type="category" dataKey="name" hide />
-                                            <Tooltip
-                                                cursor={false}
-                                                content={<ChartTooltipContent 
-                                                    hideLabel 
-                                                    formatter={(value, name, item) => (
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="h-2 w-2 rounded-full" style={{backgroundColor: item.color}}/>
-                                                            <div className="flex justify-between w-full">
-                                                                <span>{name}</span>
-                                                                <span className="font-bold ml-4">{(value as number).toLocaleString()}</span>
+                                            <BarChart layout="vertical" data={voteDistributionData} stackOffset="expand">
+                                                <YAxis type="category" dataKey="name" hide />
+                                                <Tooltip
+                                                    cursor={false}
+                                                    content={<ChartTooltipContent 
+                                                        hideLabel 
+                                                        formatter={(value, name, item) => (
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="h-2 w-2 rounded-full" style={{backgroundColor: item.color}}/>
+                                                                <div className="flex justify-between w-full">
+                                                                    <span>{name}</span>
+                                                                    <span className="font-bold ml-4">{(value as number).toLocaleString()}</span>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    )}
-                                                />}
-                                            />
-                                            {summaryData.map(p => (
-                                                <Bar key={p.partyId} dataKey={p.acronym} fill={p.color} stackId="a" radius={0}>
-                                                    <LabelList 
-                                                        position="inside"
-                                                        formatter={(value: number) => value.toLocaleString()}
-                                                        className="fill-white font-bold text-sm"
-                                                    />
-                                                </Bar>
-                                            ))}
-                                        </BarChart>
+                                                        )}
+                                                    />}
+                                                />
+                                                {summaryData.map(p => (
+                                                    <Bar key={p.partyId} dataKey={p.acronym} fill={p.color} stackId="a" radius={0}>
+                                                        <LabelList 
+                                                            position="inside"
+                                                            formatter={(value: number) => value.toLocaleString()}
+                                                            className="fill-white font-bold text-sm"
+                                                        />
+                                                    </Bar>
+                                                ))}
+                                            </BarChart>
                                         </ResponsiveContainer>
                                     </ChartContainer>
                                       <div className="mt-4 flex justify-around text-xs text-center">
@@ -370,7 +369,6 @@ export default function ResultsPage() {
                             </div>
                         )}
                     </div>
-
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                      <div className="lg:col-span-2">
                         <h3 className="text-2xl font-headline mb-6">Constituency Breakdown</h3>
