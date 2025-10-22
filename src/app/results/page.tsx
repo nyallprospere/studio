@@ -409,7 +409,7 @@ export default function ResultsPage() {
                                             {Math.abs(summaryItem.votePercentageChange).toFixed(1)}%
                                         </div>
                                     )}
-                                  <div className="text-xs text-muted-foreground">({summaryItem.totalVotes.toLocaleString()} votes)</div>
+                                  <div className="text-sm text-muted-foreground">{summaryItem.totalVotes.toLocaleString()} votes</div>
                                 </div>
                             </CardContent>
                         </Card>
