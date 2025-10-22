@@ -57,12 +57,9 @@ function CandidateBox({
     logoUrl?: string;
 }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
-    const isIncumbent = candidate?.isIncumbent;
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}` : 'Candidate TBD';
 
     const votePercentage = totalVotes && votes ? (votes / totalVotes) * 100 : 0;
-    
-    const textColorClass = party?.acronym === 'SLP' ? 'text-white' : 'text-black';
 
     return (
         <>
@@ -76,12 +73,6 @@ function CandidateBox({
                         <CheckCircle2 className="h-5 w-5 text-green-600 bg-white rounded-full mx-auto" />
                     </div>
                 )}
-                
-                <div className="relative h-10 w-10">
-                    {logoUrl ? (
-                        <Image src={logoUrl} alt={party?.name || ''} fill className="object-contain" />
-                    ) : null}
-                </div>
                 
                 <div className="flex w-full items-center gap-2">
                     <div className="w-20 flex-shrink-0 flex flex-col items-center gap-1">
@@ -97,34 +88,41 @@ function CandidateBox({
                         </Button>
                     </div>
 
-                    <div className="relative w-full h-8 bg-gray-200 rounded overflow-hidden self-center">
-                        <div 
-                            className={cn("absolute top-0 left-0 h-full rounded", isStriped && barFill === 'blue-red-stripes' && 'bg-blue-600')}
-                            style={{ width: `${votePercentage}%`, backgroundColor: (isStriped && barFill === 'blue-red-stripes') ? '' : party?.color }}
-                        >
-                            {isStriped && barFill === 'blue-red-stripes' && <div className="absolute inset-0 red-stripes-overlay"></div>}
+                     <div className="flex-grow flex flex-col items-center gap-2">
+                        <div className="relative h-10 w-10">
+                            {logoUrl ? (
+                                <Image src={logoUrl} alt={party?.name || ''} fill className="object-contain" />
+                            ) : null}
                         </div>
-                        <div className="absolute inset-0 flex items-center justify-between px-2">
-                             <span className={cn("font-bold text-xs", party?.acronym === 'SLP' ? 'text-white' : 'text-black')}>
-                                {votes?.toLocaleString()}
-                                {isWinner && margin ? <sup className="font-semibold"> (+{margin.toLocaleString()})</sup> : null}
-                            </span>
-                            <div className="flex items-baseline gap-1">
-                                <span className={cn("font-bold text-xs", party?.acronym === 'UWP' ? 'text-black' : 'text-black')}>
-                                    {votePercentage.toFixed(1)}%
+                        <div className="relative w-full h-8 bg-gray-200 rounded overflow-hidden self-center">
+                            <div 
+                                className={cn("absolute top-0 left-0 h-full rounded", isStriped && barFill === 'blue-red-stripes' && 'bg-blue-600')}
+                                style={{ width: `${votePercentage}%`, backgroundColor: (isStriped && barFill === 'blue-red-stripes') ? '' : party?.color }}
+                            >
+                                {isStriped && barFill === 'blue-red-stripes' && <div className="absolute inset-0 red-stripes-overlay"></div>}
+                            </div>
+                            <div className="absolute inset-0 flex items-center justify-between px-2">
+                                <span className={cn("font-bold text-xs", party?.acronym === 'SLP' ? 'text-white' : 'text-black')}>
+                                    {votes?.toLocaleString()}
+                                    {isWinner && margin ? <sup className="font-semibold"> (+{margin.toLocaleString()})</sup> : null}
                                 </span>
-                                {votePercentageChange !== null && typeof votePercentageChange !== 'undefined' && (
-                                    <div className={cn("text-xs font-bold flex items-center", votePercentageChange > 0 ? 'text-green-700' : 'text-red-700')}>
-                                        {votePercentageChange > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
-                                        {Math.abs(votePercentageChange).toFixed(1)}%
-                                    </div>
-                                )}
+                                <div className="flex items-baseline gap-1">
+                                    <span className={cn("font-bold text-xs", party?.acronym === 'UWP' ? 'text-black' : 'text-black')}>
+                                        {votePercentage.toFixed(1)}%
+                                    </span>
+                                    {votePercentageChange !== null && typeof votePercentageChange !== 'undefined' && (
+                                        <div className={cn("text-xs font-bold flex items-center", votePercentageChange > 0 ? 'text-green-700' : 'text-red-700')}>
+                                            {votePercentageChange > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                                            {Math.abs(votePercentageChange).toFixed(1)}%
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {isIncumbent && (
+                {candidate?.isIncumbent && (
                     <div className="absolute bottom-1 right-2 text-xs font-semibold text-muted-foreground">
                         Incumbent
                     </div>
