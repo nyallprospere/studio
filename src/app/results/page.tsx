@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import type { Election, ElectionResult, Party, Constituency, PartyLogo } from '@/lib/types';
+import type { Election, ElectionResult, Party, Constituency, PartyLogo, Region } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -50,11 +50,13 @@ export default function ResultsPage() {
   const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
   const partyLogosQuery = useMemoFirebase(() => firestore ? collection(firestore, 'party_logos') : null, [firestore]);
+  const regionsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'regions') : null, [firestore]);
 
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
   const { data: partyLogos, isLoading: loadingLogos } = useCollection<PartyLogo>(partyLogosQuery);
+  const { data: regions, isLoading: loadingRegions } = useCollection<Region>(regionsQuery);
   
   const [selectedElectionId, setSelectedElectionId] = useState<string | undefined>(undefined);
   const [resultsByYear, setResultsByYear] = useState<Record<string, ElectionResult[]>>({});
@@ -114,7 +116,7 @@ export default function ResultsPage() {
   const getPartyById = (id: string) => parties?.find(p => p.id === id);
   const getConstituencyById = (id: string) => constituencies?.find(c => c.id === id);
   
-  const loading = loadingElections || loadingParties || loadingConstituencies || loadingLogos;
+  const loading = loadingElections || loadingParties || loadingConstituencies || loadingLogos || loadingRegions;
 
   const currentElectionResults = selectedElectionId ? resultsByYear[selectedElectionId] : [];
   const currentElection = useMemo(() => sortedElections.find(e => e.id === selectedElectionId), [selectedElectionId, sortedElections]);
@@ -317,6 +319,47 @@ export default function ResultsPage() {
     return config;
   }, [summaryData]);
   
+  const regionalResults = useMemo(() => {
+    if (!regions || !currentElectionResults || !constituencies) return [];
+
+    return regions.map(region => {
+        let slpSeats = 0;
+        let uwpSeats = 0;
+        let otherSeats = 0;
+
+        const regionConstituencyIds = new Set(region.constituencyIds);
+
+        currentElectionResults.forEach(result => {
+            if (regionConstituencyIds.has(result.constituencyId)) {
+                const constituency = getConstituencyById(result.constituencyId);
+                const is2021 = currentElection?.year === 2021;
+                const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+                
+                if (isSpecialConstituency) {
+                  otherSeats++;
+                } else {
+                  if (result.slpVotes > result.uwpVotes) {
+                      slpSeats++;
+                  } else if (result.uwpVotes > result.slpVotes) {
+                      uwpSeats++;
+                  }
+                }
+            }
+        });
+
+        return {
+            id: region.id,
+            name: region.name,
+            slpSeats,
+            uwpSeats,
+            otherSeats,
+            totalSeats: slpSeats + uwpSeats + otherSeats
+        };
+    }).sort((a,b) => a.name.localeCompare(b.name));
+
+  }, [regions, currentElectionResults, constituencies, currentElection]);
+
+
   const handleYearChange = (electionId: string) => {
     setSelectedElectionId(electionId);
     router.push(`/results?year=${electionId}`);
@@ -433,6 +476,41 @@ export default function ResultsPage() {
                             />
                         </CardContent>
                     </Card>
+                    <Card>
+                      <CardHeader>
+                          <CardTitle>Results by Region</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                          {loadingResults ? <p>Loading results...</p> : (
+                              <Table>
+                                  <TableHeader>
+                                      <TableRow>
+                                          <TableHead>Region</TableHead>
+                                          <TableHead>SLP Seats</TableHead>
+                                          <TableHead>UWP Seats</TableHead>
+                                          <TableHead>Other Seats</TableHead>
+                                          <TableHead>Total Seats</TableHead>
+                                      </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                      {regionalResults && regionalResults.length > 0 ? regionalResults.map((region) => (
+                                          <TableRow key={region.id}>
+                                              <TableCell className="font-medium">{region.name}</TableCell>
+                                              <TableCell>{region.slpSeats}</TableCell>
+                                              <TableCell>{region.uwpSeats}</TableCell>
+                                              <TableCell>{region.otherSeats}</TableCell>
+                                              <TableCell className="font-semibold">{region.totalSeats}</TableCell>
+                                          </TableRow>
+                                      )) : (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="text-center text-muted-foreground h-24">Regional data not available. Please define regions in the admin panel.</TableCell>
+                                        </TableRow>
+                                      )}
+                                  </TableBody>
+                              </Table>
+                          )}
+                      </CardContent>
+                  </Card>
                     <Card>
                       <CardHeader>
                           <CardTitle>Constituency Breakdown</CardTitle>
