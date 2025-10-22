@@ -71,7 +71,7 @@ function CandidateBox({
                 isWinner && "border-2 border-green-600"
             )}>
                  {isWinner && (
-                    <div className="absolute -top-3 -right-2 text-center">
+                    <div className="absolute -top-5 -right-2 text-center">
                          <p className="font-bold text-xs -mb-2" style={{color: statusColor}}>{electionStatus}</p>
                         <CheckCircle2 className="h-5 w-5 text-green-600 bg-white rounded-full mx-auto" />
                     </div>
@@ -109,7 +109,7 @@ function CandidateBox({
                                 {isWinner && margin ? <sup className="font-semibold"> (+{margin.toLocaleString()})</sup> : null}
                             </span>
                             <div className="flex items-baseline gap-1">
-                                <span className={cn("font-bold text-xs", textColorClass === 'text-white' ? 'text-black' : 'text-black')}>
+                                <span className={cn("font-bold text-xs", "text-black")}>
                                     {votePercentage.toFixed(1)}%
                                 </span>
                                 {votePercentageChange !== null && typeof votePercentageChange !== 'undefined' && (
