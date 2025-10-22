@@ -69,8 +69,8 @@ function CandidateBox({
                 isWinner && "border-2 border-green-600"
             )}>
                  {isWinner && (
-                    <div className="absolute -top-3 -right-2 text-center">
-                         <p className="font-bold text-xs -mb-1" style={{color: statusColor}}>{electionStatus}</p>
+                    <div className="absolute -top-5 -right-2 text-center">
+                         <p className="font-bold text-xs" style={{color: statusColor}}>{electionStatus}</p>
                         <CheckCircle2 className="h-5 w-5 text-green-600 bg-white rounded-full mx-auto" />
                     </div>
                 )}
@@ -404,5 +404,3 @@ export function ConstituencyPopoverContent({
         </div>
     );
 }
-
-    
