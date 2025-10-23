@@ -27,10 +27,11 @@ import { doc, deleteDoc } from 'firebase/firestore';
 import { DateRange } from 'react-day-picker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import * as XLSX from 'xlsx';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 export default function ManageMapSubmissionsPage() {
     const { firestore } = useFirebase();
@@ -38,6 +39,7 @@ export default function ManageMapSubmissionsPage() {
     const [date, setDate] = useState<DateRange | undefined>();
     const [countryFilter, setCountryFilter] = useState('');
     const [cityFilter, setCityFilter] = useState('');
+    const [datePreset, setDatePreset] = useState('all');
 
     const mapsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -54,6 +56,30 @@ export default function ManageMapSubmissionsPage() {
     }, [firestore, date]);
 
     const { data: userMaps, isLoading } = useCollection<UserMap>(mapsQuery);
+
+    const handleDatePresetChange = (preset: string) => {
+        setDatePreset(preset);
+        const now = new Date();
+        switch (preset) {
+            case 'all':
+                setDate(undefined);
+                break;
+            case 'day':
+                setDate({ from: startOfDay(now), to: endOfDay(now) });
+                break;
+            case 'week':
+                setDate({ from: startOfWeek(now), to: endOfWeek(now) });
+                break;
+            case 'month':
+                setDate({ from: startOfMonth(now), to: endOfMonth(now) });
+                break;
+            case 'year':
+                setDate({ from: startOfYear(now), to: endOfYear(now) });
+                break;
+            default:
+                setDate(undefined);
+        }
+    }
 
     const processedMaps = useMemo(() => {
         if (!userMaps) return [];
@@ -136,6 +162,18 @@ export default function ManageMapSubmissionsPage() {
                     onChange={(e) => setCountryFilter(e.target.value)}
                     className="w-48"
                 />
+                <Select value={datePreset} onValueChange={handleDatePresetChange}>
+                    <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Date Range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Time</SelectItem>
+                        <SelectItem value="day">Day</SelectItem>
+                        <SelectItem value="week">Week</SelectItem>
+                        <SelectItem value="month">Month</SelectItem>
+                        <SelectItem value="year">Year</SelectItem>
+                    </SelectContent>
+                </Select>
                 <Popover>
                     <PopoverTrigger asChild>
                         <Button
@@ -157,7 +195,7 @@ export default function ManageMapSubmissionsPage() {
                             format(date.from, "LLL dd, y")
                             )
                         ) : (
-                            <span>Pick a date range</span>
+                            <span>Custom Range</span>
                         )}
                         </Button>
                     </PopoverTrigger>
@@ -167,7 +205,7 @@ export default function ManageMapSubmissionsPage() {
                         mode="range"
                         defaultMonth={date?.from}
                         selected={date}
-                        onSelect={setDate}
+                        onSelect={(range) => { setDate(range); setDatePreset('custom'); }}
                         numberOfMonths={2}
                         />
                     </PopoverContent>
