@@ -455,6 +455,7 @@ export function SidebarNav() {
                                           <SidebarMenuItem>
                                               <SidebarMenuSubButton asChild isActive={pathname === '/admin/analytics'}>
                                                   <Link href="/admin/analytics">
+                                                      <BarChart3 className="mr-2 h-4 w-4" />
                                                       Ad Analytics
                                                   </Link>
                                               </SidebarMenuSubButton>
