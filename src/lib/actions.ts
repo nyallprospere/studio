@@ -1,10 +1,11 @@
 
+
 'use server';
 
 import { generateElectionPredictions } from '@/ai/flows/generate-election-predictions';
 import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
 import { initializeFirebase } from '@/firebase';
-import { collection, getDocs, query, orderBy, limit, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, addDoc, serverTimestamp, where } from 'firebase/firestore';
 import { headers } from 'next/headers';
 import type { UserMap } from './types';
 
@@ -84,5 +85,28 @@ export async function saveUserMap(mapData: UserMap['mapData']) {
     } catch (e) {
         console.error('Error saving map:', e);
         return { error: 'Could not save your map. Please try again.' };
+    }
+}
+
+export async function subscribeToMailingList(data: { firstName: string; email: string }) {
+    try {
+        const { firestore } = initializeFirebase();
+        const subscribersCollection = collection(firestore, 'mailing_list_subscribers');
+        
+        // Check if email already exists
+        const q = query(subscribersCollection, where("email", "==", data.email));
+        const existingSubscriber = await getDocs(q);
+        if (!existingSubscriber.empty) {
+            return { error: "This email is already subscribed." };
+        }
+
+        await addDoc(subscribersCollection, {
+            ...data,
+            subscribedAt: serverTimestamp(),
+        });
+        return { success: true };
+    } catch (e) {
+        console.error('Error subscribing to mailing list:', e);
+        return { error: 'Could not subscribe. Please try again.' };
     }
 }

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -29,56 +30,13 @@ import { SortableFeatureCard } from '@/components/sortable-feature-card';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Pie, PieChart, ResponsiveContainer, Cell, Label } from 'recharts';
-
-const initialKeyFeatures = [
-    {
-      id: 'candidates',
-      title: 'Candidate Profiles',
-      description: 'Learn about the candidates and their platforms.',
-      icon: Users,
-      href: '/candidates',
-    },
-    {
-      id: 'polls',
-      title: 'Polling Data',
-      description: 'View the latest poll results and trends.',
-      icon: BarChart3,
-      href: '/polls',
-    },
-    {
-      id: 'predictions',
-      title: 'AI Predictions',
-      description: 'See our AI-powered election outcome predictions.',
-      icon: TrendingUp,
-      href: '/predictions',
-    },
-    {
-      id: 'results',
-      title: 'Past Results',
-      description: 'Explore historical election data from 1974.',
-      icon: Landmark,
-      href: '/results',
-    },
-     {
-      id: 'parties',
-      title: 'Party Information',
-      description: 'Discover the parties contesting the election.',
-      icon: Shield,
-      href: '/parties',
-    },
-    {
-      id: 'constituencies',
-      title: 'Constituencies',
-      description: 'Find your constituency and its voting information.',
-      icon: Map,
-      href: '/constituencies',
-    },
-];
+import { MailingListForm } from '@/components/mailing-list-form';
 
 const adminSections = [
     { id: 'admin-elections', title: 'Manage Elections', href: '/admin/elections', icon: Vote },
     { id: 'admin-parties', title: 'Manage Parties', href: '/admin/parties', icon: Shield },
     { id: 'admin-candidates', title: 'Manage Candidates', href: '/admin/candidates', icon: Users },
+    { id: 'admin-mailing-list', title: 'Manage Mailing List', href: '/admin/mailing-list', icon: Users },
     { id: 'admin-events', title: 'Manage Events', href: '/admin/events', icon: Calendar },
     { id: 'admin-results', title: 'Manage Election Results', href: '/admin/results', icon: Landmark },
     { id: 'admin-constituencies', title: 'Manage Constituencies', href: '/admin/constituencies', icon: FilePlus },
@@ -97,7 +55,6 @@ const politicalLeaningOptions = [
 export default function Home() {
   const { user } = useUser();
   const electionDate = new Date('2026-07-26T00:00:00');
-  const [keyFeatures, setKeyFeatures] = useState(initialKeyFeatures);
   
   const { firestore } = useFirebase();
   const [allEventsViewMode, setAllEventsViewMode] = useState<'upcoming' | 'past'>('upcoming');
@@ -132,30 +89,13 @@ export default function Home() {
           const dateB = (b.date as unknown as Timestamp)?.toDate ? (b.date as unknown as Timestamp).toDate() : new Date(b.date);
           return mode === 'upcoming' 
             ? dateA.getTime() - dateB.getTime() 
-            : dateB.getTime() - dateA.getTime();
+            : dateB.getTime() - a.getTime();
       });
       
       return sorted;
   }
 
   const visibleAllEvents = useMemo(() => filterAndSortEvents(events || [], allEventsViewMode), [events, allEventsViewMode]);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor)
-  );
-
-  function handleDragEnd(event: DragEndEvent) {
-    const {active, over} = event;
-    
-    if (over && active.id !== over.id) {
-      setKeyFeatures((items) => {
-        const oldIndex = items.findIndex(item => item.id === active.id);
-        const newIndex = items.findIndex(item => item.id === over.id);
-        
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
-  }
 
    const { chartData, seatCounts } = useMemo(() => {
         if (!constituencies) return { chartData: [], seatCounts: {} };
@@ -214,7 +154,11 @@ export default function Home() {
           </CardContent>
         </Card>
          <Card>
-            <CardContent className="flex flex-col items-center pt-6">
+            <CardHeader>
+                <CardTitle className="font-headline">Our Election Forecast</CardTitle>
+                <CardDescription>Our latest projection of the 2026 election.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center">
                 <ChartContainer config={chartConfig} className="h-40 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
@@ -266,23 +210,6 @@ export default function Home() {
             </CardContent>
         </Card>
       </div>
-      
-       <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={keyFeatures.map(f => f.id)}
-          strategy={verticalListSortingStrategy}
-        >
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {keyFeatures.map((feature) => (
-                    <SortableFeatureCard key={feature.id} feature={feature} />
-                ))}
-            </div>
-        </SortableContext>
-      </DndContext>
 
       <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card>
@@ -323,6 +250,16 @@ export default function Home() {
             </CardContent>
         </Card>
       </div>
+
+       <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Join Our Mailing List</CardTitle>
+          <CardDescription>Get the latest election news and analysis delivered to your inbox.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <MailingListForm />
+        </CardContent>
+      </Card>
 
 
       {user && (
@@ -374,10 +311,4 @@ export default function Home() {
     </div>
   );
 
-    
-
-
-
-
-
-
+}
