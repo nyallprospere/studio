@@ -23,10 +23,11 @@ import { useRouter } from 'next/navigation';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronRight } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
-import type { Election, Party, Candidate } from '@/lib/types';
+import type { Election, Party, Candidate, Report } from '@/lib/types';
 import { collection, query, orderBy, where } from 'firebase/firestore';
 import { SlpLogo, UwpLogo } from '../icons';
 import { ScrollArea } from '../ui/scroll-area';
+import { Badge } from '../ui/badge';
 
 
 export const mainNavItems = [
@@ -43,7 +44,7 @@ export const adminNavItems = [
     { href: '/admin/elections', icon: Vote, label: 'Manage Elections' },
     { href: '/admin/parties', icon: Shield, label: 'Manage Parties' },
     { href: '/admin/logos', icon: ImageIcon, label: 'Manage Logos' },
-    { href: '/admin/news', icon: Rss, label: 'Manage News' },
+    // { href: '/admin/news', icon: Rss, label: 'Manage News' },
     // { href: '/admin/candidates', icon: Users, label: 'Manage Candidates' },
     { href: '/admin/events', icon: Calendar, label: 'Manage Events'},
     { href: '/admin/results', icon: Landmark, label: 'Manage Election Results' },
@@ -52,7 +53,7 @@ export const adminNavItems = [
     { href: '/admin/mailing-list', icon: Mail, label: 'Manage Mailing List' },
     { href: '/admin/map-submissions', icon: Share2, label: 'Map Submissions' },
     { href: '/admin/ads', icon: Megaphone, label: 'Manage Ads' },
-    { href: '/admin/reports', icon: Flag, label: 'Manage Reports' },
+    // { href: '/admin/reports', icon: Flag, label: 'Manage Reports' },
     { href: '/admin/map', icon: Map, label: 'Manage Map' },
     { href: '/admin/settings', icon: Settings, label: 'Manage Settings' },
 ];
@@ -129,6 +130,7 @@ export function SidebarNav() {
   const [isSlpCandidatesOpen, setIsSlpCandidatesOpen] = useState(false);
   const [isManageCandidatesOpen, setIsManageCandidatesOpen] = useState(false);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+  const [isNewsOpen, setIsNewsOpen] = useState(false);
 
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
@@ -145,6 +147,10 @@ export function SidebarNav() {
 
   const slpCandidatesQuery = useMemoFirebase(() => (firestore && slpParty) ? query(collection(firestore, 'candidates'), where('partyId', '==', slpParty.id)) : null, [firestore, slpParty]);
   const { data: slpCandidates, isLoading: loadingSlpCandidates } = useCollection<Candidate>(slpCandidatesQuery);
+  
+  const pendingReportsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'reports'), where('status', '==', 'pending')) : null, [firestore]);
+  const { data: pendingReports } = useCollection<Report>(pendingReportsQuery);
+  const pendingReportsCount = pendingReports?.length || 0;
 
 
   const sortedElections = useMemo(() => {
@@ -190,6 +196,7 @@ export function SidebarNav() {
     setIsResultsOpen(pathname.startsWith('/results') || pathname.startsWith('/historical-trends'));
     setIsManageCandidatesOpen(pathname.startsWith('/admin/candidates') || pathname.startsWith('/archive'));
     setIsAnalyticsOpen(pathname.startsWith('/admin/analytics'));
+    setIsNewsOpen(pathname.startsWith('/admin/news') || pathname.startsWith('/admin/reports'));
 
     const isUwpRelated = uwpParty && (
         pathname.startsWith(`/parties/${uwpParty.id}`) || 
@@ -410,6 +417,38 @@ export function SidebarNav() {
                                   </Button>
                               </SidebarMenuItem>
                           ))}
+                          <SidebarMenuItem>
+                            <Collapsible open={isNewsOpen} onOpenChange={setIsNewsOpen}>
+                                <CollapsibleTrigger asChild>
+                                    <Button variant={isNewsOpen ? 'secondary' : 'ghost'} className="w-full justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Rss className="mr-2 h-4 w-4" />
+                                            Manage News
+                                        </div>
+                                        <ChevronRight className={`h-4 w-4 transition-transform ${isNewsOpen ? 'rotate-90' : ''}`} />
+                                    </Button>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent>
+                                    <SidebarMenuSub>
+                                        <SidebarMenuItem>
+                                            <SidebarMenuSubButton asChild isActive={pathname === '/admin/news'}>
+                                                <Link href="/admin/news">
+                                                    News Articles
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuItem>
+                                        <SidebarMenuItem>
+                                            <SidebarMenuSubButton asChild isActive={pathname === '/admin/reports'}>
+                                                <Link href="/admin/reports" className="flex justify-between items-center w-full">
+                                                    Reported Comments
+                                                    {pendingReportsCount > 0 && <Badge variant="destructive">{pendingReportsCount}</Badge>}
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuItem>
+                                    </SidebarMenuSub>
+                                </CollapsibleContent>
+                            </Collapsible>
+                          </SidebarMenuItem>
                           <SidebarMenuItem>
                               <Collapsible open={isManageCandidatesOpen} onOpenChange={setIsManageCandidatesOpen}>
                                   <CollapsibleTrigger asChild>
