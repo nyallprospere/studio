@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { Timestamp, collection, addDoc, serverTimestamp, query, orderBy, doc, updateDoc, increment, getDocs, where, deleteDoc } from 'firebase/firestore';
-import { Calendar, User, Rss, ThumbsUp, MessageSquare, Share2, Twitter, Facebook, Send, MoreVertical, Flag } from 'lucide-react';
+import { Calendar, User, Rss, ThumbsUp, MessageSquare, Share2, Twitter, Facebook, Send, MoreVertical, Flag, Trash2 } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { useFirebase, useUser, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -26,6 +26,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription as AlertDialogDescriptionComponent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Textarea } from './ui/textarea';
 
 interface Comment {
@@ -44,7 +55,8 @@ const commentSchema = z.object({
 
 
 function CommentSection({ articleId }: { articleId: string }) {
-    const { firestore, user } = useFirebase();
+    const { firestore } = useFirebase();
+    const { user } = useUser();
     const { toast } = useToast();
     const commentsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'news', articleId, 'comments'), orderBy('createdAt', 'asc')) : null, [firestore, articleId]);
     const { data: comments } = useCollection<Comment>(commentsQuery);
@@ -90,6 +102,13 @@ function CommentSection({ articleId }: { articleId: string }) {
         await updateDoc(commentRef, {
             likeCount: increment(1)
         });
+    }
+
+    const handleDelete = async (commentId: string) => {
+        if (!firestore) return;
+        const commentRef = doc(firestore, 'news', articleId, 'comments', commentId);
+        await deleteDoc(commentRef);
+        toast({ title: "Comment Deleted", description: "The comment has been removed." });
     }
 
     const handleReport = async (comment: Comment) => {
@@ -153,6 +172,28 @@ function CommentSection({ articleId }: { articleId: string }) {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent>
                                                     <DropdownMenuItem onClick={() => handleReport(comment)}><Flag className="mr-2 h-4 w-4"/>Report</DropdownMenuItem>
+                                                     {user && (
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild>
+                                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                                    <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+                                                                    <span className="text-destructive">Delete</span>
+                                                                </DropdownMenuItem>
+                                                            </AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader>
+                                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                    <AlertDialogDescriptionComponent>
+                                                                        This will permanently delete the comment. This action cannot be undone.
+                                                                    </AlertDialogDescriptionComponent>
+                                                                </AlertDialogHeader>
+                                                                <AlertDialogFooter>
+                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                    <AlertDialogAction onClick={() => handleDelete(comment.id)}>Delete</AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
+                                                     )}
                                                 </DropdownMenuContent>
                                              </DropdownMenu>
                                         </div>
@@ -176,14 +217,14 @@ function CommentSection({ articleId }: { articleId: string }) {
 
                                 {replyingTo === comment.id && (
                                      <Form {...form}>
-                                        <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2 mt-2 ml-8">
+                                        <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-start gap-2 mt-2 ml-8">
                                             <FormField control={form.control} name="author" render={({ field }) => (
-                                                <FormItem className="flex-grow"><FormControl><Input placeholder="Your name..." {...field} /></FormControl><FormMessage /></FormItem>
+                                                <FormItem className="flex-grow"><FormControl><Input placeholder="Your name..." {...field} className="h-9" /></FormControl><FormMessage /></FormItem>
                                             )} />
                                             <FormField control={form.control} name="comment" render={({ field }) => (
-                                                <FormItem className="flex-grow"><FormControl><Textarea placeholder="Write a reply..." {...field} autoFocus rows={1} /></FormControl><FormMessage /></FormItem>
+                                                <FormItem className="flex-grow"><FormControl><Textarea placeholder="Write a reply..." {...field} autoFocus rows={1} className="min-h-0 h-9" /></FormControl><FormMessage /></FormItem>
                                             )} />
-                                            <Button type="submit" size="icon"><Send className="h-4 w-4" /></Button>
+                                            <Button type="submit" size="icon" className="h-9 w-9"><Send className="h-4 w-4" /></Button>
                                         </form>
                                     </Form>
                                 )}
