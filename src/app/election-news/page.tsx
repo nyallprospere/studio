@@ -10,7 +10,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import Link from 'next/link';
-import { format, subDays } from 'date-fns';
+import { format, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import { Rss, ThumbsUp, MessageSquare, Share2, Twitter, Facebook, User, Loader2, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -183,6 +183,32 @@ export default function ElectionNewsPage() {
     const [visibleCount, setVisibleCount] = useState(4);
     const [sortOption, setSortOption] = useState('trending');
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
+    const [datePreset, setDatePreset] = useState('all');
+
+    const handleDatePresetChange = (preset: string) => {
+        setDatePreset(preset);
+        const now = new Date();
+        switch (preset) {
+            case 'all':
+                setDateRange(undefined);
+                break;
+            case 'day':
+                setDateRange({ from: startOfDay(now), to: endOfDay(now) });
+                break;
+            case 'week':
+                setDateRange({ from: startOfWeek(now), to: endOfWeek(now) });
+                break;
+            case 'month':
+                setDateRange({ from: startOfMonth(now), to: endOfMonth(now) });
+                break;
+            case 'year':
+                setDateRange({ from: startOfYear(now), to: endOfYear(now) });
+                break;
+            default:
+                setDateRange(undefined);
+        }
+    }
+
 
     const filteredAndSortedNews = useMemo(() => {
         if (!news) return [];
@@ -242,60 +268,73 @@ export default function ElectionNewsPage() {
 
     return (
         <div className="container mx-auto px-4 py-8">
-            <PageHeader
-                title="Election News"
-                description="The latest news and analysis on the St. Lucian General Elections."
-            />
-            <div className="flex flex-wrap items-center gap-4 mb-8">
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button
-                        id="date"
-                        variant={"outline"}
-                        className={cn(
-                            "w-[300px] justify-start text-left font-normal",
-                            !dateRange && "text-muted-foreground"
-                        )}
-                        >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {dateRange?.from ? (
-                            dateRange.to ? (
-                            <>
-                                {format(dateRange.from, "LLL dd, y")} -{" "}
-                                {format(dateRange.to, "LLL dd, y")}
-                            </>
+            <div className="flex justify-between items-start mb-8">
+                <PageHeader
+                    title="Election News"
+                    description="The latest news and analysis on the St. Lucian General Elections."
+                />
+                 <div className="flex flex-wrap items-center justify-end gap-2">
+                    <Select value={datePreset} onValueChange={handleDatePresetChange}>
+                        <SelectTrigger className="w-[120px]">
+                            <SelectValue placeholder="Date Range" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Time</SelectItem>
+                            <SelectItem value="day">Day</SelectItem>
+                            <SelectItem value="week">Week</SelectItem>
+                            <SelectItem value="month">Month</SelectItem>
+                            <SelectItem value="year">Year</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                            id="date"
+                            variant={"outline"}
+                            className={cn(
+                                "w-[260px] justify-start text-left font-normal",
+                                !dateRange && "text-muted-foreground"
+                            )}
+                            >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {dateRange?.from ? (
+                                dateRange.to ? (
+                                <>
+                                    {format(dateRange.from, "LLL dd, y")} -{" "}
+                                    {format(dateRange.to, "LLL dd, y")}
+                                </>
+                                ) : (
+                                format(dateRange.from, "LLL dd, y")
+                                )
                             ) : (
-                            format(dateRange.from, "LLL dd, y")
-                            )
-                        ) : (
-                            <span>Pick a date range</span>
-                        )}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                        initialFocus
-                        mode="range"
-                        defaultMonth={dateRange?.from}
-                        selected={dateRange}
-                        onSelect={setDateRange}
-                        numberOfMonths={2}
-                        />
-                    </PopoverContent>
-                </Popover>
-                 <Select value={sortOption} onValueChange={setSortOption}>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="trending">Trending</SelectItem>
-                        <SelectItem value="popular">Most Popular</SelectItem>
-                        <SelectItem value="newest">Newest</SelectItem>
-                        <SelectItem value="oldest">Oldest</SelectItem>
-                        <SelectItem value="likes">Likes</SelectItem>
-                    </SelectContent>
-                </Select>
-                 {dateRange && <Button variant="ghost" onClick={() => setDateRange(undefined)}>Clear</Button>}
+                                <span>Custom Range</span>
+                            )}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="end">
+                            <Calendar
+                            initialFocus
+                            mode="range"
+                            defaultMonth={dateRange?.from}
+                            selected={dateRange}
+                            onSelect={(range) => { setDateRange(range); setDatePreset('custom'); }}
+                            numberOfMonths={2}
+                            />
+                        </PopoverContent>
+                    </Popover>
+                    <Select value={sortOption} onValueChange={setSortOption}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Sort by" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="trending">Trending</SelectItem>
+                            <SelectItem value="popular">Most Popular</SelectItem>
+                            <SelectItem value="newest">Newest</SelectItem>
+                            <SelectItem value="oldest">Oldest</SelectItem>
+                            <SelectItem value="likes">Likes</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
             {isLoading && visibleNews.length === 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -326,3 +365,4 @@ export default function ElectionNewsPage() {
         </div>
     );
 }
+
