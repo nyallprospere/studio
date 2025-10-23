@@ -672,6 +672,17 @@
         "publishedAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "author": {
+          "type": "string",
+          "description": "The author of the news article."
+        },
+        "tags": {
+          "type": "array",
+          "description": "Tags associated with the news article.",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
@@ -793,3 +804,4 @@
     }
   }
 }
+    

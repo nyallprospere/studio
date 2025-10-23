@@ -178,5 +178,8 @@ export interface NewsArticle {
     url: string;
     imageUrl?: string;
     publishedAt: any;
+    author?: string;
+    tags?: string[];
 }
+    
     

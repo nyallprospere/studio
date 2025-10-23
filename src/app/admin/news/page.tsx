@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewsForm } from './news-form';
 import Image from 'next/image';
-import { Pencil, Trash2, PlusCircle, Rss } from 'lucide-react';
+import { Pencil, Trash2, PlusCircle, Rss, Tag, User } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +26,7 @@ import { uploadFile, deleteFile } from '@/firebase/storage';
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
 
 export default function AdminNewsPage() {
   const { firestore } = useFirebase();
@@ -52,6 +53,7 @@ export default function AdminNewsPage() {
       const articleData = { 
         ...values, 
         imageUrl,
+        tags: values.tags ? values.tags.split(',').map((tag: string) => tag.trim()) : [],
         publishedAt: values.publishedAt ? Timestamp.fromDate(values.publishedAt) : Timestamp.now(),
       };
       delete articleData.imageFile;
@@ -163,8 +165,25 @@ export default function AdminNewsPage() {
                         )}
                         <div className="flex-grow">
                           <p className="font-semibold">{article.title}</p>
-                          <p className="text-sm text-muted-foreground">{article.source} &bull; {format(article.publishedAt.toDate(), 'PPP')}</p>
+                          <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                                <span>{article.source}</span>
+                                <span>&bull;</span>
+                                <span>{format(article.publishedAt.toDate(), 'PPP')}</span>
+                                {article.author && (
+                                    <>
+                                        <span>&bull;</span>
+                                        <span className="flex items-center gap-1"><User className="h-3 w-3" /> {article.author}</span>
+                                    </>
+                                )}
+                            </div>
                           <p className="text-sm line-clamp-2 mt-1">{article.summary}</p>
+                           {article.tags && article.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                    {article.tags.map(tag => (
+                                        <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
                             <Button asChild variant="ghost" size="icon">
@@ -207,3 +226,5 @@ export default function AdminNewsPage() {
     </div>
   );
 }
+
+    

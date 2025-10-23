@@ -22,6 +22,8 @@ const newsArticleSchema = z.object({
   summary: z.string().min(1, 'Summary is required'),
   source: z.string().min(1, 'Source is required'),
   url: z.string().url('A valid URL is required'),
+  author: z.string().optional(),
+  tags: z.string().optional(),
   imageFile: z.any().optional(),
   imageUrl: z.string().url().optional().or(z.literal('')),
   publishedAt: z.date().optional(),
@@ -42,6 +44,8 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
       summary: '',
       source: '',
       url: '',
+      author: '',
+      tags: '',
       imageUrl: '',
       publishedAt: new Date(),
     },
@@ -51,6 +55,7 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
     if (initialData) {
       form.reset({
         ...initialData,
+        tags: initialData.tags?.join(', '),
         publishedAt: initialData.publishedAt ? (initialData.publishedAt as Timestamp).toDate() : new Date(),
       });
     } else {
@@ -59,6 +64,8 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
             summary: '',
             source: '',
             url: '',
+            author: '',
+            tags: '',
             imageUrl: '',
             publishedAt: new Date(),
         });
@@ -124,6 +131,36 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
             )}
             />
         </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <FormField
+                control={form.control}
+                name="author"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Author</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., John Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="tags"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Tags</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., Politics, Economy, SLP" {...field} />
+                        </FormControl>
+                        <FormDescription>Comma-separated list of tags.</FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
@@ -145,7 +182,7 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
                 name="publishedAt"
                 render={({ field }) => (
                 <FormItem className="flex flex-col">
-                    <FormLabel>Publication Date</FormLabel>
+                    <FormLabel>Date Posted</FormLabel>
                     <Popover>
                     <PopoverTrigger asChild>
                         <FormControl>
@@ -190,3 +227,5 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
     </Form>
   );
 }
+
+    
