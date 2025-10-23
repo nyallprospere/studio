@@ -34,5 +34,3 @@ const summarizeArticleFlow = ai.defineFlow(
     return output || '';
   }
 );
-
-    
