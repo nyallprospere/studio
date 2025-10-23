@@ -1,9 +1,4 @@
 
-
-
-
-
-
 'use client';
 
 import {
@@ -56,7 +51,6 @@ export const adminNavItems = [
     { href: '/admin/mailing-list', icon: Mail, label: 'Manage Mailing List' },
     { href: '/admin/map-submissions', icon: Share2, label: 'Map Submissions' },
     { href: '/admin/ads', icon: Megaphone, label: 'Manage Ads' },
-    { href: '/admin/analytics', icon: LineChart, label: 'Ad Analytics' },
     { href: '/admin/map', icon: Map, label: 'Manage Map' },
     { href: '/admin/settings', icon: Settings, label: 'Manage Settings' },
 ];
@@ -132,6 +126,7 @@ export function SidebarNav() {
   const [isUwpCandidatesOpen, setIsUwpCandidatesOpen] = useState(false);
   const [isSlpCandidatesOpen, setIsSlpCandidatesOpen] = useState(false);
   const [isManageCandidatesOpen, setIsManageCandidatesOpen] = useState(false);
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
 
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
@@ -192,6 +187,7 @@ export function SidebarNav() {
   useEffect(() => {
     setIsResultsOpen(pathname.startsWith('/results') || pathname.startsWith('/historical-trends'));
     setIsManageCandidatesOpen(pathname.startsWith('/admin/candidates') || pathname.startsWith('/archive'));
+    setIsAnalyticsOpen(pathname.startsWith('/admin/analytics'));
 
     const isUwpRelated = uwpParty && (
         pathname.startsWith(`/parties/${uwpParty.id}`) || 
@@ -436,6 +432,30 @@ export function SidebarNav() {
                                               <SidebarMenuSubButton asChild isActive={pathname === '/archive'}>
                                                   <Link href="/archive">
                                                       Archived Candidates
+                                                  </Link>
+                                              </SidebarMenuSubButton>
+                                          </SidebarMenuItem>
+                                      </SidebarMenuSub>
+                                  </CollapsibleContent>
+                              </Collapsible>
+                          </SidebarMenuItem>
+                          <SidebarMenuItem>
+                              <Collapsible open={isAnalyticsOpen} onOpenChange={setIsAnalyticsOpen}>
+                                  <CollapsibleTrigger asChild>
+                                      <Button variant={isAnalyticsOpen ? 'secondary' : 'ghost'} className="w-full justify-between">
+                                          <div className="flex items-center gap-2">
+                                              <LineChart className="mr-2 h-4 w-4" />
+                                              View Analytics
+                                          </div>
+                                          <ChevronRight className={`h-4 w-4 transition-transform ${isAnalyticsOpen ? 'rotate-90' : ''}`} />
+                                      </Button>
+                                  </CollapsibleTrigger>
+                                  <CollapsibleContent>
+                                      <SidebarMenuSub>
+                                          <SidebarMenuItem>
+                                              <SidebarMenuSubButton asChild isActive={pathname === '/admin/analytics'}>
+                                                  <Link href="/admin/analytics">
+                                                      Ad Analytics
                                                   </Link>
                                               </SidebarMenuSubButton>
                                           </SidebarMenuItem>
