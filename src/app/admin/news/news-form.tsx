@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import type { NewsArticle } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -16,7 +16,7 @@ import { CalendarIcon, Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
-import { summarizeArticle } from '@/ai/flows/summarize-article';
+import { summarizeArticle } from '@/lib/actions';
 import { MultiSelect } from '@/components/multi-select';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -76,7 +76,7 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
     },
   });
 
-  useEffect(() => {
+  useState(() => {
     if (initialData) {
       form.reset({
         ...initialData,
@@ -99,7 +99,7 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
             articleDate: new Date(),
         });
     }
-  }, [initialData, form]);
+  });
   
   const handleGenerateSummary = async () => {
     const content = form.getValues('content');
@@ -110,7 +110,11 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
     setIsSummarizing(true);
     try {
         const result = await summarizeArticle(content);
-        form.setValue('summary', result);
+        if (result.summary) {
+            form.setValue('summary', result.summary);
+        } else if (result.error) {
+            form.setError('summary', { type: 'manual', message: result.error });
+        }
     } catch (e) {
         form.setError('summary', { type: 'manual', message: 'Failed to generate summary.' });
     }
@@ -293,7 +297,7 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
                     {initialData?.galleryImageUrls && initialData.galleryImageUrls.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-2">
                             {initialData.galleryImageUrls.map((url, i) => (
-                                <a key={i} href={url} target="_blank" className="text-sm text-blue-500 hover:underline">View Gallery Image {i+1}</a>
+                                <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 hover:underline">View Gallery Image {i+1}</a>
                             ))}
                         </div>
                     )}
@@ -400,3 +404,5 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
     </Form>
   );
 }
+
+    
