@@ -659,6 +659,9 @@
         "summary": {
           "type": "string"
         },
+        "content": {
+          "type": "string"
+        },
         "source": {
           "type": "string"
         },
@@ -666,9 +669,12 @@
           "type": "string",
           "format": "uri"
         },
-        "imageUrl": {
-          "type": "string",
-          "format": "uri"
+        "imageUrls": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
         },
         "publishedAt": {
           "type": "string",

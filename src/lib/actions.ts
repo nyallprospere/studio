@@ -2,6 +2,7 @@
 
 import { generateElectionPredictions } from '@/ai/flows/generate-election-predictions';
 import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
+import { summarizeArticle as summarizeArticleFlow } from '@/ai/flows/summarize-article';
 import { getFirebaseAdmin } from '@/firebase/server';
 import { collection, getDocs, query, orderBy, limit, addDoc, serverTimestamp, where } from 'firebase/firestore';
 import { headers } from 'next/headers';
@@ -121,5 +122,15 @@ export async function subscribeToMailingList(data: { firstName: string; email: s
         }
 
         return { error: 'Could not subscribe. Please try again.' };
+    }
+}
+
+export async function summarizeArticle(content: string) {
+    try {
+        const result = await summarizeArticleFlow(content);
+        return { summary: result };
+    } catch (e) {
+        console.error("Error summarizing article:", e);
+        return { error: "Could not generate summary." };
     }
 }

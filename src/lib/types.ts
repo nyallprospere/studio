@@ -174,9 +174,10 @@ export interface NewsArticle {
     id: string;
     title: string;
     summary: string;
+    content?: string;
     source: string;
     url: string;
-    imageUrl?: string;
+    imageUrls?: string[];
     publishedAt: any;
     articleDate?: any;
     author?: string;
