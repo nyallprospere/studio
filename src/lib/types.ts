@@ -164,5 +164,7 @@ export interface Ad {
   position: 'top' | 'bottom' | 'both';
   isActive: boolean;
   revenuePerClick?: number;
+  publishDate?: any;
+  unpublishDate?: any;
 }
     

@@ -532,7 +532,9 @@
         "pages": { "type": "array", "items": { "type": "string" } },
         "position": { "type": "string", "enum": ["top", "bottom", "both"] },
         "isActive": { "type": "boolean" },
-        "revenuePerClick": { "type": "number", "description": "Expected revenue generated per click." }
+        "revenuePerClick": { "type": "number", "description": "Expected revenue generated per click." },
+        "publishDate": { "type": "string", "format": "date-time", "description": "The date the ad should start appearing." },
+        "unpublishDate": { "type": "string", "format": "date-time", "description": "The date the ad should stop appearing." }
       },
       "required": ["name", "imageUrl", "url", "priority", "pages", "position"]
     }

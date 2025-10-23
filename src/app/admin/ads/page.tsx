@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, CollectionReference } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, CollectionReference, Timestamp } from 'firebase/firestore';
 import type { Ad } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AdForm } from './ad-form';
 import Image from 'next/image';
-import { Pencil, Trash2, PlusCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Pencil, Trash2, PlusCircle, CheckCircle, XCircle, CalendarIcon } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 import { uploadFile, deleteFile } from '@/firebase/storage';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { format } from 'date-fns';
 
 export default function AdminAdsPage() {
   const { firestore } = useFirebase();
@@ -49,7 +50,12 @@ export default function AdminAdsPage() {
       imageUrl = await uploadFile(values.imageFile, `ads/${values.imageFile.name}`);
     }
 
-    const adData = { ...values, imageUrl };
+    const adData = { 
+      ...values, 
+      imageUrl,
+      publishDate: values.publishDate ? Timestamp.fromDate(values.publishDate) : null,
+      unpublishDate: values.unpublishDate ? Timestamp.fromDate(values.unpublishDate) : null,
+    };
     delete adData.imageFile;
 
     if (editingAd) {
@@ -163,6 +169,12 @@ export default function AdminAdsPage() {
                         <a href={ad.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 hover:underline truncate max-w-xs block">{ad.url}</a>
                          {ad.revenuePerClick !== undefined && (
                           <p className="text-sm text-muted-foreground">RPC: ${ad.revenuePerClick.toFixed(2)}</p>
+                        )}
+                        {(ad.publishDate || ad.unpublishDate) && (
+                          <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                            <CalendarIcon className="h-3 w-3" />
+                            {ad.publishDate ? format(ad.publishDate.toDate(), 'MMM d, y') : '...'} - {ad.unpublishDate ? format(ad.unpublishDate.toDate(), 'MMM d, y') : '...'}
+                          </p>
                         )}
                         <div className="flex items-center gap-2 mt-2">
                            {priorityBadge(ad.priority)}
