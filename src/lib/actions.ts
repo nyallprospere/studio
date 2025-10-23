@@ -126,12 +126,12 @@ export async function subscribeToMailingList(data: { firstName: string; email: s
     }
 }
 
-export async function summarizeArticle(content: string): Promise<{ summary?: string; error?: string; }> {
+export async function summarizeArticle(content: string): Promise<string> {
     try {
         const summary = await summarizeArticleFlow(content);
-        return { summary };
+        return summary;
     } catch (e) {
         console.error("Error summarizing article:", e);
-        return { error: "Could not generate summary." };
+        return "Could not generate summary.";
     }
 }

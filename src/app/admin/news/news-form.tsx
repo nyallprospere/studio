@@ -113,13 +113,11 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
     }
     setIsSummarizing(true);
     try {
-        const result = await summarizeArticle(content);
-        if (result.summary) {
-            form.setValue('summary', result.summary);
-        } else if (result.error) {
-             form.setError('summary', { type: 'manual', message: result.error });
+        const summary = await summarizeArticle(content);
+        if (summary && !summary.includes("Could not generate summary")) {
+            form.setValue('summary', summary);
         } else {
-            form.setError('summary', { type: 'manual', message: 'Could not generate summary.' });
+             form.setError('summary', { type: 'manual', message: 'Could not generate summary.' });
         }
     } catch (e) {
         form.setError('summary', { type: 'manual', message: 'Failed to generate summary.' });
