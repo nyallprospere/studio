@@ -1,23 +1,22 @@
-
 'use server';
 
 import { generateElectionPredictions } from '@/ai/flows/generate-election-predictions';
 import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
-import { initializeFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { getFirebaseAdmin } from '@/firebase/server';
 import { collection, getDocs, query, orderBy, limit, addDoc, serverTimestamp, where } from 'firebase/firestore';
 import { headers } from 'next/headers';
 import type { UserMap } from './types';
 
 
 async function getCollectionData(collectionName: string) {
-    const { firestore } = initializeFirebase();
+    const { firestore } = getFirebaseAdmin();
     const collRef = collection(firestore, collectionName);
     const snapshot = await getDocs(collRef);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
 async function getLatestHistoricalResult() {
-    const { firestore } = initializeFirebase();
+    const { firestore } = getFirebaseAdmin();
     const resultsRef = collection(firestore, 'election_results');
     const q = query(resultsRef, orderBy('year', 'desc'), limit(1));
     const snapshot = await getDocs(q);
@@ -66,7 +65,7 @@ export async function getPrediction(newsSummary: string) {
 
 export async function saveUserMap(mapData: UserMap['mapData']) {
     try {
-        const { firestore } = initializeFirebase();
+        const { firestore } = getFirebaseAdmin();
         const headersList = headers();
         const ip = headersList.get('x-forwarded-for') || 'unknown';
         const city = headersList.get('x-vercel-ip-city') || 'unknown';
@@ -88,7 +87,7 @@ export async function saveUserMap(mapData: UserMap['mapData']) {
 }
 
 export async function subscribeToMailingList(data: { firstName: string; email: string }) {
-    const { firestore } = initializeFirebase();
+    const { firestore } = getFirebaseAdmin();
     const subscribersCollection = collection(firestore, 'mailing_list_subscribers');
     
     try {
