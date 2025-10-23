@@ -17,7 +17,7 @@ const summarizeArticlePrompt = ai.definePrompt({
   name: 'summarizeArticlePrompt',
   input: {schema: z.string()},
   output: {schema: z.string()},
-  prompt: `You are a skilled news editor. Summarize the following article content into a concise paragraph.
+  prompt: `You are a skilled news editor. Summarize the following article content into a concise paragraph of 100 words or less.
   
   Article Content:
   {{input}}`,
