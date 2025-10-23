@@ -285,42 +285,6 @@ export default function ElectionNewsPage() {
                             <SelectItem value="year">Year</SelectItem>
                         </SelectContent>
                     </Select>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                            id="date"
-                            variant={"outline"}
-                            className={cn(
-                                "w-[260px] justify-start text-left font-normal",
-                                !dateRange && "text-muted-foreground"
-                            )}
-                            >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {dateRange?.from ? (
-                                dateRange.to ? (
-                                <>
-                                    {format(dateRange.from, "LLL dd, y")} -{" "}
-                                    {format(dateRange.to, "LLL dd, y")}
-                                </>
-                                ) : (
-                                format(dateRange.from, "LLL dd, y")
-                                )
-                            ) : (
-                                <span>Custom Range</span>
-                            )}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="end">
-                            <Calendar
-                            initialFocus
-                            mode="range"
-                            defaultMonth={dateRange?.from}
-                            selected={dateRange}
-                            onSelect={(range) => { setDateRange(range); setDatePreset('custom'); }}
-                            numberOfMonths={2}
-                            />
-                        </PopoverContent>
-                    </Popover>
                     <Select value={sortOption} onValueChange={setSortOption}>
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Sort by" />
