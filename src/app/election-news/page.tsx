@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -10,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { Rss, ThumbsUp, MessageSquare, Share2, Twitter, Facebook } from 'lucide-react';
+import { Rss, ThumbsUp, MessageSquare, Share2, Twitter, Facebook, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -39,60 +40,7 @@ function NewsCardSkeleton() {
 }
 
 function NewsCard({ article }: { article: NewsArticle }) {
-    const { firestore } = useFirebase();
-    const { toast } = useToast();
-    const [liked, setLiked] = useState(false);
-
-    useEffect(() => {
-        const likedArticles = JSON.parse(localStorage.getItem('likedNews') || '[]');
-        if (likedArticles.includes(article.id)) {
-            setLiked(true);
-        }
-    }, [article.id]);
-
-    const publishedDate = article.articleDate?.toDate ? article.articleDate.toDate() : new Date();
-
-    const handleLike = async () => {
-        if (!firestore || liked) {
-            if (liked) {
-                toast({ title: "Already Liked", description: "You've already liked this article." });
-            }
-            return;
-        }
-
-        setLiked(true);
-        const likedArticles = JSON.parse(localStorage.getItem('likedNews') || '[]');
-        localStorage.setItem('likedNews', JSON.stringify([...likedArticles, article.id]));
-
-        const articleRef = doc(firestore, 'news', article.id);
-        await updateDoc(articleRef, {
-            likeCount: increment(1)
-        });
-    };
-    
-    const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/election-news#${article.id}` : '';
-    const shareText = `Check out this article from LucianVotes: ${article.title}`;
-    const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
-    const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
-
-    const handleShare = async () => {
-        const shareData = {
-            title: 'LucianVotes',
-            text: shareText,
-            url: shareUrl,
-        };
-        if (navigator.share && navigator.canShare(shareData)) {
-            try {
-                await navigator.share(shareData);
-            } catch (error) {
-                console.error('Error sharing:', error);
-            }
-        } else {
-            // Fallback for browsers that don't support Web Share API
-            // The dropdown menu will be shown instead.
-        }
-    }
-
+    const articleDate = article.articleDate?.toDate ? article.articleDate.toDate() : new Date();
 
     return (
         <Card className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col" id={article.id}>
@@ -103,47 +51,15 @@ function NewsCard({ article }: { article: NewsArticle }) {
                     </div>
                 )}
                 <div className="p-6 flex flex-col flex-grow">
-                    <p className="text-sm text-muted-foreground">{format(publishedDate, 'PPP')}</p>
+                    <p className="text-sm text-muted-foreground">{format(articleDate, 'PPP')}</p>
                     <h3 className="text-xl font-bold font-headline mt-1">{article.title}</h3>
+                     {article.author && (
+                        <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                            <User className="h-3 w-3" />
+                            <span>{article.author}</span>
+                        </div>
+                     )}
                     <p className="text-muted-foreground mt-2 flex-grow">{article.summary}</p>
-                    <div className="flex justify-between items-center mt-4">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase">{article.source}</p>
-                        <Link href={article.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
-                            Read More <Rss className="inline h-4 w-4" />
-                        </Link>
-                    </div>
-                </div>
-                <div className="border-t p-2 flex justify-around items-center bg-muted/50 mt-auto">
-                    <Button variant="ghost" size="sm" onClick={handleLike} disabled={liked}>
-                        <ThumbsUp className="mr-2 h-4 w-4" />
-                        Like ({article.likeCount || 0})
-                    </Button>
-                     <Button variant="ghost" size="sm">
-                        <MessageSquare className="mr-2 h-4 w-4" />
-                        Comment
-                    </Button>
-                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" onClick={handleShare}>
-                                <Share2 className="mr-2 h-4 w-4" />
-                                Share
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuItem asChild>
-                                <a href={twitterShareUrl} target="_blank" rel="noopener noreferrer">
-                                    <Twitter className="mr-2 h-4 w-4" />
-                                    Share on Twitter
-                                </a>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                 <a href={facebookShareUrl} target="_blank" rel="noopener noreferrer">
-                                    <Facebook className="mr-2 h-4 w-4" />
-                                    Share on Facebook
-                                </a>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
                 </div>
             </div>
         </Card>
