@@ -711,6 +711,29 @@
         "url",
         "publishedAt"
       ]
+    },
+    "NewsArticleComment": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "News Article Comment",
+        "type": "object",
+        "description": "Represents a comment on a news article.",
+        "properties": {
+            "text": {
+                "type": "string"
+            },
+            "author": {
+                "type": "string"
+            },
+            "authorPhotoURL": {
+                "type": "string",
+                "format": "uri"
+            },
+            "createdAt": {
+                "type": "string",
+                "format": "date-time"
+            }
+        },
+        "required": ["text", "author", "createdAt"]
     }
   },
   "auth": {
@@ -820,7 +843,12 @@
         "$ref": "#/entities/NewsArticle"
       },
       "description": "Stores news articles for the website."
+    },
+    "/news/{newsId}/comments/{commentId}": {
+        "schema": {
+            "$ref": "#/entities/NewsArticleComment"
+        },
+        "description": "Stores comments for a specific news article."
     }
   }
 }
-    
