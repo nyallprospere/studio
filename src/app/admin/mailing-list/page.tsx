@@ -1,19 +1,24 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, deleteDoc, doc, addDoc, serverTimestamp, where, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, deleteDoc, doc, addDoc, serverTimestamp, where, getDocs, Timestamp } from 'firebase/firestore';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Trash2, Download, PlusCircle } from 'lucide-react';
+import { Trash2, Download, PlusCircle, Calendar as CalendarIcon } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { SubscriberForm } from './subscriber-form';
+import { DateRange } from 'react-day-picker';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface MailingListSubscriber {
   id: string;
@@ -26,9 +31,49 @@ export default function ManageMailingListPage() {
   const { firestore } = useFirebase();
   const { toast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [date, setDate] = useState<DateRange | undefined>();
+  const [datePreset, setDatePreset] = useState('all');
 
-  const subscribersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'mailing_list_subscribers'), orderBy('subscribedAt', 'desc')) : null, [firestore]);
+  const subscribersQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    let q = query(collection(firestore, 'mailing_list_subscribers'), orderBy('subscribedAt', 'desc'));
+     if (date?.from) {
+        q = query(q, where('subscribedAt', '>=', Timestamp.fromDate(date.from)));
+    }
+    if (date?.to) {
+        const toDate = new Date(date.to);
+        toDate.setHours(23, 59, 59, 999);
+        q = query(q, where('subscribedAt', '<=', Timestamp.fromDate(toDate)));
+    }
+    return q;
+  }, [firestore, date]);
+  
   const { data: subscribers, isLoading, error } = useCollection<MailingListSubscriber>(subscribersQuery);
+
+  const handleDatePresetChange = (preset: string) => {
+      setDatePreset(preset);
+      const now = new Date();
+      switch (preset) {
+          case 'all':
+              setDate(undefined);
+              break;
+          case 'day':
+              setDate({ from: startOfDay(now), to: endOfDay(now) });
+              break;
+          case 'week':
+              setDate({ from: startOfWeek(now), to: endOfWeek(now) });
+              break;
+          case 'month':
+              setDate({ from: startOfMonth(now), to: endOfMonth(now) });
+              break;
+          case 'year':
+              setDate({ from: startOfYear(now), to: endOfYear(now) });
+              break;
+          default:
+              setDate(undefined);
+      }
+  }
+
 
   const handleFormSubmit = async (values: { firstName: string; email: string }) => {
     if (!firestore) {
@@ -102,19 +147,67 @@ export default function ManageMailingListPage() {
       </Dialog>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <CardTitle>Subscribers</CardTitle>
             <CardDescription>A list of all users subscribed to your mailing list.</CardDescription>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+             <Select value={datePreset} onValueChange={handleDatePresetChange}>
+                <SelectTrigger className="w-[120px]">
+                    <SelectValue placeholder="Date Range" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="day">Day</SelectItem>
+                    <SelectItem value="week">Week</SelectItem>
+                    <SelectItem value="month">Month</SelectItem>
+                    <SelectItem value="year">Year</SelectItem>
+                </SelectContent>
+            </Select>
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button
+                    id="date"
+                    variant={"outline"}
+                    className={cn(
+                        "w-[260px] justify-start text-left font-normal",
+                        !date && "text-muted-foreground"
+                    )}
+                    >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date?.from ? (
+                        date.to ? (
+                        <>
+                            {format(date.from, "LLL dd, y")} -{" "}
+                            {format(date.to, "LLL dd, y")}
+                        </>
+                        ) : (
+                        format(date.from, "LLL dd, y")
+                        )
+                    ) : (
+                        <span>Custom Range</span>
+                    )}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                    initialFocus
+                    mode="range"
+                    defaultMonth={date?.from}
+                    selected={date}
+                    onSelect={(range) => { setDate(range); setDatePreset('custom'); }}
+                    numberOfMonths={2}
+                    />
+                </PopoverContent>
+            </Popover>
             <Button variant="outline" onClick={handleExport} disabled={!subscribers || subscribers.length === 0}>
               <Download className="mr-2 h-4 w-4" />
-              Export to Excel
+              Export
             </Button>
             <Button onClick={() => setIsFormOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Add Subscriber
+                Add
             </Button>
           </div>
         </CardHeader>
@@ -170,7 +263,7 @@ export default function ManageMailingListPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center h-24">
-                      No subscribers yet.
+                      No subscribers match the current filters.
                     </TableCell>
                   </TableRow>
                 )}
