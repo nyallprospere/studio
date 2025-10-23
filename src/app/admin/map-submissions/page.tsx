@@ -81,12 +81,12 @@ export default function ManageMapSubmissionsPage() {
         }
 
         const dataToExport = processedMaps.map(map => ({
-            'Creation Date': map.createdAt?.toDate ? new Date(map.createdAt.toDate()).toLocaleString() : 'N/A',
+            'Date': map.createdAt?.toDate ? new Date(map.createdAt.toDate()).toLocaleString() : 'N/A',
             'IP Address': map.ipAddress || 'N/A',
             'City': map.city || 'N/A',
             'Country': map.country || 'N/A',
-            'SLP Seats': map.slpSeats,
-            'UWP Seats': map.uwpSeats,
+            'SLP': map.slpSeats,
+            'UWP': map.uwpSeats,
             'Tossups': map.tossups,
             'Map URL': `${window.location.origin}/maps/${map.id}`
         }));
@@ -181,12 +181,12 @@ export default function ManageMapSubmissionsPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Creation Date</TableHead>
+                            <TableHead>Date</TableHead>
                             <TableHead>IP Address</TableHead>
                             <TableHead>City</TableHead>
                             <TableHead>Country</TableHead>
-                            <TableHead>SLP Seats</TableHead>
-                            <TableHead>UWP Seats</TableHead>
+                            <TableHead>SLP</TableHead>
+                            <TableHead>UWP</TableHead>
                             <TableHead>Tossups</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
