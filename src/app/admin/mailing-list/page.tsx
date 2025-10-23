@@ -102,8 +102,8 @@ export default function ManageMailingListPage() {
       </Dialog>
 
       <Card>
-        <CardHeader className="flex flex-row items-center">
-          <div className="flex-1">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
             <CardTitle>Subscribers</CardTitle>
             <CardDescription>A list of all users subscribed to your mailing list.</CardDescription>
           </div>
