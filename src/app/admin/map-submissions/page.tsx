@@ -1,16 +1,16 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, where, Timestamp } from 'firebase/firestore';
-import type { UserMap } from '@/lib/types';
+import { useState, useMemo, useEffect } from 'react';
+import { useCollection, useFirebase, useMemoFirebase, useDoc } from '@/firebase';
+import { collection, query, orderBy, where, Timestamp, doc, setDoc } from 'firebase/firestore';
+import type { UserMap, SiteSettings } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Eye, Trash2, Calendar as CalendarIcon, Download } from 'lucide-react';
+import { Eye, Trash2, Calendar as CalendarIcon, Download, Share2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,15 +23,36 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
-import { doc, deleteDoc } from 'firebase/firestore';
+import { deleteDoc } from 'firebase/firestore';
 import { DateRange } from 'react-day-picker';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import * as XLSX from 'xlsx';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Textarea } from '@/components/ui/textarea';
+
+const shareSettingsSchema = z.object({
+  defaultShareTitle: z.string().min(1, 'Title is required'),
+  defaultShareDescription: z.string().min(1, 'Description is required'),
+});
+
+function SharePreview({ title, description }: { title: string; description: string }) {
+    return (
+        <div className="mt-6 border p-4 rounded-lg space-y-2 bg-muted/50">
+            <h4 className="text-sm font-semibold">Share Preview</h4>
+            <div className="border rounded-lg bg-background p-3 space-y-1">
+                <p className="text-sm font-bold">{title || 'Your Share Title'}</p>
+                <p className="text-xs text-muted-foreground">{description || 'Your share description will appear here.'}</p>
+                <div className="text-xs text-muted-foreground pt-1">lucianvotes.com</div>
+            </div>
+        </div>
+    )
+}
 
 export default function ManageMapSubmissionsPage() {
     const { firestore } = useFirebase();
@@ -56,6 +77,41 @@ export default function ManageMapSubmissionsPage() {
     }, [firestore, date]);
 
     const { data: userMaps, isLoading } = useCollection<UserMap>(mapsQuery);
+
+    const siteSettingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'site') : null, [firestore]);
+    const { data: siteSettings, isLoading: loadingSiteSettings } = useDoc<SiteSettings>(siteSettingsRef);
+
+    const form = useForm<z.infer<typeof shareSettingsSchema>>({
+        resolver: zodResolver(shareSettingsSchema),
+        defaultValues: {
+            defaultShareTitle: '',
+            defaultShareDescription: '',
+        },
+    });
+    
+    const watchedTitle = form.watch('defaultShareTitle');
+    const watchedDescription = form.watch('defaultShareDescription');
+
+    useEffect(() => {
+        if (siteSettings) {
+            form.reset({
+                defaultShareTitle: siteSettings.defaultShareTitle || '',
+                defaultShareDescription: siteSettings.defaultShareDescription || '',
+            });
+        }
+    }, [siteSettings, form]);
+
+    const handleShareSettingsSubmit = async (values: z.infer<typeof shareSettingsSchema>) => {
+        if (!firestore || !siteSettingsRef) return;
+        try {
+            await setDoc(siteSettingsRef, values, { merge: true });
+            toast({ title: 'Settings Updated', description: 'Default share settings have been saved.' });
+        } catch (error) {
+            console.error('Error saving share settings:', error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not save share settings.' });
+        }
+    }
+
 
     const handleDatePresetChange = (preset: string) => {
         setDatePreset(preset);
@@ -143,105 +199,157 @@ export default function ManageMapSubmissionsPage() {
           description="View user-submitted election map predictions."
         />
       </div>
-      <Card>
-        <CardHeader>
-            <CardTitle>User Submissions</CardTitle>
-            <CardDescription>A list of all shared or completed maps from users.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <div className="flex items-center gap-2 mb-4">
-                <Input 
-                    placeholder="Filter by city..."
-                    value={cityFilter}
-                    onChange={(e) => setCityFilter(e.target.value)}
-                    className="w-48"
-                />
-                <Input 
-                    placeholder="Filter by country..."
-                    value={countryFilter}
-                    onChange={(e) => setCountryFilter(e.target.value)}
-                    className="w-48"
-                />
-                <Select value={datePreset} onValueChange={handleDatePresetChange}>
-                    <SelectTrigger className="w-[120px]">
-                        <SelectValue placeholder="Date Range" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Time</SelectItem>
-                        <SelectItem value="day">Day</SelectItem>
-                        <SelectItem value="week">Week</SelectItem>
-                        <SelectItem value="month">Month</SelectItem>
-                        <SelectItem value="year">Year</SelectItem>
-                    </SelectContent>
-                </Select>
-                <Button variant="outline" onClick={handleExport}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Export
-                </Button>
-            </div>
-            {isLoading ? <p>Loading submissions...</p> : (
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Date</TableHead>
-                            <TableHead>IP Address</TableHead>
-                            <TableHead>City</TableHead>
-                            <TableHead>Country</TableHead>
-                            <TableHead>SLP</TableHead>
-                            <TableHead>UWP</TableHead>
-                            <TableHead>Tossups</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {processedMaps && processedMaps.length > 0 ? (
-                            processedMaps.map(map => (
-                                <TableRow key={map.id}>
-                                    <TableCell>{map.createdAt?.toDate ? new Date(map.createdAt.toDate()).toLocaleString() : 'N/A'}</TableCell>
-                                    <TableCell>{map.ipAddress || 'N/A'}</TableCell>
-                                    <TableCell>{map.city || 'N/A'}</TableCell>
-                                    <TableCell>{map.country || 'N/A'}</TableCell>
-                                    <TableCell>{map.slpSeats}</TableCell>
-                                    <TableCell>{map.uwpSeats}</TableCell>
-                                    <TableCell>{map.tossups}</TableCell>
-                                    <TableCell className="text-right">
-                                        <Button asChild variant="ghost" size="icon">
-                                            <Link href={`/maps/${map.id}`} target="_blank">
-                                                <Eye className="h-4 w-4" />
-                                            </Link>
-                                        </Button>
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                    <AlertDialogDescription>This will permanently delete this submitted map. This action cannot be undone.</AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleDelete(map.id)}>Delete</AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
-                                    </TableCell>
+       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle>User Submissions</CardTitle>
+                    <CardDescription>A list of all shared or completed maps from users.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-center gap-2 mb-4">
+                        <Input 
+                            placeholder="Filter by city..."
+                            value={cityFilter}
+                            onChange={(e) => setCityFilter(e.target.value)}
+                            className="w-48"
+                        />
+                        <Input 
+                            placeholder="Filter by country..."
+                            value={countryFilter}
+                            onChange={(e) => setCountryFilter(e.target.value)}
+                            className="w-48"
+                        />
+                        <Select value={datePreset} onValueChange={handleDatePresetChange}>
+                            <SelectTrigger className="w-[120px]">
+                                <SelectValue placeholder="Date Range" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Time</SelectItem>
+                                <SelectItem value="day">Day</SelectItem>
+                                <SelectItem value="week">Week</SelectItem>
+                                <SelectItem value="month">Month</SelectItem>
+                                <SelectItem value="year">Year</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Button variant="outline" onClick={handleExport}>
+                            <Download className="mr-2 h-4 w-4" />
+                            Export
+                        </Button>
+                    </div>
+                    {isLoading ? <p>Loading submissions...</p> : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>IP Address</TableHead>
+                                    <TableHead>City</TableHead>
+                                    <TableHead>Country</TableHead>
+                                    <TableHead>SLP</TableHead>
+                                    <TableHead>UWP</TableHead>
+                                    <TableHead>Tossups</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={8} className="text-center h-24">
-                                    No map submissions match the current filters.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            )}
-        </CardContent>
-      </Card>
+                            </TableHeader>
+                            <TableBody>
+                                {processedMaps && processedMaps.length > 0 ? (
+                                    processedMaps.map(map => (
+                                        <TableRow key={map.id}>
+                                            <TableCell>{map.createdAt?.toDate ? new Date(map.createdAt.toDate()).toLocaleString() : 'N/A'}</TableCell>
+                                            <TableCell>{map.ipAddress || 'N/A'}</TableCell>
+                                            <TableCell>{map.city || 'N/A'}</TableCell>
+                                            <TableCell>{map.country || 'N/A'}</TableCell>
+                                            <TableCell>{map.slpSeats}</TableCell>
+                                            <TableCell>{map.uwpSeats}</TableCell>
+                                            <TableCell>{map.tossups}</TableCell>
+                                            <TableCell className="text-right">
+                                                <Button asChild variant="ghost" size="icon">
+                                                    <Link href={`/maps/${map.id}`} target="_blank">
+                                                        <Eye className="h-4 w-4" />
+                                                    </Link>
+                                                </Button>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription>This will permanently delete this submitted map. This action cannot be undone.</AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleDelete(map.id)}>Delete</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={8} className="text-center h-24">
+                                            No map submissions match the current filters.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
+        <div>
+            <Card>
+                <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Share2 className="w-5 h-5" /> Social Sharing
+                </CardTitle>
+                <CardDescription>
+                    Set the default text for social media posts when users share their maps.
+                </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {loadingSiteSettings ? <p>Loading...</p> : (
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(handleShareSettingsSubmit)} className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="defaultShareTitle"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Default Share Title</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="defaultShareDescription"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Default Share Description</FormLabel>
+                                            <FormControl>
+                                                <Textarea {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <Button type="submit">Save Share Settings</Button>
+                            </form>
+                        </Form>
+                    )}
+                    <SharePreview title={watchedTitle} description={watchedDescription} />
+                </CardContent>
+            </Card>
+        </div>
+       </div>
     </div>
   );
 }
