@@ -1,202 +1,293 @@
 /**
- * @fileoverview Firestore Security Rules for the Revolucianize application.
+ * @fileoverview Firestore Security Rules for the application.
  *
  * Core Philosophy:
- * This ruleset prioritizes security by default, enforcing strict access control.
- * It leans towards restrictive permissions, requiring explicit allowances for data access.
- * All rules rely on Firebase Authentication (`request.auth`) for identity verification.
+ * This ruleset prioritizes ease of prototyping. It enforces basic authorization
+ * (e.g., public reads or owner-only writes) but avoids strict data validation.
+ * This allows for rapid iteration on the data model without being blocked by
+ * overly restrictive rules.
  *
  * Data Structure:
- * The Firestore database is structured with top-level collections for entities
- * like `parties`, `candidates`, `events`, `elections`, etc. There are also a few
- * singleton documents under `/settings`.
+ * The Firestore database consists of several top-level collections:
+ * - /mailing_list_subscribers/{subscriberId}: Mailing list subscriptions.
+ * - /parties/{partyId}: Political party information.
+ * - /party_logos/{partyLogoId}: Party logos for elections.
+ * - /events/{eventId}: Political events.
+ * - /candidates/{candidateId}: Candidates running for election.
+ * - /archived_candidates/{archivedCandidateId}: Archived candidate data.
+ * - /elections/{electionId}: Election information.
+ * - /polling_data/{pollingDataId}: Polling data for elections.
+ * - /constituencies/{constituencyId}: Voting constituencies.
+ * - /election_results/{electionResultId}: Election results.
+ * - /settings/pageLayouts: Page layouts (single document).
+ * - /settings/site: Global site settings (single document).
+ * - /user_activity/{activityId}: User activity tracking.
+ * - /regions/{regionId}: Geographical regions.
+ * - /user_maps/{userMapId}: User-created prediction maps.
  *
  * Key Security Decisions:
- * - **No Public Listing:** Unless explicitly specified, listing operations are generally disallowed to prevent unauthorized data enumeration.
- * - **Admin Roles (Not Yet Implemented):** The current rules do not implement any admin roles or privileged access. All authorization is based on the authenticated user.
- * - **Data Validation (Minimal):** In this prototyping phase, data validation is limited to critical aspects like enforcing ownership on creation and preventing modification of key relational fields. Full schema validation is deferred for later iterations.
+ * - Mailing list subscriptions are publicly writable.
+ * - All other collections are read-only for all users. No write access is given,
+ *   which assumes an admin backend manages these collections.
+ * - The `settings` documents are read-only for all users and writable by no one.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to mailing list subscribers.
+     * @description Allows anyone to add themselves to the mailing list.
      * @path /mailing_list_subscribers/{subscriberId}
-     * @allow (list) User with any auth can list mailing list subscribers
-     * @deny (create) No one can create mailing list subscribers
-     * @principle Open reads, restricted writes
+     * @allow (create) Any unauthenticated user can create a new mailing list entry.
+     * @deny (update) No one can update mailing list entries.
+     * @deny (delete) No one can delete mailing list entries.
+     * @principle Public write access for mailing list subscriptions.
      */
     match /mailing_list_subscribers/{subscriberId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if true;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Controls access to political parties.
+     * @description Allows read-only access to political party information.
      * @path /parties/{partyId}
-     * @allow (list) User with any auth can list parties
-     * @deny (create) No one can create parties
-     * @principle Open reads, restricted writes
+     * @allow (get) Any user can read party information.
+     * @allow (list) Any user can list parties.
+     * @deny (create) No one can create parties through the client.
+     * @deny (update) No one can update parties through the client.
+     * @deny (delete) No one can delete parties through the client.
+     * @principle Read-only access for all users.
      */
     match /parties/{partyId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Controls access to party logos.
+     * @description Allows read-only access to party logos.
      * @path /party_logos/{partyLogoId}
-     * @allow (list) User with any auth can list party logos
-     * @deny (create) No one can create party logos
-     * @principle Open reads, restricted writes
+     * @allow (get) Any user can read party logo information.
+     * @allow (list) Any user can list party logos.
+     * @deny (create) No one can create party logos through the client.
+     * @deny (update) No one can update party logos through the client.
+     * @deny (delete) No one can delete party logos through the client.
+     * @principle Read-only access for all users.
      */
     match /party_logos/{partyLogoId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Controls access to political events.
+     * @description Allows read-only access to event information.
      * @path /events/{eventId}
-     * @allow (list) User with any auth can list events
-     * @deny (create) No one can create events
-     * @principle Open reads, restricted writes
+     * @allow (get) Any user can read event information.
+     * @allow (list) Any user can list events.
+     * @deny (create) No one can create events through the client.
+     * @deny (update) No one can update events through the client.
+     * @deny (delete) No one can delete events through the client.
+     * @principle Read-only access for all users.
      */
     match /events/{eventId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Controls access to candidates.
+     * @description Allows read-only access to candidate information.
      * @path /candidates/{candidateId}
-     * @allow (list) User with any auth can list candidates
-     * @deny (create) No one can create candidates
-     * @principle Open reads, restricted writes
+     * @allow (get) Any user can read candidate information.
+     * @allow (list) Any user can list candidates.
+     * @deny (create) No one can create candidates through the client.
+     * @deny (update) No one can update candidates through the client.
+     * @deny (delete) No one can delete candidates through the client.
+     * @principle Read-only access for all users.
      */
     match /candidates/{candidateId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Controls access to archived candidates.
+     * @description Allows read-only access to archived candidate information.
      * @path /archived_candidates/{archivedCandidateId}
-     * @allow (list) User with any auth can list archived candidates
-     * @deny (create) No one can create archived candidates
-     * @principle Open reads, restricted writes
+     * @allow (get) Any user can read archived candidate information.
+     * @allow (list) Any user can list archived candidates.
+     * @deny (create) No one can create archived candidates through the client.
+     * @deny (update) No one can update archived candidates through the client.
+     * @deny (delete) No one can delete archived candidates through the client.
+     * @principle Read-only access for all users.
      */
     match /archived_candidates/{archivedCandidateId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Controls access to elections.
+     * @description Allows read-only access to election information.
      * @path /elections/{electionId}
-     * @allow (list) User with any auth can list elections
-     * @deny (create) No one can create elections
-     * @principle Open reads, restricted writes
+     * @allow (get) Any user can read election information.
+     * @allow (list) Any user can list elections.
+     * @deny (create) No one can create elections through the client.
+     * @deny (update) No one can update elections through the client.
+     * @deny (delete) No one can delete elections through the client.
+     * @principle Read-only access for all users.
      */
     match /elections/{electionId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Controls access to polling data.
+     * @description Allows read-only access to polling data.
      * @path /polling_data/{pollingDataId}
-     * @allow (list) User with any auth can list polling data
-     * @deny (create) No one can create polling data
-     * @principle Open reads, restricted writes
+     * @allow (get) Any user can read polling data.
+     * @allow (list) Any user can list polling data.
+     * @deny (create) No one can create polling data through the client.
+     * @deny (update) No one can update polling data through the client.
+     * @deny (delete) No one can delete polling data through the client.
+     * @principle Read-only access for all users.
      */
     match /polling_data/{pollingDataId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Controls access to constituencies.
+     * @description Allows read-only access to constituency information.
      * @path /constituencies/{constituencyId}
-     * @allow (list) User with any auth can list constituencies
-     * @deny (create) No one can create constituencies
-     * @principle Open reads, restricted writes
+     * @allow (get) Any user can read constituency information.
+     * @allow (list) Any user can list constituencies.
+     * @deny (create) No one can create constituencies through the client.
+     * @deny (update) No one can update constituencies through the client.
+     * @deny (delete) No one can delete constituencies through the client.
+     * @principle Read-only access for all users.
      */
     match /constituencies/{constituencyId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Controls access to election results.
+     * @description Allows read-only access to election results.
      * @path /election_results/{electionResultId}
-     * @allow (list) User with any auth can list election results
-     * @deny (create) No one can create election results
-     * @principle Open reads, restricted writes
+     * @allow (get) Any user can read election results.
+     * @allow (list) Any user can list election results.
+     * @deny (create) No one can create election results through the client.
+     * @deny (update) No one can update election results through the client.
+     * @deny (delete) No one can delete election results through the client.
+     * @principle Read-only access for all users.
      */
     match /election_results/{electionResultId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Controls access to page layouts settings.
+     * @description Allows read-only access to page layouts.
      * @path /settings/pageLayouts
-     * @allow (get) User with any auth can get page layouts settings
-     * @deny (create) No one can create page layouts settings
-     * @principle Open reads, restricted writes
+     * @allow (get) Any user can read page layouts.
+     * @deny (list) Listing is not possible for single documents.
+     * @deny (create) No one can create page layouts through the client.
+     * @deny (update) No one can update page layouts through the client.
+     * @deny (delete) No one can delete page layouts through the client.
+     * @principle Read-only access for all users.
      */
     match /settings/pageLayouts {
       allow get: if true;
       allow list: if false;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Controls access to site settings.
+     * @description Allows read-only access to site settings.
      * @path /settings/site
-     * @allow (get) User with any auth can get site settings
-     * @deny (create) No one can create site settings
-     * @principle Open reads, restricted writes
+     * @allow (get) Any user can read site settings.
+     * @deny (list) Listing is not possible for single documents.
+     * @deny (create) No one can create site settings through the client.
+     * @deny (update) No one can update site settings through the client.
+     * @deny (delete) No one can delete site settings through the client.
+     * @principle Read-only access for all users.
      */
     match /settings/site {
       allow get: if true;
       allow list: if false;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Controls access to user activity events.
+     * @description Allows read-only access to user activity.
      * @path /user_activity/{activityId}
-     * @allow (list) User with any auth can list user activity events
-     * @deny (create) No one can create user activity events
-     * @principle Open reads, restricted writes
+     * @allow (get) Any user can read user activity.
+     * @allow (list) Any user can list user activities.
+     * @deny (create) No one can create user activity through the client.
+     * @deny (update) No one can update user activity through the client.
+     * @deny (delete) No one can delete user activity through the client.
+     * @principle Read-only access for all users.
      */
     match /user_activity/{activityId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Controls access to regions.
+     * @description Allows read-only access to region information.
      * @path /regions/{regionId}
-     * @allow (list) User with any auth can list regions
-     * @deny (create) No one can create regions
-     * @principle Open reads, restricted writes
+     * @allow (get) Any user can read region information.
+     * @allow (list) Any user can list regions.
+     * @deny (create) No one can create regions through the client.
+     * @deny (update) No one can update regions through the client.
+     * @deny (delete) No one can delete regions through the client.
+     * @principle Read-only access for all users.
      */
     match /regions/{regionId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
-        /**
-     * @description Controls access to user maps.
-     * @path /user_maps/{userMapId}
-     */
-    match /user_maps/{userMapId} {
+     /**
+      * @description Allows read-only access to user maps.
+      * @path /user_maps/{userMapId}
+      * @allow (get) Any user can read the maps.
+      * @allow (list) Any user can list the maps.
+      * @deny (create) No user can create a map through client.
+      * @deny (update) No user can update a map through client.
+      * @deny (delete) No user can delete a map through client.
+      * @principle Read-only access for all users.
+      */
+     match /user_maps/{userMapId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
   }
 }
