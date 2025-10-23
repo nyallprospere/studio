@@ -153,4 +153,15 @@ export interface UserMap {
     city?: string;
     country?: string;
 }
+
+export interface Ad {
+  id: string;
+  name: string;
+  imageUrl: string;
+  url: string;
+  priority: 'high' | 'medium' | 'low';
+  pages: string[];
+  position: 'top' | 'bottom' | 'both';
+  isActive: boolean;
+}
     

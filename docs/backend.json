@@ -517,6 +517,23 @@
             }
         },
         "required": ["createdAt", "mapData"]
+    },
+    "Ad": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Ad",
+      "type": "object",
+      "description": "Represents an advertisement listing.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "imageUrl": { "type": "string", "format": "uri" },
+        "url": { "type": "string", "format": "uri" },
+        "priority": { "type": "string", "enum": ["high", "medium", "low"] },
+        "pages": { "type": "array", "items": { "type": "string" } },
+        "position": { "type": "string", "enum": ["top", "bottom", "both"] },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["name", "imageUrl", "url", "priority", "pages", "position"]
     }
   },
   "auth": {
@@ -614,6 +631,12 @@
         "$ref": "#/entities/UserMap"
       },
       "description": "Stores user-created prediction maps."
+    },
+    "/ads/{adId}": {
+      "schema": {
+        "$ref": "#/entities/Ad"
+      },
+      "description": "Stores ad listings for the website."
     }
   }
 }
