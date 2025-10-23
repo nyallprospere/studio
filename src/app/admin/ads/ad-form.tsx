@@ -210,6 +210,24 @@ export function AdForm({ onSubmit, initialData, onCancel }: AdFormProps) {
                          <CommandInput placeholder="Search pages..." />
                          <ScrollArea className="h-48">
                             <CommandGroup>
+                                <CommandItem
+                                    onSelect={() => {
+                                        if (field.value.length === pageOptions.length) {
+                                            field.onChange([]);
+                                        } else {
+                                            field.onChange(pageOptions.map(option => option.value));
+                                        }
+                                    }}
+                                    className="flex items-center justify-between"
+                                >
+                                    <span>Select All</span>
+                                    <Check
+                                        className={cn(
+                                        'h-4 w-4',
+                                        field.value.length === pageOptions.length ? 'opacity-100' : 'opacity-0'
+                                        )}
+                                    />
+                                </CommandItem>
                                 {pageOptions.map((option) => (
                                 <CommandItem
                                     key={option.value}
