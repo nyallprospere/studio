@@ -10,7 +10,7 @@ import { format } from 'date-fns';
 import { Timestamp, collection, addDoc, serverTimestamp, query, orderBy, doc, updateDoc, increment, getDocs, where, deleteDoc } from 'firebase/firestore';
 import { Calendar, User, Rss, ThumbsUp, MessageSquare, Share2, Twitter, Facebook, Send, MoreVertical, Flag } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
-import { useFirebase, useUser, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirebase, useUser, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Input } from './ui/input';
 import { Form, FormControl, FormField, FormItem, FormMessage } from './ui/form';
@@ -55,19 +55,32 @@ function CommentSection({ articleId }: { articleId: string }) {
         defaultValues: { comment: '', author: '' },
     });
 
-    const onSubmit = async (values: z.infer<typeof commentSchema>) => {
-        if (!firestore) return;
-        
-        await addDoc(collection(firestore, 'news', articleId, 'comments'), {
-            author: values.author,
-            text: values.comment,
-            createdAt: serverTimestamp(),
-            likeCount: 0,
-            replyTo: replyingTo,
+    const onSubmit = (values: z.infer<typeof commentSchema>) => {
+      if (!firestore) return;
+  
+      const commentData = {
+        author: values.author,
+        text: values.comment,
+        createdAt: serverTimestamp(),
+        likeCount: 0,
+        replyTo: replyingTo,
+      };
+      
+      const commentsCollection = collection(firestore, 'news', articleId, 'comments');
+      
+      addDoc(commentsCollection, commentData)
+        .then(() => {
+          form.reset();
+          setReplyingTo(null);
+        })
+        .catch(error => {
+          const contextualError = new FirestorePermissionError({
+            path: commentsCollection.path,
+            operation: 'create',
+            requestResourceData: commentData,
+          });
+          errorEmitter.emit('permission-error', contextualError);
         });
-
-        form.reset();
-        setReplyingTo(null);
     };
 
     const handleLike = async (commentId: string) => {
