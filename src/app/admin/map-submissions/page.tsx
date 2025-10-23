@@ -35,6 +35,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
+import Image from 'next/image';
 
 const shareSettingsSchema = z.object({
   defaultShareTitle: z.string().min(1, 'Title is required'),
@@ -45,10 +46,21 @@ function SharePreview({ title, description }: { title: string; description: stri
     return (
         <div className="mt-6 border p-4 rounded-lg space-y-2 bg-muted/50">
             <h4 className="text-sm font-semibold">Share Preview</h4>
-            <div className="border rounded-lg bg-background p-3 space-y-1">
-                <p className="text-sm font-bold">{title || 'Your Share Title'}</p>
-                <p className="text-xs text-muted-foreground">{description || 'Your share description will appear here.'}</p>
-                <div className="text-xs text-muted-foreground pt-1">lucianvotes.com</div>
+            <div className="border rounded-lg bg-background overflow-hidden">
+                <div className="relative aspect-video bg-gray-200">
+                    <Image
+                        src="https://picsum.photos/seed/map-preview/1200/630"
+                        alt="Map preview"
+                        fill
+                        className="object-cover"
+                        data-ai-hint="map"
+                    />
+                </div>
+                <div className="p-3 space-y-1">
+                    <p className="text-xs text-muted-foreground uppercase">lucianvotes.com</p>
+                    <p className="text-sm font-bold">{title || 'Your Share Title'}</p>
+                    <p className="text-xs text-muted-foreground">{description || 'Your share description will appear here.'}</p>
+                </div>
             </div>
         </div>
     )
