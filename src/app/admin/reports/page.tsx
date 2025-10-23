@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase, useDoc } from '@/firebase';
-import { collection, query, orderBy, doc, updateDoc, where, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, doc, updateDoc, where, Timestamp, deleteDoc } from 'firebase/firestore';
 import type { Report, NewsArticle, Comment } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
-import { Check, ShieldAlert, Eye } from 'lucide-react';
+import { Check, ShieldAlert, Eye, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,6 +20,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 function ContextDialog({ report, isOpen, onClose }: { report: Report; isOpen: boolean; onClose: () => void; }) {
     const { firestore } = useFirebase();
@@ -134,6 +144,20 @@ export default function ManageReportsPage() {
     }
   };
 
+  const handleDeleteComment = async (report: Report) => {
+    if (!firestore) return;
+    const commentRef = doc(firestore, 'news', report.articleId, 'comments', report.commentId);
+    const reportRef = doc(firestore, 'reports', report.id);
+    try {
+        await deleteDoc(commentRef);
+        await updateDoc(reportRef, { status: 'resolved' });
+        toast({ title: 'Comment Deleted', description: 'The reported comment has been deleted.'});
+    } catch (error) {
+        console.error('Error deleting comment: ', error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not delete the comment.' });
+    }
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <PageHeader
@@ -202,9 +226,30 @@ export default function ManageReportsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         {filter === 'pending' && (
-                          <Button size="sm" onClick={() => handleMarkResolved(report.id)}>
-                            Mark as Resolved
-                          </Button>
+                          <div className="flex justify-end gap-2">
+                            <Button size="sm" variant="outline" onClick={() => handleMarkResolved(report.id)}>
+                              Mark Resolved
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button size="sm" variant="destructive">
+                                  <Trash2 className="mr-2 h-4 w-4" /> Delete Comment
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will permanently delete the comment and resolve this report. This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteComment(report)}>Delete Comment</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         )}
                       </TableCell>
                     </TableRow>
