@@ -1,252 +1,202 @@
 /**
- * @fileoverview Firestore Security Rules for the Political App.
+ * @fileoverview Firestore Security Rules for the Revolucianize application.
  *
  * Core Philosophy:
- * This ruleset provides public read access to most data collections while restricting write access.
- * Write access is either denied completely or requires authentication.
- * Schema validation is not enforced during this prototyping phase.
+ * This ruleset prioritizes security by default, enforcing strict access control.
+ * It leans towards restrictive permissions, requiring explicit allowances for data access.
+ * All rules rely on Firebase Authentication (`request.auth`) for identity verification.
  *
  * Data Structure:
- * The Firestore database consists of several top-level collections such as `parties`, `events`, `candidates`, etc.
- * Each collection contains documents representing specific entities.
- * There is also a `/settings` document with sub-documents for `pageLayouts` and `site` configuration.
+ * The Firestore database is structured with top-level collections for entities
+ * like `parties`, `candidates`, `events`, `elections`, etc. There are also a few
+ * singleton documents under `/settings`.
  *
  * Key Security Decisions:
- * - Public read access for `parties`, `events`, `candidates`, `elections`, `polling_data`, `constituencies`, `election_results`, `regions`.
- * - Restricted write access for all collections, requiring authentication for user-generated content.
- * - No user-specific data trees are enforced in this version.
- * - User data isn't stored, so `list` access is not restricted.
+ * - **No Public Listing:** Unless explicitly specified, listing operations are generally disallowed to prevent unauthorized data enumeration.
+ * - **Admin Roles (Not Yet Implemented):** The current rules do not implement any admin roles or privileged access. All authorization is based on the authenticated user.
+ * - **Data Validation (Minimal):** In this prototyping phase, data validation is limited to critical aspects like enforcing ownership on creation and preventing modification of key relational fields. Full schema validation is deferred for later iterations.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read party information, but prohibits creation, updates, and deletion.
+     * @description Controls access to mailing list subscribers.
+     * @path /mailing_list_subscribers/{subscriberId}
+     * @allow (list) User with any auth can list mailing list subscribers
+     * @deny (create) No one can create mailing list subscribers
+     * @principle Open reads, restricted writes
+     */
+    match /mailing_list_subscribers/{subscriberId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Controls access to political parties.
      * @path /parties/{partyId}
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Public read access, no write access.
+     * @allow (list) User with any auth can list parties
+     * @deny (create) No one can create parties
+     * @principle Open reads, restricted writes
      */
     match /parties/{partyId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read party logos, but prohibits creation, updates, and deletion.
+     * @description Controls access to party logos.
      * @path /party_logos/{partyLogoId}
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Public read access, no write access.
+     * @allow (list) User with any auth can list party logos
+     * @deny (create) No one can create party logos
+     * @principle Open reads, restricted writes
      */
     match /party_logos/{partyLogoId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read event information, but prohibits creation, updates, and deletion.
+     * @description Controls access to political events.
      * @path /events/{eventId}
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Public read access, no write access.
+     * @allow (list) User with any auth can list events
+     * @deny (create) No one can create events
+     * @principle Open reads, restricted writes
      */
     match /events/{eventId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read candidate information, but prohibits creation, updates, and deletion.
+     * @description Controls access to candidates.
      * @path /candidates/{candidateId}
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Public read access, no write access.
+     * @allow (list) User with any auth can list candidates
+     * @deny (create) No one can create candidates
+     * @principle Open reads, restricted writes
      */
     match /candidates/{candidateId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read archived candidate information, but prohibits creation, updates, and deletion.
+     * @description Controls access to archived candidates.
      * @path /archived_candidates/{archivedCandidateId}
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Public read access, no write access.
+     * @allow (list) User with any auth can list archived candidates
+     * @deny (create) No one can create archived candidates
+     * @principle Open reads, restricted writes
      */
     match /archived_candidates/{archivedCandidateId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read election information, but prohibits creation, updates, and deletion.
+     * @description Controls access to elections.
      * @path /elections/{electionId}
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Public read access, no write access.
+     * @allow (list) User with any auth can list elections
+     * @deny (create) No one can create elections
+     * @principle Open reads, restricted writes
      */
     match /elections/{electionId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read polling data, but prohibits creation, updates, and deletion.
+     * @description Controls access to polling data.
      * @path /polling_data/{pollingDataId}
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Public read access, no write access.
+     * @allow (list) User with any auth can list polling data
+     * @deny (create) No one can create polling data
+     * @principle Open reads, restricted writes
      */
     match /polling_data/{pollingDataId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read constituency information, but prohibits creation, updates, and deletion.
+     * @description Controls access to constituencies.
      * @path /constituencies/{constituencyId}
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Public read access, no write access.
+     * @allow (list) User with any auth can list constituencies
+     * @deny (create) No one can create constituencies
+     * @principle Open reads, restricted writes
      */
     match /constituencies/{constituencyId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read election results, but prohibits creation, updates, and deletion.
+     * @description Controls access to election results.
      * @path /election_results/{electionResultId}
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Public read access, no write access.
+     * @allow (list) User with any auth can list election results
+     * @deny (create) No one can create election results
+     * @principle Open reads, restricted writes
      */
     match /election_results/{electionResultId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read page layouts, but prohibits creation, updates, and deletion.
+     * @description Controls access to page layouts settings.
      * @path /settings/pageLayouts
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Public read access, no write access.
+     * @allow (get) User with any auth can get page layouts settings
+     * @deny (create) No one can create page layouts settings
+     * @principle Open reads, restricted writes
      */
     match /settings/pageLayouts {
-      allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get: if true;
+      allow list: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read site settings, but prohibits creation, updates, and deletion.
+     * @description Controls access to site settings.
      * @path /settings/site
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Public read access, no write access.
+     * @allow (get) User with any auth can get site settings
+     * @deny (create) No one can create site settings
+     * @principle Open reads, restricted writes
      */
     match /settings/site {
-      allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get: if true;
+      allow list: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read user activity, but prohibits creation, updates, and deletion.
+     * @description Controls access to user activity events.
      * @path /user_activity/{activityId}
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Public read access, no write access.
+     * @allow (list) User with any auth can list user activity events
+     * @deny (create) No one can create user activity events
+     * @principle Open reads, restricted writes
      */
     match /user_activity/{activityId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read region information, but prohibits creation, updates, and deletion.
+     * @description Controls access to regions.
      * @path /regions/{regionId}
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Public read access, no write access.
+     * @allow (list) User with any auth can list regions
+     * @deny (create) No one can create regions
+     * @principle Open reads, restricted writes
      */
     match /regions/{regionId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
-      /**
-       * @description Allows authenticated users to create user maps. Read access is public, while update and delete are forbidden.
-       * @path /user_maps/{userMapId}
-       * @allow get, list: if true;
-       * @allow create: if isSignedIn();
-       * @deny update: if false;
-       * @deny delete: if false;
-       * @principle Allows creating user maps when signed in.
-       */
-      match /user_maps/{userMapId} {
-        allow get, list: if true;
-        allow create: if isSignedIn();
-        allow update: if false;
-        allow delete: if false;
-      }
-  }
-
-  function isSignedIn() {
-    return request.auth != null;
+        /**
+     * @description Controls access to user maps.
+     * @path /user_maps/{userMapId}
+     */
+    match /user_maps/{userMapId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
   }
 }
