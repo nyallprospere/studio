@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { NewsArticle } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -23,6 +23,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
+import { useUser } from '@/firebase';
 
 const PREDEFINED_TAGS = [
   'SLP',
@@ -56,6 +57,7 @@ type NewsFormProps = {
 };
 
 export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
+  const { user } = useUser();
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [tagSearch, setTagSearch] = useState('');
 
@@ -76,7 +78,7 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
     },
   });
 
-  useState(() => {
+  useEffect(() => {
     if (initialData) {
       form.reset({
         ...initialData,
@@ -99,7 +101,7 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
             articleDate: new Date(),
         });
     }
-  });
+  }, [initialData, form]);
   
   const handleGenerateSummary = async () => {
     const content = form.getValues('content');
@@ -110,10 +112,10 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
     setIsSummarizing(true);
     try {
         const result = await summarizeArticle(content);
-        if (result.summary) {
-            form.setValue('summary', result.summary);
-        } else if (result.error) {
-            form.setError('summary', { type: 'manual', message: result.error });
+        if (result) {
+            form.setValue('summary', result);
+        } else {
+             form.setError('summary', { type: 'manual', message: "Could not generate summary." });
         }
     } catch (e) {
         form.setError('summary', { type: 'manual', message: 'Failed to generate summary.' });
@@ -121,11 +123,11 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
     setIsSummarizing(false);
   }
   
+  const currentTags = form.watch('tags') || [];
   const allTagOptions = useMemo(() => {
-    const currentTags = form.watch('tags') || [];
     const combined = new Set([...PREDEFINED_TAGS, ...currentTags]);
     return Array.from(combined).map(tag => ({ value: tag, label: tag }));
-  }, [form.watch('tags')]);
+  }, [currentTags]);
 
   const filteredTagOptions = useMemo(() => {
     if (!tagSearch) return allTagOptions;
@@ -173,10 +175,12 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
             <FormItem>
                <div className="flex items-center justify-between">
                 <FormLabel>Summary</FormLabel>
-                <Button type="button" size="sm" variant="outline" onClick={handleGenerateSummary} disabled={isSummarizing}>
-                    {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                    AI Summarize
-                </Button>
+                {user && (
+                    <Button type="button" size="sm" variant="outline" onClick={handleGenerateSummary} disabled={isSummarizing}>
+                        {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                        AI Summarize
+                    </Button>
+                )}
               </div>
               <FormControl>
                 <Textarea placeholder="A brief summary of the news article..." {...field} rows={4} />
@@ -404,5 +408,3 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
     </Form>
   );
 }
-
-    
