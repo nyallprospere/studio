@@ -31,7 +31,13 @@ const summarizeArticleFlow = ai.defineFlow(
     outputSchema: z.string(),
   },
   async (content) => {
-    const {output} = await summarizeArticlePrompt(content);
-    return output || '';
+    const llmResponse = await ai.generate({
+      prompt: `You are a skilled news editor. Summarize the following article content into a concise paragraph of 100 words or less.
+  
+      Article Content:
+      ${content}`,
+    });
+
+    return llmResponse.text;
   }
 );
