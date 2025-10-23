@@ -181,6 +181,7 @@ export interface NewsArticle {
     articleDate?: any;
     author?: string;
     tags?: string[];
+    likeCount?: number;
 }
     
     

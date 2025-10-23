@@ -688,6 +688,10 @@
           "items": {
             "type": "string"
           }
+        },
+        "likeCount": {
+          "type": "number",
+          "description": "The number of times the article has been liked."
         }
       },
       "required": [
