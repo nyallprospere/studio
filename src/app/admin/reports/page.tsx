@@ -2,21 +2,70 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, orderBy, doc, updateDoc, where, Timestamp } from 'firebase/firestore';
-import type { Report } from '@/lib/types';
+import type { Report, NewsArticle, Comment } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
-import { Check, ShieldAlert, Calendar as CalendarIcon } from 'lucide-react';
+import { Check, ShieldAlert, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DateRange } from 'react-day-picker';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 
+function ContextDialog({ report, isOpen, onClose }: { report: Report; isOpen: boolean; onClose: () => void; }) {
+    const { firestore } = useFirebase();
+
+    const articleRef = useMemoFirebase(() => firestore && report ? doc(firestore, 'news', report.articleId) : null, [firestore, report]);
+    const { data: article, isLoading: loadingArticle } = useDoc<NewsArticle>(articleRef);
+    
+    const commentsQuery = useMemoFirebase(() => firestore && report ? query(collection(firestore, 'news', report.articleId, 'comments'), orderBy('createdAt', 'asc')) : null, [firestore, report]);
+    const { data: comments, isLoading: loadingComments } = useCollection<Comment>(commentsQuery);
+
+    const isLoading = loadingArticle || loadingComments;
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Comment Context</DialogTitle>
+                    <DialogDescription>Viewing the context for a reported comment.</DialogDescription>
+                </DialogHeader>
+                {isLoading ? <p>Loading context...</p> : (
+                    <ScrollArea className="max-h-[60vh] pr-4">
+                        {article && (
+                            <div className="mb-6">
+                                <h3 className="font-semibold text-lg">{article.title}</h3>
+                                <p className="text-sm text-muted-foreground">From article: <Link href={`/news/${article.id}`} target="_blank" className="underline">{article.title}</Link></p>
+                            </div>
+                        )}
+                        <div className="space-y-4">
+                            {comments?.map(comment => (
+                                <div key={comment.id} className={cn("flex items-start gap-3 p-3 rounded-lg", comment.id === report.commentId && 'bg-yellow-100 dark:bg-yellow-900/50 ring-2 ring-yellow-500')}>
+                                     <Avatar className="h-8 w-8">
+                                        <AvatarFallback>{(comment.author || 'A').charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <p className="text-sm font-semibold">{comment.author}</p>
+                                        <p className="text-sm text-muted-foreground">{comment.text}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </ScrollArea>
+                )}
+            </DialogContent>
+        </Dialog>
+    )
+}
 
 export default function ManageReportsPage() {
   const { firestore } = useFirebase();
@@ -24,6 +73,7 @@ export default function ManageReportsPage() {
 
   const [date, setDate] = useState<DateRange | undefined>();
   const [datePreset, setDatePreset] = useState('all');
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
   const reportsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -132,7 +182,7 @@ export default function ManageReportsPage() {
                   <TableHead>Date</TableHead>
                   <TableHead>Comment</TableHead>
                   <TableHead>Author</TableHead>
-                  <TableHead>Article</TableHead>
+                  <TableHead>Context</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -146,8 +196,8 @@ export default function ManageReportsPage() {
                       </TableCell>
                       <TableCell>{report.commentAuthor}</TableCell>
                       <TableCell>
-                          <Button asChild variant="link" className="p-0 h-auto">
-                             <Link href={`/news/${report.articleId}`} target="_blank">View Article</Link>
+                          <Button variant="ghost" size="icon" onClick={() => setSelectedReport(report)}>
+                            <Eye className="h-4 w-4" />
                           </Button>
                       </TableCell>
                       <TableCell className="text-right">
@@ -171,6 +221,13 @@ export default function ManageReportsPage() {
           )}
         </CardContent>
       </Card>
+      {selectedReport && (
+        <ContextDialog
+            report={selectedReport}
+            isOpen={!!selectedReport}
+            onClose={() => setSelectedReport(null)}
+        />
+      )}
     </div>
   );
 }

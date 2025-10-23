@@ -185,6 +185,15 @@ export interface NewsArticle {
     tags?: string[];
     likeCount?: number;
 }
+
+export interface Comment {
+    id: string;
+    author: string;
+    text: string;
+    createdAt: any;
+    likeCount?: number;
+    replyTo?: string;
+}
     
 export interface Report {
     id: string;
@@ -198,4 +207,3 @@ export interface Report {
     
 
     
-
