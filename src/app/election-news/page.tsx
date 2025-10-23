@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, doc, updateDoc, increment } from 'firebase/firestore';
 import type { NewsArticle } from '@/lib/types';
@@ -10,9 +10,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { Rss, ThumbsUp, MessageSquare, Share2 } from 'lucide-react';
+import { Rss, ThumbsUp, MessageSquare, Share2, Twitter, Facebook } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 function NewsCardSkeleton() {
     return (
@@ -35,31 +41,62 @@ function NewsCardSkeleton() {
 function NewsCard({ article }: { article: NewsArticle }) {
     const { firestore } = useFirebase();
     const { toast } = useToast();
+    const [liked, setLiked] = useState(false);
+
+    useEffect(() => {
+        const likedArticles = JSON.parse(localStorage.getItem('likedNews') || '[]');
+        if (likedArticles.includes(article.id)) {
+            setLiked(true);
+        }
+    }, [article.id]);
+
     const publishedDate = article.articleDate?.toDate ? article.articleDate.toDate() : new Date();
 
     const handleLike = async () => {
-        if (!firestore) return;
+        if (!firestore || liked) {
+            if (liked) {
+                toast({ title: "Already Liked", description: "You've already liked this article." });
+            }
+            return;
+        }
+
+        setLiked(true);
+        const likedArticles = JSON.parse(localStorage.getItem('likedNews') || '[]');
+        localStorage.setItem('likedNews', JSON.stringify([...likedArticles, article.id]));
+
         const articleRef = doc(firestore, 'news', article.id);
         await updateDoc(articleRef, {
             likeCount: increment(1)
         });
     };
     
-    const handleShare = () => {
-        if(navigator.share) {
-            navigator.share({
-                title: article.title,
-                text: article.summary,
-                url: window.location.href,
-            }).catch(console.error);
+    const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/election-news#${article.id}` : '';
+    const shareText = `Check out this article from LucianVotes: ${article.title}`;
+    const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+    const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+
+    const handleShare = async () => {
+        const shareData = {
+            title: 'LucianVotes',
+            text: shareText,
+            url: shareUrl,
+        };
+        if (navigator.share && navigator.canShare(shareData)) {
+            try {
+                await navigator.share(shareData);
+            } catch (error) {
+                console.error('Error sharing:', error);
+            }
         } else {
-            toast({ title: "Share not supported", description: "Your browser does not support the Web Share API."});
+            // Fallback for browsers that don't support Web Share API
+            // The dropdown menu will be shown instead.
         }
     }
 
+
     return (
-        <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="flex flex-col">
+        <Card className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col" id={article.id}>
+            <div className="flex flex-col flex-grow">
                  {article.imageUrl && (
                     <div className="w-full h-48 relative flex-shrink-0">
                        <Image src={article.imageUrl} alt={article.title} fill className="object-cover" />
@@ -76,8 +113,8 @@ function NewsCard({ article }: { article: NewsArticle }) {
                         </Link>
                     </div>
                 </div>
-                <div className="border-t p-2 flex justify-around items-center bg-muted/50">
-                    <Button variant="ghost" size="sm" onClick={handleLike}>
+                <div className="border-t p-2 flex justify-around items-center bg-muted/50 mt-auto">
+                    <Button variant="ghost" size="sm" onClick={handleLike} disabled={liked}>
                         <ThumbsUp className="mr-2 h-4 w-4" />
                         Like ({article.likeCount || 0})
                     </Button>
@@ -85,10 +122,28 @@ function NewsCard({ article }: { article: NewsArticle }) {
                         <MessageSquare className="mr-2 h-4 w-4" />
                         Comment
                     </Button>
-                     <Button variant="ghost" size="sm" onClick={handleShare}>
-                        <Share2 className="mr-2 h-4 w-4" />
-                        Share
-                    </Button>
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" onClick={handleShare}>
+                                <Share2 className="mr-2 h-4 w-4" />
+                                Share
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem asChild>
+                                <a href={twitterShareUrl} target="_blank" rel="noopener noreferrer">
+                                    <Twitter className="mr-2 h-4 w-4" />
+                                    Share on Twitter
+                                </a>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                 <a href={facebookShareUrl} target="_blank" rel="noopener noreferrer">
+                                    <Facebook className="mr-2 h-4 w-4" />
+                                    Share on Facebook
+                                </a>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </div>
         </Card>
