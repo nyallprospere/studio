@@ -26,6 +26,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Textarea } from './ui/textarea';
 
 interface Comment {
     id: string;
@@ -180,7 +181,7 @@ function CommentSection({ articleId }: { articleId: string }) {
                                                 <FormItem className="flex-grow"><FormControl><Input placeholder="Your name..." {...field} /></FormControl><FormMessage /></FormItem>
                                             )} />
                                             <FormField control={form.control} name="comment" render={({ field }) => (
-                                                <FormItem className="flex-grow"><FormControl><Input placeholder="Write a reply..." {...field} autoFocus /></FormControl><FormMessage /></FormItem>
+                                                <FormItem className="flex-grow"><FormControl><Textarea placeholder="Write a reply..." {...field} autoFocus rows={1} /></FormControl><FormMessage /></FormItem>
                                             )} />
                                             <Button type="submit" size="icon"><Send className="h-4 w-4" /></Button>
                                         </form>
@@ -201,7 +202,7 @@ function CommentSection({ articleId }: { articleId: string }) {
                                 <FormItem><FormControl><Input placeholder="Your name..." {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
                              <FormField control={form.control} name="comment" render={({ field }) => (
-                                <FormItem><FormControl><Input placeholder="Write a comment..." {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormControl><Textarea placeholder="Write a comment..." {...field} rows={2} /></FormControl><FormMessage /></FormItem>
                             )} />
                             <div className="flex justify-end">
                                 <Button type="submit" size="sm">Post Comment</Button>
