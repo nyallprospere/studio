@@ -130,22 +130,22 @@ export function NewsArticleDialog({ article, isOpen, onClose }: NewsArticleDialo
                             )}
                             <DialogHeader className="text-left">
                                 <DialogTitle className="font-headline text-3xl leading-tight">{article.title}</DialogTitle>
-                                <DialogDescription className="space-y-2 pt-2 text-md">
+                                <div className="space-y-2 pt-2 text-md text-muted-foreground">
                                      <div className="flex items-center gap-2">
-                                        <Rss className="h-4 w-4 text-muted-foreground" />
+                                        <Rss className="h-4 w-4" />
                                         <span>{article.source}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                                        <Calendar className="h-4 w-4" />
                                         <span>{format(articleDate, "EEEE, MMMM do, yyyy")}</span>
                                     </div>
                                     {article.author && (
                                         <div className="flex items-center gap-2">
-                                            <User className="h-4 w-4 text-muted-foreground" />
+                                            <User className="h-4 w-4" />
                                             <span>{article.author}</span>
                                         </div>
                                     )}
-                                </DialogDescription>
+                                </div>
                             </DialogHeader>
                             {article.content && (
                                 <div className="mt-6">
