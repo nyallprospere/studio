@@ -2,8 +2,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
+import { collection, addDoc, updateDoc, deleteDoc, doc, CollectionReference } from 'firebase/firestore';
 import type { Ad } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -40,33 +40,49 @@ export default function AdminAdsPage() {
 
   const handleFormSubmit = async (values: any) => {
     if (!firestore || !adsCollection) return;
-    try {
-      let imageUrl = values.imageUrl;
-      if (values.imageFile) {
-        if (editingAd?.imageUrl) {
-          await deleteFile(editingAd.imageUrl);
-        }
-        imageUrl = await uploadFile(values.imageFile, `ads/${values.imageFile.name}`);
+    
+    let imageUrl = values.imageUrl;
+    if (values.imageFile) {
+      if (editingAd?.imageUrl) {
+        await deleteFile(editingAd.imageUrl).catch(console.warn);
       }
-
-      const adData = { ...values, imageUrl };
-      delete adData.imageFile;
-
-      if (editingAd) {
-        const adDoc = doc(firestore, 'ads', editingAd.id);
-        await updateDoc(adDoc, adData);
-        toast({ title: "Ad Updated", description: `The ad "${adData.name}" has been successfully updated.` });
-      } else {
-        await addDoc(adsCollection, adData);
-        toast({ title: "Ad Added", description: `The ad "${adData.name}" has been successfully added.` });
-      }
-    } catch (error) {
-      console.error("Error saving ad: ", error);
-      toast({ variant: "destructive", title: "Error", description: "Failed to save ad. Check console for details." });
-    } finally {
-      setIsFormOpen(false);
-      setEditingAd(null);
+      imageUrl = await uploadFile(values.imageFile, `ads/${values.imageFile.name}`);
     }
+
+    const adData = { ...values, imageUrl };
+    delete adData.imageFile;
+
+    if (editingAd) {
+      const adDoc = doc(firestore, 'ads', editingAd.id);
+      updateDoc(adDoc, adData)
+        .then(() => {
+          toast({ title: "Ad Updated", description: `The ad "${adData.name}" has been successfully updated.` });
+        })
+        .catch(error => {
+          const contextualError = new FirestorePermissionError({
+            path: adDoc.path,
+            operation: 'update',
+            requestResourceData: adData,
+          });
+          errorEmitter.emit('permission-error', contextualError);
+        });
+    } else {
+      addDoc(adsCollection, adData)
+        .then(() => {
+          toast({ title: "Ad Added", description: `The ad "${adData.name}" has been successfully added.` });
+        })
+        .catch(error => {
+          const contextualError = new FirestorePermissionError({
+            path: (adsCollection as CollectionReference).path,
+            operation: 'create',
+            requestResourceData: adData,
+          });
+          errorEmitter.emit('permission-error', contextualError);
+        });
+    }
+
+    setIsFormOpen(false);
+    setEditingAd(null);
   };
 
   const handleDelete = async (ad: Ad) => {
