@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { Rss, ThumbsUp, MessageSquare, Share2, Twitter, Facebook, User } from 'lucide-react';
+import { Rss, ThumbsUp, MessageSquare, Share2, Twitter, Facebook, User, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -174,6 +174,13 @@ export default function ElectionNewsPage() {
     const { firestore } = useFirebase();
     const newsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'news'), orderBy('articleDate', 'desc')) : null, [firestore]);
     const { data: news, isLoading } = useCollection<NewsArticle>(newsQuery);
+    const [visibleCount, setVisibleCount] = useState(4);
+
+    const visibleNews = useMemo(() => news?.slice(0, visibleCount) || [], [news, visibleCount]);
+
+    const handleLoadMore = () => {
+        setVisibleCount(prevCount => prevCount + 4);
+    };
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -181,20 +188,31 @@ export default function ElectionNewsPage() {
                 title="Election News"
                 description="The latest news and analysis on the St. Lucian General Elections."
             />
-            {isLoading ? (
+            {isLoading && visibleNews.length === 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <NewsCardSkeleton />
                     <NewsCardSkeleton />
                     <NewsCardSkeleton />
                     <NewsCardSkeleton />
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {news && news.length > 0 ? (
-                        news.map(article => <NewsCard key={article.id} article={article} />)
-                    ) : (
-                        <p className="text-center text-muted-foreground py-16 col-span-full">No news articles found.</p>
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {visibleNews.length > 0 ? (
+                            visibleNews.map(article => <NewsCard key={article.id} article={article} />)
+                        ) : (
+                            <p className="text-center text-muted-foreground py-16 col-span-full">No news articles found.</p>
+                        )}
+                    </div>
+                    {news && visibleCount < news.length && (
+                        <div className="flex justify-center mt-8">
+                            <Button onClick={handleLoadMore}>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin hidden" />
+                                Load More
+                            </Button>
+                        </div>
                     )}
-                </div>
+                </>
             )}
         </div>
     );
