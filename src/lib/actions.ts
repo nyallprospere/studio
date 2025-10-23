@@ -1,3 +1,4 @@
+
 'use server';
 
 import { generateElectionPredictions } from '@/ai/flows/generate-election-predictions';
@@ -128,6 +129,7 @@ export async function subscribeToMailingList(data: { firstName: string; email: s
 export async function summarizeArticle(content: string) {
     try {
         const result = await summarizeArticleFlow(content);
+        // The flow now returns a string, so we can pass it directly.
         return { summary: result };
     } catch (e) {
         console.error("Error summarizing article:", e);
