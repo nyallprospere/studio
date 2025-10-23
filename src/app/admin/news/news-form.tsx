@@ -6,26 +6,28 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { NewsArticle } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
+import { summarizeArticle } from '@/lib/actions';
 
 
 const newsArticleSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   summary: z.string().min(1, 'Summary is required'),
+  content: z.string().optional(),
   url: z.string().url('A valid URL is required'),
   source: z.string().min(1, 'Source is required'),
   author: z.string().optional(),
   tags: z.string().optional(),
-  imageFile: z.any().optional(),
-  imageUrl: z.string().url().optional().or(z.literal('')),
+  imageFiles: z.any().optional(),
+  imageUrls: z.array(z.string().url()).optional(),
   publishedAt: z.date().optional(),
   articleDate: z.date().optional(),
 });
@@ -38,16 +40,18 @@ type NewsFormProps = {
 };
 
 export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
+  const [isSummarizing, setIsSummarizing] = useState(false);
   const form = useForm<z.infer<typeof newsArticleSchema>>({
     resolver: zodResolver(newsArticleSchema),
     defaultValues: {
       title: '',
       summary: '',
+      content: '',
       source: '',
       url: '',
       author: '',
       tags: '',
-      imageUrl: '',
+      imageUrls: [],
       publishedAt: new Date(),
       articleDate: new Date(),
     },
@@ -65,16 +69,34 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
         form.reset({
             title: '',
             summary: '',
+            content: '',
             source: '',
             url: '',
             author: '',
             tags: '',
-            imageUrl: '',
+            imageUrls: [],
             publishedAt: new Date(),
             articleDate: new Date(),
         });
     }
   }, [initialData, form]);
+  
+  const handleGenerateSummary = async () => {
+    const content = form.getValues('content');
+    if (!content) {
+      form.setError('content', { type: 'manual', message: 'Content is required to generate a summary.' });
+      return;
+    }
+    setIsSummarizing(true);
+    const result = await summarizeArticle(content);
+    if(result.summary) {
+        form.setValue('summary', result.summary);
+    } else {
+        // Handle error case
+        form.setError('summary', { type: 'manual', message: result.error || 'Failed to generate summary.' });
+    }
+    setIsSummarizing(false);
+  }
 
   return (
     <Form {...form}>
@@ -92,13 +114,33 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
             </FormItem>
           )}
         />
-
+        
+        <FormField
+          control={form.control}
+          name="content"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Content</FormLabel>
+              <FormControl>
+                <Textarea placeholder="The full content of the news article..." {...field} rows={10} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
         <FormField
           control={form.control}
           name="summary"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Summary</FormLabel>
+               <div className="flex items-center justify-between">
+                <FormLabel>Summary</FormLabel>
+                <Button type="button" size="sm" variant="outline" onClick={handleGenerateSummary} disabled={isSummarizing}>
+                    {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                    AI Summarize
+                </Button>
+              </div>
               <FormControl>
                 <Textarea placeholder="A brief summary of the news article..." {...field} rows={4} />
               </FormControl>
@@ -191,14 +233,21 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
             />
              <FormField
                 control={form.control}
-                name="imageFile"
+                name="imageFiles"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Article Image</FormLabel>
+                    <FormLabel>Article Images</FormLabel>
                     <FormControl>
-                        <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
+                        <Input type="file" accept="image/*" multiple onChange={(e) => field.onChange(e.target.files)} />
                     </FormControl>
-                    {initialData?.imageUrl && <a href={initialData.imageUrl} target="_blank" className="text-sm text-blue-500 hover:underline">View current image</a>}
+                    <FormDescription>Upload one or more images. The first image will be the main article image.</FormDescription>
+                    {initialData?.imageUrls && initialData.imageUrls.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                            {initialData.imageUrls.map((url, i) => (
+                                <a key={i} href={url} target="_blank" className="text-sm text-blue-500 hover:underline">View Image {i+1}</a>
+                            ))}
+                        </div>
+                    )}
                     <FormMessage />
                     </FormItem>
                 )}
@@ -237,3 +286,5 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
     </Form>
   );
 }
+
+    
