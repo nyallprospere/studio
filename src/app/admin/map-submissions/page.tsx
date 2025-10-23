@@ -45,7 +45,7 @@ const shareSettingsSchema = z.object({
 function SharePreview({ title, description }: { title: string; description: string }) {
     const victoryStatus = "SLP Wins a Decisive Victory"; // Example status
     const seatCount = "SLP 14, UWP 3"; // Example seat count
-    const dynamicTitle = `I predicted ${victoryStatus}`;
+    const dynamicTitle = `I predict ${victoryStatus}`;
     const dynamicDescription = `${description} My prediction: ${seatCount}. Click here to make your own!`;
 
     return (
