@@ -44,20 +44,34 @@ export default function AdminNewsPage() {
     
     try {
       let imageUrl = values.imageUrl;
-      if (values.imageFile) {
+      if (values.mainImageFile) {
         if (editingArticle?.imageUrl) {
           await deleteFile(editingArticle.imageUrl).catch(console.warn);
         }
-        imageUrl = await uploadFile(values.imageFile, `news/${values.imageFile.name}`);
+        imageUrl = await uploadFile(values.mainImageFile, `news/${values.mainImageFile.name}_main`);
+      }
+
+      let galleryImageUrls = values.galleryImageUrls || [];
+      if (values.galleryImageFiles && values.galleryImageFiles.length > 0) {
+          if (editingArticle?.galleryImageUrls) {
+              for (const url of editingArticle.galleryImageUrls) {
+                  await deleteFile(url).catch(console.warn);
+              }
+          }
+          galleryImageUrls = await Promise.all(
+              Array.from(values.galleryImageFiles).map((file: any) => uploadFile(file, `news/gallery/${file.name}`))
+          );
       }
 
       const articleData = { 
         ...values, 
         imageUrl,
+        galleryImageUrls,
         tags: values.tags ? values.tags.split(',').map((tag: string) => tag.trim()) : [],
         articleDate: values.articleDate ? Timestamp.fromDate(values.articleDate) : Timestamp.now(),
       };
-      delete articleData.imageFile;
+      delete articleData.mainImageFile;
+      delete articleData.galleryImageFiles;
       
       const newsColRef = collection(firestore, 'news');
 
@@ -106,7 +120,12 @@ export default function AdminNewsPage() {
     if (!firestore) return;
     try {
       if (article.imageUrl) {
-        await deleteFile(article.imageUrl);
+        await deleteFile(article.imageUrl).catch(console.warn);
+      }
+      if (article.galleryImageUrls) {
+          for (const url of article.galleryImageUrls) {
+              await deleteFile(url).catch(console.warn);
+          }
       }
       const articleDoc = doc(firestore, 'news', article.id);
       await deleteDoc(articleDoc);

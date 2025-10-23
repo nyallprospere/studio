@@ -669,7 +669,11 @@
           "type": "string",
           "format": "uri"
         },
-        "imageUrls": {
+        "imageUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "galleryImageUrls": {
           "type": "array",
           "items": {
             "type": "string",
@@ -819,6 +823,4 @@
     }
   }
 }
-    
-
     

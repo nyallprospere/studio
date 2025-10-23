@@ -177,7 +177,8 @@ export interface NewsArticle {
     content?: string;
     source: string;
     url: string;
-    imageUrls?: string[];
+    imageUrl?: string;
+    galleryImageUrls?: string[];
     publishedAt: any;
     articleDate?: any;
     author?: string;
