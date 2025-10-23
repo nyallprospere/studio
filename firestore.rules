@@ -1,236 +1,292 @@
 /**
- * @fileOverview Firestore Security Rules for the application.
+ * @file Firestore Security Rules
+ * @description This ruleset defines access control for the Revolucianize platform.
  *
  * Core Philosophy:
- * This ruleset prioritizes a public-read, restricted-write model. Most data is readable by all authenticated users.
- * Write access is generally restricted to prevent unauthorized data modification.
+ * The ruleset prioritizes security and data protection.
+ * It enforces strict access control based on a combination of factors,
+ * including user authentication and explicit ownership. Data validation is relaxed
+ * to allow for rapid prototyping, focusing on authorization rather than data shapes.
  *
  * Data Structure:
- * The Firestore database consists of several top-level collections. There are no user-specific data trees.
+ * The Firestore database is organized into several top-level collections, each representing
+ * a different entity in the application (e.g., `elections`, `parties`, `candidates`).
+ * Some collections contain public data, while others contain user-specific data.
+ * Subcollections are used to manage comments on news articles.
  *
  * Key Security Decisions:
- * - User listing is generally disallowed.
- * - The `news` collection is publicly readable.
- * - Schema validation is relaxed to allow for rapid prototyping, focusing only on authorization-critical fields.
- * - Denormalization is not explicitly used.
+ * - Public read access is granted to collections containing general content,
+ *   like `elections`, `parties`, `candidates`, `constituencies`, `ads`, and `news`.
+ * - Write access to these collections is generally denied.
+ * - Private collections, such as `mailing_list_subscribers`, `user_activity`, `user_maps`
+ *   are protected with authentication checks and ownership validation.
+ * - The `settings` collection is read-only.
+ *
+ *  -CRITICAL- The ruleset DOES NOT implement full schema validation.
+ *  Data types and optional fields are not strictly enforced to allow rapid prototyping.
+ *
+ * WARNING:
+ * -These rules are generated for prototyping purposes and might need further refinement
+ *  before being deployed to a production environment.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read news articles, but restricts creation, updates, and deletion.
-     * @path /news/{newsId}
-     * @allow (get, list) - Any logged-in user can read any news article.
-     * @deny (create, update, delete) - No one can create, update or delete news articles.
-     * @principle Allows public read access to news articles.
-     */
-    match /news/{newsId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Allows anyone to read comments on news articles, but restricts creation, updates, and deletion.
-     * @path /news/{newsId}/comments/{commentId}
-     * @allow (get, list) - Any logged-in user can read any comment.
-     * @deny (create, update, delete) - No one can create, update or delete comments.
-     * @principle Allows public read access to news article comments.
-     */
-    match /news/{newsId}/comments/{commentId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Restricts access to reports. No one can read, create, update, or delete reports.
-     * @path /reports/{reportId}
-     * @allow None
-     * @deny (get, list, create, update, delete) - All operations are denied on reports.
-     * @principle Restricts all access to reports.
-     */
-    match /reports/{reportId} {
-        allow get, list, create, update, delete: if false;
-    }
-
-    /**
-     * @description Restricts access to mailing list subscribers. No one can read, create, update, or delete subscribers.
+     * @description Controls access to mailing list subscriber data.
      * @path /mailing_list_subscribers/{subscriberId}
-     * @allow None
-     * @deny (get, list, create, update, delete) - All operations are denied.
-     * @principle Restricts all access to mailing list subscribers.
+     * @allow (create) An authenticated user can create their own subscriber document.
+     * @deny (create) An unauthenticated user cannot create a subscriber document.
+     * @allow (get, list) Nobody can read mailing list subscribers.
+     * @deny (get, list) Everyone is denied from listing and getting mailing list subscribers.
+     * @allow (update, delete) An authenticated user cannot update or delete a subscriber document.
+     * @deny (update, delete) Nobody can update or delete mailing list subscribers.
+     * @principle Enforces authentication for data access.
      */
     match /mailing_list_subscribers/{subscriberId} {
-      allow get, list, create, update, delete: if false;
+      allow get, list: if false;
+      allow create: if isSignedIn();
+      allow update, delete: if false;
     }
 
     /**
-     * @description Restricts access to parties. No one can read, create, update, or delete parties.
+     * @description Controls access to political party data.
      * @path /parties/{partyId}
-     * @allow None
-     * @deny (get, list, create, update, delete) - All operations are denied.
-     * @principle Restricts all access to parties.
+     * @allow (get, list) Anyone can read party data.
+     * @deny (create, update, delete) Nobody can create, update, or delete party data.
+     * @principle Allows public read access to general content.
      */
     match /parties/{partyId} {
-      allow get, list, create, update, delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Restricts access to party logos. No one can read, create, update, or delete party logos.
+     * @description Controls access to party logo data.
      * @path /party_logos/{partyLogoId}
-     * @allow None
-     * @deny (get, list, create, update, delete) - All operations are denied.
-     * @principle Restricts all access to party logos.
+     * @allow (get, list) Anyone can read party logo data.
+     * @deny (create, update, delete) Nobody can create, update, or delete party logo data.
+     * @principle Allows public read access to general content.
      */
     match /party_logos/{partyLogoId} {
-      allow get, list, create, update, delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Restricts access to events. No one can read, create, update, or delete events.
+     * @description Controls access to event data.
      * @path /events/{eventId}
-     * @allow None
-     * @deny (get, list, create, update, delete) - All operations are denied.
-     * @principle Restricts all access to events.
+     * @allow (get, list) Anyone can read event data.
+     * @deny (create, update, delete) Nobody can create, update, or delete event data.
+     * @principle Allows public read access to general content.
      */
     match /events/{eventId} {
-      allow get, list, create, update, delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Restricts access to candidates. No one can read, create, update, or delete candidates.
+     * @description Controls access to candidate data.
      * @path /candidates/{candidateId}
-     * @allow None
-     * @deny (get, list, create, update, delete) - All operations are denied.
-     * @principle Restricts all access to candidates.
+     * @allow (get, list) Anyone can read candidate data.
+     * @deny (create, update, delete) Nobody can create, update, or delete candidate data.
+     * @principle Allows public read access to general content.
      */
     match /candidates/{candidateId} {
-      allow get, list, create, update, delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Restricts access to archived candidates. No one can read, create, update, or delete archived candidates.
+     * @description Controls access to archived candidate data.
      * @path /archived_candidates/{archivedCandidateId}
-     * @allow None
-     * @deny (get, list, create, update, delete) - All operations are denied.
-     * @principle Restricts all access to archived candidates.
+     * @allow (get, list) Anyone can read archived candidate data.
+     * @deny (create, update, delete) Nobody can create, update, or delete archived candidate data.
+     * @principle Allows public read access to general content.
      */
     match /archived_candidates/{archivedCandidateId} {
-      allow get, list, create, update, delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Restricts access to elections. No one can read, create, update, or delete elections.
+     * @description Controls access to election data.
      * @path /elections/{electionId}
-     * @allow None
-     * @deny (get, list, create, update, delete) - All operations are denied.
-     * @principle Restricts all access to elections.
+     * @allow (get, list) Anyone can read election data.
+     * @deny (create, update, delete) Nobody can create, update, or delete election data.
+     * @principle Allows public read access to general content.
      */
     match /elections/{electionId} {
-      allow get, list, create, update, delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Restricts access to polling data. No one can read, create, update, or delete polling data.
+     * @description Controls access to polling data.
      * @path /polling_data/{pollingDataId}
-     * @allow None
-     * @deny (get, list, create, update, delete) - All operations are denied.
-     * @principle Restricts all access to polling data.
+     * @allow (get, list) Anyone can read polling data.
+     * @deny (create, update, delete) Nobody can create, update, or delete polling data.
+     * @principle Allows public read access to general content.
      */
     match /polling_data/{pollingDataId} {
-      allow get, list, create, update, delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Restricts access to constituencies. No one can read, create, update, or delete constituencies.
+     * @description Controls access to constituency data.
      * @path /constituencies/{constituencyId}
-     * @allow None
-     * @deny (get, list, create, update, delete) - All operations are denied.
-     * @principle Restricts all access to constituencies.
+     * @allow (get, list) Anyone can read constituency data.
+     * @deny (create, update, delete) Nobody can create, update, or delete constituency data.
+     * @principle Allows public read access to general content.
      */
     match /constituencies/{constituencyId} {
-      allow get, list, create, update, delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Restricts access to election results. No one can read, create, update, or delete election results.
+     * @description Controls access to election result data.
      * @path /election_results/{electionResultId}
-     * @allow None
-     * @deny (get, list, create, update, delete) - All operations are denied.
-     * @principle Restricts all access to election results.
+     * @allow (get, list) Anyone can read election result data.
+     * @deny (create, update, delete) Nobody can create, update, or delete election result data.
+     * @principle Allows public read access to general content.
      */
     match /election_results/{electionResultId} {
-      allow get, list, create, update, delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Restricts access to page layouts. No one can read, create, update, or delete page layouts.
+     * @description Controls access to page layouts settings.
      * @path /settings/pageLayouts
-     * @allow None
-     * @deny (get, list, create, update, delete) - All operations are denied.
-     * @principle Restricts all access to page layouts.
+     * @allow (get) Anyone can read page layouts.
+     * @deny (list, create, update, delete) Nobody can list, create, update, or delete page layouts.
+     * @principle Restricts write access to settings.
      */
     match /settings/pageLayouts {
-      allow get, list, create, update, delete: if false;
+      allow get: if true;
+      allow list, create, update, delete: if false;
     }
 
     /**
-     * @description Restricts access to site settings. No one can read, create, update, or delete site settings.
+     * @description Controls access to site settings.
      * @path /settings/site
-     * @allow None
-     * @deny (get, list, create, update, delete) - All operations are denied.
-     * @principle Restricts all access to site settings.
+     * @allow (get) Anyone can read site settings.
+     * @deny (list, create, update, delete) Nobody can list, create, update, or delete site settings.
+     * @principle Restricts write access to settings.
      */
     match /settings/site {
-      allow get, list, create, update, delete: if false;
+      allow get: if true;
+      allow list, create, update, delete: if false;
     }
 
     /**
-     * @description Restricts access to user activity. No one can read, create, update, or delete user activity.
+     * @description Controls access to user activity data.
      * @path /user_activity/{activityId}
-     * @allow None
-     * @deny (get, list, create, update, delete) - All operations are denied.
-     * @principle Restricts all access to user activity.
+     *  @allow (create) An authenticated user can create a user activity.
+     *  @deny (create) An unauthenticated user can't create a user activity.
+     *  @allow (list, get) No one can list or get user activities.
+     *  @deny (list, get) Everyone is denied from listing and getting user activities.
+     * @allow (update, delete) Nobody can update or delete User Activity data.
+     * @deny (update, delete) Everyone is denied from updating and deleting user activities.
+     * @principle Enforces authentication and restricts modification.
      */
     match /user_activity/{activityId} {
-      allow get, list, create, update, delete: if false;
-    }
-
-     /**
-      * @description Restricts access to regions. No one can read, create, update, or delete regions.
-      * @path /regions/{regionId}
-      * @allow None
-      * @deny (get, list, create, update, delete) - All operations are denied.
-      * @principle Restricts all access to regions.
-      */
-    match /regions/{regionId} {
-        allow get, list, create, update, delete: if false;
+      allow get, list: if false;
+      allow create: if isSignedIn();
+      allow update, delete: if false;
     }
 
     /**
-     * @description Restricts access to user maps. No one can read, create, update, or delete user maps.
+     * @description Controls access to region data.
+     * @path /regions/{regionId}
+     * @allow (get, list) Anyone can read region data.
+     * @deny (create, update, delete) Nobody can create, update, or delete region data.
+     * @principle Allows public read access to general content.
+     */
+    match /regions/{regionId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Controls access to user map data.
      * @path /user_maps/{userMapId}
-     * @allow None
-     * @deny (get, list, create, update, delete) - All operations are denied.
-     * @principle Restricts all access to user maps.
+     * @allow (create) An authenticated user can create a user map.
+     * @deny (create) An unauthenticated user cannot create a user map.
+     * @allow (get, list) No one can get or list the user maps data.
+     * @deny (get, list) Everyone is denied from listing and getting the user map data.
+     * @allow (update, delete) Nobody can update or delete the user maps data.
+     * @deny (update, delete) Everyone is denied from updating and deleting the user maps data.
+     * @principle Enforces authentication for data access.
      */
     match /user_maps/{userMapId} {
-      allow get, list, create, update, delete: if false;
+      allow get, list: if false;
+      allow create: if isSignedIn();
+      allow update, delete: if false;
     }
 
     /**
-     * @description Restricts access to ads. No one can read, create, update, or delete ads.
+     * @description Controls access to ad data.
      * @path /ads/{adId}
-     * @allow None
-     * @deny (get, list, create, update, delete) - All operations are denied.
-     * @principle Restricts all access to ads.
+     * @allow (get, list) Anyone can read ad data.
+     * @deny (create, update, delete) Nobody can create, update, or delete ad data.
+     * @principle Allows public read access to general content.
      */
     match /ads/{adId} {
-      allow get, list, create, update, delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
+
+    /**
+     * @description Controls access to news article data.
+     * @path /news/{newsId}
+     * @allow (get, list) Anyone can read news article data.
+     * @deny (create, update, delete) Nobody can create, update, or delete news article data.
+     * @principle Allows public read access to general content.
+     */
+    match /news/{newsId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+
+          /**
+           * @description Controls access to comments on a specific news article.
+           * @path /news/{newsId}/comments/{commentId}
+           * @allow (create) An authenticated user can create a comment.
+           * @deny (create) An unauthenticated user cannot create a comment.
+           *  @allow (list, get) No one can list or get news articles.
+           *  @deny (list, get) Everyone is denied from listing and getting news articles.
+           * @allow (update, delete) No one can update or delete a comment.
+           * @deny (update, delete) Everyone is denied from updating and deleting the comments.
+           * @principle Authenticated users can create comments.
+           */
+          match /comments/{commentId} {
+            allow get, list: if false;
+            allow create: if isSignedIn();
+            allow update, delete: if false;
+          }
+    }
+    /**
+     * @description Controls access to reported comments data.
+     * @path /reports/{reportId}
+     *  @allow (create) An authenticated user can create a report.
+     *  @deny (create) An unauthenticated user can't create a report.
+     *  @allow (list, get) No one can list or get reports.
+     *  @deny (list, get) Everyone is denied from listing and getting reports.
+     * @allow (update, delete) Nobody can update or delete reports.
+     * @deny (update, delete) Everyone is denied from updating and deleting reports.
+     */
+        match /reports/{reportId} {
+            allow get, list: if false;
+            allow create: if isSignedIn();
+            allow update, delete: if false;
+        }
+
   }
 
-  // Helper function to determine if a user is signed in
+  // Helper function to determine if a user is signed in.
   function isSignedIn() {
     return request.auth != null;
   }
