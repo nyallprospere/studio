@@ -15,8 +15,19 @@ import { CalendarIcon, Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
-import { summarizeArticle } from '@/lib/actions';
+import { summarizeArticle } from '@/ai/flows/summarize-article';
+import { MultiSelect } from '@/components/multi-select';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Check } from 'lucide-react';
 
+const PREDEFINED_TAGS = [
+  'SLP',
+  'UWP',
+  'Allen Chastanet',
+  'Philip J Pierre',
+  'Ernest Hilaire',
+];
 
 const newsArticleSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -25,7 +36,7 @@ const newsArticleSchema = z.object({
   url: z.string().url('A valid URL is required'),
   source: z.string().min(1, 'Source is required'),
   author: z.string().optional(),
-  tags: z.string().optional(),
+  tags: z.array(z.string()).optional(),
   mainImageFile: z.any().optional(),
   galleryImageFiles: z.any().optional(),
   imageUrl: z.string().url().optional().or(z.literal('')),
@@ -43,6 +54,8 @@ type NewsFormProps = {
 
 export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [tagSearch, setTagSearch] = useState('');
+
   const form = useForm<z.infer<typeof newsArticleSchema>>({
     resolver: zodResolver(newsArticleSchema),
     defaultValues: {
@@ -52,7 +65,7 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
       source: '',
       url: '',
       author: '',
-      tags: '',
+      tags: [],
       imageUrl: '',
       galleryImageUrls: [],
       publishedAt: new Date(),
@@ -64,7 +77,7 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
     if (initialData) {
       form.reset({
         ...initialData,
-        tags: initialData.tags?.join(', '),
+        tags: initialData.tags || [],
         publishedAt: initialData.publishedAt ? (initialData.publishedAt as Timestamp).toDate() : new Date(),
         articleDate: initialData.articleDate ? (initialData.articleDate as Timestamp).toDate() : new Date(),
       });
@@ -76,7 +89,7 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
             source: '',
             url: '',
             author: '',
-            tags: '',
+            tags: [],
             imageUrl: '',
             galleryImageUrls: [],
             publishedAt: new Date(),
@@ -92,15 +105,27 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
       return;
     }
     setIsSummarizing(true);
-    const result = await summarizeArticle(content);
-    if(result.summary) {
-        form.setValue('summary', result.summary);
-    } else {
-        // Handle error case
-        form.setError('summary', { type: 'manual', message: result.error || 'Failed to generate summary.' });
+    try {
+        const result = await summarizeArticle(content);
+        form.setValue('summary', result);
+    } catch (e) {
+        form.setError('summary', { type: 'manual', message: 'Failed to generate summary.' });
     }
     setIsSummarizing(false);
   }
+  
+  const allTagOptions = useMemo(() => {
+    const combined = new Set([...PREDEFINED_TAGS, ...(form.watch('tags') || [])]);
+    return Array.from(combined).map(tag => ({ value: tag, label: tag }));
+  }, [form.watch('tags')]);
+
+  const filteredTagOptions = useMemo(() => {
+    if (!tagSearch) return allTagOptions;
+    return allTagOptions.filter(option =>
+      option.label.toLowerCase().includes(tagSearch.toLowerCase())
+    );
+  }, [tagSearch, allTagOptions]);
+
 
   return (
     <Form {...form}>
@@ -245,7 +270,7 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
                         <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
                     </FormControl>
                     {initialData?.imageUrl && (
-                        <a href={initialData.imageUrl} target="_blank" className="text-sm text-blue-500 hover:underline">View current image</a>
+                        <a href={initialData.imageUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 hover:underline">View current image</a>
                     )}
                     <FormMessage />
                     </FormItem>
@@ -287,10 +312,59 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Tags</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., Politics, Economy, SLP" {...field} />
-              </FormControl>
-              <FormDescription>Comma-separated list of tags.</FormDescription>
+              <MultiSelect
+                options={allTagOptions}
+                selected={field.value || []}
+                onChange={field.onChange}
+                placeholder="Select or create tags..."
+              >
+                <CommandInput 
+                    placeholder="Search or create tag..."
+                    value={tagSearch}
+                    onValueChange={setTagSearch}
+                />
+                <ScrollArea className="h-48">
+                    <CommandEmpty>
+                    {tagSearch && !filteredTagOptions.some(opt => opt.label.toLowerCase() === tagSearch.toLowerCase()) ? (
+                        <CommandItem
+                            onSelect={() => {
+                                const newTag = tagSearch.trim();
+                                if (newTag && !field.value?.includes(newTag)) {
+                                    field.onChange([...(field.value || []), newTag]);
+                                }
+                                setTagSearch('');
+                            }}
+                        >
+                            Create "{tagSearch}"
+                        </CommandItem>
+                        ) : 'No results found.'}
+                    </CommandEmpty>
+                  <CommandGroup>
+                    {filteredTagOptions.map((option) => (
+                      <CommandItem
+                        key={option.value}
+                        onSelect={() => {
+                            const newValue = field.value?.includes(option.value)
+                            ? field.value.filter((v) => v !== option.value)
+                            : [...(field.value || []), option.value];
+                            field.onChange(newValue);
+                        }}
+                        className="flex items-center justify-between"
+                      >
+                        <span>{option.label}</span>
+                        <Check
+                          className={cn(
+                            'h-4 w-4',
+                            field.value?.includes(option.value)
+                              ? 'opacity-100'
+                              : 'opacity-0'
+                          )}
+                        />
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </ScrollArea>
+              </MultiSelect>
               <FormMessage />
             </FormItem>
           )}

@@ -67,7 +67,7 @@ export default function AdminNewsPage() {
         ...values, 
         imageUrl,
         galleryImageUrls,
-        tags: values.tags ? values.tags.split(',').map((tag: string) => tag.trim()) : [],
+        tags: values.tags || [],
         articleDate: values.articleDate ? Timestamp.fromDate(values.articleDate) : Timestamp.now(),
       };
       delete articleData.mainImageFile;
