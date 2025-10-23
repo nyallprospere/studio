@@ -43,23 +43,27 @@ const shareSettingsSchema = z.object({
 });
 
 function SharePreview({ title, description }: { title: string; description: string }) {
+    const victoryStatus = "SLP Wins a Decisive Victory"; // Example status
+    const seatCount = "SLP 14, UWP 3"; // Example seat count
+    const dynamicTitle = `I predicted ${victoryStatus}`;
+    const dynamicDescription = `${description} My prediction: ${seatCount}. Click here to make your own!`;
+
     return (
         <div className="mt-6 border p-4 rounded-lg space-y-2 bg-muted/50">
             <h4 className="text-sm font-semibold">Share Preview</h4>
             <div className="border rounded-lg bg-background overflow-hidden">
                 <div className="relative aspect-video bg-gray-200">
                     <Image
-                        src="https://picsum.photos/seed/map-preview/1200/630"
+                        src="https://storage.googleapis.com/proud-booth-422319-e7.appspot.com/maps/share-map-preview.png"
                         alt="Map preview"
                         fill
                         className="object-cover"
-                        data-ai-hint="map"
                     />
                 </div>
                 <div className="p-3 space-y-1">
                     <p className="text-xs text-muted-foreground uppercase">lucianvotes.com</p>
-                    <p className="text-sm font-bold">{title || 'Your Share Title'}</p>
-                    <p className="text-xs text-muted-foreground">{description || 'Your share description will appear here.'}</p>
+                    <p className="text-sm font-bold">{dynamicTitle}</p>
+                    <p className="text-xs text-muted-foreground">{dynamicDescription}</p>
                 </div>
             </div>
         </div>
