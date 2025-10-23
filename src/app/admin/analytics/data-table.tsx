@@ -29,7 +29,7 @@ import { DateRange } from "react-day-picker"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CalendarIcon, Download } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
-import { format } from "date-fns"
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns"
 import { cn } from "@/lib/utils"
 import * as XLSX from 'xlsx';
 
@@ -46,6 +46,7 @@ export function DataTable<TData, TValue>({
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [date, setDate] = React.useState<DateRange | undefined>()
+  const [datePreset, setDatePreset] = React.useState('all');
 
   const table = useReactTable({
     data,
@@ -63,12 +64,46 @@ export function DataTable<TData, TValue>({
   })
   
   React.useEffect(() => {
-    if (date?.from && date.to) {
-        table.getColumn("publishDate")?.setFilterValue([date.from, date.to]);
+    const activationDateColumn = table.getColumn("publishDate");
+    if (date?.from) {
+        const filter = (row: any, columnId: string) => {
+            const rowValue = row.getValue(columnId);
+            if (!rowValue) return false;
+            const rowDate = rowValue.toDate();
+            const from = date.from!;
+            const to = date.to ? new Date(date.to.getTime() + 86400000) : new Date(from.getTime() + 86400000);
+            return rowDate >= from && rowDate < to;
+        }
+        activationDateColumn?.setFilterValue(filter)
     } else {
-        table.getColumn("publishDate")?.setFilterValue(undefined);
+        activationDateColumn?.setFilterValue(undefined)
     }
   }, [date, table]);
+
+
+  const handleDatePresetChange = (preset: string) => {
+      setDatePreset(preset);
+      const now = new Date();
+      switch (preset) {
+          case 'all':
+              setDate(undefined);
+              break;
+          case 'day':
+              setDate({ from: startOfDay(now), to: endOfDay(now) });
+              break;
+          case 'week':
+              setDate({ from: startOfWeek(now), to: endOfWeek(now) });
+              break;
+          case 'month':
+              setDate({ from: startOfMonth(now), to: endOfMonth(now) });
+              break;
+          case 'year':
+              setDate({ from: startOfYear(now), to: endOfYear(now) });
+              break;
+          default:
+              setDate(undefined);
+      }
+  }
 
   const handleExport = (format: 'csv' | 'xlsx') => {
     const tableData = table.getFilteredRowModel().rows.map(row => row.original);
@@ -104,6 +139,18 @@ export function DataTable<TData, TValue>({
                         <SelectItem value="low">Low</SelectItem>
                     </SelectContent>
                 </Select>
+                 <Select value={datePreset} onValueChange={handleDatePresetChange}>
+                    <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Date Range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Time</SelectItem>
+                        <SelectItem value="day">Day</SelectItem>
+                        <SelectItem value="week">Week</SelectItem>
+                        <SelectItem value="month">Month</SelectItem>
+                        <SelectItem value="year">Year</SelectItem>
+                    </SelectContent>
+                </Select>
                  <Popover>
                     <PopoverTrigger asChild>
                         <Button
@@ -125,7 +172,7 @@ export function DataTable<TData, TValue>({
                             format(date.from, "LLL dd, y")
                             )
                         ) : (
-                            <span>Pick a date range</span>
+                            <span>Custom Range</span>
                         )}
                         </Button>
                     </PopoverTrigger>
@@ -135,7 +182,7 @@ export function DataTable<TData, TValue>({
                         mode="range"
                         defaultMonth={date?.from}
                         selected={date}
-                        onSelect={setDate}
+                        onSelect={(range) => { setDate(range); setDatePreset('custom'); }}
                         numberOfMonths={2}
                         />
                     </PopoverContent>
