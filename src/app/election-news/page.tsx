@@ -6,7 +6,7 @@ import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, doc, updateDoc, increment } from 'firebase/firestore';
 import type { NewsArticle } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -40,7 +40,66 @@ function NewsCardSkeleton() {
 }
 
 function NewsCard({ article }: { article: NewsArticle }) {
+    const { firestore } = useFirebase();
+    const { toast } = useToast();
+    const [isLiked, setIsLiked] = useState(false);
+    const [likeCount, setLikeCount] = useState(article.likeCount || 0);
+
+    useEffect(() => {
+        // Check local storage to see if this article has been liked
+        const likedArticles = JSON.parse(localStorage.getItem('likedNewsArticles') || '[]');
+        if (likedArticles.includes(article.id)) {
+            setIsLiked(true);
+        }
+    }, [article.id]);
+
+    const handleLike = async () => {
+        if (!firestore || isLiked) return;
+
+        const articleRef = doc(firestore, 'news', article.id);
+        await updateDoc(articleRef, {
+            likeCount: increment(1)
+        });
+
+        // Store liked article in local storage
+        const likedArticles = JSON.parse(localStorage.getItem('likedNewsArticles') || '[]');
+        likedArticles.push(article.id);
+        localStorage.setItem('likedNewsArticles', JSON.stringify(likedArticles));
+
+        setIsLiked(true);
+        setLikeCount(prev => prev + 1);
+
+        toast({
+            title: "Article Liked!",
+        });
+    };
+
+    const handleShare = async () => {
+        const shareData = {
+            title: article.title,
+            text: article.summary,
+            url: article.url,
+        };
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                // Fallback for browsers that don't support Web Share API
+                // This will trigger the dropdown menu with links
+                return;
+            }
+        } catch (err) {
+            console.error('Share failed:', err);
+        }
+    };
+    
     const articleDate = article.articleDate?.toDate ? article.articleDate.toDate() : new Date();
+
+    const articleUrl = article.url || (typeof window !== 'undefined' ? window.location.href : '');
+    const shareText = `Check out this article: ${article.title}`;
+    const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(articleUrl)}`;
+    const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`;
+
 
     return (
         <Card className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col" id={article.id}>
@@ -61,6 +120,42 @@ function NewsCard({ article }: { article: NewsArticle }) {
                      )}
                     <p className="text-muted-foreground mt-2 flex-grow">{article.summary}</p>
                 </div>
+                <CardFooter className="p-4 bg-muted/50">
+                    <div className="flex w-full justify-between items-center">
+                        <div className="flex gap-4">
+                            <Button variant="ghost" size="sm" onClick={handleLike} disabled={isLiked}>
+                                <ThumbsUp className="mr-2 h-4 w-4" /> 
+                                Like ({likeCount})
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                                <MessageSquare className="mr-2 h-4 w-4" /> 
+                                Comment
+                            </Button>
+                        </div>
+                         <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" onClick={handleShare}>
+                                    <Share2 className="mr-2 h-4 w-4" /> 
+                                    Share
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem asChild>
+                                <Link href={twitterShareUrl} target="_blank" rel="noopener noreferrer">
+                                    <Twitter className="mr-2 h-4 w-4" />
+                                    Share on Twitter
+                                </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                <Link href={facebookShareUrl} target="_blank" rel="noopener noreferrer">
+                                    <Facebook className="mr-2 h-4 w-4" />
+                                    Share on Facebook
+                                </Link>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                </CardFooter>
             </div>
         </Card>
     )
