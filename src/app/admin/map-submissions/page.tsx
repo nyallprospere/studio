@@ -116,60 +116,6 @@ export default function ManageMapSubmissionsPage() {
           title="Manage Map Submissions"
           description="View user-submitted election map predictions."
         />
-        <div className="flex items-center gap-2">
-            <Input 
-                placeholder="Filter by city..."
-                value={cityFilter}
-                onChange={(e) => setCityFilter(e.target.value)}
-                className="w-48"
-            />
-            <Input 
-                placeholder="Filter by country..."
-                value={countryFilter}
-                onChange={(e) => setCountryFilter(e.target.value)}
-                className="w-48"
-            />
-            <Popover>
-                <PopoverTrigger asChild>
-                    <Button
-                    id="date"
-                    variant={"outline"}
-                    className={cn(
-                        "w-[300px] justify-start text-left font-normal",
-                        !date && "text-muted-foreground"
-                    )}
-                    >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date?.from ? (
-                        date.to ? (
-                        <>
-                            {format(date.from, "LLL dd, y")} -{" "}
-                            {format(date.to, "LLL dd, y")}
-                        </>
-                        ) : (
-                        format(date.from, "LLL dd, y")
-                        )
-                    ) : (
-                        <span>Pick a date range</span>
-                    )}
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                    <Calendar
-                    initialFocus
-                    mode="range"
-                    defaultMonth={date?.from}
-                    selected={date}
-                    onSelect={setDate}
-                    numberOfMonths={2}
-                    />
-                </PopoverContent>
-            </Popover>
-            <Button variant="outline" onClick={handleExport}>
-                <Download className="mr-2 h-4 w-4" />
-                Export
-            </Button>
-        </div>
       </div>
       <Card>
         <CardHeader>
@@ -177,6 +123,60 @@ export default function ManageMapSubmissionsPage() {
             <CardDescription>A list of all shared or completed maps from users.</CardDescription>
         </CardHeader>
         <CardContent>
+            <div className="flex items-center gap-2 mb-4">
+                <Input 
+                    placeholder="Filter by city..."
+                    value={cityFilter}
+                    onChange={(e) => setCityFilter(e.target.value)}
+                    className="w-48"
+                />
+                <Input 
+                    placeholder="Filter by country..."
+                    value={countryFilter}
+                    onChange={(e) => setCountryFilter(e.target.value)}
+                    className="w-48"
+                />
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                        id="date"
+                        variant={"outline"}
+                        className={cn(
+                            "w-[300px] justify-start text-left font-normal",
+                            !date && "text-muted-foreground"
+                        )}
+                        >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {date?.from ? (
+                            date.to ? (
+                            <>
+                                {format(date.from, "LLL dd, y")} -{" "}
+                                {format(date.to, "LLL dd, y")}
+                            </>
+                            ) : (
+                            format(date.from, "LLL dd, y")
+                            )
+                        ) : (
+                            <span>Pick a date range</span>
+                        )}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                        <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={date?.from}
+                        selected={date}
+                        onSelect={setDate}
+                        numberOfMonths={2}
+                        />
+                    </PopoverContent>
+                </Popover>
+                <Button variant="outline" onClick={handleExport}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Export
+                </Button>
+            </div>
             {isLoading ? <p>Loading submissions...</p> : (
                 <Table>
                     <TableHeader>
