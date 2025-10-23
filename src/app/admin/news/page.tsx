@@ -54,7 +54,8 @@ export default function AdminNewsPage() {
         ...values, 
         imageUrl,
         tags: values.tags ? values.tags.split(',').map((tag: string) => tag.trim()) : [],
-        publishedAt: values.publishedAt ? Timestamp.fromDate(values.publishedAt) : Timestamp.now(),
+        publishedAt: Timestamp.now(),
+        articleDate: values.articleDate ? Timestamp.fromDate(values.articleDate) : Timestamp.now(),
       };
       delete articleData.imageFile;
       
@@ -168,7 +169,7 @@ export default function AdminNewsPage() {
                           <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
                                 <span>{article.source}</span>
                                 <span>&bull;</span>
-                                <span>{format(article.publishedAt.toDate(), 'PPP')}</span>
+                                <span>{format(article.articleDate ? article.articleDate.toDate() : article.publishedAt.toDate(), 'PPP')}</span>
                                 {article.author && (
                                     <>
                                         <span>&bull;</span>
@@ -226,5 +227,3 @@ export default function AdminNewsPage() {
     </div>
   );
 }
-
-    

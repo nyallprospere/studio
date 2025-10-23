@@ -27,7 +27,7 @@ function NewsCardSkeleton() {
 }
 
 function NewsCard({ article }: { article: NewsArticle }) {
-    const publishedDate = article.publishedAt?.toDate ? article.publishedAt.toDate() : new Date();
+    const publishedDate = article.articleDate?.toDate ? article.articleDate.toDate() : new Date();
 
     return (
         <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -55,7 +55,7 @@ function NewsCard({ article }: { article: NewsArticle }) {
 
 export default function ElectionNewsPage() {
     const { firestore } = useFirebase();
-    const newsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'news'), orderBy('publishedAt', 'desc')) : null, [firestore]);
+    const newsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'news'), orderBy('articleDate', 'desc')) : null, [firestore]);
     const { data: news, isLoading } = useCollection<NewsArticle>(newsQuery);
 
     return (

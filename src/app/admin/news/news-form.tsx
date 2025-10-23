@@ -20,13 +20,14 @@ import { Timestamp } from 'firebase/firestore';
 const newsArticleSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   summary: z.string().min(1, 'Summary is required'),
-  source: z.string().min(1, 'Source is required'),
   url: z.string().url('A valid URL is required'),
+  source: z.string().min(1, 'Source is required'),
   author: z.string().optional(),
   tags: z.string().optional(),
   imageFile: z.any().optional(),
   imageUrl: z.string().url().optional().or(z.literal('')),
   publishedAt: z.date().optional(),
+  articleDate: z.date().optional(),
 });
 
 
@@ -48,6 +49,7 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
       tags: '',
       imageUrl: '',
       publishedAt: new Date(),
+      articleDate: new Date(),
     },
   });
 
@@ -57,6 +59,7 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
         ...initialData,
         tags: initialData.tags?.join(', '),
         publishedAt: initialData.publishedAt ? (initialData.publishedAt as Timestamp).toDate() : new Date(),
+        articleDate: initialData.articleDate ? (initialData.articleDate as Timestamp).toDate() : new Date(),
       });
     } else {
         form.reset({
@@ -68,6 +71,7 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
             tags: '',
             imageUrl: '',
             publishedAt: new Date(),
+            articleDate: new Date(),
         });
     }
   }, [initialData, form]);
@@ -103,6 +107,20 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
           )}
         />
         
+        <FormField
+          control={form.control}
+          name="url"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Article URL</FormLabel>
+              <FormControl>
+                <Input type="url" placeholder="https://example.com/news/article" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
             control={form.control}
@@ -118,71 +136,11 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
             )}
             />
             <FormField
-            control={form.control}
-            name="url"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Article URL</FormLabel>
-                <FormControl>
-                    <Input type="url" placeholder="https://example.com/news/article" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <FormField
                 control={form.control}
-                name="author"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Author</FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., John Doe" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-             <FormField
-                control={form.control}
-                name="tags"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Tags</FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., Politics, Economy, SLP" {...field} />
-                        </FormControl>
-                        <FormDescription>Comma-separated list of tags.</FormDescription>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-                control={form.control}
-                name="imageFile"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Article Image</FormLabel>
-                    <FormControl>
-                        <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
-                    </FormControl>
-                    {initialData?.imageUrl && <a href={initialData.imageUrl} target="_blank" className="text-sm text-blue-500 hover:underline">View current image</a>}
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <FormField
-                control={form.control}
-                name="publishedAt"
+                name="articleDate"
                 render={({ field }) => (
                 <FormItem className="flex flex-col">
-                    <FormLabel>Date Posted</FormLabel>
+                    <FormLabel>Article Date</FormLabel>
                     <Popover>
                     <PopoverTrigger asChild>
                         <FormControl>
@@ -216,6 +174,51 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
                 )}
             />
         </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <FormField
+                control={form.control}
+                name="author"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Author</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., John Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="imageFile"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Article Image</FormLabel>
+                    <FormControl>
+                        <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
+                    </FormControl>
+                    {initialData?.imageUrl && <a href={initialData.imageUrl} target="_blank" className="text-sm text-blue-500 hover:underline">View current image</a>}
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="tags"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tags</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., Politics, Economy, SLP" {...field} />
+              </FormControl>
+              <FormDescription>Comma-separated list of tags.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
         <div className="flex justify-end gap-4 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>
