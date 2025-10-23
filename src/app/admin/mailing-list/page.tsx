@@ -3,15 +3,17 @@
 
 import { useState, useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, orderBy, deleteDoc, doc, addDoc, serverTimestamp, where, getDocs } from 'firebase/firestore';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Trash2, Download } from 'lucide-react';
+import { Trash2, Download, PlusCircle } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
+import { SubscriberForm } from './subscriber-form';
 
 interface MailingListSubscriber {
   id: string;
@@ -23,9 +25,37 @@ interface MailingListSubscriber {
 export default function ManageMailingListPage() {
   const { firestore } = useFirebase();
   const { toast } = useToast();
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   const subscribersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'mailing_list_subscribers'), orderBy('subscribedAt', 'desc')) : null, [firestore]);
   const { data: subscribers, isLoading, error } = useCollection<MailingListSubscriber>(subscribersQuery);
+
+  const handleFormSubmit = async (values: { firstName: string; email: string }) => {
+    if (!firestore) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available.' });
+      return;
+    }
+
+    try {
+        const subscribersCollection = collection(firestore, 'mailing_list_subscribers');
+        const q = query(subscribersCollection, where("email", "==", values.email));
+        const existingSubscriber = await getDocs(q);
+        if (!existingSubscriber.empty) {
+            toast({ variant: 'destructive', title: 'Subscriber Exists', description: 'This email is already on the mailing list.'});
+            return;
+        }
+
+        await addDoc(subscribersCollection, {
+            ...values,
+            subscribedAt: serverTimestamp(),
+        });
+        toast({ title: "Subscriber Added", description: "The new subscriber has been added to the mailing list." });
+        setIsFormOpen(false);
+    } catch (e) {
+        console.error("Error adding subscriber:", e);
+        toast({ variant: "destructive", title: "Error", description: "Could not add subscriber." });
+    }
+  };
 
   const handleDelete = async (subscriberId: string) => {
     if (!firestore) return;
@@ -57,21 +87,36 @@ export default function ManageMailingListPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-start mb-8">
-        <PageHeader
-          title="Manage Mailing List"
-          description="View and manage your mailing list subscribers."
-        />
-        <Button variant="outline" onClick={handleExport} disabled={!subscribers || subscribers.length === 0}>
-          <Download className="mr-2 h-4 w-4" />
-          Export to Excel
-        </Button>
-      </div>
+      <PageHeader
+        title="Manage Mailing List"
+        description="View and manage your mailing list subscribers."
+      />
+      
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Subscriber</DialogTitle>
+          </DialogHeader>
+          <SubscriberForm onSubmit={handleFormSubmit} onCancel={() => setIsFormOpen(false)} />
+        </DialogContent>
+      </Dialog>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Subscribers</CardTitle>
-          <CardDescription>A list of all users subscribed to your mailing list.</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Subscribers</CardTitle>
+            <CardDescription>A list of all users subscribed to your mailing list.</CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={handleExport} disabled={!subscribers || subscribers.length === 0}>
+              <Download className="mr-2 h-4 w-4" />
+              Export to Excel
+            </Button>
+            <Button onClick={() => setIsFormOpen(true)}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Subscriber
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
