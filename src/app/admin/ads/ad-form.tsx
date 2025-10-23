@@ -26,6 +26,7 @@ const adSchema = z.object({
   priority: z.enum(['high', 'medium', 'low']),
   pages: z.array(z.string()).min(1, 'Please select at least one page.'),
   position: z.enum(['top', 'bottom', 'both']),
+  revenuePerClick: z.coerce.number().min(0, "Revenue must be a positive number").optional(),
   isActive: z.boolean().default(true),
 }).refine(data => data.imageUrl || data.imageFile, {
   message: "An image is required. Please upload a file or provide a URL.",
@@ -50,6 +51,7 @@ export function AdForm({ onSubmit, initialData, onCancel }: AdFormProps) {
       position: 'top',
       isActive: true,
       imageUrl: '',
+      revenuePerClick: 0,
     },
   });
 
@@ -74,6 +76,7 @@ export function AdForm({ onSubmit, initialData, onCancel }: AdFormProps) {
             position: 'top',
             isActive: true,
             imageUrl: '',
+            revenuePerClick: 0,
         });
     }
   }, [initialData, form]);
@@ -95,20 +98,36 @@ export function AdForm({ onSubmit, initialData, onCancel }: AdFormProps) {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="url"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Clickable URL</FormLabel>
-              <FormControl>
-                <Input type="url" placeholder="https://example.com/promo" {...field} />
-              </FormControl>
-              <FormDescription>The destination URL when the ad is clicked.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+            control={form.control}
+            name="url"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Clickable URL</FormLabel>
+                <FormControl>
+                    <Input type="url" placeholder="https://example.com/promo" {...field} />
+                </FormControl>
+                <FormDescription>The destination URL when the ad is clicked.</FormDescription>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+                control={form.control}
+                name="revenuePerClick"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Expected Revenue per Click ($)</FormLabel>
+                        <FormControl>
+                            <Input type="number" placeholder="0.50" {...field} step="0.01" />
+                        </FormControl>
+                        <FormDescription>The amount you expect to earn per click.</FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
         <FormField
             control={form.control}
             name="imageFile"

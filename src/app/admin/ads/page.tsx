@@ -145,6 +145,9 @@ export default function AdminAdsPage() {
                       <div>
                         <p className="font-semibold">{ad.name}</p>
                         <a href={ad.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 hover:underline truncate max-w-xs block">{ad.url}</a>
+                         {ad.revenuePerClick !== undefined && (
+                          <p className="text-sm text-muted-foreground">RPC: ${ad.revenuePerClick.toFixed(2)}</p>
+                        )}
                         <div className="flex items-center gap-2 mt-2">
                            {priorityBadge(ad.priority)}
                            <Badge variant={ad.isActive ? "default" : "secondary"} className="capitalize">

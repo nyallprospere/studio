@@ -163,5 +163,6 @@ export interface Ad {
   pages: string[];
   position: 'top' | 'bottom' | 'both';
   isActive: boolean;
+  revenuePerClick?: number;
 }
     
