@@ -79,7 +79,7 @@ export interface Event {
   id: string;
   partyId: string;
   title: string;
-  date: string; // Stored as ISO string or Firestore Timestamp
+  date: string; // Stored as ISO or Firestore Timestamp
   location: string;
   description?: string;
   imageUrl?: string;
@@ -166,5 +166,7 @@ export interface Ad {
   revenuePerClick?: number;
   publishDate?: any;
   unpublishDate?: any;
+  clicks?: number;
+  impressions?: number;
 }
     

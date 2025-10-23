@@ -534,7 +534,9 @@
         "isActive": { "type": "boolean" },
         "revenuePerClick": { "type": "number", "description": "Expected revenue generated per click." },
         "publishDate": { "type": "string", "format": "date-time", "description": "The date the ad should start appearing." },
-        "unpublishDate": { "type": "string", "format": "date-time", "description": "The date the ad should stop appearing." }
+        "unpublishDate": { "type": "string", "format": "date-time", "description": "The date the ad should stop appearing." },
+        "clicks": { "type": "number", "description": "The number of times the ad has been clicked." },
+        "impressions": { "type": "number", "description": "The number of times the ad has been shown." }
       },
       "required": ["name", "imageUrl", "url", "priority", "pages", "position"]
     }
