@@ -1,36 +1,13 @@
-/**
- * @file Firestore Security Rules
- * @description This ruleset enforces a secure access model for the Revolucianize platform.
- *
- * Data Structure:
- * - Top-level collections: `/mailing_list_subscribers`, `/parties`, `/party_logos`, `/events`, `/candidates`,
- *   `/archived_candidates`, `/elections`, `/polling_data`, `/constituencies`, `/election_results`, `/ads`, `/news`, `/regions`, `/user_maps`, `/user_activity`.
- * - Singleton documents under `/settings`: `/settings/pageLayouts`, `/settings/site`.
- * - Subcollection under `/news/{newsId}`: `/news/{newsId}/comments/{commentId}`.
- *
- * Core Philosophy:
- * - Strict Authorization: All write operations are protected by authentication checks.
- * - Public Read Access: Most collections allow public read access (`get`, `list`), with controlled write access.
- * - No User Listing: Listing users is generally disallowed.
- * - Subcollection Access: Secure subcollections by validating parent document access.
- *
- * Key Security Decisions:
- * - Singleton documents under `/settings` are publicly readable but writes are disallowed. This assumes that setting data is populated via the Firebase Console or a secure backend process.
- * - User-generated content in `/user_maps` and `/user_activity` is allowed for all users without restriction.
- * - Read access is generally open for collections.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read mailing list subscribers, but prevents direct client-side creation, updates, or deletion.
-     * @path /databases/{database}/documents/mailing_list_subscribers/{subscriberId}
+     * @description Allows anyone to read mailing list subscribers but restricts writes.
+     * @path /mailing_list_subscribers/{subscriberId}
      * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no client-side writes.
+     * @deny create, update, delete: if false;
+     * @principle Public read, no writes
      */
     match /mailing_list_subscribers/{subscriberId} {
       allow get, list: if true;
@@ -38,13 +15,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read party information, but prevents direct client-side modification.
-     * @path /databases/{database}/documents/parties/{partyId}
+     * @description Allows anyone to read party information but restricts writes.
+     * @path /parties/{partyId}
      * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no client-side writes.
+     * @deny create, update, delete: if false;
+     * @principle Public read, no writes
      */
     match /parties/{partyId} {
       allow get, list: if true;
@@ -52,13 +27,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read party logos, but prevents direct client-side modification.
-     * @path /databases/{database}/documents/party_logos/{partyLogoId}
+     * @description Allows anyone to read party logos but restricts writes.
+     * @path /party_logos/{partyLogoId}
      * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no client-side writes.
+     * @deny create, update, delete: if false;
+     * @principle Public read, no writes
      */
     match /party_logos/{partyLogoId} {
       allow get, list: if true;
@@ -66,13 +39,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read event information, but prevents direct client-side modification.
-     * @path /databases/{database}/documents/events/{eventId}
+     * @description Allows anyone to read event information but restricts writes.
+     * @path /events/{eventId}
      * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no client-side writes.
+     * @deny create, update, delete: if false;
+     * @principle Public read, no writes
      */
     match /events/{eventId} {
       allow get, list: if true;
@@ -80,13 +51,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read candidate information, but prevents direct client-side modification.
-     * @path /databases/{database}/documents/candidates/{candidateId}
+     * @description Allows anyone to read candidate information but restricts writes.
+     * @path /candidates/{candidateId}
      * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no client-side writes.
+     * @deny create, update, delete: if false;
+     * @principle Public read, no writes
      */
     match /candidates/{candidateId} {
       allow get, list: if true;
@@ -94,13 +63,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read archived candidate information, but prevents direct client-side modification.
-     * @path /databases/{database}/documents/archived_candidates/{archivedCandidateId}
+     * @description Allows anyone to read archived candidate information but restricts writes.
+     * @path /archived_candidates/{archivedCandidateId}
      * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no client-side writes.
+     * @deny create, update, delete: if false;
+     * @principle Public read, no writes
      */
     match /archived_candidates/{archivedCandidateId} {
       allow get, list: if true;
@@ -108,13 +75,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read election information, but prevents direct client-side modification.
-     * @path /databases/{database}/documents/elections/{electionId}
+     * @description Allows anyone to read election information but restricts writes.
+     * @path /elections/{electionId}
      * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no client-side writes.
+     * @deny create, update, delete: if false;
+     * @principle Public read, no writes
      */
     match /elections/{electionId} {
       allow get, list: if true;
@@ -122,13 +87,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read polling data, but prevents direct client-side modification.
-     * @path /databases/{database}/documents/polling_data/{pollingDataId}
+     * @description Allows anyone to read polling data but restricts writes.
+     * @path /polling_data/{pollingDataId}
      * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no client-side writes.
+     * @deny create, update, delete: if false;
+     * @principle Public read, no writes
      */
     match /polling_data/{pollingDataId} {
       allow get, list: if true;
@@ -136,13 +99,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read constituency information, but prevents direct client-side modification.
-     * @path /databases/{database}/documents/constituencies/{constituencyId}
+     * @description Allows anyone to read constituency information but restricts writes.
+     * @path /constituencies/{constituencyId}
      * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no client-side writes.
+     * @deny create, update, delete: if false;
+     * @principle Public read, no writes
      */
     match /constituencies/{constituencyId} {
       allow get, list: if true;
@@ -150,13 +111,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read election results, but prevents direct client-side modification.
-     * @path /databases/{database}/documents/election_results/{electionResultId}
+     * @description Allows anyone to read election results but restricts writes.
+     * @path /election_results/{electionResultId}
      * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no client-side writes.
+     * @deny create, update, delete: if false;
+     * @principle Public read, no writes
      */
     match /election_results/{electionResultId} {
       allow get, list: if true;
@@ -164,85 +123,71 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read page layouts, but prevents direct client-side modification.  This is a singleton document.
-     * @path /databases/{database}/documents/settings/pageLayouts
-     * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no client-side writes.
+     * @description Allows anyone to read page layouts but restricts writes.
+     * @path /settings/pageLayouts
+     * @allow get: if true;
+     * @deny list, create, update, delete: if false;
+     * @principle Public read, no writes. Single document.
      */
     match /settings/pageLayouts {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get: if true;
+      allow list, create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read site settings, but prevents direct client-side modification. This is a singleton document.
-     * @path /databases/{database}/documents/settings/site
-     * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no client-side writes.
+     * @description Allows anyone to read site settings but restricts writes.
+     * @path /settings/site
+     * @allow get: if true;
+     * @deny list, create, update, delete: if false;
+     * @principle Public read, no writes. Single document.
      */
     match /settings/site {
-      allow get, list: if true;
-      allow create, update, delete: if false;
-    }
-
-   /**
-     * @description Allows anyone to create and read user activity entries, but prevents direct client-side updates or deletion.
-     * @path /databases/{database}/documents/user_activity/{activityId}
-     * @allow get, list: if true;
-     * @allow create: if true;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public create and read.
-     */
-    match /user_activity/{activityId} {
-        allow get, list: if true;
-        allow create: if true;
-        allow update, delete: if false;
+      allow get: if true;
+      allow list, create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read region information, but prevents direct client-side modification.
-     * @path /databases/{database}/documents/regions/{regionId}
+     * @description Allows anyone to create and read user activity data, but restricts updates and deletes.
+     * @path /user_activity/{activityId}
+     * @allow get, list, create: if true;
+     * @deny update, delete: if false;
+     * @principle Public read, no writes
+     */
+    match /user_activity/{activityId} {
+      allow get, list, create: if true;
+      allow update, delete: if false;
+    }
+
+    /**
+     * @description Allows anyone to read region information but restricts writes.
+     * @path /regions/{regionId}
      * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no client-side writes.
+     * @deny create, update, delete: if false;
+     * @principle Public read, no writes
      */
     match /regions/{regionId} {
       allow get, list: if true;
       allow create, update, delete: if false;
     }
 
-   /**
-     * @description Allows anyone to create and read user maps, but prevents direct client-side updates or deletion.
-     * @path /databases/{database}/documents/user_maps/{userMapId}
-     * @allow get, list: if true;
-     * @allow create: if true;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public create and read.
+    /**
+     * @description Allows anyone to create and read user maps, but restricts updates and deletes.
+     * @path /user_maps/{userMapId}
+     * @allow get, list, create: if true;
+     * @deny update, delete: if false;
+     * @principle Public read, no writes
      */
     match /user_maps/{userMapId} {
-        allow get, list: if true;
-        allow create: if true;
-        allow update, delete: if false;
+      allow get, list, create: if true;
+      allow update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read ads, but prevents direct client-side modification.
-     * @path /databases/{database}/documents/ads/{adId}
+     * @description Allows anyone to read ad information but restricts writes.
+     * @path /ads/{adId}
      * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no client-side writes.
+     * @deny create, update, delete: if false;
+     * @principle Public read, no writes
      */
     match /ads/{adId} {
       allow get, list: if true;
@@ -250,32 +195,40 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read news articles, but prevents direct client-side modification.
-     * @path /databases/{database}/documents/news/{newsId}
+     * @description Allows anyone to read news articles but restricts writes.
+     * @path /news/{newsId}
      * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, no client-side writes.
+     * @deny create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
      */
     match /news/{newsId} {
+      allow get, list: if true;
+      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+    }
+
+    /**
+     * @description Allows anyone to read comments on news articles, but restricts writes.
+     * @path /news/{newsId}/comments/{commentId}
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Public read, no writes
+     */
+    match /news/{newsId}/comments/{commentId} {
       allow get, list: if true;
       allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read comments for a specific news article, but prevents direct client-side modification.
-     * @path /databases/{database}/documents/news/{newsId}/comments/{commentId}
-     * @allow get, list: if true;
-     * @allow create: if true;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Public read, public create, no client-side writes.
+     * @description Denies all access to reports.
+     * @path /reports/{reportId}
+     * @deny get, list, create, update, delete: if true;
+     * @principle No access
      */
-    match /news/{newsId}/comments/{commentId} {
-      allow get, list: if true;
-      allow create: if true;
-      allow update, delete: if false;
+    match /reports/{reportId} {
+      allow get, list, create, update, delete: if false;
+    }
+
+    function isSignedIn() {
+        return request.auth != null;
     }
   }
 }
