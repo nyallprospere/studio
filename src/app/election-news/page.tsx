@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -267,37 +268,35 @@ export default function ElectionNewsPage() {
 
     return (
         <div className="container mx-auto px-4 py-8">
-            <div className="flex justify-between items-start mb-8">
-                <PageHeader
-                    title="Election News"
-                    description="The latest news and analysis on the St. Lucian General Elections."
-                />
-                 <div className="flex flex-wrap items-center justify-end gap-2">
-                     <Select value={datePreset} onValueChange={handleDatePresetChange}>
-                        <SelectTrigger className="w-[120px]">
-                            <SelectValue placeholder="Date Range" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Time</SelectItem>
-                            <SelectItem value="day">Day</SelectItem>
-                            <SelectItem value="week">Week</SelectItem>
-                            <SelectItem value="month">Month</SelectItem>
-                            <SelectItem value="year">Year</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Select value={sortOption} onValueChange={setSortOption}>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Sort by" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="trending">Trending</SelectItem>
-                            <SelectItem value="popular">Most Popular</SelectItem>
-                            <SelectItem value="newest">Newest</SelectItem>
-                            <SelectItem value="oldest">Oldest</SelectItem>
-                            <SelectItem value="likes">Likes</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
+            <PageHeader
+                title="Election News"
+                description="The latest news and analysis on the St. Lucian General Elections."
+            />
+            <div className="flex flex-wrap items-center justify-end gap-2 my-8">
+                <Select value={datePreset} onValueChange={handleDatePresetChange}>
+                <SelectTrigger className="w-[120px]">
+                    <SelectValue placeholder="Date Range" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="day">Day</SelectItem>
+                    <SelectItem value="week">Week</SelectItem>
+                    <SelectItem value="month">Month</SelectItem>
+                    <SelectItem value="year">Year</SelectItem>
+                </SelectContent>
+                </Select>
+                <Select value={sortOption} onValueChange={setSortOption}>
+                <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="trending">Trending</SelectItem>
+                    <SelectItem value="popular">Most Popular</SelectItem>
+                    <SelectItem value="newest">Newest</SelectItem>
+                    <SelectItem value="oldest">Oldest</SelectItem>
+                    <SelectItem value="likes">Likes</SelectItem>
+                </SelectContent>
+                </Select>
             </div>
             {isLoading && visibleNews.length === 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
