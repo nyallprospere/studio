@@ -10,8 +10,8 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import Link from 'next/link';
-import { format } from 'date-fns';
-import { Rss, ThumbsUp, MessageSquare, Share2, Twitter, Facebook, User, Loader2 } from 'lucide-react';
+import { format, subDays } from 'date-fns';
+import { Rss, ThumbsUp, MessageSquare, Share2, Twitter, Facebook, User, Loader2, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -20,6 +20,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { DateRange } from 'react-day-picker';
+import { cn } from '@/lib/utils';
 
 function NewsCardSkeleton() {
     return (
@@ -174,9 +179,62 @@ export default function ElectionNewsPage() {
     const { firestore } = useFirebase();
     const newsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'news'), orderBy('articleDate', 'desc')) : null, [firestore]);
     const { data: news, isLoading } = useCollection<NewsArticle>(newsQuery);
+    
     const [visibleCount, setVisibleCount] = useState(4);
+    const [sortOption, setSortOption] = useState('trending');
+    const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
-    const visibleNews = useMemo(() => news?.slice(0, visibleCount) || [], [news, visibleCount]);
+    const filteredAndSortedNews = useMemo(() => {
+        if (!news) return [];
+
+        let processedNews = [...news];
+
+        // Filter by date range
+        if (dateRange?.from) {
+            processedNews = processedNews.filter(article => {
+                const articleDate = article.articleDate?.toDate ? article.articleDate.toDate() : new Date(0);
+                return articleDate >= dateRange.from!;
+            });
+        }
+        if (dateRange?.to) {
+            const toDate = new Date(dateRange.to);
+            toDate.setHours(23, 59, 59, 999);
+             processedNews = processedNews.filter(article => {
+                const articleDate = article.articleDate?.toDate ? article.articleDate.toDate() : new Date(0);
+                return articleDate <= toDate;
+            });
+        }
+
+        // Sort
+        switch (sortOption) {
+            case 'trending':
+                 const oneWeekAgo = subDays(new Date(), 7);
+                 processedNews.sort((a, b) => {
+                    const scoreA = (a.articleDate?.toDate() > oneWeekAgo) ? (a.likeCount || 0) + 1 : 0;
+                    const scoreB = (b.articleDate?.toDate() > oneWeekAgo) ? (b.likeCount || 0) + 1 : 0;
+                    return scoreB - scoreA;
+                });
+                break;
+            case 'popular':
+                processedNews.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0));
+                break;
+            case 'newest':
+                // Already sorted by newest from Firestore query
+                break;
+            case 'oldest':
+                processedNews.reverse();
+                break;
+            case 'likes':
+                 processedNews.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0));
+                break;
+        }
+
+        return processedNews;
+
+    }, [news, sortOption, dateRange]);
+
+
+    const visibleNews = useMemo(() => filteredAndSortedNews?.slice(0, visibleCount) || [], [filteredAndSortedNews, visibleCount]);
 
     const handleLoadMore = () => {
         setVisibleCount(prevCount => prevCount + 4);
@@ -188,6 +246,57 @@ export default function ElectionNewsPage() {
                 title="Election News"
                 description="The latest news and analysis on the St. Lucian General Elections."
             />
+            <div className="flex flex-wrap items-center gap-4 mb-8">
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                        id="date"
+                        variant={"outline"}
+                        className={cn(
+                            "w-[300px] justify-start text-left font-normal",
+                            !dateRange && "text-muted-foreground"
+                        )}
+                        >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateRange?.from ? (
+                            dateRange.to ? (
+                            <>
+                                {format(dateRange.from, "LLL dd, y")} -{" "}
+                                {format(dateRange.to, "LLL dd, y")}
+                            </>
+                            ) : (
+                            format(dateRange.from, "LLL dd, y")
+                            )
+                        ) : (
+                            <span>Pick a date range</span>
+                        )}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={dateRange?.from}
+                        selected={dateRange}
+                        onSelect={setDateRange}
+                        numberOfMonths={2}
+                        />
+                    </PopoverContent>
+                </Popover>
+                 <Select value={sortOption} onValueChange={setSortOption}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="trending">Trending</SelectItem>
+                        <SelectItem value="popular">Most Popular</SelectItem>
+                        <SelectItem value="newest">Newest</SelectItem>
+                        <SelectItem value="oldest">Oldest</SelectItem>
+                        <SelectItem value="likes">Likes</SelectItem>
+                    </SelectContent>
+                </Select>
+                 {dateRange && <Button variant="ghost" onClick={() => setDateRange(undefined)}>Clear</Button>}
+            </div>
             {isLoading && visibleNews.length === 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <NewsCardSkeleton />
@@ -201,10 +310,10 @@ export default function ElectionNewsPage() {
                         {visibleNews.length > 0 ? (
                             visibleNews.map(article => <NewsCard key={article.id} article={article} />)
                         ) : (
-                            <p className="text-center text-muted-foreground py-16 col-span-full">No news articles found.</p>
+                            <p className="text-center text-muted-foreground py-16 col-span-full">No news articles found for the selected criteria.</p>
                         )}
                     </div>
-                    {news && visibleCount < news.length && (
+                    {filteredAndSortedNews && visibleCount < filteredAndSortedNews.length && (
                         <div className="flex justify-center mt-8">
                             <Button onClick={handleLoadMore}>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin hidden" />
