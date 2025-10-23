@@ -11,18 +11,15 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 export async function summarizeArticle(content: string): Promise<string> {
-    return summarizeArticleFlow(content);
-}
-
-const summarizeArticlePrompt = ai.definePrompt({
-  name: 'summarizeArticlePrompt',
-  input: {schema: z.string()},
-  output: {schema: z.string()},
-  prompt: `You are a skilled news editor. Summarize the following article content into a concise paragraph of 100 words or less.
+    const llmResponse = await ai.generate({
+      prompt: `You are a skilled news editor. Summarize the following article content to 45 characters or less.
   
-  Article Content:
-  {{input}}`,
-});
+      Article Content:
+      ${content}`,
+    });
+
+    return llmResponse.text;
+}
 
 const summarizeArticleFlow = ai.defineFlow(
   {
@@ -32,7 +29,7 @@ const summarizeArticleFlow = ai.defineFlow(
   },
   async (content) => {
     const llmResponse = await ai.generate({
-      prompt: `You are a skilled news editor. Summarize the following article content into a concise paragraph of 100 words or less.
+      prompt: `You are a skilled news editor. Summarize the following article content to 45 characters or less.
   
       Article Content:
       ${content}`,
@@ -41,3 +38,4 @@ const summarizeArticleFlow = ai.defineFlow(
     return llmResponse.text;
   }
 );
+
