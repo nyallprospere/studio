@@ -98,22 +98,39 @@ export function AdForm({ onSubmit, initialData, onCancel }: AdFormProps) {
             </FormItem>
           )}
         />
+        
+        <FormField
+          control={form.control}
+          name="url"
+          render={({ field }) => (
+              <FormItem>
+              <FormLabel>Clickable URL</FormLabel>
+              <FormControl>
+                  <Input type="url" placeholder="https://example.com/promo" {...field} />
+              </FormControl>
+              <FormDescription>The destination URL when the ad is clicked.</FormDescription>
+              <FormMessage />
+              </FormItem>
+          )}
+        />
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
-            control={form.control}
-            name="url"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Clickable URL</FormLabel>
-                <FormControl>
-                    <Input type="url" placeholder="https://example.com/promo" {...field} />
-                </FormControl>
-                <FormDescription>The destination URL when the ad is clicked.</FormDescription>
-                <FormMessage />
-                </FormItem>
-            )}
+                control={form.control}
+                name="imageFile"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Ad Image</FormLabel>
+                    <FormControl>
+                        <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
+                    </FormControl>
+                    <FormDescription>Upload an image for the ad. Recommended size: 728x90 (leaderboard) or 300x250 (medium rectangle).</FormDescription>
+                    {initialData?.imageUrl && <a href={initialData.imageUrl} target="_blank" className="text-sm text-blue-500 hover:underline">View current image</a>}
+                    <FormMessage />
+                    </FormItem>
+                )}
             />
-            <FormField
+             <FormField
                 control={form.control}
                 name="revenuePerClick"
                 render={({ field }) => (
@@ -128,21 +145,7 @@ export function AdForm({ onSubmit, initialData, onCancel }: AdFormProps) {
                 )}
             />
         </div>
-        <FormField
-            control={form.control}
-            name="imageFile"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Ad Image</FormLabel>
-                <FormControl>
-                    <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
-                </FormControl>
-                <FormDescription>Upload an image for the ad. Recommended size: 728x90 (leaderboard) or 300x250 (medium rectangle).</FormDescription>
-                {initialData?.imageUrl && <a href={initialData.imageUrl} target="_blank" className="text-sm text-blue-500 hover:underline">View current image</a>}
-                <FormMessage />
-                </FormItem>
-            )}
-        />
+
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
                 control={form.control}
