@@ -3,23 +3,42 @@
 
 import { useState, useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, updateDoc, where, Timestamp } from 'firebase/firestore';
 import type { Report } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
-import { Check, ShieldAlert } from 'lucide-react';
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
+import { Check, ShieldAlert, Calendar as CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DateRange } from 'react-day-picker';
+
 
 export default function ManageReportsPage() {
   const { firestore } = useFirebase();
   const { toast } = useToast();
 
-  const reportsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'reports'), orderBy('reportedAt', 'desc')) : null, [firestore]);
+  const [date, setDate] = useState<DateRange | undefined>();
+  const [datePreset, setDatePreset] = useState('all');
+
+  const reportsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    let q = query(collection(firestore, 'reports'), orderBy('reportedAt', 'desc'));
+    if (date?.from) {
+      q = query(q, where('reportedAt', '>=', Timestamp.fromDate(date.from)));
+    }
+    if (date?.to) {
+        const toDate = new Date(date.to);
+        toDate.setHours(23, 59, 59, 999);
+        q = query(q, where('reportedAt', '<=', Timestamp.fromDate(toDate)));
+    }
+    return q;
+  }, [firestore, date]);
+  
   const { data: reports, isLoading } = useCollection<Report>(reportsQuery);
 
   const [filter, setFilter] = useState<'pending' | 'resolved'>('pending');
@@ -28,6 +47,30 @@ export default function ManageReportsPage() {
     if (!reports) return [];
     return reports.filter(r => r.status === filter);
   }, [reports, filter]);
+
+  const handleDatePresetChange = (preset: string) => {
+      setDatePreset(preset);
+      const now = new Date();
+      switch (preset) {
+          case 'all':
+              setDate(undefined);
+              break;
+          case 'day':
+              setDate({ from: startOfDay(now), to: endOfDay(now) });
+              break;
+          case 'week':
+              setDate({ from: startOfWeek(now), to: endOfWeek(now) });
+              break;
+          case 'month':
+              setDate({ from: startOfMonth(now), to: endOfMonth(now) });
+              break;
+          case 'year':
+              setDate({ from: startOfYear(now), to: endOfYear(now) });
+              break;
+          default:
+              setDate(undefined);
+      }
+  }
 
   const handleMarkResolved = async (reportId: string) => {
     if (!firestore) return;
@@ -58,6 +101,18 @@ export default function ManageReportsPage() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
+               <Select value={datePreset} onValueChange={handleDatePresetChange}>
+                  <SelectTrigger className="w-[120px]">
+                      <SelectValue placeholder="Date Range" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="all">All Time</SelectItem>
+                      <SelectItem value="day">Day</SelectItem>
+                      <SelectItem value="week">Week</SelectItem>
+                      <SelectItem value="month">Month</SelectItem>
+                      <SelectItem value="year">Year</SelectItem>
+                  </SelectContent>
+              </Select>
               <Button variant={filter === 'pending' ? 'secondary' : 'outline'} onClick={() => setFilter('pending')}>
                 <ShieldAlert className="mr-2 h-4 w-4" />
                 Pending
