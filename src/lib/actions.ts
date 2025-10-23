@@ -126,11 +126,10 @@ export async function subscribeToMailingList(data: { firstName: string; email: s
     }
 }
 
-export async function summarizeArticle(content: string) {
+export async function summarizeArticle(content: string): Promise<{ summary?: string; error?: string; }> {
     try {
-        const result = await summarizeArticleFlow(content);
-        // The flow now returns a string, so we can pass it directly.
-        return { summary: result };
+        const summary = await summarizeArticleFlow(content);
+        return { summary };
     } catch (e) {
         console.error("Error summarizing article:", e);
         return { error: "Could not generate summary." };

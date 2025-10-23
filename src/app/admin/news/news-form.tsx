@@ -77,6 +77,8 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
       articleDate: new Date(),
     },
   });
+  
+  const currentTags = form.watch('tags') || [];
 
   useEffect(() => {
     if (initialData) {
@@ -112,10 +114,12 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
     setIsSummarizing(true);
     try {
         const result = await summarizeArticle(content);
-        if (result) {
-            form.setValue('summary', result);
+        if (result.summary) {
+            form.setValue('summary', result.summary);
+        } else if (result.error) {
+             form.setError('summary', { type: 'manual', message: result.error });
         } else {
-             form.setError('summary', { type: 'manual', message: "Could not generate summary." });
+            form.setError('summary', { type: 'manual', message: 'Could not generate summary.' });
         }
     } catch (e) {
         form.setError('summary', { type: 'manual', message: 'Failed to generate summary.' });
@@ -123,7 +127,6 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
     setIsSummarizing(false);
   }
   
-  const currentTags = form.watch('tags') || [];
   const allTagOptions = useMemo(() => {
     const combined = new Set([...PREDEFINED_TAGS, ...currentTags]);
     return Array.from(combined).map(tag => ({ value: tag, label: tag }));
