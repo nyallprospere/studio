@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import { Space_Grotesk, Inter } from 'next/font/google';
 import './globals.css';
-import { MainLayout } from '@/components/layout/main-layout';
 import { Toaster } from '@/components/ui/toaster';
-import { FirebaseClientProvider } from '@/firebase';
+import { ClientLayout } from './client-layout';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -26,21 +25,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const isAuthPage =
-    // @ts-ignore
-    children?.props?.childProp?.segment === 'login' ||
-    // @ts-ignore
-    children?.props?.childProp?.segment === 'signup';
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${spaceGrotesk.variable} ${inter.variable} font-body antialiased`}
         suppressHydrationWarning={true}
       >
-        <FirebaseClientProvider>
-          {isAuthPage ? children : <MainLayout>{children}</MainLayout>}
-        </FirebaseClientProvider>
+        <ClientLayout>{children}</ClientLayout>
         <Toaster />
       </body>
     </html>

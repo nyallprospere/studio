@@ -38,6 +38,7 @@ export const mainNavItems = [
   { href: '/constituencies', icon: Map, label: 'Constituencies' },
   { href: '/make-your-own', icon: Pencil, label: 'Make Your Own' },
   { href: '/interactive-maps', icon: Map, label: 'Interactive Maps' },
+  { href: '/admin/map-submissions', icon: Share2, label: 'Map Submissions' },
 ];
 
 export const adminNavItems = [
@@ -51,7 +52,6 @@ export const adminNavItems = [
     { href: '/admin/constituencies', icon: FilePlus, label: 'Manage Constituencies' },
     { href: '/admin/regions', icon: Globe, label: 'Manage Regions' },
     { href: '/admin/mailing-list', icon: Mail, label: 'Manage Mailing List' },
-    { href: '/admin/map-submissions', icon: Share2, label: 'Map Submissions' },
     { href: '/admin/ads', icon: Megaphone, label: 'Manage Ads' },
     // { href: '/admin/reports', icon: Flag, label: 'Manage Reports' },
     { href: '/admin/map', icon: Map, label: 'Manage Map' },
