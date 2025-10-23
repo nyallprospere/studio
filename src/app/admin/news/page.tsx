@@ -54,7 +54,6 @@ export default function AdminNewsPage() {
         ...values, 
         imageUrl,
         tags: values.tags ? values.tags.split(',').map((tag: string) => tag.trim()) : [],
-        publishedAt: Timestamp.now(),
         articleDate: values.articleDate ? Timestamp.fromDate(values.articleDate) : Timestamp.now(),
       };
       delete articleData.imageFile;
@@ -62,6 +61,8 @@ export default function AdminNewsPage() {
       const newsColRef = collection(firestore, 'news');
 
       if (editingArticle) {
+        // Don't update publishedAt when editing
+        delete articleData.publishedAt;
         const articleDoc = doc(firestore, 'news', editingArticle.id);
         updateDoc(articleDoc, articleData)
           .catch(error => {
@@ -74,6 +75,7 @@ export default function AdminNewsPage() {
           });
         toast({ title: "Article Updated", description: `The article "${articleData.title}" has been successfully updated.` });
       } else {
+        articleData.publishedAt = Timestamp.now();
         addDoc(newsColRef, articleData)
           .catch(error => {
             const contextualError = new FirestorePermissionError({

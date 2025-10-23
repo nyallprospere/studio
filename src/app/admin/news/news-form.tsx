@@ -204,6 +204,13 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
                 )}
             />
         </div>
+        
+        {initialData && form.getValues('publishedAt') && (
+            <FormItem>
+                <FormLabel>Posted on LucianVotes</FormLabel>
+                <p className="text-sm text-muted-foreground">{format(form.getValues('publishedAt') as Date, 'PPP')}</p>
+            </FormItem>
+        )}
 
         <FormField
           control={form.control}
@@ -230,5 +237,3 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
     </Form>
   );
 }
-
-    
