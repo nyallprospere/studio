@@ -1,369 +1,231 @@
 /**
- * @fileoverview Firestore Security Rules for the political data application.
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a public-read, restricted-write model for most data,
+ *  with an emphasis on allowing only authenticated users to create, update, or delete content.
+ *  It prioritizes a flexible data structure, foregoing strict schema validation for rapid prototyping.
  *
- * Core Philosophy:
- * This ruleset prioritizes secure data access with an emphasis on explicit authorization.
- * It allows public read access to most collections but restricts write access to prevent unauthorized data modification.
- * Strict ownership is enforced where applicable.
+ * @dataStructure
+ *  - Top-level collections store core application data (parties, candidates, events, etc.).
+ *  - `/settings` collection contains singleton documents for global configuration.
+ *  - No user-specific data is stored under `/users/{userId}` paths.
  *
- * Data Structure:
- * The Firestore database contains collections for parties, candidates, constituencies, elections,
- * polling data, election results, site settings, user activity, regions, and user-created maps.
+ * @keySecurityDecisions
+ *  - Mailing list subscribers can be listed by anyone.
+ *  - All other top-level collections are publicly readable.
+ *  - Writes to all collections are restricted to authenticated users.
+ *  - No user listing is allowed.
  *
- * Key Security Decisions:
- * - Public read access is granted for collections like parties, candidates, constituencies, and elections to allow
- *   unauthenticated users to view the data.
- * - Write access to these collections is generally denied to prevent unauthorized modifications.
- * - The `settings` documents are read-only.
- * - User-specific data like `user_activity` and `user_maps` are stored with document-level ownership.
- * - Listing of the `mailing_list_subscribers` collection is denied for privacy.
+ * @denormalizationForAuthorization
+ *  - The ruleset assumes that documents in public-read collections do NOT contain ownership
+ *    fields. If ownership is required, the schema MUST be updated to include `ownerId` or `authorId`
+ *    and the rules MUST be adjusted accordingly.
  *
- * Denormalization for Authorization:
- * - Not explicitly used in this initial ruleset, but can be applied in the future. For instance, to secure a subcollection of `/parties/{partyId}`,
- *   the role of the current user could be denormalized onto the party document itself (e.g., `parties/{partyId}.members[request.auth.uid] == 'admin'`).
- *
- * Structural Segregation:
- * - The `user_activity` collection implicitly segregates public and private data by storing activity logs separately
- *   from core political data.
+ * @structuralSegregation
+ *  - There is no segregation of public and private content. All collections are treated as public for reads
+ *    but secured against unauthorized writes.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read mailing list subscribers, but prevents listing.
+     * @description Anyone can read and list the emails of mailing list subscribers.
      * @path /mailing_list_subscribers/{subscriberId}
-     * @allow (get) Signed-in user can retrieve a specific subscriber's information if the document exists.
-     * @deny (get) N/A
-     * @allow (list) Never allowed.
-     * @deny (list) Any user attempting to list the collection.
-     * @allow (create) Not allowed.
-     * @deny (create) Any user attempting to create a new subscriber.
-     * @allow (update) Not allowed.
-     * @deny (update) Any user attempting to update a subscriber.
-     * @allow (delete) Not allowed.
-     * @deny (delete) Any user attempting to delete a subscriber.
-     * @principle Protects subscriber privacy by preventing listing and restricts write operations.
+     * @allow (get, list) Unauthenticated user can read a mailing list subscriber
+     * @deny (create, update, delete) Unauthenticated user cannot modify mailing list subscribers
+     * @principle Public read access for mailing list.
      */
     match /mailing_list_subscribers/{subscriberId} {
-      allow get: if true;
-      allow list: if false;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read parties, but restricts modifications.
+     * @description Stores information about political parties. The `partyId` is used as the document ID.
      * @path /parties/{partyId}
-     * @allow (get) Any user can retrieve a party's information.
-     * @deny (get) N/A
-     * @allow (list) Any user can list parties.
-     * @deny (list) N/A
-     * @allow (create) Not allowed.
-     * @deny (create) Any user attempting to create a new party.
-     * @allow (update) Not allowed.
-     * @deny (update) Any user attempting to update a party.
-     * @allow (delete) Not allowed.
-     * @deny (delete) Any user attempting to delete a party.
-     * @principle Allows public access to party information while preventing unauthorized modifications.
+     * @allow (get, list) Unauthenticated user can read party information
+     * @allow (create, update, delete) Authenticated user can create/update/delete party information
+     * @deny (create, update, delete) Unauthenticated user cannot modify party information
+     * @principle Public read, authenticated write for party information.
      */
     match /parties/{partyId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read party logos, but restricts modifications.
+     * @description Stores election-specific logos for parties.
      * @path /party_logos/{partyLogoId}
-     * @allow (get) Any user can retrieve a party logo.
-     * @deny (get) N/A
-     * @allow (list) Any user can list party logos.
-     * @deny (list) N/A
-     * @allow (create) Not allowed.
-     * @deny (create) Any user attempting to create a new party logo.
-     * @allow (update) Not allowed.
-     * @deny (update) Any user attempting to update a party logo.
-     * @allow (delete) Not allowed.
-     * @deny (delete) Any user attempting to delete a party logo.
-     * @principle Allows public access to party logos while preventing unauthorized modifications.
+     * @allow (get, list) Unauthenticated user can read party logos
+     * @allow (create, update, delete) Authenticated user can create/update/delete party logos
+     * @deny (create, update, delete) Unauthenticated user cannot modify party logos
+     * @principle Public read, authenticated write for party logos.
      */
     match /party_logos/{partyLogoId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read events, but restricts modifications.
+     * @description Stores information about political events. The `eventId` is used as the document ID.
      * @path /events/{eventId}
-     * @allow (get) Any user can retrieve an event's information.
-     * @deny (get) N/A
-     * @allow (list) Any user can list events.
-     * @deny (list) N/A
-     * @allow (create) Not allowed.
-     * @deny (create) Any user attempting to create a new event.
-     * @allow (update) Not allowed.
-     * @deny (update) Any user attempting to update an event.
-     * @allow (delete) Not allowed.
-     * @deny (delete) Any user attempting to delete an event.
-     * @principle Allows public access to event information while preventing unauthorized modifications.
+     * @allow (get, list) Unauthenticated user can read event information
+     * @allow (create, update, delete) Authenticated user can create/update/delete event information
+     * @deny (create, update, delete) Unauthenticated user cannot modify event information
+     * @principle Public read, authenticated write for event information.
      */
     match /events/{eventId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read candidates, but restricts modifications.
+     * @description Stores information about candidates. The `candidateId` is used as the document ID.
      * @path /candidates/{candidateId}
-     * @allow (get) Any user can retrieve a candidate's information.
-     * @deny (get) N/A
-     * @allow (list) Any user can list candidates.
-     * @deny (list) N/A
-     * @allow (create) Not allowed.
-     * @deny (create) Any user attempting to create a new candidate.
-     * @allow (update) Not allowed.
-     * @deny (update) Any user attempting to update a candidate.
-     * @allow (delete) Not allowed.
-     * @deny (delete) Any user attempting to delete a candidate.
-     * @principle Allows public access to candidate information while preventing unauthorized modifications.
+     * @allow (get, list) Unauthenticated user can read candidate information
+     * @allow (create, update, delete) Authenticated user can create/update/delete candidate information
+     * @deny (create, update, delete) Unauthenticated user cannot modify candidate information
+     * @principle Public read, authenticated write for candidate information.
      */
     match /candidates/{candidateId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read archived candidates, but restricts modifications.
+     * @description Stores archived candidate data from previous election cycles. The `archivedCandidateId` is used as the document ID.
      * @path /archived_candidates/{archivedCandidateId}
-     * @allow (get) Any user can retrieve an archived candidate's information.
-     * @deny (get) N/A
-     * @allow (list) Any user can list archived candidates.
-     * @deny (list) N/A
-     * @allow (create) Not allowed.
-     * @deny (create) Any user attempting to create a new archived candidate.
-     * @allow (update) Not allowed.
-     * @deny (update) Any user attempting to update an archived candidate.
-     * @allow (delete) Not allowed.
-     * @deny (delete) Any user attempting to delete an archived candidate.
-     * @principle Allows public access to archived candidate information while preventing unauthorized modifications.
+     * @allow (get, list) Unauthenticated user can read archived candidate information
+     * @allow (create, update, delete) Authenticated user can create/update/delete archived candidate information
+     * @deny (create, update, delete) Unauthenticated user cannot modify archived candidate information
+     * @principle Public read, authenticated write for archived candidate information.
      */
     match /archived_candidates/{archivedCandidateId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read elections, but restricts modifications.
+     * @description Stores information about elections. The `electionId` is used as the document ID.
      * @path /elections/{electionId}
-     * @allow (get) Any user can retrieve an election's information.
-     * @deny (get) N/A
-     * @allow (list) Any user can list elections.
-     * @deny (list) N/A
-     * @allow (create) Not allowed.
-     * @deny (create) Any user attempting to create a new election.
-     * @allow (update) Not allowed.
-     * @deny (update) Any user attempting to update an election.
-     * @allow (delete) Not allowed.
-     * @deny (delete) Any user attempting to delete an election.
-     * @principle Allows public access to election information while preventing unauthorized modifications.
+     * @allow (get, list) Unauthenticated user can read election information
+     * @allow (create, update, delete) Authenticated user can create/update/delete election information
+     * @deny (create, update, delete) Unauthenticated user cannot modify election information
+     * @principle Public read, authenticated write for election information.
      */
     match /elections/{electionId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read polling data, but restricts modifications.
+     * @description Stores polling data for elections. The `pollingDataId` is used as the document ID.
      * @path /polling_data/{pollingDataId}
-     * @allow (get) Any user can retrieve polling data.
-     * @deny (get) N/A
-     * @allow (list) Any user can list polling data.
-     * @deny (list) N/A
-     * @allow (create) Not allowed.
-     * @deny (create) Any user attempting to create new polling data.
-     * @allow (update) Not allowed.
-     * @deny (update) Any user attempting to update polling data.
-     * @allow (delete) Not allowed.
-     * @deny (delete) Any user attempting to delete polling data.
-     * @principle Allows public access to polling data while preventing unauthorized modifications.
+     * @allow (get, list) Unauthenticated user can read polling data
+     * @allow (create, update, delete) Authenticated user can create/update/delete polling data
+     * @deny (create, update, delete) Unauthenticated user cannot modify polling data
+     * @principle Public read, authenticated write for polling data.
      */
     match /polling_data/{pollingDataId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read constituencies, but restricts modifications.
+     * @description Stores information about constituencies. The `constituencyId` is used as the document ID.
      * @path /constituencies/{constituencyId}
-     * @allow (get) Any user can retrieve constituency information.
-     * @deny (get) N/A
-     * @allow (list) Any user can list constituencies.
-     * @deny (list) N/A
-     * @allow (create) Not allowed.
-     * @deny (create) Any user attempting to create a new constituency.
-     * @allow (update) Not allowed.
-     * @deny (update) Any user attempting to update a constituency.
-     * @allow (delete) Not allowed.
-     * @deny (delete) Any user attempting to delete a constituency.
-     * @principle Allows public access to constituency information while preventing unauthorized modifications.
+     * @allow (get, list) Unauthenticated user can read constituency information
+     * @allow (create, update, delete) Authenticated user can create/update/delete constituency information
+     * @deny (create, update, delete) Unauthenticated user cannot modify constituency information
+     * @principle Public read, authenticated write for constituency information.
      */
     match /constituencies/{constituencyId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read election results, but restricts modifications.
+     * @description Stores election results. The `electionResultId` is used as the document ID.
      * @path /election_results/{electionResultId}
-     * @allow (get) Any user can retrieve election results.
-     * @deny (get) N/A
-     * @allow (list) Any user can list election results.
-     * @deny (list) N/A
-     * @allow (create) Not allowed.
-     * @deny (create) Any user attempting to create new election results.
-     * @allow (update) Not allowed.
-     * @deny (update) Any user attempting to update election results.
-     * @allow (delete) Not allowed.
-     * @deny (delete) Any user attempting to delete election results.
-     * @principle Allows public access to election results while preventing unauthorized modifications.
+     * @allow (get, list) Unauthenticated user can read election results
+     * @allow (create, update, delete) Authenticated user can create/update/delete election results
+     * @deny (create, update, delete) Unauthenticated user cannot modify election results
+     * @principle Public read, authenticated write for election results.
      */
     match /election_results/{electionResultId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Disallows all operations on page layouts.
+     * @description Stores user-defined layouts for various pages. This is a single document.
      * @path /settings/pageLayouts
-     * @allow (get) Not allowed
-     * @deny (get) Any user attempting to get the page layouts.
-     * @allow (list) Not allowed
-     * @deny (list) Any user attempting to list the page layouts.
-     * @allow (create) Not allowed
-     * @deny (create) Any user attempting to create page layouts.
-     * @allow (update) Not allowed
-     * @deny (update) Any user attempting to update page layouts.
-     * @allow (delete) Not allowed
-     * @deny (delete) Any user attempting to delete page layouts.
-     * @principle Restricts all access to page layouts.
+     * @allow (get) Unauthenticated user can read page layouts
+     * @allow (create, update, delete) Authenticated user can create/update/delete page layouts
+     * @deny (create, update, delete) Unauthenticated user cannot modify page layouts
+     * @principle Public read, authenticated write for page layouts.
      */
     match /settings/pageLayouts {
-      allow get, list: if false;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get: if true;
+      allow list: if false;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Disallows all operations on site settings.
+     * @description Stores global site settings. This is a single document.
      * @path /settings/site
-     * @allow (get) Not allowed.
-     * @deny (get) Any user attempting to get the site settings.
-     * @allow (list) Not allowed.
-     * @deny (list) Any user attempting to list the site settings.
-     * @allow (create) Not allowed.
-     * @deny (create) Any user attempting to create site settings.
-     * @allow (update) Not allowed.
-     * @deny (update) Any user attempting to update site settings.
-     * @allow (delete) Not allowed.
-     * @deny (delete) Any user attempting to delete site settings.
-     * @principle Restricts all access to site settings.
+     * @allow (get) Unauthenticated user can read site settings
+     * @allow (create, update, delete) Authenticated user can create/update/delete site settings
+     * @deny (create, update, delete) Unauthenticated user cannot modify site settings
+     * @principle Public read, authenticated write for site settings.
      */
     match /settings/site {
-      allow get, list: if false;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get: if true;
+      allow list: if false;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows a user to read, create, update, and delete their own activity logs.
+     * @description Stores user activity events, such as page visits. The `activityId` is used as the document ID.
      * @path /user_activity/{activityId}
-     * @allow (get) A user can get their own activity log.
-     * @deny (get) A user cannot get another user's activity log.
-     * @allow (list) A user can list their own activity logs.
-     * @deny (list) A user cannot list another user's activity logs.
-     * @allow (create) A user can create their own activity log.
-     * @deny (create) A user cannot create an activity log with a mismatched userId.
-     * @allow (update) A user can update their own activity log.
-     * @deny (update) A user cannot update another user's activity log.
-     * @allow (delete) A user can delete their own activity log.
-     * @deny (delete) A user cannot delete another user's activity log.
-     * @principle Enforces document ownership for user activity logs.
+     * @allow (get, list) Unauthenticated user can read user activity
+     * @allow (create) Authenticated user can create user activity
+     * @deny (update, delete) User activity cannot be updated or deleted
+     * @principle Public read, authenticated create, no update or delete for user activity.
      */
     match /user_activity/{activityId} {
-      allow get, list: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow get, list: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && request.auth.uid == resource.data.userId;
-      allow delete: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read regions, but restricts modifications.
+     * @description Stores information about regions. The `regionId` is used as the document ID.
      * @path /regions/{regionId}
-     * @allow (get) Any user can retrieve region information.
-     * @deny (get) N/A
-     * @allow (list) Any user can list regions.
-     * @deny (list) N/A
-     * @allow (create) Not allowed.
-     * @deny (create) Any user attempting to create a new region.
-     * @allow (update) Not allowed.
-     * @deny (update) Any user attempting to update a region.
-     * @allow (delete) Not allowed.
-     * @deny (delete) Any user attempting to delete a region.
-     * @principle Allows public access to region information while preventing unauthorized modifications.
+     * @allow (get, list) Unauthenticated user can read region information
+     * @allow (create, update, delete) Authenticated user can create/update/delete region information
+     * @deny (create, update, delete) Unauthenticated user cannot modify region information
+     * @principle Public read, authenticated write for region information.
      */
     match /regions/{regionId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if isSignedIn();
     }
 
-      /**
-       * @description Allows a user to read, create, update, and delete their own user maps.
-       * @path /user_maps/{userMapId}
-       * @allow (get) A user can get their own user map.
-       * @deny (get) A user cannot get another user's user map.
-       * @allow (list) A user can list their own user maps.
-       * @deny (list) A user cannot list another user's user maps.
-       * @allow (create) A user can create their own user map.
-       * @deny (create) A user cannot create a user map with a mismatched userId.
-       * @allow (update) A user can update their own user map.
-       * @deny (update) A user cannot update another user's user map.
-       * @allow (delete) A user can delete their own user map.
-       * @deny (delete) A user cannot delete another user's user map.
-       * @principle Enforces document ownership for user maps.
-       */
-      match /user_maps/{userMapId} {
-        allow get, list: if isSignedIn();
-        allow create: if isSignedIn();
-        allow update: if isSignedIn();
-        allow delete: if isSignedIn();
-      }
-
+    /**
+     * @description Stores user-created prediction maps.
+     * @path /user_maps/{userMapId}
+     * @allow (get, list) Unauthenticated user can read user maps
+     * @allow (create, update, delete) Authenticated user can create/update/delete user maps
+     * @deny (create, update, delete) Unauthenticated user cannot modify user maps
+     * @principle Public read, authenticated write for user maps.
+     */
+    match /user_maps/{userMapId} {
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
+    }
   }
 
-  // Helper function to determine if a user is signed in
   function isSignedIn() {
     return request.auth != null;
   }
