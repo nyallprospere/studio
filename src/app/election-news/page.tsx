@@ -173,13 +173,13 @@ export default function ElectionNewsPage() {
                 description="The latest news and analysis on the St. Lucian General Elections."
             />
             {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <NewsCardSkeleton />
                     <NewsCardSkeleton />
                     <NewsCardSkeleton />
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {news && news.length > 0 ? (
                         news.map(article => <NewsCard key={article.id} article={article} />)
                     ) : (
