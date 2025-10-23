@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -20,6 +21,8 @@ import { MultiSelect } from '@/components/multi-select';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Check } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { X } from 'lucide-react';
 
 const PREDEFINED_TAGS = [
   'SLP',
@@ -115,7 +118,8 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
   }
   
   const allTagOptions = useMemo(() => {
-    const combined = new Set([...PREDEFINED_TAGS, ...(form.watch('tags') || [])]);
+    const currentTags = form.watch('tags') || [];
+    const combined = new Set([...PREDEFINED_TAGS, ...currentTags]);
     return Array.from(combined).map(tag => ({ value: tag, label: tag }));
   }, [form.watch('tags')]);
 
@@ -366,6 +370,22 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
                 </ScrollArea>
               </MultiSelect>
               <FormMessage />
+              {field.value && field.value.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                    {field.value.map(tag => (
+                        <Badge key={tag} variant="secondary">
+                            {tag}
+                            <button
+                                type="button"
+                                className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                onClick={() => field.onChange(field.value?.filter(v => v !== tag))}
+                            >
+                                <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                            </button>
+                        </Badge>
+                    ))}
+                </div>
+              )}
             </FormItem>
           )}
         />
