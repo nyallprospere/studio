@@ -1,5 +1,3 @@
-
-
 {
   "entities": {
     "MailingListSubscriber": {
@@ -23,7 +21,10 @@
           "description": "The date and time the user subscribed."
         }
       },
-      "required": ["email", "subscribedAt"]
+      "required": [
+        "email",
+        "subscribedAt"
+      ]
     },
     "Candidate": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -171,12 +172,26 @@
       "type": "object",
       "description": "Represents a party's logo for a specific election.",
       "properties": {
-        "partyId": { "type": "string" },
-        "electionId": { "type": "string" },
-        "logoUrl": { "type": "string", "format": "uri" },
-        "expandedLogoUrl": { "type": "string", "format": "uri" }
+        "partyId": {
+          "type": "string"
+        },
+        "electionId": {
+          "type": "string"
+        },
+        "logoUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "expandedLogoUrl": {
+          "type": "string",
+          "format": "uri"
+        }
       },
-      "required": ["partyId", "electionId", "logoUrl"]
+      "required": [
+        "partyId",
+        "electionId",
+        "logoUrl"
+      ]
     },
     "Event": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -388,17 +403,29 @@
         "constituenciesPage": {
           "type": "object",
           "properties": {
-            "pageTitle": { "type": "string" },
-            "pageDescription": { "type": "string" },
-            "seatCountTitle": { "type": "string" },
-            "seatCountDescription": { "type": "string" },
+            "pageTitle": {
+              "type": "string"
+            },
+            "pageDescription": {
+              "type": "string"
+            },
+            "seatCountTitle": {
+              "type": "string"
+            },
+            "seatCountDescription": {
+              "type": "string"
+            },
             "sections": {
               "type": "array",
-              "items": { "type": "string" }
+              "items": {
+                "type": "string"
+              }
             },
             "sectionSpans": {
               "type": "object",
-              "additionalProperties": { "type": "number" }
+              "additionalProperties": {
+                "type": "number"
+              }
             }
           }
         }
@@ -416,12 +443,12 @@
           "description": "URL of the main constituency map image."
         },
         "defaultShareTitle": {
-            "type": "string",
-            "description": "Default title for social media sharing."
+          "type": "string",
+          "description": "Default title for social media sharing."
         },
         "defaultShareDescription": {
-            "type": "string",
-            "description": "Default description for social media sharing."
+          "type": "string",
+          "description": "Default description for social media sharing."
         }
       }
     },
@@ -461,7 +488,10 @@
           "description": "The path of the page visited."
         }
       },
-      "required": ["timestamp", "pageVisited"]
+      "required": [
+        "timestamp",
+        "pageVisited"
+      ]
     },
     "Region": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -485,38 +515,56 @@
           }
         }
       },
-      "required": ["id", "name"]
+      "required": [
+        "id",
+        "name"
+      ]
     },
     "UserMap": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "title": "User Map",
-        "type": "object",
-        "description": "A user-created prediction map.",
-        "properties": {
-            "id": { "type": "string" },
-            "createdAt": { "type": "string", "format": "date-time" },
-            "mapData": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "constituencyId": { "type": "string" },
-                        "politicalLeaning": { "type": "string" }
-                    },
-                    "required": ["constituencyId", "politicalLeaning"]
-                }
-            },
-            "ipAddress": {
-                "type": "string"
-            },
-            "city": {
-                "type": "string"
-            },
-            "country": {
-                "type": "string"
-            }
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User Map",
+      "type": "object",
+      "description": "A user-created prediction map.",
+      "properties": {
+        "id": {
+          "type": "string"
         },
-        "required": ["createdAt", "mapData"]
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "mapData": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "constituencyId": {
+                "type": "string"
+              },
+              "politicalLeaning": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "constituencyId",
+              "politicalLeaning"
+            ]
+          }
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "createdAt",
+        "mapData"
+      ]
     },
     "Ad": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -524,21 +572,115 @@
       "type": "object",
       "description": "Represents an advertisement listing.",
       "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "imageUrl": { "type": "string", "format": "uri" },
-        "url": { "type": "string", "format": "uri" },
-        "priority": { "type": "string", "enum": ["high", "medium", "low"] },
-        "pages": { "type": "array", "items": { "type": "string" } },
-        "position": { "type": "string", "enum": ["top", "bottom", "both"] },
-        "isActive": { "type": "boolean" },
-        "revenuePerClick": { "type": "number", "description": "Expected revenue generated per click." },
-        "publishDate": { "type": "string", "format": "date-time", "description": "The date the ad should start appearing." },
-        "unpublishDate": { "type": "string", "format": "date-time", "description": "The date the ad should stop appearing." },
-        "clicks": { "type": "number", "description": "The number of times the ad has been clicked." },
-        "impressions": { "type": "number", "description": "The number of times the ad has been shown." }
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "imageUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "priority": {
+          "type": "string",
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ]
+        },
+        "pages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "position": {
+          "type": "string",
+          "enum": [
+            "top",
+            "bottom",
+            "both"
+          ]
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "revenuePerClick": {
+          "type": "number",
+          "description": "Expected revenue generated per click."
+        },
+        "publishDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date the ad should start appearing."
+        },
+        "unpublishDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date the ad should stop appearing."
+        },
+        "clicks": {
+          "type": "number",
+          "description": "The number of times the ad has been clicked."
+        },
+        "impressions": {
+          "type": "number",
+          "description": "The number of times the ad has been shown."
+        }
       },
-      "required": ["name", "imageUrl", "url", "priority", "pages", "position"]
+      "required": [
+        "name",
+        "imageUrl",
+        "url",
+        "priority",
+        "pages",
+        "position"
+      ]
+    },
+    "NewsArticle": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "News Article",
+      "type": "object",
+      "description": "Represents a news article.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "imageUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "title",
+        "summary",
+        "source",
+        "url",
+        "publishedAt"
+      ]
     }
   },
   "auth": {
@@ -642,6 +784,12 @@
         "$ref": "#/entities/Ad"
       },
       "description": "Stores ad listings for the website."
+    },
+    "/news/{newsId}": {
+      "schema": {
+        "$ref": "#/entities/NewsArticle"
+      },
+      "description": "Stores news articles for the website."
     }
   }
 }

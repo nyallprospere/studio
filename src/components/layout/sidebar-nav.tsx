@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -15,7 +14,7 @@ import {
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, LogIn, LogOut, UserPlus, FilePlus, Calendar, Pencil, Archive, Cat, ImageIcon, Globe, Share2, Mail, Megaphone, LineChart } from 'lucide-react';
+import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, LogIn, LogOut, UserPlus, FilePlus, Calendar, Pencil, Archive, Cat, ImageIcon, Globe, Share2, Mail, Megaphone, LineChart, Rss } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useUser, useAuth, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -33,16 +32,17 @@ export const mainNavItems = [
   { href: '/', icon: Home, label: 'Dashboard' },
   { href: '/polls', icon: BarChart3, label: 'Polls' },
   { href: '/predictions', icon: TrendingUp, label: 'Predictions' },
+  { href: '/election-news', icon: Rss, label: 'Election News' },
   { href: '/constituencies', icon: Map, label: 'Constituencies' },
   { href: '/make-your-own', icon: Pencil, label: 'Make Your Own' },
   { href: '/interactive-maps', icon: Map, label: 'Interactive Maps' },
-  { href: '/pokemon', icon: Cat, label: 'Pokemon' },
 ];
 
 export const adminNavItems = [
     { href: '/admin/elections', icon: Vote, label: 'Manage Elections' },
     { href: '/admin/parties', icon: Shield, label: 'Manage Parties' },
     { href: '/admin/logos', icon: ImageIcon, label: 'Manage Logos' },
+    { href: '/admin/news', icon: Rss, label: 'Manage News' },
     // { href: '/admin/candidates', icon: Users, label: 'Manage Candidates' },
     { href: '/admin/events', icon: Calendar, label: 'Manage Events'},
     { href: '/admin/results', icon: Landmark, label: 'Manage Election Results' },

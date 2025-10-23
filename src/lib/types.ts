@@ -169,4 +169,14 @@ export interface Ad {
   clicks?: number;
   impressions?: number;
 }
+
+export interface NewsArticle {
+    id: string;
+    title: string;
+    summary: string;
+    source: string;
+    url: string;
+    imageUrl?: string;
+    publishedAt: any;
+}
     

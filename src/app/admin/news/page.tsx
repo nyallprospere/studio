@@ -1,0 +1,209 @@
+'use client';
+
+import { useState, useMemo } from 'react';
+import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
+import { collection, addDoc, updateDoc, deleteDoc, doc, Timestamp, query, orderBy } from 'firebase/firestore';
+import type { NewsArticle } from '@/lib/types';
+import { PageHeader } from '@/components/page-header';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { NewsForm } from './news-form';
+import Image from 'next/image';
+import { Pencil, Trash2, PlusCircle, Rss } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
+import { uploadFile, deleteFile } from '@/firebase/storage';
+import { format } from 'date-fns';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import Link from 'next/link';
+
+export default function AdminNewsPage() {
+  const { firestore } = useFirebase();
+  const { toast } = useToast();
+
+  const newsCollection = useMemoFirebase(() => firestore ? query(collection(firestore, 'news'), orderBy('publishedAt', 'desc')) : null, [firestore]);
+  const { data: news, isLoading, error } = useCollection<NewsArticle>(newsCollection);
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingArticle, setEditingArticle] = useState<NewsArticle | null>(null);
+
+  const handleFormSubmit = async (values: any) => {
+    if (!firestore) return;
+    
+    try {
+      let imageUrl = values.imageUrl;
+      if (values.imageFile) {
+        if (editingArticle?.imageUrl) {
+          await deleteFile(editingArticle.imageUrl).catch(console.warn);
+        }
+        imageUrl = await uploadFile(values.imageFile, `news/${values.imageFile.name}`);
+      }
+
+      const articleData = { 
+        ...values, 
+        imageUrl,
+        publishedAt: values.publishedAt ? Timestamp.fromDate(values.publishedAt) : Timestamp.now(),
+      };
+      delete articleData.imageFile;
+      
+      const newsColRef = collection(firestore, 'news');
+
+      if (editingArticle) {
+        const articleDoc = doc(firestore, 'news', editingArticle.id);
+        updateDoc(articleDoc, articleData)
+          .catch(error => {
+            const contextualError = new FirestorePermissionError({
+              path: articleDoc.path,
+              operation: 'update',
+              requestResourceData: articleData,
+            });
+            errorEmitter.emit('permission-error', contextualError);
+          });
+        toast({ title: "Article Updated", description: `The article "${articleData.title}" has been successfully updated.` });
+      } else {
+        addDoc(newsColRef, articleData)
+          .catch(error => {
+            const contextualError = new FirestorePermissionError({
+              path: newsColRef.path,
+              operation: 'create',
+              requestResourceData: articleData,
+            });
+            errorEmitter.emit('permission-error', contextualError);
+          });
+        toast({ title: "Article Added", description: `The article "${articleData.title}" has been successfully added.` });
+      }
+    } catch (e) {
+        console.error("Error saving article:", e);
+        toast({variant: 'destructive', title: 'Error', description: 'Could not save article.'})
+    } finally {
+        setIsFormOpen(false);
+        setEditingArticle(null);
+    }
+  };
+
+  const handleEdit = (article: NewsArticle) => {
+    setEditingArticle(article);
+    setIsFormOpen(true);
+  }
+
+  const handleDelete = async (article: NewsArticle) => {
+    if (!firestore) return;
+    try {
+      if (article.imageUrl) {
+        await deleteFile(article.imageUrl);
+      }
+      const articleDoc = doc(firestore, 'news', article.id);
+      await deleteDoc(articleDoc);
+      toast({ title: "Article Deleted", description: `The article "${article.title}" has been deleted.` });
+    } catch (error) {
+      console.error("Error deleting article: ", error);
+      toast({ variant: "destructive", title: "Error", description: "Failed to delete article." });
+    }
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-start mb-8">
+        <PageHeader
+          title="Manage News"
+          description="Create, edit, and manage news articles."
+        />
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={() => { setEditingArticle(null); setIsFormOpen(true) }}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add New Article
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-2xl h-[90vh]">
+            <DialogHeader>
+              <DialogTitle>{editingArticle ? 'Edit Article' : 'Add New Article'}</DialogTitle>
+            </DialogHeader>
+             <ScrollArea className="h-full pr-6">
+                <NewsForm
+                onSubmit={handleFormSubmit}
+                initialData={editingArticle}
+                onCancel={() => setIsFormOpen(false)}
+                />
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Card>
+          <CardHeader>
+            <CardTitle>News Articles</CardTitle>
+            <CardDescription>A list of all news articles currently in the system.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <p>Loading articles...</p>
+            ) : error ? (
+              <div className="text-red-600 bg-red-100 p-4 rounded-md">
+                  <h3 className="font-bold">Error loading articles</h3>
+                  <p>{error.message}</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {news && news.length > 0 ? (
+                  news.map((article) => (
+                     <div key={article.id} className="flex items-start justify-between p-4 border rounded-md hover:bg-muted/50 gap-4">
+                        {article.imageUrl && (
+                            <Image src={article.imageUrl} alt={article.title} width={120} height={80} className="rounded-md object-cover border" />
+                        )}
+                        <div className="flex-grow">
+                          <p className="font-semibold">{article.title}</p>
+                          <p className="text-sm text-muted-foreground">{article.source} &bull; {format(article.publishedAt.toDate(), 'PPP')}</p>
+                          <p className="text-sm line-clamp-2 mt-1">{article.summary}</p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            <Button asChild variant="ghost" size="icon">
+                                <Link href={article.url} target="_blank" rel="noopener noreferrer">
+                                    <Rss className="h-4 w-4" />
+                                </Link>
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleEdit(article)}>
+                                <Pencil className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will permanently delete the article "{article.title}". This action cannot be undone.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(article)}>Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center text-muted-foreground py-8">No articles have been created yet.</p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+    </div>
+  );
+}
