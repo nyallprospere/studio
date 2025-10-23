@@ -186,6 +186,16 @@ export interface NewsArticle {
     likeCount?: number;
 }
     
+export interface Report {
+    id: string;
+    articleId: string;
+    commentId: string;
+    commentText: string;
+    commentAuthor: string;
+    reportedAt: any;
+    status: 'pending' | 'resolved';
+}
     
 
     
+

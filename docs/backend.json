@@ -713,27 +713,64 @@
       ]
     },
     "NewsArticleComment": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "title": "News Article Comment",
-        "type": "object",
-        "description": "Represents a comment on a news article.",
-        "properties": {
-            "text": {
-                "type": "string"
-            },
-            "author": {
-                "type": "string"
-            },
-            "authorPhotoURL": {
-                "type": "string",
-                "format": "uri"
-            },
-            "createdAt": {
-                "type": "string",
-                "format": "date-time"
-            }
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "News Article Comment",
+      "type": "object",
+      "description": "Represents a comment on a news article.",
+      "properties": {
+        "text": {
+          "type": "string"
         },
-        "required": ["text", "author", "createdAt"]
+        "author": {
+          "type": "string"
+        },
+        "authorPhotoURL": {
+          "type": "string",
+          "format": "uri"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "likeCount": {
+          "type": "number",
+          "description": "The number of times the comment has been liked."
+        },
+        "replyTo": {
+          "type": "string",
+          "description": "The ID of the comment this is a reply to."
+        }
+      },
+      "required": ["text", "author", "createdAt"]
+    },
+    "Report": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Report",
+      "type": "object",
+      "description": "Represents a reported comment.",
+      "properties": {
+        "articleId": {
+          "type": "string"
+        },
+        "commentId": {
+          "type": "string"
+        },
+        "commentText": {
+          "type": "string"
+        },
+        "commentAuthor": {
+          "type": "string"
+        },
+        "reportedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "resolved"]
+        }
+      },
+      "required": ["articleId", "commentId", "commentText", "commentAuthor", "reportedAt", "status"]
     }
   },
   "auth": {
@@ -849,6 +886,12 @@
             "$ref": "#/entities/NewsArticleComment"
         },
         "description": "Stores comments for a specific news article."
+    },
+    "/reports/{reportId}": {
+        "schema": {
+            "$ref": "#/entities/Report"
+        },
+        "description": "Stores reported comments for moderation."
     }
   }
 }

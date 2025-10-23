@@ -33,7 +33,8 @@ export function NewsCard({ article }: { article: NewsArticle }) {
         if (likedArticles.includes(article.id)) {
             setIsLiked(true);
         }
-    }, [article.id]);
+         setLikeCount(article.likeCount || 0);
+    }, [article.id, article.likeCount]);
 
     const handleLike = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -44,7 +45,6 @@ export function NewsCard({ article }: { article: NewsArticle }) {
             likeCount: increment(1)
         });
 
-        // Store liked article in local storage
         const likedArticles = JSON.parse(localStorage.getItem('likedNewsArticles') || '[]');
         likedArticles.push(article.id);
         localStorage.setItem('likedNewsArticles', JSON.stringify(likedArticles));
@@ -55,18 +55,6 @@ export function NewsCard({ article }: { article: NewsArticle }) {
         toast({
             title: "Article Liked!",
         });
-    };
-
-    const handleShare = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        const shareData = {
-            title: article.title,
-            text: article.summary,
-            url: article.url,
-        };
-        if (navigator.share) {
-            navigator.share(shareData).catch(err => console.error('Share failed:', err));
-        }
     };
     
     const articleDate = article.articleDate?.toDate ? article.articleDate.toDate() : new Date();
@@ -119,7 +107,7 @@ export function NewsCard({ article }: { article: NewsArticle }) {
                             </div>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm" onClick={handleShare}>
+                                    <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
                                         <Share2 className="mr-2 h-4 w-4" /> 
                                         Share
                                     </Button>
