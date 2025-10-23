@@ -1,10 +1,9 @@
 
-
 'use server';
 
 import { generateElectionPredictions } from '@/ai/flows/generate-election-predictions';
 import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
-import { initializeFirebase } from '@/firebase';
+import { initializeFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, getDocs, query, orderBy, limit, addDoc, serverTimestamp, where } from 'firebase/firestore';
 import { headers } from 'next/headers';
 import type { UserMap } from './types';
@@ -89,10 +88,10 @@ export async function saveUserMap(mapData: UserMap['mapData']) {
 }
 
 export async function subscribeToMailingList(data: { firstName: string; email: string }) {
+    const { firestore } = initializeFirebase();
+    const subscribersCollection = collection(firestore, 'mailing_list_subscribers');
+    
     try {
-        const { firestore } = initializeFirebase();
-        const subscribersCollection = collection(firestore, 'mailing_list_subscribers');
-        
         // Check if email already exists
         const q = query(subscribersCollection, where("email", "==", data.email));
         const existingSubscriber = await getDocs(q);
@@ -100,13 +99,28 @@ export async function subscribeToMailingList(data: { firstName: string; email: s
             return { error: "This email is already subscribed." };
         }
 
-        await addDoc(subscribersCollection, {
+        const dataToSave = {
             ...data,
             subscribedAt: serverTimestamp(),
-        });
+        };
+
+        await addDoc(subscribersCollection, dataToSave);
         return { success: true };
-    } catch (e) {
+    } catch (e: any) {
         console.error('Error subscribing to mailing list:', e);
+
+        // This is a server action, so we can't use the client-side errorEmitter.
+        // We will simulate the error message that the client-side architecture would create.
+        if (e.code === 'permission-denied') {
+             const errorMessage = `Missing or insufficient permissions: The following request was denied by Firestore Security Rules:
+{
+  "auth": null,
+  "method": "create",
+  "path": "/databases/(default)/documents/mailing_list_subscribers"
+}`;
+            return { error: errorMessage }
+        }
+
         return { error: 'Could not subscribe. Please try again.' };
     }
 }
