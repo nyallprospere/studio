@@ -19,19 +19,19 @@ import { Pie, PieChart, Cell, ResponsiveContainer } from 'recharts';
 import { ChartContainer } from './ui/chart';
 
 const politicalLeaningOptions = [
-    { value: 'solid-uwp', label: 'Solid UWP' },
-    { value: 'lean-uwp', label: 'Lean UWP' },
-    { value: 'tossup', label: 'Tossup' },
-    { value: 'lean-slp', label: 'Lean SLP' },
-    { value: 'solid-slp', label: 'Solid SLP' },
+    { value: 'solid-uwp', label: 'Solid UWP', color: 'fill-yellow-500' },
+    { value: 'lean-uwp', label: 'Lean UWP', color: 'fill-yellow-300' },
+    { value: 'tossup', label: 'Tossup', color: 'fill-purple-500' },
+    { value: 'lean-slp', label: 'Lean SLP', color: 'fill-red-400' },
+    { value: 'solid-slp', label: 'Solid SLP', color: 'fill-red-700' },
 ];
 
 const makeYourOwnLeaningOptions = [
-    { value: 'solid-slp', label: 'Solid SLP' },
-    { value: 'lean-slp', label: 'Lean SLP' },
-    { value: 'tossup', label: 'Tossup' },
-    { value: 'lean-uwp', label: 'Lean UWP' },
-    { value: 'solid-uwp', label: 'Solid UWP' },
+    { value: 'slp', label: 'SLP' },
+    { value: 'uwp', label: 'UWP' },
+    { value: 'ind', label: 'IND' },
+    { value: 'tossup', label: 'Toss Up' },
+    { value: 'unselected', label: 'To be selected' },
 ];
 
 
@@ -198,23 +198,19 @@ export function ConstituencyPopoverContent({
         const uwpCand = uwp ? candidates.find(c => c.partyId === uwp.id) : null;
         
         let indCand = null;
-        const isCurrentElection = election?.isCurrent;
         
-        if (isCurrentElection) {
-            indCand = candidates.find(c => (c as Candidate).isIndependentCastriesNorth || (c as Candidate).isIndependentCastriesCentral);
-        } else {
-            const isSpecial2021Election = election?.year === 2021;
-            if (isSpecial2021Election && (constituency.name === 'Castries North' || constituency.name === 'Castries Central')) {
-                if (constituency.name === 'Castries North') {
-                    indCand = candidates.find(c => c.firstName === 'Stephenson' && c.lastName === 'King');
-                } else if (constituency.name === 'Castries Central') {
-                    indCand = candidates.find(c => c.firstName === 'Richard' && c.lastName === 'Frederick');
-                }
+        if (election?.year === 2021) {
+            if (constituency.name === 'Castries North') {
+                indCand = slpCand; // Stephenson King ran on SLP ticket in 2021 results data, but was independent
+                slpCand = null; // No official SLP candidate
+            } else if (constituency.name === 'Castries Central') {
+                indCand = slpCand; // Richard Frederick, same situation
+                slpCand = null;
             }
-        }
-        
-        if (indCand) { 
-            slpCand = null; 
+        } else if (election?.isCurrent) {
+             indCand = candidates.find(c => (c as Candidate).isIndependentCastriesNorth || (c as Candidate).isIndependentCastriesCentral);
+        } else {
+             indCand = candidates.find(c => c.partyId !== slp?.id && c.partyId !== uwp?.id);
         }
 
         return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand, slpParty: slp, uwpParty: uwp };
@@ -229,17 +225,28 @@ export function ConstituencyPopoverContent({
         if (!currentResult) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null, slpVotePercentageChange: null, uwpVotePercentageChange: null, otherVotePercentageChange: null, slpLogoUrl: null, uwpLogoUrl: null, indLogoUrl: null, indVotes: 0 };
         
         const totalVotes = currentResult.totalVotes;
-        const isSpecialConstituency = election?.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
+        const isSpecial2021Constituency = election?.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
 
-        const indVotes = isSpecialConstituency ? currentResult.slpVotes : currentResult.otherVotes;
-        const slpVotes = isSpecialConstituency ? 0 : currentResult.slpVotes;
-
-        const winnerParty = indVotes > currentResult.uwpVotes ? {acronym: 'IND', color: '#3b82f6'} : slpVotes > currentResult.uwpVotes ? slpParty : uwpParty;
-        const winnerAcronym = winnerParty.acronym;
+        const indVotes = isSpecial2021Constituency ? currentResult.slpVotes : currentResult.otherVotes;
+        const slpVotes = isSpecial2021Constituency ? 0 : currentResult.slpVotes;
+        const uwpVotes = currentResult.uwpVotes;
         
+        let winnerAcronym = '';
+        let margin = 0;
+
+        if (indVotes > uwpVotes && indVotes > slpVotes) {
+            winnerAcronym = 'IND';
+            margin = indVotes - Math.max(uwpVotes, slpVotes);
+        } else if (slpVotes > uwpVotes) {
+            winnerAcronym = 'SLP';
+            margin = slpVotes - uwpVotes;
+        } else {
+            winnerAcronym = 'UWP';
+            margin = uwpVotes - slpVotes;
+        }
+
         let status = `${''}${winnerAcronym} Win`;
         let color = winnerAcronym === 'UWP' ? '#D4AC0D' : winnerAcronym === 'SLP' ? slpParty.color : '#3b82f6';
-        let margin = isSpecialConstituency ? Math.abs(indVotes - currentResult.uwpVotes) : Math.abs(slpVotes - currentResult.uwpVotes);
 
         let slpVotePercentageChange = null;
         let uwpVotePercentageChange = null;
@@ -248,12 +255,19 @@ export function ConstituencyPopoverContent({
         if (previousElectionResults && previousElection) {
             const previousResult = previousElectionResults.find(r => r.constituencyId === constituency.id);
             if (previousResult) {
-                const prevIsSpecialConstituency = previousElection.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
-                const prevIndVotes = prevIsSpecialConstituency ? previousResult.slpVotes : previousResult.otherVotes;
-                const prevSlpVotes = prevIsSpecialConstituency ? 0 : previousResult.slpVotes;
+                const prevIsSpecial2021Constituency = previousElection.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
+                const prevIndVotes = prevIsSpecial2021Constituency ? previousResult.slpVotes : previousResult.otherVotes;
+                const prevSlpVotes = prevIsSpecial2021Constituency ? 0 : previousResult.slpVotes;
 
-                const previousWinner = prevIndVotes > previousResult.uwpVotes ? {acronym: 'IND'} : prevSlpVotes > previousResult.uwpVotes ? slpParty : uwpParty;
-                const previousWinnerAcronym = previousWinner.acronym;
+                let previousWinnerAcronym = '';
+                if (prevIndVotes > previousResult.uwpVotes && prevIndVotes > prevSlpVotes) {
+                    previousWinnerAcronym = 'IND';
+                } else if (prevSlpVotes > previousResult.uwpVotes) {
+                    previousWinnerAcronym = 'SLP';
+                } else {
+                    previousWinnerAcronym = 'UWP';
+                }
+                
                 if (winnerAcronym === previousWinnerAcronym) {
                     status = `${winnerAcronym} Hold`;
                 } else {
@@ -262,7 +276,7 @@ export function ConstituencyPopoverContent({
 
                 if (totalVotes > 0) {
                     const currentSlpPercent = (slpVotes / totalVotes) * 100;
-                    const currentUwpPercent = (currentResult.uwpVotes / totalVotes) * 100;
+                    const currentUwpPercent = (uwpVotes / totalVotes) * 100;
                     const currentIndPercent = (indVotes / totalVotes) * 100;
 
                     const prevTotalVotes = previousResult.totalVotes;
@@ -394,26 +408,12 @@ export function ConstituencyPopoverContent({
                       votePercentageChange={uwpVotePercentageChange}
                       logoUrl={uwpLogoUrl}
                   />
-                  {isSpecialConstituency && independentCandidate && (
+                  {(isSpecialConstituency || (currentResult?.otherVotes || 0) > 0) && (
                       <CandidateBox 
-                        candidate={independentCandidate}
-                        party={null}
-                        isWinner={otherIsWinner}
-                        votes={indVotes}
-                        totalVotes={totalConstituencyVotes}
-                        margin={margin}
-                        electionStatus={electionStatus}
-                        statusColor={statusColor}
-                        votePercentageChange={otherVotePercentageChange}
-                        logoUrl={indLogoUrl}
-                      />
-                  )}
-                  {(!isSpecialConstituency && (currentResult?.otherVotes || 0) > 0) && (
-                      <CandidateBox 
-                          candidate={null} // Or find independent candidate if data exists
+                          candidate={independentCandidate}
                           party={null}
                           isWinner={otherIsWinner}
-                          votes={currentResult?.otherVotes}
+                          votes={indVotes}
                           totalVotes={totalConstituencyVotes}
                           margin={margin}
                           electionStatus={electionStatus}
@@ -433,7 +433,7 @@ export function ConstituencyPopoverContent({
                         onValueChange={onLeaningChange}
                         className="grid grid-cols-5 gap-1"
                     >
-                        {makeYourOwnLeaningOptions.map(opt => (
+                        {politicalLeaningOptions.map(opt => (
                             <Label 
                                 key={opt.value} 
                                 htmlFor={`${constituency.id}-${opt.value}`}
