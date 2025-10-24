@@ -584,6 +584,7 @@ export default function ResultsPage() {
                                 election={currentElection}
                                 electionResults={currentElectionResults}
                                 previousElectionResults={previousElectionResults}
+                                previousElection={previousElection}
                                 partyLogos={partyLogos}
                             />
                         </CardContent>

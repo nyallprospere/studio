@@ -152,6 +152,7 @@ export function ConstituencyPopoverContent({
     onPredictionChange,
     electionResults,
     previousElectionResults,
+    previousElection,
     partyLogos,
     isMakeYourOwn
 }: { 
@@ -161,6 +162,7 @@ export function ConstituencyPopoverContent({
     onPredictionChange?: (slp: number, uwp: number) => void;
     electionResults?: ElectionResult[];
     previousElectionResults?: ElectionResult[];
+    previousElection?: Election | null;
     partyLogos?: PartyLogo[];
     isMakeYourOwn?: boolean;
 }) {
@@ -296,7 +298,7 @@ export function ConstituencyPopoverContent({
             indLogoUrl: independentLogo?.logoUrl || election?.independentLogoUrl,
         };
 
-    }, [constituency.id, electionResults, previousElectionResults, slpParty, uwpParty, partyLogos, election, parties]);
+    }, [constituency.id, electionResults, previousElectionResults, slpParty, uwpParty, partyLogos, election, parties, previousElection]);
 
 
     const isLoading = loadingCandidates || loadingParties;
