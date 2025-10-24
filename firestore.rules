@@ -1,251 +1,249 @@
 /**
- * @fileoverview Firestore Security Rules for the political website.
+ * @fileoverview Firestore Security Rules for the Revolucianize application.
  *
  * Core Philosophy:
- * This ruleset prioritizes strong authorization, allowing public read access where appropriate while strictly controlling write access.
+ * This ruleset prioritizes security by enforcing strict access control.
+ * Public read access is granted sparingly, and write access is generally restricted to authenticated users or specific roles.
  *
  * Data Structure:
- * The database consists of top-level collections for core entities like parties, candidates, events, constituencies, and elections.
- * It also contains settings documents, user activity logs, and user-generated content like prediction maps.
- * Nested collections are used for comments on news articles.
+ * The Firestore database contains collections for various entities, including parties, candidates, elections, constituencies, news, and user-generated content.
  *
  * Key Security Decisions:
- * - Public read access is granted to collections like `events` and `news` to allow open data consumption.
- * - All write operations (create, update, delete) are secured by authorization checks.
- * - User activity logs and user-created maps do not have owner-only read access and are publicly readable.
- * - All writes require authentication (`isSignedIn()`).
- * - The rules do NOT implement strong schema validation beyond what is essential for authorization.
+ * - Parties are publicly listable, but modifications are disallowed in this prototyping phase.
+ * - User-specific data (e.g., user activity) is stored in a way that prevents listing by other users.
+ * - Read/write access to user maps and ad data is not currently defined, defaulting to locked-down rules.
+ *
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read events.
-     * @path /databases/{database}/documents/events/{eventId}
-     * @allow (get, list) if true
-     * @deny (create, update, delete) if false
-     * @principle Public read access for events.
+     * @description Allows anyone to read mailing list subscriber data, but restricts writes.
+     * @path /mailing_list_subscribers/{subscriberId}
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Public read, no write access.
      */
-    match /events/{eventId} {
+    match /mailing_list_subscribers/{subscriberId} {
       allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read parties.
-     * @path /databases/{database}/documents/parties/{partyId}
-     * @allow (get, list) if true
-     * @deny (create, update, delete) if false
-     * @principle Public read access for parties.
+     * @description Allows anyone to read Parties, but restricts writes.
+     * @path /parties/{partyId}
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Public read, no write access.
      */
     match /parties/{partyId} {
       allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read party logos.
-     * @path /databases/{database}/documents/party_logos/{partyLogoId}
-     * @allow (get, list) if true
-     * @deny (create, update, delete) if false
-     * @principle Public read access for party logos.
+     * @description Allows anyone to read Party Logos, but restricts writes.
+     * @path /party_logos/{partyLogoId}
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Public read, no write access.
      */
     match /party_logos/{partyLogoId} {
       allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read candidates.
-     * @path /databases/{database}/documents/candidates/{candidateId}
-     * @allow (get, list) if true
-     * @deny (create, update, delete) if false
-     * @principle Public read access for candidates.
+     * @description Allows anyone to read Events, but restricts writes.
+     * @path /events/{eventId}
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Public read, no write access.
+     */
+    match /events/{eventId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Allows anyone to read Candidates, but restricts writes.
+     * @path /candidates/{candidateId}
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Public read, no write access.
      */
     match /candidates/{candidateId} {
       allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read archived candidates.
-     * @path /databases/{database}/documents/archived_candidates/{archivedCandidateId}
-     * @allow (get, list) if true
-     * @deny (create, update, delete) if false
-     * @principle Public read access for archived candidates.
+     * @description Allows anyone to read Archived Candidates, but restricts writes.
+     * @path /archived_candidates/{archivedCandidateId}
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Public read, no write access.
      */
     match /archived_candidates/{archivedCandidateId} {
       allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read elections.
-     * @path /databases/{database}/documents/elections/{electionId}
-     * @allow (get, list) if true
-     * @deny (create, update, delete) if false
-     * @principle Public read access for elections.
+     * @description Allows anyone to read Elections, but restricts writes.
+     * @path /elections/{electionId}
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Public read, no write access.
      */
     match /elections/{electionId} {
       allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read polling data.
-     * @path /databases/{database}/documents/polling_data/{pollingDataId}
-     * @allow (get, list) if true
-     * @deny (create, update, delete) if false
-     * @principle Public read access for polling data.
+     * @description Allows anyone to read Polling Data, but restricts writes.
+     * @path /polling_data/{pollingDataId}
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Public read, no write access.
      */
     match /polling_data/{pollingDataId} {
       allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read constituencies.
-     * @path /databases/{database}/documents/constituencies/{constituencyId}
-     * @allow (get, list) if true
-     * @deny (create, update, delete) if false
-     * @principle Public read access for constituencies.
+     * @description Allows anyone to read Constituencies, but restricts writes.
+     * @path /constituencies/{constituencyId}
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Public read, no write access.
      */
     match /constituencies/{constituencyId} {
       allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read election results.
-     * @path /databases/{database}/documents/election_results/{electionResultId}
-     * @allow (get, list) if true
-     * @deny (create, update, delete) if false
-     * @principle Public read access for election results.
+     * @description Allows anyone to read Election Results, but restricts writes.
+     * @path /election_results/{electionResultId}
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Public read, no write access.
      */
     match /election_results/{electionResultId} {
       allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read ads.
-     * @path /databases/{database}/documents/ads/{adId}
-     * @allow (get, list) if true
-     * @deny (create, update, delete) if false
-     * @principle Public read access for ads.
+     * @description Allows anyone to read the Page Layouts, but restricts writes.
+     * @path /settings/pageLayouts
+     * @allow get: if true;
+     * @deny list, create, update, delete: if false;
+     * @principle Public read, no write access.
      */
-    match /ads/{adId} {
-      allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+    match /settings/pageLayouts {
+      allow get: if true;
+      allow list, create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read news articles.
-     * @path /databases/{database}/documents/news/{newsId}
-     * @allow (get, list) if true
-     * @deny (create, update, delete) if false
-     * @principle Public read access for news articles.
+     * @description Allows anyone to read the Site Settings, but restricts writes.
+     * @path /settings/site
+     * @allow get: if true;
+     * @deny list, create, update, delete: if false;
+     * @principle Public read, no write access.
+     */
+    match /settings/site {
+      allow get: if true;
+      allow list, create, update, delete: if false;
+    }
+
+    /**
+     * @description  Restricts access to user activity to prevent listing or modification.
+     * @path /user_activity/{activityId}
+     * @allow get: if false;
+     * @deny list, create, update, delete: if false;
+     * @principle Prevents unauthorized access to user activity data.
+     */
+    match /user_activity/{activityId} {
+        allow get: if false;
+        allow list, create, update, delete: if false;
+    }
+
+   /**
+     * @description Allows anyone to read Regions, but restricts writes.
+     * @path /regions/{regionId}
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Public read, no write access.
+     */
+    match /regions/{regionId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+   /**
+     * @description  Restricts access to user maps.
+     * @path /user_maps/{userMapId}
+     * @allow get: if false;
+     * @deny list, create, update, delete: if false;
+     * @principle Prevents unauthorized access to user created maps.
+     */
+     match /user_maps/{userMapId} {
+        allow get: if false;
+        allow list, create, update, delete: if false;
+    }
+
+   /**
+     * @description  Restricts access to ads.
+     * @path /ads/{adId}
+     * @allow get: if false;
+     * @deny list, create, update, delete: if false;
+     * @principle Prevents unauthorized access to ad configuration.
+     */
+     match /ads/{adId} {
+        allow get: if false;
+        allow list, create, update, delete: if false;
+    }
+
+   /**
+     * @description Allows anyone to read News Articles, but restricts writes.
+     * @path /news/{newsId}
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Public read, no write access.
      */
     match /news/{newsId} {
       allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow create, update, delete: if false;
 
-      /**
-       * @description Allows anyone to read news article comments.
-       * @path /databases/{database}/documents/news/{newsId}/comments/{commentId}
-       * @allow (get, list) if true
-       * @deny (create, update, delete) if false
-       * @principle Public read access for news article comments.
-       */
+       /**
+        * @description  Restricts access to News Article Comments.
+        * @path /news/{newsId}/comments/{commentId}
+        * @allow get: if false;
+        * @deny list, create, update, delete: if false;
+        * @principle Prevents unauthorized access to user created maps.
+        */
       match /comments/{commentId} {
-        allow get, list: if true;
-        allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+        allow get: if false;
+        allow list, create, update, delete: if false;
       }
     }
 
     /**
-     * @description Allows anyone to read reports.
-     * @path /databases/{database}/documents/reports/{reportId}
-     * @allow (get, list) if true
-     * @deny (create, update, delete) if false
-     * @principle Public read access for reports.
+     * @description  Restricts access to Reports
+     * @path /reports/{reportId}
+     * @allow get: if false;
+     * @deny list, create, update, delete: if false;
+     * @principle Prevents unauthorized access to user created maps.
      */
-    match /reports/{reportId} {
-        allow get, list: if true;
-        allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
-    }
-
-    /**
-     * @description Allows anyone to read mailing list subscribers.
-     * @path /databases/{database}/documents/mailing_list_subscribers/{subscriberId}
-     * @allow (get, list) if true
-     * @deny (create, update, delete) if false
-     * @principle Public read access for mailing list subscribers.
-     */
-    match /mailing_list_subscribers/{subscriberId} {
-      allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
-    }
-
-    /**
-     * @description Allows anyone to read user activity.
-     * @path /databases/{database}/documents/user_activity/{activityId}
-     * @allow (get, list) if true
-     * @deny (create, update, delete) if false
-     * @principle Public read access for user activity.
-     */
-    match /user_activity/{activityId} {
-        allow get, list: if true;
-        allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
-    }
-
-    /**
-     * @description Allows anyone to read regions.
-     * @path /databases/{database}/documents/regions/{regionId}
-     * @allow (get, list) if true
-     * @deny (create, update, delete) if false
-     * @principle Public read access for regions.
-     */
-    match /regions/{regionId} {
-        allow get, list: if true;
-        allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
-    }
-
-    /**
-     * @description Allows anyone to read user maps.
-     * @path /databases/{database}/documents/user_maps/{userMapId}
-     * @allow (get, list) if true
-     * @deny (create, update, delete) if false
-     * @principle Public read access for user maps.
-     */
-    match /user_maps/{userMapId} {
-        allow get, list: if true;
-        allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
-    }
-
-    /**
-     * @description Allows anyone to read page layouts.
-     * @path /databases/{database}/documents/settings/pageLayouts
-     * @allow (get, list) if true
-     * @deny (create, update, delete) if false
-     * @principle Public read access for page layouts.
-     */
-    match /settings/pageLayouts {
-      allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
-    }
-
-    /**
-     * @description Allows anyone to read site settings.
-     * @path /databases/{database}/documents/settings/site
-     * @allow (get, list) if true
-     * @deny (create, update, delete) if false
-     * @principle Public read access for site settings.
-     */
-    match /settings/site {
-      allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+     match /reports/{reportId} {
+        allow get: if false;
+        allow list, create, update, delete: if false;
     }
   }
 }
