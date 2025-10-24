@@ -35,7 +35,6 @@ export const mainNavItems = [
   { href: '/polls', icon: BarChart3, label: 'Polls' },
   { href: '/predictions', icon: TrendingUp, label: 'Predictions' },
   { href: '/election-news', icon: Rss, label: 'Election News' },
-  { href: '/constituencies', icon: Map, label: 'Constituencies' },
   { href: '/make-your-own', icon: Pencil, label: 'Make Your Own' },
   { href: '/interactive-maps', icon: Map, label: 'Interactive Maps' },
 ];
@@ -233,7 +232,7 @@ export function SidebarNav() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {mainNavItems.filter(item => item.href !== '/make-your-own').map((item) => (
+          {mainNavItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <Button
                 asChild
