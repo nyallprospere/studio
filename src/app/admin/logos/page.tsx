@@ -82,7 +82,7 @@ export default function ManageLogosPage() {
     }
 
     return partyList;
-  }, [parties, activeTab, electionFilter, sortedElections]);
+  }, [parties, activeTab]);
   
   const handleUploadClick = (party: Party) => {
     setSelectedPartyForUpload(party);
@@ -103,13 +103,11 @@ export default function ManageLogosPage() {
   
     for (const party of allParties) {
       const partyId = party.id;
-      const logosForParty = partyLogos.filter(logo => {
-        if (logo.partyId !== partyId) return false;
-        if (partyId === 'independent' && activeTab === 'independent' && electionFilter !== 'all') {
-          return logo.electionId === electionFilter;
-        }
-        return true;
-      });
+      let logosForParty = partyLogos.filter(logo => logo.partyId === partyId);
+
+      if (partyId === 'independent' && activeTab === 'independent' && electionFilter !== 'all') {
+        logosForParty = logosForParty.filter(logo => logo.electionId === electionFilter);
+      }
   
       if (partyId === 'independent') {
         allLogoGroups[partyId] = logosForParty.map(logo => {
