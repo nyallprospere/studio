@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useCollection, useFirebase, useMemoFirebase, useDoc } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, query, orderBy, doc, updateDoc, where, Timestamp, deleteDoc } from 'firebase/firestore';
 import type { Report, NewsArticle, Comment } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
@@ -25,6 +24,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
+  AlertDialogDescription as AlertDialogDescriptionComponent,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -139,8 +139,12 @@ export default function ManageReportsPage() {
       await updateDoc(reportRef, { status: 'resolved' });
       toast({ title: 'Report Resolved', description: 'The report has been marked as resolved.' });
     } catch (error) {
-      console.error('Error resolving report:', error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Could not resolve report.' });
+      const contextualError = new FirestorePermissionError({
+        path: reportRef.path,
+        operation: 'update',
+        requestResourceData: { status: 'resolved' },
+      });
+      errorEmitter.emit('permission-error', contextualError);
     }
   };
 
@@ -153,8 +157,8 @@ export default function ManageReportsPage() {
         await updateDoc(reportRef, { status: 'resolved' });
         toast({ title: 'Comment Deleted', description: 'The reported comment has been deleted.'});
     } catch (error) {
-        console.error('Error deleting comment: ', error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not delete the comment.' });
+        const contextualError = new FirestorePermissionError({ path: commentRef.path, operation: 'delete' });
+        errorEmitter.emit('permission-error', contextualError);
     }
   }
 
@@ -239,9 +243,9 @@ export default function ManageReportsPage() {
                               <AlertDialogContent>
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                  <AlertDialogDescription>
+                                  <AlertDialogDescriptionComponent>
                                     This will permanently delete the comment and resolve this report. This action cannot be undone.
-                                  </AlertDialogDescription>
+                                  </AlertDialogDescriptionComponent>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
