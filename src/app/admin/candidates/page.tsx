@@ -385,7 +385,9 @@ export default function AdminCandidatesPage() {
                         <div>
                             <p className="font-semibold">{candidate.firstName} {candidate.lastName} {candidate.isIncumbent && <span className="font-normal text-primary text-sm">(Inc.)</span>}</p>
                             <p className="text-sm text-muted-foreground">
-                            {getPartyAcronym(candidate.partyId)} &bull; {getConstituencyName(candidate.constituencyId)}
+                            {getPartyAcronym(candidate.partyId)} 
+                            {(candidate.isIndependentCastriesCentral || candidate.isIndependentCastriesNorth) && ' (IND)'}
+                             &bull; {getConstituencyName(candidate.constituencyId)}
                             {candidate.isPartyLeader && <span className="font-bold text-primary"> (Party Leader)</span>}
                             </p>
                         </div>

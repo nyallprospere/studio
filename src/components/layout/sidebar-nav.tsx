@@ -321,7 +321,7 @@ export function SidebarNav() {
                                                         <SidebarMenuSubButton asChild isActive={pathname === `/candidates/${candidate.id}`} size="sm">
                                                             <Link href={`/candidates/${candidate.id}`}>
                                                                 {candidate.firstName} {candidate.lastName}
-                                                                {(candidate.firstName === 'Stephenson' && candidate.lastName === 'King') && ' (IND)'}
+                                                                {candidate.isIndependentCastriesNorth && ' (IND)'}
                                                             </Link>
                                                         </SidebarMenuSubButton>
                                                     </SidebarMenuItem>
@@ -378,7 +378,7 @@ export function SidebarNav() {
                                                         <SidebarMenuSubButton asChild isActive={pathname === `/candidates/${candidate.id}`} size="sm">
                                                             <Link href={`/candidates/${candidate.id}`}>
                                                                 {candidate.firstName} {candidate.lastName}
-                                                                {(candidate.firstName === 'Richard' && candidate.lastName === 'Frederick') && ' (IND)'}
+                                                                {candidate.isIndependentCastriesCentral && ' (IND)'}
                                                             </Link>
                                                         </SidebarMenuSubButton>
                                                     </SidebarMenuItem>
