@@ -294,49 +294,22 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                             render={({ field }) => (
                                 <FormItem>
                                     <div className="flex items-center justify-between">
-                                      <FormLabel>Constituencies</FormLabel>
-                                      <Button
-                                        type="button"
-                                        variant="link"
-                                        size="sm"
-                                        className="p-0 h-auto"
-                                        onClick={() => field.onChange(constituencies.map(c => c.id))}
-                                      >
-                                        Select All
-                                      </Button>
+                                      <FormLabel>Constituency</FormLabel>
                                     </div>
-                                    <MultiSelect
-                                      options={constituencyOptions}
-                                      selected={field.value || []}
-                                      onChange={field.onChange}
-                                      placeholder="Select constituencies..."
-                                    >
-                                       <CommandInput placeholder="Search constituencies..." />
-                                        <ScrollArea className="h-48">
-                                          <CommandGroup>
-                                          {constituencyOptions.map((option) => (
-                                              <CommandItem
-                                                  key={option.value}
-                                                  onSelect={() => {
-                                                      const newValue = field.value?.includes(option.value)
-                                                      ? field.value?.filter((v) => v !== option.value)
-                                                      : [...(field.value || []), option.value];
-                                                      field.onChange(newValue);
-                                                  }}
-                                                  className="flex items-center justify-between"
-                                                  >
-                                                  <span>{option.label}</span>
-                                                  <Check
-                                                      className={cn(
-                                                      'h-4 w-4',
-                                                      field.value?.includes(option.value) ? 'opacity-100' : 'opacity-0'
-                                                      )}
-                                                  />
-                                              </CommandItem>
-                                          ))}
-                                          </CommandGroup>
-                                        </ScrollArea>
-                                    </MultiSelect>
+                                    <Select onValueChange={(value) => field.onChange([value])} value={field.value?.[0] || ''}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a constituency" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {constituencyOptions.map((option) => (
+                                                <SelectItem key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </FormItem>
                             )}
                         />
@@ -347,7 +320,7 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                                 <FormItem>
                                     <FormLabel>Candidate Name</FormLabel>
                                     <FormControl>
-                                        <Input {...field} placeholder="e.g., John Doe" />
+                                        <Input {...field} placeholder="e.g., Stephenson King" />
                                     </FormControl>
                                 </FormItem>
                             )}
@@ -357,7 +330,7 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                             name="standardLogoFile"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Standard Logo (Square)</FormLabel>
+                                    <FormLabel>Standard Logo - Castries North</FormLabel>
                                     <FormControl>
                                         <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
                                     </FormControl>
