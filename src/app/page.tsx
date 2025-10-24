@@ -155,8 +155,8 @@ export default function Home() {
         </Card>
       </div>
       
-       <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
+       <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="lg:col-span-1">
            <Card>
             <CardHeader>
                 <CardTitle>Interactive Map</CardTitle>
