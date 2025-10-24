@@ -126,7 +126,6 @@ export function SidebarNav() {
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [isNewsOpen, setIsNewsOpen] = useState(false);
   const [isMapSubmissionsOpen, setIsMapSubmissionsOpen] = useState(false);
-  const [isMakeYourOwnOpen, setIsMakeYourOwnOpen] = useState(false);
 
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
@@ -194,7 +193,6 @@ export function SidebarNav() {
     setIsAnalyticsOpen(pathname.startsWith('/admin/analytics'));
     setIsNewsOpen(pathname.startsWith('/admin/news') || pathname.startsWith('/admin/reports'));
     setIsMapSubmissionsOpen(pathname.startsWith('/admin/map-submissions'));
-    setIsMakeYourOwnOpen(pathname.startsWith('/make-your-own'));
 
     const isUwpRelated = uwpParty && (
         pathname.startsWith(`/parties/${uwpParty.id}`) || 
@@ -323,6 +321,7 @@ export function SidebarNav() {
                                                         <SidebarMenuSubButton asChild isActive={pathname === `/candidates/${candidate.id}`} size="sm">
                                                             <Link href={`/candidates/${candidate.id}`}>
                                                                 {candidate.firstName} {candidate.lastName}
+                                                                {(candidate.firstName === 'Stephenson' && candidate.lastName === 'King') && ' (IND)'}
                                                             </Link>
                                                         </SidebarMenuSubButton>
                                                     </SidebarMenuItem>
@@ -379,6 +378,7 @@ export function SidebarNav() {
                                                         <SidebarMenuSubButton asChild isActive={pathname === `/candidates/${candidate.id}`} size="sm">
                                                             <Link href={`/candidates/${candidate.id}`}>
                                                                 {candidate.firstName} {candidate.lastName}
+                                                                {(candidate.firstName === 'Richard' && candidate.lastName === 'Frederick') && ' (IND)'}
                                                             </Link>
                                                         </SidebarMenuSubButton>
                                                     </SidebarMenuItem>
@@ -523,15 +523,13 @@ export function SidebarNav() {
                                                   </Link>
                                               </SidebarMenuSubButton>
                                           </SidebarMenuItem>
-                                          {user && (
-                                            <SidebarMenuItem>
-                                                <SidebarMenuSubButton asChild isActive={pathname.startsWith('/admin/map-submissions/sharing')}>
-                                                    <Link href="/admin/map-submissions/sharing">
-                                                        Sharing Settings
-                                                    </Link>
-                                                </SidebarMenuSubButton>
-                                            </SidebarMenuItem>
-                                          )}
+                                          <SidebarMenuItem>
+                                            <SidebarMenuSubButton asChild isActive={pathname === '/admin/map-submissions/sharing'}>
+                                                <Link href="/admin/map-submissions/sharing">
+                                                    Sharing Settings
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                          </SidebarMenuItem>
                                       </SidebarMenuSub>
                                   </CollapsibleContent>
                               </Collapsible>
