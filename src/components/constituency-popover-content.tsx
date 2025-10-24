@@ -204,7 +204,10 @@ export function ConstituencyPopoverContent({
             } else if (constituency.name === 'Castries Central') {
                 indCand = candidates.find(c => c.firstName === 'Richard' && c.lastName === 'Frederick');
             }
-            slpCand = null; 
+            // If an independent candidate is found for the special constituency, nullify the SLP candidate.
+            if (indCand) { 
+              slpCand = null; 
+            }
         }
 
         return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand, slpParty: slp, uwpParty: uwp };
@@ -360,7 +363,7 @@ export function ConstituencyPopoverContent({
                 </div>
             ) : !isMakeYourOwn ? (
               <div className="space-y-2">
-                   {!isSpecialConstituency && slpCandidate && (
+                   {slpCandidate && (
                     <CandidateBox 
                         candidate={slpCandidate} 
                         party={slpParty} 
@@ -386,7 +389,7 @@ export function ConstituencyPopoverContent({
                       votePercentageChange={uwpVotePercentageChange}
                       logoUrl={uwpLogoUrl}
                   />
-                  {(independentCandidate || (indVotes || 0) > 0) && (isSpecialConstituency || (currentResult?.otherVotes || 0) > 0) && (
+                  {(independentCandidate || (indVotes || 0) > 0) && (isSpecialConstituency || (currentResult?.otherVotes || 0) > 0) && election?.year === 2021 && (
                       <CandidateBox 
                         candidate={independentCandidate}
                         party={null}
