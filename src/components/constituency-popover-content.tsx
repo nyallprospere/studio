@@ -27,9 +27,11 @@ const politicalLeaningOptions = [
 ];
 
 const makeYourOwnLeaningOptions = [
-  { value: 'slp', label: 'SLP' },
-  { value: 'uwp', label: 'UWP' },
-  { value: 'ind', label: 'IND' },
+    { value: 'solid-slp', label: 'Solid SLP' },
+    { value: 'lean-slp', label: 'Lean SLP' },
+    { value: 'tossup', label: 'Tossup' },
+    { value: 'lean-uwp', label: 'Lean UWP' },
+    { value: 'solid-uwp', label: 'Solid UWP' },
 ];
 
 
@@ -199,7 +201,7 @@ export function ConstituencyPopoverContent({
         const isCurrentElection = election?.isCurrent;
         
         if (isCurrentElection) {
-            indCand = candidates.find(c => c.isIndependentCastriesNorth || c.isIndependentCastriesCentral);
+            indCand = candidates.find(c => (c as Candidate).isIndependentCastriesNorth || (c as Candidate).isIndependentCastriesCentral);
         } else {
             const isSpecial2021Election = election?.year === 2021;
             if (isSpecial2021Election && (constituency.name === 'Castries North' || constituency.name === 'Castries Central')) {
@@ -429,16 +431,14 @@ export function ConstituencyPopoverContent({
                      <RadioGroup 
                         value={constituency.politicalLeaning} 
                         onValueChange={onLeaningChange}
-                        className="flex gap-2"
+                        className="grid grid-cols-5 gap-1"
                     >
-                        {makeYourOwnLeaningOptions
-                            .filter(opt => isMakeYourOwnSpecial ? opt.value !== 'slp' : opt.value !== 'ind')
-                            .map(opt => (
+                        {makeYourOwnLeaningOptions.map(opt => (
                             <Label 
                                 key={opt.value} 
                                 htmlFor={`${constituency.id}-${opt.value}`}
                                 className={cn(
-                                    "flex-1 text-center border rounded-md px-3 py-1.5 text-xs font-medium cursor-pointer transition-colors",
+                                    "flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors",
                                     constituency.politicalLeaning === opt.value 
                                         ? "bg-primary text-primary-foreground" 
                                         : "hover:bg-muted"
