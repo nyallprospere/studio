@@ -15,7 +15,7 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, LogIn, LogOut, UserPlus, FilePlus, Calendar, Pencil, Archive, Cat, ImageIcon, Globe, Share2, Mail, Megaphone, LineChart, Rss, Flag } from 'lucide-react';
-import { Button } from '../ui/button';
+import { Button } from '@/components/ui/button';
 import { useUser, useAuth, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -24,9 +24,9 @@ import { ChevronRight } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import type { Election, Party, Candidate, Report } from '@/lib/types';
 import { collection, query, orderBy, where } from 'firebase/firestore';
-import { SlpLogo, UwpLogo } from '../icons';
-import { ScrollArea } from '../ui/scroll-area';
-import { Badge } from '../ui/badge';
+import { SlpLogo, UwpLogo } from '@/components/icons';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 
 
 export const mainNavItems = [
