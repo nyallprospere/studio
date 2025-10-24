@@ -28,6 +28,7 @@ import { collection, query, orderBy, where } from 'firebase/firestore';
 import { SlpLogo, UwpLogo } from '../icons';
 import { ScrollArea } from '../ui/scroll-area';
 import { Badge } from '../ui/badge';
+import Image from 'next/image';
 
 
 export const mainNavItems = [
@@ -318,7 +319,8 @@ export function SidebarNav() {
                                                 {loadingUwpCandidates ? <p className="p-2 text-xs text-muted-foreground">Loading...</p> : sortedUwpCandidates.map(candidate => (
                                                     <SidebarMenuItem key={candidate.id}>
                                                         <SidebarMenuSubButton asChild isActive={pathname === `/candidates/${candidate.id}`} size="sm">
-                                                            <Link href={`/candidates/${candidate.id}`}>
+                                                            <Link href={`/candidates/${candidate.id}`} className="flex items-center gap-2">
+                                                                {candidate.customLogoUrl && <Image src={candidate.customLogoUrl} alt="custom logo" width={16} height={16} />}
                                                                 {candidate.firstName} {candidate.lastName}
                                                                 {(candidate.isIndependentCastriesNorth || candidate.isIndependentCastriesCentral) && ' (IND)'}
                                                             </Link>
@@ -375,7 +377,8 @@ export function SidebarNav() {
                                                 {loadingSlpCandidates ? <p className="p-2 text-xs text-muted-foreground">Loading...</p> : sortedSlpCandidates.map(candidate => (
                                                     <SidebarMenuItem key={candidate.id}>
                                                         <SidebarMenuSubButton asChild isActive={pathname === `/candidates/${candidate.id}`} size="sm">
-                                                            <Link href={`/candidates/${candidate.id}`}>
+                                                            <Link href={`/candidates/${candidate.id}`} className="flex items-center gap-2">
+                                                                {candidate.customLogoUrl && <Image src={candidate.customLogoUrl} alt="custom logo" width={16} height={16} />}
                                                                 {candidate.firstName} {candidate.lastName}
                                                                 {(candidate.isIndependentCastriesNorth || candidate.isIndependentCastriesCentral) && ' (IND)'}
                                                             </Link>
@@ -547,3 +550,5 @@ export function SidebarNav() {
     </Sidebar>
   );
 }
+
+    
