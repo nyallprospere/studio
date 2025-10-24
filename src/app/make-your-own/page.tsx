@@ -219,8 +219,6 @@ export default function MakeYourOwnPage() {
     const { myMapChartData, seatCounts, allSelected, seatChanges } = useMemo(() => {
         if (!myMapConstituencies) return { myMapChartData: [], seatCounts: {}, allSelected: false, seatChanges: {} };
     
-        const specialConstituencies = new Set(['Castries North', 'Castries Central']);
-    
         let slpCount = 0;
         let uwpCount = 0;
         let indCount = 0;
@@ -228,16 +226,13 @@ export default function MakeYourOwnPage() {
     
         myMapConstituencies.forEach(c => {
             const leaning = c.politicalLeaning || 'unselected';
-            const isSpecial = specialConstituencies.has(c.name);
-    
+            
             if (leaning === 'slp') {
-                if (isSpecial) {
-                    indCount++;
-                } else {
-                    slpCount++;
-                }
+                slpCount++;
             } else if (leaning === 'uwp') {
                 uwpCount++;
+            } else if (leaning === 'ind') {
+                indCount++;
             } else if (leaning === 'unselected') {
                 unselectedCount++;
             }
@@ -438,6 +433,7 @@ export default function MakeYourOwnPage() {
     </div>
   );
 }
+
 
 
 
