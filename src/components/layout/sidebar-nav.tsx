@@ -35,7 +35,6 @@ export const mainNavItems = [
   { href: '/polls', icon: BarChart3, label: 'Polls' },
   { href: '/predictions', icon: TrendingUp, label: 'Predictions' },
   { href: '/election-news', icon: Rss, label: 'Election News' },
-  { href: '/make-your-own', icon: Pencil, label: 'Make Your Own' },
 ];
 
 export const adminNavItems = [
@@ -321,7 +320,7 @@ export function SidebarNav() {
                                                         <SidebarMenuSubButton asChild isActive={pathname === `/candidates/${candidate.id}`} size="sm">
                                                             <Link href={`/candidates/${candidate.id}`}>
                                                                 {candidate.firstName} {candidate.lastName}
-                                                                {candidate.isIndependentCastriesNorth && ' (IND)'}
+                                                                {(candidate.isIndependentCastriesNorth || candidate.isIndependentCastriesCentral) && ' (IND)'}
                                                             </Link>
                                                         </SidebarMenuSubButton>
                                                     </SidebarMenuItem>
@@ -378,7 +377,7 @@ export function SidebarNav() {
                                                         <SidebarMenuSubButton asChild isActive={pathname === `/candidates/${candidate.id}`} size="sm">
                                                             <Link href={`/candidates/${candidate.id}`}>
                                                                 {candidate.firstName} {candidate.lastName}
-                                                                {candidate.isIndependentCastriesCentral && ' (IND)'}
+                                                                {(candidate.isIndependentCastriesNorth || candidate.isIndependentCastriesCentral) && ' (IND)'}
                                                             </Link>
                                                         </SidebarMenuSubButton>
                                                     </SidebarMenuItem>
