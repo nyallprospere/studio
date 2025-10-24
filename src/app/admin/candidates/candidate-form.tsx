@@ -30,6 +30,8 @@ const candidateSchema = z.object({
   isPartyLeader: z.boolean().default(false),
   isDeputyLeader: z.boolean().default(false),
   partyLevel: z.enum(['higher', 'lower']).default('lower'),
+  isIndependentCastriesNorth: z.boolean().default(false),
+  isIndependentCastriesCentral: z.boolean().default(false),
 });
 
 type CandidateFormProps = {
@@ -57,6 +59,8 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
       isPartyLeader: false,
       isDeputyLeader: false,
       partyLevel: 'lower',
+      isIndependentCastriesNorth: false,
+      isIndependentCastriesCentral: false,
     },
   });
 
@@ -68,6 +72,8 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
         isPartyLeader: initialData.isPartyLeader ?? false,
         isDeputyLeader: initialData.isDeputyLeader ?? false,
         partyLevel: initialData.partyLevel ?? 'lower',
+        isIndependentCastriesNorth: initialData.isIndependentCastriesNorth ?? false,
+        isIndependentCastriesCentral: initialData.isIndependentCastriesCentral ?? false,
       });
     } else {
         form.reset({
@@ -81,6 +87,8 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
           isPartyLeader: false,
           isDeputyLeader: false,
           partyLevel: 'lower',
+          isIndependentCastriesNorth: false,
+          isIndependentCastriesCentral: false,
         });
     }
   }, [initialData, form]);
@@ -260,7 +268,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
           )}
         />
         
-        <div className="flex items-start gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           <FormField
             control={form.control}
             name="isIncumbent"
@@ -276,9 +284,6 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
                   <FormLabel>
                     Incumbent
                   </FormLabel>
-                   <FormDescription>
-                    Is this candidate currently holding office?
-                  </FormDescription>
                 </div>
               </FormItem>
             )}
@@ -298,9 +303,6 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
                   <FormLabel>
                     Party Leader
                   </FormLabel>
-                  <FormDescription>
-                    Is this candidate the leader of their party?
-                  </FormDescription>
                 </div>
               </FormItem>
             )}
@@ -320,9 +322,44 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
                   <FormLabel>
                     Deputy Leader
                   </FormLabel>
-                  <FormDescription>
-                    Is this candidate a deputy leader of their party?
-                  </FormDescription>
+                </div>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="isIndependentCastriesNorth"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>
+                    IND (CN)
+                  </FormLabel>
+                </div>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="isIndependentCastriesCentral"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>
+                    IND (CC)
+                  </FormLabel>
                 </div>
               </FormItem>
             )}

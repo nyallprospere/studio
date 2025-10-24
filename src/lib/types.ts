@@ -39,6 +39,8 @@ export interface Candidate {
   isPartyLeader?: boolean;
   isDeputyLeader?: boolean;
   partyLevel?: 'higher' | 'lower';
+  isIndependentCastriesNorth?: boolean;
+  isIndependentCastriesCentral?: boolean;
 }
 
 export interface ArchivedCandidate extends Omit<Candidate, 'id' | 'name'> {
