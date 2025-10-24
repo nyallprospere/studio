@@ -245,6 +245,18 @@ export function SidebarNav() {
               </Button>
             </SidebarMenuItem>
           ))}
+          {user && (
+            <SidebarMenuItem>
+                <SidebarMenuSubButton asChild isActive={pathname.startsWith('/admin/map-submissions/sharing')}>
+                    <Link href="/admin/map-submissions/sharing">
+                       <div className="flex items-center gap-2">
+                           <Share2 className="mr-2 h-4 w-4" />
+                           Sharing Settings
+                       </div>
+                    </Link>
+                </SidebarMenuSubButton>
+            </SidebarMenuItem>
+          )}
 
           <SidebarMenuItem>
               <Collapsible open={isResultsOpen} onOpenChange={setIsResultsOpen}>
@@ -520,13 +532,6 @@ export function SidebarNav() {
                                               <SidebarMenuSubButton asChild isActive={pathname === '/admin/map-submissions'}>
                                                   <Link href="/admin/map-submissions">
                                                       View Submissions
-                                                  </Link>
-                                              </SidebarMenuSubButton>
-                                          </SidebarMenuItem>
-                                           <SidebarMenuItem>
-                                              <SidebarMenuSubButton asChild isActive={pathname === '/admin/map-submissions/sharing'}>
-                                                  <Link href="/admin/map-submissions/sharing">
-                                                      Sharing Settings
                                                   </Link>
                                               </SidebarMenuSubButton>
                                           </SidebarMenuItem>
