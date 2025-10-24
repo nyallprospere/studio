@@ -142,8 +142,8 @@ export default function Home() {
         description="Your comprehensive guide to the 2026 General Elections."
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        <Card className="lg:col-span-2 bg-card shadow-lg border-primary/20">
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 mb-8">
+        <Card className="lg:col-span-1 bg-card shadow-lg border-primary/20">
           <CardHeader>
             <CardTitle className="text-center text-2xl font-headline md:text-3xl text-primary">
               Countdown to Election Day 2026
@@ -152,62 +152,6 @@ export default function Home() {
           <CardContent>
             <Countdown date={electionDate} />
           </CardContent>
-        </Card>
-         <Card>
-            <CardHeader>
-                <CardTitle className="font-headline">Our Election Forecast</CardTitle>
-                <CardDescription>Our latest projection of the 2026 election.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center">
-                <ChartContainer config={chartConfig} className="h-40 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                            <ChartTooltip 
-                                cursor={false}
-                                content={<ChartTooltipContent hideLabel />}
-                            />
-                            <Pie 
-                                data={chartData} 
-                                dataKey="value"
-                                nameKey="name"
-                                cx="50%" 
-                                cy="100%" 
-                                startAngle={180} 
-                                endAngle={0} 
-                                innerRadius="60%"
-                                outerRadius="100%"
-                                paddingAngle={2}
-                            >
-                                  {chartData.map((entry) => (
-                                    <Cell key={`cell-${entry.name}`} fill={entry.fill} />
-                                ))}
-                            </Pie>
-                        </PieChart>
-                    </ResponsiveContainer>
-                </ChartContainer>
-                <div className="mt-4 grid grid-cols-3 gap-4 w-full text-center text-xs">
-                    <div>
-                        <p className="font-bold text-lg" style={{color: 'hsl(var(--chart-5))'}}>{seatCounts.slpTotal}</p>
-                        <p className="text-muted-foreground font-semibold">SLP</p>
-                        <div className="mt-2 space-y-1 text-muted-foreground">
-                            <p>Solid: {seatCounts.solidSlp}</p>
-                            <p>Lean: {seatCounts.leanSlp}</p>
-                        </div>
-                    </div>
-                    <div>
-                        <p className="font-bold text-lg" style={{color: 'hsl(var(--chart-4))'}}>{seatCounts.tossup}</p>
-                        <p className="text-muted-foreground font-semibold">Tossup</p>
-                    </div>
-                    <div>
-                        <p className="font-bold text-lg" style={{color: 'hsl(var(--chart-1))'}}>{seatCounts.uwpTotal}</p>
-                        <p className="text-muted-foreground font-semibold">UWP</p>
-                         <div className="mt-2 space-y-1 text-muted-foreground">
-                            <p>Solid: {seatCounts.solidUwp}</p>
-                            <p>Lean: {seatCounts.leanUwp}</p>
-                        </div>
-                    </div>
-                </div>
-            </CardContent>
         </Card>
       </div>
 

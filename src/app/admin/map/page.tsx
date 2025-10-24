@@ -84,7 +84,7 @@ export default function AdminMapPage() {
     <div className="container mx-auto px-4 py-8">
       <PageHeader
         title="Manage Constituency Map"
-        description="A preview of the interactive map used on the constituencies page."
+        description="A preview of the interactive map used on the dashboard page."
       />
       
       <div className="grid grid-cols-1 gap-8">
