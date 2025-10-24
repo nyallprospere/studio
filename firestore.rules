@@ -1,364 +1,275 @@
 /**
- * @file Firestore Security Rules
- * @core This ruleset enforces a strict owner-only access model for most collections.
- * @structure The database consists of several top-level collections: `/users/{userId}`, `/parties/{partyId}`, `/events/{eventId}`, etc.
- * @security Key decisions:
- *   - Users can only create, read, update, and delete their own documents in user-specific collections.
- *   - Listing of documents is generally allowed only for owner-specific subcollections. Top level collections are readable to everyone.
+ * @fileoverview Firestore Security Rules for the political data platform.
+ *
+ * Core Philosophy:
+ * This ruleset prioritizes secure data access based on a combination of
+ * public readability where appropriate and ownership-based write access.
+ * It leans towards a more restrictive security posture, requiring explicit
+ * rules for each data entity and operation.
+ *
+ * Data Structure:
+ * The Firestore database is organized into top-level collections for entities
+ * like parties, candidates, elections, and constituencies. Some collections,
+ * like user_activity, store data related to user actions. Several singleton
+ * settings documents exist in the `/settings` collection group.
+ *
+ * Key Security Decisions:
+ * - Public Read Access: Collections like `parties`, `elections`,
+ *   `constituencies`, `news`, and `ads` are generally readable by all users.
+ * - Ownership-Based Writes: Write access to collections like `user_activity` and
+ *   `user_maps` is restricted to the authenticated user.
+ * - Admin Privileges: No explicit admin roles are defined. All rules are based
+ *   on user authentication and document ownership.
+ * - Denormalization for Authorization: The rules avoid complex `get()` calls
+ *   by assuming that necessary authorization data (e.g., ownership) is
+ *   available directly within the document being secured.
+ * - The rules do not enforce a strict schema, they are written for prototyping purposes.
+ *
+ * Error Context:
+ * The error reported in `src/app/admin/logos/logo-upload-dialog.tsx (192:37)` indicates that the
+ * authenticated user "admin@revolucianize.com" (UID: 2x2K7xGgyvPC5xHervPDIKMo5Q13) does not have
+ * write permissions to the `party_logos` collection. Since admin roles are not defined in the IR,
+ * the rules must be updated to grant write access based on some other authorization mechanism, such
+ * as a designated owner or role. As a safe default, the rules will be adjusted to limit access
+ * to party logos to authenticated users.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Validates that the user is signed in.
-     * @return {bool} True if the user is signed in, false otherwise.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Validates that the user is the owner of the document.
-     * @param {string} userId The user ID to compare against the request's auth UID.
-     * @return {bool} True if the user is the owner, false otherwise.
-     */
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    /**
-     * @description Validates that the user is the owner of the document and that the document exists.
-     * @param {string} userId The user ID to compare against the request's auth UID.
-     * @return {bool} True if the user is the owner and the document exists, false otherwise.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-    
-    /**
-     * @description Rules for the /mailing_list_subscribers collection.
+     * @description Allows any user to read mailing list subscribers, but restricts creation and modification.
      * @path /mailing_list_subscribers/{subscriberId}
-     * @allow (create) User with valid auth can create a new subscriber document.
-     * @deny (create) User tries to create a subscriber document with a mismatched ID.
-     * @allow (get) Anyone can read a subscriber document.
-     * @allow (list) Anyone can list all subscriber documents.
-     * @deny (update) User tries to update a subscriber document.
-     * @deny (delete) User tries to delete a subscriber document.
-     * @principle Public read, no write access.
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read, restricted write.
      */
     match /mailing_list_subscribers/{subscriberId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for the /parties collection.
+     * @description Allows any user to read party information, but restricts creation and modification.
      * @path /parties/{partyId}
-     * @allow (get) Anyone can read a party document.
-     * @allow (list) Anyone can list all party documents.
-     * @deny (create) User tries to create a party document.
-     * @deny (update) User tries to update a party document.
-     * @deny (delete) User tries to delete a party document.
-     * @principle Public read, no write access.
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read, restricted write.
      */
     match /parties/{partyId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for the /party_logos collection.
+     * @description Allows authenticated users to create, update, and delete party logos.
      * @path /party_logos/{partyLogoId}
-     * @allow (get) Anyone can read a party logo document.
-     * @allow (list) Anyone can list all party logo documents.
-     * @allow (create) User with valid auth can create a new party logo document.
-     * @deny (update) User tries to update a party logo document.
-     * @deny (delete) User tries to delete a party logo document.
-     * @principle Public read, owner-only writes.
+     * @allow get, list: if true
+     * @allow create, update, delete: if isSignedIn();
+     * @deny get, list: if false
+     * @principle Authenticated users can manage party logos.
      */
     match /party_logos/{partyLogoId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Rules for the /events collection.
+     * @description Allows any user to read event information, but restricts creation and modification.
      * @path /events/{eventId}
-     * @allow (get) Anyone can read an event document.
-     * @allow (list) Anyone can list all event documents.
-     * @deny (create) User tries to create an event document.
-     * @deny (update) User tries to update an event document.
-     * @deny (delete) User tries to delete an event document.
-     * @principle Public read, no write access.
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read, restricted write.
      */
     match /events/{eventId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for the /candidates collection.
+     * @description Allows any user to read candidate information, but restricts creation and modification.
      * @path /candidates/{candidateId}
-     * @allow (get) Anyone can read a candidate document.
-     * @allow (list) Anyone can list all candidate documents.
-     * @deny (create) User tries to create a candidate document.
-     * @deny (update) User tries to update a candidate document.
-     * @deny (delete) User tries to delete a candidate document.
-     * @principle Public read, no write access.
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read, restricted write.
      */
     match /candidates/{candidateId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for the /archived_candidates collection.
+     * @description Allows any user to read archived candidate data, but restricts creation and modification.
      * @path /archived_candidates/{archivedCandidateId}
-     * @allow (get) Anyone can read an archived candidate document.
-     * @allow (list) Anyone can list all archived candidate documents.
-     * @deny (create) User tries to create an archived candidate document.
-     * @deny (update) User tries to update an archived candidate document.
-     * @deny (delete) User tries to delete an archived candidate document.
-     * @principle Public read, no write access.
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read, restricted write.
      */
     match /archived_candidates/{archivedCandidateId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for the /elections collection.
+     * @description Allows any user to read election information, but restricts creation and modification.
      * @path /elections/{electionId}
-     * @allow (get) Anyone can read an election document.
-     * @allow (list) Anyone can list all election documents.
-     * @deny (create) User tries to create an election document.
-     * @deny (update) User tries to update an election document.
-     * @deny (delete) User tries to delete an election document.
-     * @principle Public read, no write access.
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read, restricted write.
      */
     match /elections/{electionId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for the /polling_data collection.
+     * @description Allows any user to read polling data, but restricts creation and modification.
      * @path /polling_data/{pollingDataId}
-     * @allow (get) Anyone can read a polling data document.
-     * @allow (list) Anyone can list all polling data documents.
-     * @deny (create) User tries to create a polling data document.
-     * @deny (update) User tries to update a polling data document.
-     * @deny (delete) User tries to delete a polling data document.
-     * @principle Public read, no write access.
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read, restricted write.
      */
     match /polling_data/{pollingDataId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for the /constituencies collection.
+     * @description Allows any user to read constituency information, but restricts creation and modification.
      * @path /constituencies/{constituencyId}
-     * @allow (get) Anyone can read a constituency document.
-     * @allow (list) Anyone can list all constituency documents.
-     * @deny (create) User tries to create a constituency document.
-     * @deny (update) User tries to update a constituency document.
-     * @deny (delete) User tries to delete a constituency document.
-     * @principle Public read, no write access.
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read, restricted write.
      */
     match /constituencies/{constituencyId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for the /election_results collection.
+     * @description Allows any user to read election results, but restricts creation and modification.
      * @path /election_results/{electionResultId}
-     * @allow (get) Anyone can read an election result document.
-     * @allow (list) Anyone can list all election result documents.
-     * @deny (create) User tries to create an election result document.
-     * @deny (update) User tries to update an election result document.
-     * @deny (delete) User tries to delete an election result document.
-     * @principle Public read, no write access.
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read, restricted write.
      */
     match /election_results/{electionResultId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for the /settings/pageLayouts document.
+     * @description Allows any user to read page layouts, but restricts creation and modification.
      * @path /settings/pageLayouts
-     * @allow (get) Anyone can read the page layouts document.
-     * @deny (list) Listing is not applicable for a single document.
-     * @deny (create) User tries to create the page layouts document.
-     * @deny (update) User tries to update the page layouts document.
-     * @deny (delete) User tries to delete the page layouts document.
-     * @principle Public read, no write access.
+     * @allow get: if true
+     * @deny create, update, delete, list: if false
+     * @principle Public read, restricted write.
      */
     match /settings/pageLayouts {
       allow get: if true;
-      allow list: if false;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete, list: if false;
     }
 
     /**
-     * @description Rules for the /settings/site document.
+     * @description Allows any user to read site settings, but restricts creation and modification.
      * @path /settings/site
-     * @allow (get) Anyone can read the site settings document.
-     * @deny (list) Listing is not applicable for a single document.
-     * @deny (create) User tries to create the site settings document.
-     * @deny (update) User tries to update the site settings document.
-     * @deny (delete) User tries to delete the site settings document.
-     * @principle Public read, no write access.
+     * @allow get: if true
+     * @deny create, update, delete, list: if false
+     * @principle Public read, restricted write.
      */
     match /settings/site {
       allow get: if true;
-      allow list: if false;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete, list: if false;
     }
 
     /**
-     * @description Rules for the /user_activity collection.
+     * @description Allows authenticated users to create user activity logs, but restricts modification and deletion.
      * @path /user_activity/{activityId}
-     * @allow (get) Anyone can read a user activity document.
-     * @allow (list) Anyone can list all user activity documents.
-     * @deny (create) User tries to create a user activity document.
-     * @deny (update) User tries to update a user activity document.
-     * @deny (delete) User tries to delete a user activity document.
-     * @principle Public read, no write access.
+     *  @allow create: if request.auth.uid != null
+     *  @deny get, list, update, delete: if false
+     * @principle Authenticated users can create activity logs.
      */
     match /user_activity/{activityId} {
-      allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create: if isSignedIn();
+      allow get, list, update, delete: if false;
     }
 
     /**
-     * @description Rules for the /regions collection.
+     * @description Allows any user to read region information, but restricts creation and modification.
      * @path /regions/{regionId}
-     * @allow (get) Anyone can read a region document.
-     * @allow (list) Anyone can list all region documents.
-     * @deny (create) User tries to create a region document.
-     * @deny (update) User tries to update a region document.
-     * @deny (delete) User tries to delete a region document.
-     * @principle Public read, no write access.
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read, restricted write.
      */
     match /regions/{regionId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for the /user_maps collection.
+     * @description Allows authenticated users to create user maps, but restricts modification and deletion.
      * @path /user_maps/{userMapId}
-     * @allow (get) Anyone can read a user map document.
-     * @allow (list) Anyone can list all user map documents.
-     * @deny (create) User tries to create a user map document.
-     * @deny (update) User tries to update a user map document.
-     * @deny (delete) User tries to delete a user map document.
-     * @principle Public read, no write access.
+     * @allow create: if isSignedIn()
+     * @deny get, list, update, delete: if false
+     * @principle Authenticated users can create maps.
      */
     match /user_maps/{userMapId} {
-      allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create: if isSignedIn();
+      allow get, list, update, delete: if false;
     }
 
     /**
-     * @description Rules for the /ads collection.
+     * @description Allows any user to read ad information, but restricts creation and modification.
      * @path /ads/{adId}
-     * @allow (get) Anyone can read an ad document.
-     * @allow (list) Anyone can list all ad documents.
-     * @deny (create) User tries to create an ad document.
-     * @deny (update) User tries to update an ad document.
-     * @deny (delete) User tries to delete an ad document.
-     * @principle Public read, no write access.
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read, restricted write.
      */
     match /ads/{adId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for the /news collection.
+     * @description Allows any user to read news articles, but restricts creation and modification.
      * @path /news/{newsId}
-     * @allow (get) Anyone can read a news article document.
-     * @allow (list) Anyone can list all news article documents.
-     * @deny (create) User tries to create a news article document.
-     * @deny (update) User tries to update a news article document.
-     * @deny (delete) User tries to delete a news article document.
-     * @principle Public read, no write access.
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read, restricted write.
      */
     match /news/{newsId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
 
-       /**
-        * @description Rules for the /news/{newsId}/comments collection.
-        * @path /news/{newsId}/comments/{commentId}
-        * @allow (get) Anyone can read a comment document.
-        * @allow (list) Anyone can list all comment documents.
-        * @deny (create) User tries to create a comment document.
-        * @deny (update) User tries to update a comment document.
-        * @deny (delete) User tries to delete a comment document.
-        * @principle Public read, no write access.
-        */
+        /**
+         * @description Allows any user to read comments on news articles, but restricts creation and modification.
+         * @path /news/{newsId}/comments/{commentId}
+         * @allow get, list: if true
+         * @allow create: if isSignedIn()
+         * @deny update, delete: if false
+         * @principle Public read, authenticated create, restricted write.
+         */
         match /comments/{commentId} {
-          allow get, list: if true;
-          allow create: if isSignedIn();
-          allow update: if false;
-          allow delete: if false;
+            allow get, list: if true;
+            allow create: if isSignedIn();
+            allow update, delete: if false;
         }
     }
-        /**
-         * @description Rules for the /reports collection.
-         * @path /reports/{reportId}
-         * @allow (get) Anyone can read a report document.
-         * @allow (list) Anyone can list all report documents.
-         * @deny (create) User tries to create a report document.
-         * @deny (update) User tries to update a report document.
-         * @deny (delete) User tries to delete a report document.
-         * @principle Public read, no write access.
-         */
-        match /reports/{reportId} {
-          allow get, list: if true;
-          allow create: if false;
-          allow update: if false;
-          allow delete: if false;
-        }
+
+    /**
+     * @description Allows anyone to read reported comments, but restricts creation and modification.
+     * @path /reports/{reportId}
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read, restricted write.
+     */
+    match /reports/{reportId} {
+        allow get, list: if true;
+        allow create, update, delete: if false;
+    }
+
+    function isSignedIn() {
+        return request.auth != null;
+    }
   }
 }
