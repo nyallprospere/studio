@@ -41,7 +41,7 @@ const constituencyMapOrder = [
 
 export default function ResultsPage() {
   const { firestore } = useFirebase();
-  const searchParams = React.use(useSearchParams());
+  const searchParams = useSearchParams();
   const router = useRouter();
   const yearFromQuery = searchParams.get('year');
 
@@ -828,4 +828,3 @@ export default function ResultsPage() {
     </div>
   );
 }
-
