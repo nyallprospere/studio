@@ -86,63 +86,71 @@ export default function ManageLogosPage() {
     setIsUploadDialogOpen(false);
     toast({ title: 'Logos Updated Successfully' });
   }
-  
-  const getLogoGroups = (partyId: string) => {
-    if (!partyLogos || !sortedElections || !candidates || !constituencies) return [];
 
-    const logosForParty = partyLogos.filter(logo => {
+  const logoGroupsByParty = useMemo(() => {
+    if (!allParties || !partyLogos || !sortedElections || !candidates || !constituencies) {
+      return {};
+    }
+  
+    const allLogoGroups: Record<string, any[]> = {};
+  
+    for (const party of allParties) {
+      const partyId = party.id;
+      const logosForParty = partyLogos.filter(logo => {
         if (logo.partyId !== partyId) return false;
         if (partyId === 'independent' && activeTab === 'independent' && electionFilter !== 'all') {
-             return logo.electionId === electionFilter;
+          return logo.electionId === electionFilter;
         }
         return true;
-    });
-    
-    if (partyId === 'independent') {
-       return logosForParty.map(logo => {
-        const election = sortedElections.find(e => e.id === logo.electionId);
-        // Find the candidate associated with this logo's electionId and constituencyId
-        const candidate = candidates.find(c => c.partyId === 'independent' && c.constituencyId === logo.constituencyId);
-        const constituency = constituencies.find(c => c.id === logo.constituencyId);
-
-        return {
-          logoUrl: logo.logoUrl,
-          expandedLogoUrl: logo.expandedLogoUrl,
-          dateRange: election?.year.toString() || 'N/A',
-          maxYear: election?.year || 0,
-          electionIds: [logo.electionId],
-          key: logo.id,
-          candidateName: candidate?.name,
-          constituencyName: constituency?.name,
-          constituencyId: logo.constituencyId
-        };
-      }).sort((a, b) => b.maxYear - a.maxYear);
+      });
+  
+      if (partyId === 'independent') {
+        allLogoGroups[partyId] = logosForParty.map(logo => {
+          const election = sortedElections.find(e => e.id === logo.electionId);
+          const candidate = candidates.find(c => c.partyId === 'independent' && c.constituencyId === logo.constituencyId);
+          const constituency = constituencies.find(c => c.id === logo.constituencyId);
+  
+          return {
+            logoUrl: logo.logoUrl,
+            expandedLogoUrl: logo.expandedLogoUrl,
+            dateRange: election?.year.toString() || 'N/A',
+            maxYear: election?.year || 0,
+            electionIds: [logo.electionId],
+            key: logo.id,
+            candidateName: candidate?.name,
+            constituencyName: constituency?.name,
+            constituencyId: logo.constituencyId
+          };
+        }).sort((a, b) => b.maxYear - a.maxYear);
+      } else {
+        const groupedByLogo = groupBy(logosForParty, logo => `${logo.logoUrl || ''}|${logo.expandedLogoUrl || ''}`);
+  
+        allLogoGroups[partyId] = Object.entries(groupedByLogo).map(([key, group]) => {
+          const first = group[0];
+          const electionIds = group.map(g => g.electionId);
+          const groupElections = sortedElections.filter(e => electionIds.includes(e.id));
+  
+          if (groupElections.length === 0) return null;
+  
+          const years = groupElections.map(e => e.year).sort((a, b) => b - a);
+  
+          return {
+            logoUrl: first.logoUrl,
+            expandedLogoUrl: first.expandedLogoUrl,
+            dateRange: years.join(', '),
+            maxYear: Math.max(...years),
+            electionIds: electionIds,
+            key: key,
+            candidateName: null,
+            constituencyName: null,
+          };
+        }).filter((g): g is NonNullable<typeof g> => g !== null)
+          .sort((a, b) => b.maxYear - a.maxYear);
+      }
     }
-    
-    const groupedByLogo = groupBy(logosForParty, logo => `${logo.logoUrl || ''}|${logo.expandedLogoUrl || ''}`);
-    
-    return Object.entries(groupedByLogo).map(([key, group]) => {
-      const first = group[0];
-      const electionIds = group.map(g => g.electionId);
-      const groupElections = sortedElections.filter(e => electionIds.includes(e.id));
-      
-      if (groupElections.length === 0) return null;
-
-      const years = groupElections.map(e => e.year).sort((a,b) => b - a);
-      
-      return {
-        logoUrl: first.logoUrl,
-        expandedLogoUrl: first.expandedLogoUrl,
-        dateRange: years.join(', '),
-        maxYear: Math.max(...years),
-        electionIds: electionIds,
-        key: key,
-        candidateName: null,
-        constituencyName: null,
-      };
-    }).filter((g): g is NonNullable<typeof g> => g !== null)
-    .sort((a,b) => b.maxYear - a.maxYear);
-  };
+    return allLogoGroups;
+  }, [allParties, partyLogos, sortedElections, candidates, constituencies, activeTab, electionFilter]);
+  
   
   const handleDeleteLogos = async (partyId: string, electionIds: string[], logoId?: string) => {
     if (!firestore || !partyLogos) return;
@@ -226,7 +234,7 @@ export default function ManageLogosPage() {
                   ))}
               </TabsList>
               {allParties.map(party => {
-                const logoGroups = getLogoGroups(party.id);
+                const logoGroups = logoGroupsByParty[party.id] || [];
                 return (
                   <TabsContent key={party.id} value={party.id}>
                       <Card>
