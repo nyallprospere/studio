@@ -1,293 +1,142 @@
-/**
- * @file Firestore Security Rules
- * @description This ruleset is in Prototyping Mode. It prioritizes a highly secure authorization model with flexible data shapes for rapid iteration.
- *
- * Core Philosophy:
- *   All authenticated users can manage election results.
- *
- * Data Structure:
- *   The Firestore database contains collections for various entities like parties, candidates, elections, and results.
- *   Each collection is at the top level, using auto-generated IDs for documents.
- *
- * Key Security Decisions:
- *   - All write operations are restricted to signed-in users.
- *   - Read operations are generally public for top-level collections.
- *   - Subcollections inherit the access control of their parent documents.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Grants all logged in users the ability to manage election results
-     * @path /election_results/{electionResultId}
-     * @allow (create) - Any logged-in user can create an election result.
-     * @deny (create) - Request is unauthenticated.
-     * @allow (get, list) - All users can read election results.
-     * @allow (update, delete) - All logged-in users can update/delete election results.
-     * @deny (update, delete) - Request is unauthenticated.
-     * @principle Authenticated users can manage election results.
+     * @description Checks if the user is signed in.
+     * @return {boolean} True if the user is signed in, false otherwise.
      */
-    match /election_results/{electionResultId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+    function isSignedIn() {
+      return request.auth != null;
     }
 
     /**
-     * @description Grants write access only to authenticated users and read access to anyone for mailing list subscribers
-     * @path /mailing_list_subscribers/{subscriberId}
-     * @allow (create, update, delete) - Any logged-in user can create/update/delete a mailing list subscriber.
-     * @deny (create, update, delete) - Request is unauthenticated.
-     * @allow (get, list) - All users can read mailing list subscribers.
-     * @deny (get, list) - None.
-     * @principle Authenticated users can manage mailing list subscribers.
+     * @description Allows a user to only access their own resources.
+     * @param {string} userId The user ID to check against.
+     * @return {boolean} True if the request is made by the specified user, false otherwise.
      */
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the user is the owner of an existing document.
+     * @param {string} userId The user ID to check against.
+     * @return {boolean} True if the user is the owner of the existing document, false otherwise.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Allows create access to authenticated users.
+     * @return {boolean} True if the user is authenticated
+     */
+    function canCreate() {
+        return isSignedIn();
+    }
+
+    /**
+     * @description Allows write access to authenticated users.
+     * @return {boolean} True if the user is authenticated
+     */
+    function canWrite() {
+        return isSignedIn();
+    }
+
+    // Secure all collections by default
+    match /{path=**} {
+      allow read: if false;
+      allow write: if false;
+    }
+
     match /mailing_list_subscribers/{subscriberId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if true;
+      allow list: if true;
     }
 
-    /**
-     * @description Grants write access only to authenticated users and read access to anyone for political parties
-     * @path /parties/{partyId}
-     * @allow (create, update, delete) - Any logged-in user can create/update/delete a political party.
-     * @deny (create, update, delete) - Request is unauthenticated.
-     * @allow (get, list) - All users can read political parties.
-     * @deny (get, list) - None.
-     * @principle Authenticated users can manage political parties.
-     */
     match /parties/{partyId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if true;
+      allow list: if true;
     }
 
-    /**
-     * @description Grants write access only to authenticated users and read access to anyone for party logos
-     * @path /party_logos/{partyLogoId}
-     * @allow (create, update, delete) - Any logged-in user can create/update/delete a party logo.
-     * @deny (create, update, delete) - Request is unauthenticated.
-     * @allow (get, list) - All users can read party logos.
-     * @deny (get, list) - None.
-     * @principle Authenticated users can manage party logos.
-     */
     match /party_logos/{partyLogoId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if true;
+      allow list: if true;
     }
 
-    /**
-     * @description Grants write access only to authenticated users and read access to anyone for political events
-     * @path /events/{eventId}
-     * @allow (create, update, delete) - Any logged-in user can create/update/delete a political event.
-     * @deny (create, update, delete) - Request is unauthenticated.
-     * @allow (get, list) - All users can read political events.
-     * @deny (get, list) - None.
-     * @principle Authenticated users can manage political events.
-     */
     match /events/{eventId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if true;
+      allow list: if true;
     }
 
-    /**
-     * @description Grants write access only to authenticated users and read access to anyone for candidates
-     * @path /candidates/{candidateId}
-     * @allow (create, update, delete) - Any logged-in user can create/update/delete a candidate.
-     * @deny (create, update, delete) - Request is unauthenticated.
-     * @allow (get, list) - All users can read candidates.
-     * @deny (get, list) - None.
-     * @principle Authenticated users can manage candidates.
-     */
     match /candidates/{candidateId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if true;
+      allow list: if true;
     }
 
-    /**
-     * @description Grants write access only to authenticated users and read access to anyone for archived candidates
-     * @path /archived_candidates/{archivedCandidateId}
-     * @allow (create, update, delete) - Any logged-in user can create/update/delete an archived candidate.
-     * @deny (create, update, delete) - Request is unauthenticated.
-     * @allow (get, list) - All users can read archived candidates.
-     * @deny (get, list) - None.
-     * @principle Authenticated users can manage archived candidates.
-     */
     match /archived_candidates/{archivedCandidateId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if true;
+      allow list: if true;
     }
 
-    /**
-     * @description Grants write access only to authenticated users and read access to anyone for elections
-     * @path /elections/{electionId}
-     * @allow (create, update, delete) - Any logged-in user can create/update/delete an election.
-     * @deny (create, update, delete) - Request is unauthenticated.
-     * @allow (get, list) - All users can read elections.
-     * @deny (get, list) - None.
-     * @principle Authenticated users can manage elections.
-     */
     match /elections/{electionId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if true;
+      allow list: if true;
     }
 
-    /**
-     * @description Grants write access only to authenticated users and read access to anyone for polling data
-     * @path /polling_data/{pollingDataId}
-     * @allow (create, update, delete) - Any logged-in user can create/update/delete polling data.
-     * @deny (create, update, delete) - Request is unauthenticated.
-     * @allow (get, list) - All users can read polling data.
-     * @deny (get, list) - None.
-     * @principle Authenticated users can manage polling data.
-     */
     match /polling_data/{pollingDataId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if true;
+      allow list: if true;
     }
 
-    /**
-     * @description Grants write access only to authenticated users and read access to anyone for constituencies
-     * @path /constituencies/{constituencyId}
-     * @allow (create, update, delete) - Any logged-in user can create/update/delete a constituency.
-     * @deny (create, update, delete) - Request is unauthenticated.
-     * @allow (get, list) - All users can read constituencies.
-     * @deny (get, list) - None.
-     * @principle Authenticated users can manage constituencies.
-     */
     match /constituencies/{constituencyId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if true;
+      allow list: if true;
     }
 
-    /**
-     * @description Grants write access only to authenticated users and read access to anyone for page layouts
-     * @path /settings/pageLayouts
-     * @allow (create, update, delete) - Any logged-in user can create/update/delete page layouts.
-     * @deny (create, update, delete) - Request is unauthenticated.
-     * @allow (get, list) - All users can read page layouts.
-     * @deny (get, list) - None.
-     * @principle Authenticated users can manage page layouts.
-     */
+    match /election_results/{electionResultId} {
+      allow get: if true;
+      allow list: if true;
+    }
+
     match /settings/pageLayouts {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if true;
     }
 
-    /**
-     * @description Grants write access only to authenticated users and read access to anyone for site settings
-     * @path /settings/site
-     * @allow (create, update, delete) - Any logged-in user can create/update/delete site settings.
-     * @deny (create, update, delete) - Request is unauthenticated.
-     * @allow (get, list) - All users can read site settings.
-     * @deny (get, list) - None.
-     * @principle Authenticated users can manage site settings.
-     */
     match /settings/site {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if true;
     }
 
-    /**
-     * @description Grants write access only to authenticated users and read access to anyone for user activity
-     * @path /user_activity/{activityId}
-     * @allow (create, update, delete) - Any logged-in user can create/update/delete user activity.
-     * @deny (create, update, delete) - Request is unauthenticated.
-     * @allow (get, list) - All users can read user activity.
-     * @deny (get, list) - None.
-     * @principle Authenticated users can manage user activity.
-     */
     match /user_activity/{activityId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow create: if canCreate();
     }
 
-    /**
-     * @description Grants write access only to authenticated users and read access to anyone for regions
-     * @path /regions/{regionId}
-     * @allow (create, update, delete) - Any logged-in user can create/update/delete a region.
-     * @deny (create, update, delete) - Request is unauthenticated.
-     * @allow (get, list) - All users can read regions.
-     * @deny (get, list) - None.
-     * @principle Authenticated users can manage regions.
-     */
     match /regions/{regionId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if true;
+      allow list: if true;
     }
 
-    /**
-     * @description Grants write access only to authenticated users and read access to anyone for user maps
-     * @path /user_maps/{userMapId}
-     * @allow (create, update, delete) - Any logged-in user can create/update/delete a user map.
-     * @deny (create, update, delete) - Request is unauthenticated.
-     * @allow (get, list) - All users can read user maps.
-     * @deny (get, list) - None.
-     * @principle Authenticated users can manage user maps.
-     */
     match /user_maps/{userMapId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow create: if canCreate();
     }
 
-     /**
-      * @description Grants write access only to authenticated users and read access to anyone for ads
-      * @path /ads/{adId}
-      * @allow (create, update, delete) - Any logged-in user can create/update/delete ads.
-      * @deny (create, update, delete) - Request is unauthenticated.
-      * @allow (get, list) - All users can read ads.
-      * @deny (get, list) - None.
-      * @principle Authenticated users can manage ads.
-      */
     match /ads/{adId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow get: if true;
+      allow list: if true;
     }
 
-    /**
-     * @description Grants write access only to authenticated users and read access to anyone for news articles
-     * @path /news/{newsId}
-     * @allow (create, update, delete) - Any logged-in user can create/update/delete news articles.
-     * @deny (create, update, delete) - Request is unauthenticated.
-     * @allow (get, list) - All users can read news articles.
-     * @deny (get, list) - None.
-     * @principle Authenticated users can manage news articles.
-     */
     match /news/{newsId} {
-        allow get, list: if true;
-        allow create, update, delete: if isSignedIn();
+      allow get: if true;
+      allow list: if true;
 
-        /**
-         * @description Grants write access only to authenticated users and read access to anyone for news article comments
-         * @path /news/{newsId}/comments/{commentId}
-         * @allow (create, update, delete) - Any logged-in user can create/update/delete news article comments.
-         * @deny (create, update, delete) - Request is unauthenticated.
-         * @allow (get, list) - All users can read news article comments.
-         * @deny (get, list) - None.
-         * @principle Authenticated users can manage news article comments.
-         */
-        match /comments/{commentId} {
-            allow get, list: if true;
-            allow create, update, delete: if isSignedIn();
-        }
+      match /comments/{commentId} {
+        allow create: if canCreate();
+      }
     }
 
-    /**
-     * @description Grants write access only to authenticated users and read access to anyone for reports
-     * @path /reports/{reportId}
-     * @allow (create, update, delete) - Any logged-in user can create/update/delete reports.
-     * @deny (create, update, delete) - Request is unauthenticated.
-     * @allow (get, list) - All users can read reports.
-     * @deny (get, list) - None.
-     * @principle Authenticated users can manage reports.
-     */
-     match /reports/{reportId} {
-        allow get, list: if true;
-        allow create, update, delete: if isSignedIn();
+    match /reports/{reportId} {
+      allow create: if canCreate();
     }
-
-  }
-
-  function isSignedIn() {
-    return request.auth != null;
   }
 }
