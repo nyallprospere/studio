@@ -196,17 +196,23 @@ export function ConstituencyPopoverContent({
         const uwpCand = uwp ? candidates.find(c => c.partyId === uwp.id) : null;
         
         let indCand = null;
-        const isSpecialConstituency = election?.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
+        const isCurrentElection = election?.isCurrent;
         
-        if (isSpecialConstituency) {
-            if (constituency.name === 'Castries North') {
-                indCand = candidates.find(c => c.firstName === 'Stephenson' && c.lastName === 'King');
-            } else if (constituency.name === 'Castries Central') {
-                indCand = candidates.find(c => c.firstName === 'Richard' && c.lastName === 'Frederick');
+        if (isCurrentElection) {
+            indCand = candidates.find(c => c.isIndependentCastriesNorth || c.isIndependentCastriesCentral);
+        } else {
+            const isSpecial2021Election = election?.year === 2021;
+            if (isSpecial2021Election && (constituency.name === 'Castries North' || constituency.name === 'Castries Central')) {
+                if (constituency.name === 'Castries North') {
+                    indCand = candidates.find(c => c.firstName === 'Stephenson' && c.lastName === 'King');
+                } else if (constituency.name === 'Castries Central') {
+                    indCand = candidates.find(c => c.firstName === 'Richard' && c.lastName === 'Frederick');
+                }
             }
-            if (indCand) { 
-              slpCand = null; 
-            }
+        }
+        
+        if (indCand) { 
+            slpCand = null; 
         }
 
         return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand, slpParty: slp, uwpParty: uwp };
