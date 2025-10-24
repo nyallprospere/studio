@@ -712,9 +712,9 @@ export default function ResultsPage() {
                                           const is2021 = currentElection?.year === 2021;
                                           const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
                                           
-                                          let currentWinner = 'TBD';
                                           const indVotes = isSpecialConstituency ? cr.slpVotes : cr.otherVotes;
                                           const slpVotes = isSpecialConstituency ? 0 : cr.slpVotes;
+                                          let currentWinner = 'TBD';
 
                                             if (indVotes > cr.uwpVotes && indVotes > slpVotes) {
                                                 currentWinner = 'IND';
@@ -753,16 +753,13 @@ export default function ResultsPage() {
 
                                                const prevTotalVotes = previousResult.totalVotes;
                                                 if (prevTotalVotes > 0) {
-                                                  const prevSlpPercent = (previousResult.slpVotes / prevTotalVotes) * 100;
-                                                  const prevUwpPercent = (previousResult.uwpVotes / prevTotalVotes) * 100;
-                                                  
                                                   const prevIsSpecial = previousElection?.year === 2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
-                                                  let prevIndPercent = 0;
-                                                  if(prevIsSpecial) {
-                                                      prevIndPercent = (previousResult.slpVotes / prevTotalVotes) * 100;
-                                                  } else {
-                                                      prevIndPercent = (previousResult.otherVotes / prevTotalVotes) * 100;
-                                                  }
+                                                  const prevSlpVotes = prevIsSpecial ? 0 : previousResult.slpVotes;
+                                                  const prevIndVotes = prevIsSpecial ? previousResult.slpVotes : previousResult.otherVotes;
+                                                  
+                                                  const prevSlpPercent = (prevSlpVotes / prevTotalVotes) * 100;
+                                                  const prevUwpPercent = (previousResult.uwpVotes / prevTotalVotes) * 100;
+                                                  const prevIndPercent = (prevIndVotes / prevTotalVotes) * 100;
                                                   
                                                   slpVotePercentageChange = currentSlpPercent - prevSlpPercent;
                                                   uwpVotePercentageChange = currentUwpPercent - prevUwpPercent;
@@ -783,7 +780,7 @@ export default function ResultsPage() {
                                                   <TableCell>
                                                     <div className="flex flex-col">
                                                       <span>{slpVotes > 0 ? (cr.totalVotes > 0 ? `${(slpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%') : '-'}</span>
-                                                      {!isSpecialConstituency && <VotePercentageChangeIndicator change={slpVotePercentageChange} />}
+                                                      <VotePercentageChangeIndicator change={slpVotePercentageChange} />
                                                     </div>
                                                   </TableCell>
                                                   <TableCell>
@@ -833,3 +830,4 @@ export default function ResultsPage() {
     </div>
   );
 }
+
