@@ -38,22 +38,18 @@ export const mainNavItems = [
   { href: '/constituencies', icon: Map, label: 'Constituencies' },
   { href: '/make-your-own', icon: Pencil, label: 'Make Your Own' },
   { href: '/interactive-maps', icon: Map, label: 'Interactive Maps' },
-  { href: '/admin/map-submissions', icon: Share2, label: 'Map Submissions' },
 ];
 
 export const adminNavItems = [
     { href: '/admin/elections', icon: Vote, label: 'Manage Elections' },
     { href: '/admin/parties', icon: Shield, label: 'Manage Parties' },
     { href: '/admin/logos', icon: ImageIcon, label: 'Manage Logos' },
-    // { href: '/admin/news', icon: Rss, label: 'Manage News' },
-    // { href: '/admin/candidates', icon: Users, label: 'Manage Candidates' },
     { href: '/admin/events', icon: Calendar, label: 'Manage Events'},
     { href: '/admin/results', icon: Landmark, label: 'Manage Election Results' },
     { href: '/admin/constituencies', icon: FilePlus, label: 'Manage Constituencies' },
     { href: '/admin/regions', icon: Globe, label: 'Manage Regions' },
     { href: '/admin/mailing-list', icon: Mail, label: 'Manage Mailing List' },
     { href: '/admin/ads', icon: Megaphone, label: 'Manage Ads' },
-    // { href: '/admin/reports', icon: Flag, label: 'Manage Reports' },
     { href: '/admin/map', icon: Map, label: 'Manage Map' },
     { href: '/admin/settings', icon: Settings, label: 'Manage Settings' },
 ];
@@ -131,6 +127,7 @@ export function SidebarNav() {
   const [isManageCandidatesOpen, setIsManageCandidatesOpen] = useState(false);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [isNewsOpen, setIsNewsOpen] = useState(false);
+  const [isMapSubmissionsOpen, setIsMapSubmissionsOpen] = useState(false);
 
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
@@ -197,6 +194,7 @@ export function SidebarNav() {
     setIsManageCandidatesOpen(pathname.startsWith('/admin/candidates') || pathname.startsWith('/archive'));
     setIsAnalyticsOpen(pathname.startsWith('/admin/analytics'));
     setIsNewsOpen(pathname.startsWith('/admin/news') || pathname.startsWith('/admin/reports'));
+    setIsMapSubmissionsOpen(pathname.startsWith('/admin/map-submissions'));
 
     const isUwpRelated = uwpParty && (
         pathname.startsWith(`/parties/${uwpParty.id}`) || 
@@ -498,6 +496,37 @@ export function SidebarNav() {
                                                   <Link href="/admin/analytics">
                                                       <BarChart3 className="mr-2 h-4 w-4" />
                                                       Ad Analytics
+                                                  </Link>
+                                              </SidebarMenuSubButton>
+                                          </SidebarMenuItem>
+                                      </SidebarMenuSub>
+                                  </CollapsibleContent>
+                              </Collapsible>
+                          </SidebarMenuItem>
+                           <SidebarMenuItem>
+                              <Collapsible open={isMapSubmissionsOpen} onOpenChange={setIsMapSubmissionsOpen}>
+                                  <CollapsibleTrigger asChild>
+                                      <Button variant={isMapSubmissionsOpen ? 'secondary' : 'ghost'} className="w-full justify-between">
+                                          <div className="flex items-center gap-2">
+                                              <Share2 className="mr-2 h-4 w-4" />
+                                              Map Submissions
+                                          </div>
+                                          <ChevronRight className={`h-4 w-4 transition-transform ${isMapSubmissionsOpen ? 'rotate-90' : ''}`} />
+                                      </Button>
+                                  </CollapsibleTrigger>
+                                  <CollapsibleContent>
+                                      <SidebarMenuSub>
+                                          <SidebarMenuItem>
+                                              <SidebarMenuSubButton asChild isActive={pathname === '/admin/map-submissions'}>
+                                                  <Link href="/admin/map-submissions">
+                                                      View Submissions
+                                                  </Link>
+                                              </SidebarMenuSubButton>
+                                          </SidebarMenuItem>
+                                           <SidebarMenuItem>
+                                              <SidebarMenuSubButton asChild isActive={pathname === '/admin/map-submissions/sharing'}>
+                                                  <Link href="/admin/map-submissions/sharing">
+                                                      Sharing Settings
                                                   </Link>
                                               </SidebarMenuSubButton>
                                           </SidebarMenuItem>

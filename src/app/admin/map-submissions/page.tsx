@@ -3,14 +3,14 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useCollection, useFirebase, useMemoFirebase, useDoc } from '@/firebase';
-import { collection, query, orderBy, where, Timestamp, doc, setDoc } from 'firebase/firestore';
+import { collection, query, orderBy, where, Timestamp, doc } from 'firebase/firestore';
 import type { UserMap, SiteSettings } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Eye, Trash2, Calendar as CalendarIcon, Download, Share2 } from 'lucide-react';
+import { Eye, Trash2, Calendar as CalendarIcon, Download } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,45 +30,6 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import * as XLSX from 'xlsx';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Textarea } from '@/components/ui/textarea';
-import Image from 'next/image';
-
-const shareSettingsSchema = z.object({
-  defaultShareTitle: z.string().min(1, 'Title is required'),
-  defaultShareDescription: z.string().min(1, 'Description is required'),
-});
-
-function SharePreview({ title, description }: { title: string; description: string }) {
-    const victoryStatus = "SLP Wins a Decisive Victory"; // Example status
-    const seatCount = "SLP 14, UWP 3"; // Example seat count
-    const dynamicTitle = `I predict ${victoryStatus}`;
-    const dynamicDescription = `${description} My prediction: ${seatCount}. Click here to make your own!`;
-
-    return (
-        <div className="mt-6 border p-4 rounded-lg space-y-2 bg-muted/50">
-            <h4 className="text-sm font-semibold">Share Preview</h4>
-            <div className="border rounded-lg bg-background overflow-hidden">
-                <div className="relative aspect-video bg-gray-200">
-                    <Image
-                        src="https://storage.googleapis.com/proud-booth-422319-e7.appspot.com/maps/share-map-preview.png"
-                        alt="Map preview"
-                        fill
-                        className="object-cover"
-                    />
-                </div>
-                <div className="p-3 space-y-1">
-                    <p className="text-xs text-muted-foreground uppercase">lucianvotes.com</p>
-                    <p className="text-sm font-bold">{dynamicTitle}</p>
-                    <p className="text-xs text-muted-foreground">{dynamicDescription}</p>
-                </div>
-            </div>
-        </div>
-    )
-}
 
 export default function ManageMapSubmissionsPage() {
     const { firestore } = useFirebase();
@@ -93,41 +54,6 @@ export default function ManageMapSubmissionsPage() {
     }, [firestore, date]);
 
     const { data: userMaps, isLoading } = useCollection<UserMap>(mapsQuery);
-
-    const siteSettingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'site') : null, [firestore]);
-    const { data: siteSettings, isLoading: loadingSiteSettings } = useDoc<SiteSettings>(siteSettingsRef);
-
-    const form = useForm<z.infer<typeof shareSettingsSchema>>({
-        resolver: zodResolver(shareSettingsSchema),
-        defaultValues: {
-            defaultShareTitle: '',
-            defaultShareDescription: '',
-        },
-    });
-    
-    const watchedTitle = form.watch('defaultShareTitle');
-    const watchedDescription = form.watch('defaultShareDescription');
-
-    useEffect(() => {
-        if (siteSettings) {
-            form.reset({
-                defaultShareTitle: siteSettings.defaultShareTitle || '',
-                defaultShareDescription: siteSettings.defaultShareDescription || '',
-            });
-        }
-    }, [siteSettings, form]);
-
-    const handleShareSettingsSubmit = async (values: z.infer<typeof shareSettingsSchema>) => {
-        if (!firestore || !siteSettingsRef) return;
-        try {
-            await setDoc(siteSettingsRef, values, { merge: true });
-            toast({ title: 'Settings Updated', description: 'Default share settings have been saved.' });
-        } catch (error) {
-            console.error('Error saving share settings:', error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not save share settings.' });
-        }
-    }
-
 
     const handleDatePresetChange = (preset: string) => {
         setDatePreset(preset);
@@ -215,8 +141,8 @@ export default function ManageMapSubmissionsPage() {
           description="View user-submitted election map predictions."
         />
       </div>
-       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
+       <div className="grid grid-cols-1 gap-8">
+        <div>
             <Card>
                 <CardHeader>
                     <CardTitle>User Submissions</CardTitle>
@@ -314,54 +240,6 @@ export default function ManageMapSubmissionsPage() {
                             </TableBody>
                         </Table>
                     )}
-                </CardContent>
-            </Card>
-        </div>
-        <div>
-            <Card>
-                <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Share2 className="w-5 h-5" /> Social Sharing
-                </CardTitle>
-                <CardDescription>
-                    Set the default text for social media posts when users share their maps.
-                </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {loadingSiteSettings ? <p>Loading...</p> : (
-                        <Form {...form}>
-                            <form onSubmit={form.handleSubmit(handleShareSettingsSubmit)} className="space-y-4">
-                                <FormField
-                                    control={form.control}
-                                    name="defaultShareTitle"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Default Share Title</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="defaultShareDescription"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Default Share Description</FormLabel>
-                                            <FormControl>
-                                                <Textarea {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <Button type="submit">Save Share Settings</Button>
-                            </form>
-                        </Form>
-                    )}
-                    <SharePreview title={watchedTitle} description={watchedDescription} />
                 </CardContent>
             </Card>
         </div>
