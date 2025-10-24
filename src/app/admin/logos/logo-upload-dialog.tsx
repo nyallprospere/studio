@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { Party, Election, Constituency, Candidate, PartyLogo } from '@/lib/types';
+import type { Party, Election, Constituency, PartyLogo } from '@/lib/types';
 import { MultiSelect } from '@/components/multi-select';
 import { useFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, doc, query, where, getDocs, updateDoc, addDoc, writeBatch, setDoc } from 'firebase/firestore';
@@ -21,6 +21,7 @@ import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Image from 'next/image';
 
 interface LogoUploadDialogProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ interface LogoUploadDialogProps {
   party: Party | null;
   elections: Election[];
   constituencies: Constituency[];
+  partyLogos: PartyLogo[];
   onSuccess: () => void;
 }
 
@@ -39,15 +41,17 @@ const uploadSchema = z.object({
   expandedLogoFiles: z.any().optional(),
   candidateName: z.string().optional(),
   constituencyIds: z.array(z.string()).optional(),
+  existingStandardLogo: z.string().optional(),
+  existingExpandedLogo: z.string().optional(),
 }).refine(data => {
-    if(data.candidateName || (data.constituencyIds && data.constituencyIds.length > 0)) return true; // allow saving candidate info without logo
-    return data.standardLogoFile || data.expandedLogoFile || (data.standardLogoFiles && data.standardLogoFiles.length > 0)
+    if(data.candidateName || (data.constituencyIds && data.constituencyIds.length > 0)) return true;
+    return data.standardLogoFile || data.expandedLogoFile || (data.standardLogoFiles && data.standardLogoFiles.length > 0) || data.existingStandardLogo || data.existingExpandedLogo;
 }, {
-  message: 'At least one logo file is required.',
+  message: 'At least one logo file or existing logo is required.',
   path: ['standardLogoFile'],
 });
 
-export function LogoUploadDialog({ isOpen, onClose, party, elections, constituencies, onSuccess }: LogoUploadDialogProps) {
+export function LogoUploadDialog({ isOpen, onClose, party, elections, constituencies, partyLogos, onSuccess }: LogoUploadDialogProps) {
   const { firestore } = useFirebase();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -71,6 +75,18 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
     value: c.id,
     label: c.name,
   })).sort((a,b) => a.label.localeCompare(b.label));
+
+  const existingPartyLogos = partyLogos
+    .filter(logo => logo.partyId === party?.id)
+    .reduce((acc, logo) => {
+        if (logo.logoUrl && !acc.find(l => l.url === logo.logoUrl)) {
+            acc.push({ type: 'standard', url: logo.logoUrl });
+        }
+        if (logo.expandedLogoUrl && !acc.find(l => l.url === logo.expandedLogoUrl)) {
+            acc.push({ type: 'expanded', url: logo.expandedLogoUrl });
+        }
+        return acc;
+    }, [] as {type: 'standard' | 'expanded', url: string}[]);
 
   const handleFormSubmit = async (values: z.infer<typeof uploadSchema>) => {
     if (!firestore || !party) {
@@ -106,10 +122,15 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                     if (fileToUpload) {
                         const path = `logos/ind_${electionId}_${constituencyId}_std.png`;
                         logoData.logoUrl = await uploadFile(fileToUpload as File, path);
+                    } else if (values.existingStandardLogo) {
+                        logoData.logoUrl = values.existingStandardLogo;
                     }
-                    if (values.expandedLogoFile) { // Assuming one expanded logo for all
+
+                    if (values.expandedLogoFile) {
                         const path = `logos/ind_${electionId}_${constituencyId}_exp.png`;
                         logoData.expandedLogoUrl = await uploadFile(values.expandedLogoFile, path);
+                    } else if (values.existingExpandedLogo) {
+                        logoData.expandedLogoUrl = values.existingExpandedLogo;
                     }
 
                     const q = query(
@@ -121,10 +142,6 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
 
                     if(!existingLogoSnap.empty) {
                         const docRef = existingLogoSnap.docs[0].ref;
-                        const existingData = existingLogoSnap.docs[0].data();
-                        if (logoData.logoUrl && existingData.logoUrl) await deleteFile(existingData.logoUrl);
-                        if (logoData.expandedLogoUrl && existingData.expandedLogoUrl) await deleteFile(existingData.expandedLogoUrl);
-                        
                         batch.update(docRef, logoData);
                     } else if (logoData.logoUrl || logoData.expandedLogoUrl) {
                         const newLogoRef = doc(collection(firestore, 'party_logos'));
@@ -151,16 +168,16 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                 const existingLogoSnap = await getDocs(existingLogoQuery);
                 const existingLogoDoc = existingLogoSnap.docs[0];
 
-                let standardUrl = existingLogoDoc?.data()?.logoUrl;
-                let expandedUrl = existingLogoDoc?.data()?.expandedLogoUrl;
+                let standardUrl = values.existingStandardLogo || existingLogoDoc?.data()?.logoUrl;
+                let expandedUrl = values.existingExpandedLogo || existingLogoDoc?.data()?.expandedLogoUrl;
 
                 if (files.standard) {
-                    if (standardUrl) await deleteFile(standardUrl).catch(console.warn);
+                    if (standardUrl && !values.existingStandardLogo) await deleteFile(standardUrl).catch(console.warn);
                     const path = `logos/${party.id}_${electionId}_std.png`;
                     standardUrl = await uploadFile(files.standard, path);
                 }
                 if (files.expanded) {
-                    if (expandedUrl) await deleteFile(expandedUrl).catch(console.warn);
+                    if (expandedUrl && !values.existingExpandedLogo) await deleteFile(expandedUrl).catch(console.warn);
                         const path = `logos/${party.id}_${electionId}_exp.png`;
                     expandedUrl = await uploadFile(files.expanded, path);
                 }
@@ -321,12 +338,12 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                                     </FormControl>
                                     <FormMessage />
                                     <p className="text-xs text-muted-foreground">
-                                        Upload a single file to apply to all, or multiple files that correspond to each selected constituency.
+                                        Upload a single file to apply to all, or multiple files that correspond to each selected constituency. Or, select an existing logo below.
                                     </p>
                                 </FormItem>
                             )}
                         />
-                        <FormField
+                         <FormField
                             control={form.control}
                             name="expandedLogoFile"
                             render={({ field }) => (
@@ -337,7 +354,7 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                                 </FormControl>
                                  <FormMessage />
                                  <p className="text-xs text-muted-foreground">
-                                    One expanded logo will be applied to all selected constituencies.
+                                    One expanded logo will be applied to all selected constituencies. Or, select an existing logo below.
                                 </p>
                                 </FormItem>
                             )}
@@ -355,6 +372,7 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                                     <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
                                 </FormControl>
                                 <FormMessage />
+                                <FormDescription>Or, select an existing logo below.</FormDescription>
                                 </FormItem>
                             )}
                         />
@@ -368,11 +386,62 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                                     <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
                                 </FormControl>
                                 <FormMessage />
+                                <FormDescription>Or, select an existing logo below.</FormDescription>
                                 </FormItem>
                             )}
                         />
                     </>
                  )}
+                
+                 {existingPartyLogos.length > 0 && (
+                    <div className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="existingStandardLogo"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Existing Standard Logos</FormLabel>
+                                    <ScrollArea className="h-32">
+                                        <div className="grid grid-cols-4 gap-2">
+                                            {existingPartyLogos.filter(l => l.type === 'standard').map(logo => (
+                                                <div 
+                                                    key={logo.url} 
+                                                    className={cn("relative aspect-square border rounded-md cursor-pointer", field.value === logo.url && "ring-2 ring-primary")}
+                                                    onClick={() => field.onChange(field.value === logo.url ? undefined : logo.url)}
+                                                >
+                                                    <Image src={logo.url} alt="Existing Logo" fill className="object-contain p-1" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </ScrollArea>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="existingExpandedLogo"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Existing Expanded Logos</FormLabel>
+                                    <ScrollArea className="h-32">
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {existingPartyLogos.filter(l => l.type === 'expanded').map(logo => (
+                                                <div 
+                                                    key={logo.url} 
+                                                    className={cn("relative aspect-video border rounded-md cursor-pointer", field.value === logo.url && "ring-2 ring-primary")}
+                                                    onClick={() => field.onChange(field.value === logo.url ? undefined : logo.url)}
+                                                >
+                                                    <Image src={logo.url} alt="Existing Expanded Logo" fill className="object-contain p-1" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </ScrollArea>
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                )}
+
 
                 <DialogFooter>
                     <Button type="button" variant="outline" onClick={handleClose}>Cancel</Button>

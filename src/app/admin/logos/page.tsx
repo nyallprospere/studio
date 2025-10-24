@@ -237,6 +237,7 @@ export default function ManageLogosPage() {
             party={selectedPartyForUpload}
             elections={elections || []}
             constituencies={constituencies || []}
+            partyLogos={partyLogos || []}
             onSuccess={handleUploadSuccess}
           />
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
