@@ -203,48 +203,67 @@ export function ConstituencyPopoverContent({
                 indCand = candidates.find(c => c.firstName === 'Richard' && c.lastName === 'Frederick');
             }
             slpCand = null;
+        } else {
+            indCand = candidates.find(c => c.partyId !== slp?.id && c.partyId !== uwp?.id) || null;
         }
 
         return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand, slpParty: slp, uwpParty: uwp };
     }, [parties, candidates, constituency.name, election]);
 
 
-    const { electionStatus, statusColor, margin, totalConstituencyVotes, winnerAcronym, slpVotePercentageChange, uwpVotePercentageChange, slpLogoUrl, uwpLogoUrl, indLogoUrl } = useMemo(() => {
-        if (!electionResults || !slpParty || !uwpParty) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null, slpVotePercentageChange: null, uwpVotePercentageChange: null, slpLogoUrl: null, uwpLogoUrl: null, indLogoUrl: null };
+    const { electionStatus, statusColor, margin, totalConstituencyVotes, winnerAcronym, slpVotePercentageChange, uwpVotePercentageChange, otherVotePercentageChange, slpLogoUrl, uwpLogoUrl, indLogoUrl } = useMemo(() => {
+        if (!electionResults || !slpParty || !uwpParty) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null, slpVotePercentageChange: null, uwpVotePercentageChange: null, otherVotePercentageChange: null, slpLogoUrl: null, uwpLogoUrl: null, indLogoUrl: null };
 
         const currentResult = electionResults.find(r => r.constituencyId === constituency.id);
         
-        if (!currentResult) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null, slpVotePercentageChange: null, uwpVotePercentageChange: null, slpLogoUrl: null, uwpLogoUrl: null, indLogoUrl: null };
+        if (!currentResult) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null, slpVotePercentageChange: null, uwpVotePercentageChange: null, otherVotePercentageChange: null, slpLogoUrl: null, uwpLogoUrl: null, indLogoUrl: null };
         
         const totalVotes = currentResult.slpVotes + currentResult.uwpVotes + currentResult.otherVotes;
-        const margin = Math.abs(currentResult.slpVotes - currentResult.uwpVotes);
-        const currentWinner = currentResult.slpVotes > currentResult.uwpVotes ? slpParty : uwpParty;
-        const winnerAcronym = currentWinner?.acronym;
+        const isSpecialConstituency = election?.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
+
+        const indVotes = isSpecialConstituency ? currentResult.slpVotes : currentResult.otherVotes;
+        const slpVotes = isSpecialConstituency ? 0 : currentResult.slpVotes;
+
+        const winnerParty = indVotes > currentResult.uwpVotes ? {acronym: 'IND', color: '#3b82f6'} : slpVotes > currentResult.uwpVotes ? slpParty : uwpParty;
+        const winnerAcronym = winnerParty.acronym;
+        
         let status = `${''}${winnerAcronym} Win`;
-        let color = currentWinner?.acronym === 'UWP' ? '#D4AC0D' : currentWinner?.color;
+        let color = winnerAcronym === 'UWP' ? '#D4AC0D' : winnerAcronym === 'SLP' ? slpParty.color : '#3b82f6';
+        let margin = isSpecialConstituency ? Math.abs(indVotes - currentResult.uwpVotes) : Math.abs(slpVotes - currentResult.uwpVotes);
 
         let slpVotePercentageChange = null;
         let uwpVotePercentageChange = null;
+        let otherVotePercentageChange = null;
 
         if (previousElectionResults) {
             const previousResult = previousElectionResults.find(r => r.constituencyId === constituency.id);
             if (previousResult) {
-                const previousWinnerAcronym = previousResult.slpVotes > previousResult.uwpVotes ? 'SLP' : 'UWP';
+                const prevIsSpecialConstituency = previousElection?.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
+                const prevIndVotes = prevIsSpecialConstituency ? previousResult.slpVotes : previousResult.otherVotes;
+                const prevSlpVotes = prevIsSpecialConstituency ? 0 : previousResult.slpVotes;
+
+                const previousWinner = prevIndVotes > previousResult.uwpVotes ? {acronym: 'IND'} : prevSlpVotes > previousResult.uwpVotes ? slpParty : uwpParty;
+                const previousWinnerAcronym = previousWinner.acronym;
                 if (winnerAcronym === previousWinnerAcronym) {
                     status = `${winnerAcronym} Hold`;
                 } else {
                     status = `${winnerAcronym} Gain`;
-                    color = currentWinner?.acronym === 'UWP' ? '#D4AC0D' : currentWinner?.color;
                 }
+
                 if (totalVotes > 0) {
-                    const currentSlpPercent = (currentResult.slpVotes / totalVotes) * 100;
+                    const currentSlpPercent = (slpVotes / totalVotes) * 100;
                     const currentUwpPercent = (currentResult.uwpVotes / totalVotes) * 100;
-                    const prevTotalVotes = previousResult.slpVotes + previousResult.uwpVotes + previousResult.otherVotes;
+                    const currentIndPercent = (indVotes / totalVotes) * 100;
+
+                    const prevTotalVotes = previousResult.totalVotes;
                     if (prevTotalVotes > 0) {
-                        const prevSlpPercent = (previousResult.slpVotes / prevTotalVotes) * 100;
+                        const prevSlpPercent = (prevSlpVotes / prevTotalVotes) * 100;
                         const prevUwpPercent = (previousResult.uwpVotes / prevTotalVotes) * 100;
+                        const prevIndPercent = (prevIndVotes / prevTotalVotes) * 100;
+                        
                         slpVotePercentageChange = currentSlpPercent - prevSlpPercent;
                         uwpVotePercentageChange = currentUwpPercent - prevUwpPercent;
+                        otherVotePercentageChange = currentIndPercent - prevIndPercent;
                     }
                 }
             }
@@ -271,6 +290,7 @@ export function ConstituencyPopoverContent({
             winnerAcronym, 
             slpVotePercentageChange, 
             uwpVotePercentageChange,
+            otherVotePercentageChange,
             slpLogoUrl: getLogo(slpParty.id),
             uwpLogoUrl: getLogo(uwpParty.id),
             indLogoUrl: independentLogo?.logoUrl || election?.independentLogoUrl,
@@ -281,17 +301,19 @@ export function ConstituencyPopoverContent({
 
     const isLoading = loadingCandidates || loadingParties;
     const currentResult = electionResults?.find(r => r.constituencyId === constituency.id);
-    const slpIsWinner = winnerAcronym === 'SLP';
     const uwpIsWinner = winnerAcronym === 'UWP';
+    const otherIsWinner = winnerAcronym === 'IND';
+    const slpIsWinner = !uwpIsWinner && !otherIsWinner;
 
-    const isCastriesNorth2021 = election?.year === 2021 && constituency.name === 'Castries North';
-    const castriesNorthWinnerAcronym = isCastriesNorth2021 ? (currentResult && currentResult.slpVotes > currentResult.uwpVotes ? 'SLP' : 'UWP') : null;
+    const isSpecialConstituency = election?.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
+    const isMakeYourOwnSpecial = isMakeYourOwn && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
+
+    const indVotes = isSpecialConstituency && currentResult ? currentResult.slpVotes : currentResult?.otherVotes;
+
 
     if (isLoading) {
         return <Skeleton className="h-40 w-full" />;
     }
-
-    const isSpecialConstituency = isMakeYourOwn && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
 
     return (
         <div className="space-y-3 w-80">
@@ -338,41 +360,43 @@ export function ConstituencyPopoverContent({
                 </div>
             ) : !isMakeYourOwn ? (
               <div className="space-y-2">
+                   {!isSpecialConstituency && slpCandidate && (
+                    <CandidateBox 
+                        candidate={slpCandidate} 
+                        party={slpParty} 
+                        isWinner={slpIsWinner} 
+                        votes={currentResult?.slpVotes} 
+                        totalVotes={totalConstituencyVotes}
+                        margin={margin}
+                        electionStatus={electionStatus}
+                        statusColor={statusColor}
+                        votePercentageChange={slpVotePercentageChange}
+                        logoUrl={slpLogoUrl}
+                    />
+                   )}
                   <CandidateBox 
-                      candidate={slpCandidate!} 
-                      party={slpParty!} 
-                      isWinner={slpIsWinner} 
-                      votes={currentResult?.slpVotes} 
-                      totalVotes={totalConstituencyVotes}
-                      margin={margin}
-                      electionStatus={electionStatus}
-                      statusColor={statusColor}
-                      isStriped={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'SLP'}
-                      barFill={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'SLP' ? 'blue-red-stripes' : undefined}
-                      votePercentageChange={slpVotePercentageChange}
-                      logoUrl={slpLogoUrl}
-                  />
-                  <CandidateBox 
-                      candidate={uwpCandidate!} 
-                      party={uwpParty!} 
+                      candidate={uwpCandidate} 
+                      party={uwpParty} 
                       isWinner={uwpIsWinner} 
                       votes={currentResult?.uwpVotes}
                       totalVotes={totalConstituencyVotes}
                       margin={margin}
                       electionStatus={electionStatus}
                       statusColor={statusColor}
-                      isStriped={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'UWP'}
-                      barFill={isCastriesNorth2021 && castriesNorthWinnerAcronym === 'UWP' ? 'blue-red-stripes' : undefined}
                       votePercentageChange={uwpVotePercentageChange}
                       logoUrl={uwpLogoUrl}
                   />
-                  {independentCandidate && (
+                  {(independentCandidate || indVotes || 0 > 0) && (
                       <CandidateBox 
                         candidate={independentCandidate}
                         party={null}
-                        isWinner={!slpIsWinner && !uwpIsWinner}
-                        votes={currentResult?.otherVotes}
+                        isWinner={otherIsWinner}
+                        votes={indVotes}
                         totalVotes={totalConstituencyVotes}
+                        margin={margin}
+                        electionStatus={electionStatus}
+                        statusColor={statusColor}
+                        votePercentageChange={otherVotePercentageChange}
                         logoUrl={indLogoUrl}
                       />
                   )}
@@ -388,7 +412,7 @@ export function ConstituencyPopoverContent({
                         className="flex gap-2"
                     >
                         {makeYourOwnLeaningOptions
-                            .filter(opt => isSpecialConstituency ? opt.value !== 'slp' : opt.value !== 'ind')
+                            .filter(opt => isMakeYourOwnSpecial ? opt.value !== 'slp' : opt.value !== 'ind')
                             .map(opt => (
                             <Label 
                                 key={opt.value} 
