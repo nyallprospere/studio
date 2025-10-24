@@ -183,26 +183,33 @@ export function ConstituencyPopoverContent({
     const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
     const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
 
-    const { slpCandidate, uwpCandidate, slpParty, uwpParty } = useMemo(() => {
+    const { slpCandidate, uwpCandidate, independentCandidate, slpParty, uwpParty } = useMemo(() => {
         if (!parties || !candidates) {
-            return { slpCandidate: null, uwpCandidate: null, slpParty: null, uwpParty: null };
+            return { slpCandidate: null, uwpCandidate: null, independentCandidate: null, slpParty: null, uwpParty: null };
         }
         const slp = parties.find(p => p.acronym === 'SLP');
         const uwp = parties.find(p => p.acronym === 'UWP');
 
         const slpCand = slp ? candidates.find(c => c.partyId === slp.id) : null;
         const uwpCand = uwp ? candidates.find(c => c.partyId === uwp.id) : null;
+        
+        let indCand = null;
+        if (constituency.name === 'Castries North') {
+            indCand = candidates.find(c => c.firstName === 'Stephenson' && c.lastName === 'King');
+        } else if (constituency.name === 'Castries Central') {
+            indCand = candidates.find(c => c.firstName === 'Richard' && c.lastName === 'Frederick');
+        }
 
-        return { slpCandidate: slpCand, uwpCandidate: uwpCand, slpParty: slp, uwpParty: uwp };
-    }, [parties, candidates]);
+        return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand, slpParty: slp, uwpParty: uwp };
+    }, [parties, candidates, constituency.name]);
 
 
-    const { electionStatus, statusColor, margin, totalConstituencyVotes, winnerAcronym, slpVotePercentageChange, uwpVotePercentageChange, slpLogoUrl, uwpLogoUrl } = useMemo(() => {
-        if (!electionResults || !slpParty || !uwpParty) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null, slpVotePercentageChange: null, uwpVotePercentageChange: null, slpLogoUrl: null, uwpLogoUrl: null };
+    const { electionStatus, statusColor, margin, totalConstituencyVotes, winnerAcronym, slpVotePercentageChange, uwpVotePercentageChange, slpLogoUrl, uwpLogoUrl, indLogoUrl } = useMemo(() => {
+        if (!electionResults || !slpParty || !uwpParty) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null, slpVotePercentageChange: null, uwpVotePercentageChange: null, slpLogoUrl: null, uwpLogoUrl: null, indLogoUrl: null };
 
         const currentResult = electionResults.find(r => r.constituencyId === constituency.id);
         
-        if (!currentResult) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null, slpVotePercentageChange: null, uwpVotePercentageChange: null, slpLogoUrl: null, uwpLogoUrl: null };
+        if (!currentResult) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null, slpVotePercentageChange: null, uwpVotePercentageChange: null, slpLogoUrl: null, uwpLogoUrl: null, indLogoUrl: null };
         
         const totalVotes = currentResult.slpVotes + currentResult.uwpVotes + currentResult.otherVotes;
         const margin = Math.abs(currentResult.slpVotes - currentResult.uwpVotes);
@@ -248,7 +255,8 @@ export function ConstituencyPopoverContent({
             }
             return logoUrl;
         }
-
+        
+        const independentLogo = partyLogos?.find(logo => logo.partyId === 'independent' && logo.electionId === election?.id && logo.constituencyId === constituency.id);
 
         return { 
             electionStatus: status, 
@@ -260,6 +268,7 @@ export function ConstituencyPopoverContent({
             uwpVotePercentageChange,
             slpLogoUrl: getLogo(slpParty.id),
             uwpLogoUrl: getLogo(uwpParty.id),
+            indLogoUrl: independentLogo?.logoUrl || election?.independentLogoUrl,
         };
 
     }, [constituency.id, electionResults, previousElectionResults, slpParty, uwpParty, partyLogos, election, parties]);
@@ -352,6 +361,16 @@ export function ConstituencyPopoverContent({
                       votePercentageChange={uwpVotePercentageChange}
                       logoUrl={uwpLogoUrl}
                   />
+                  {independentCandidate && (
+                      <CandidateBox 
+                        candidate={independentCandidate}
+                        party={null}
+                        isWinner={!slpIsWinner && !uwpIsWinner}
+                        votes={currentResult?.otherVotes}
+                        totalVotes={totalConstituencyVotes}
+                        logoUrl={indLogoUrl}
+                      />
+                  )}
               </div>
             ) : null}
             
@@ -375,7 +394,7 @@ export function ConstituencyPopoverContent({
                                 )}
                             >
                                 <RadioGroupItem value={opt.value} id={`${constituency.id}-${opt.value}`} className="sr-only" />
-                                {opt.value === 'slp' && isSpecialConstituency ? 'IND' : opt.label}
+                                {opt.label}
                             </Label>
                         ))}
                     </RadioGroup>
