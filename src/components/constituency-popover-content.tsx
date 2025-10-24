@@ -30,7 +30,6 @@ const makeYourOwnLeaningOptions = [
   { value: 'slp', label: 'SLP' },
   { value: 'uwp', label: 'UWP' },
   { value: 'ind', label: 'IND' },
-  { value: 'tossup', label: 'Toss Up' },
 ];
 
 
@@ -364,24 +363,21 @@ export function ConstituencyPopoverContent({
                         onValueChange={onLeaningChange}
                         className="flex gap-2"
                     >
-                        {makeYourOwnLeaningOptions.map(opt => {
-                            if (opt.value === 'tossup') return null; // Don't show Toss Up
-                            return (
-                                <Label 
-                                    key={opt.value} 
-                                    htmlFor={`${constituency.id}-${opt.value}`}
-                                    className={cn(
-                                        "flex-1 text-center border rounded-md px-3 py-1.5 text-xs font-medium cursor-pointer transition-colors",
-                                        constituency.politicalLeaning === opt.value 
-                                            ? "bg-primary text-primary-foreground" 
-                                            : "hover:bg-muted"
-                                    )}
-                                >
-                                    <RadioGroupItem value={opt.value} id={`${constituency.id}-${opt.value}`} className="sr-only" />
-                                    {opt.value === 'slp' && isSpecialConstituency ? 'IND' : opt.label}
-                                </Label>
-                            )
-                        })}
+                        {makeYourOwnLeaningOptions.map(opt => (
+                            <Label 
+                                key={opt.value} 
+                                htmlFor={`${constituency.id}-${opt.value}`}
+                                className={cn(
+                                    "flex-1 text-center border rounded-md px-3 py-1.5 text-xs font-medium cursor-pointer transition-colors",
+                                    constituency.politicalLeaning === opt.value 
+                                        ? "bg-primary text-primary-foreground" 
+                                        : "hover:bg-muted"
+                                )}
+                            >
+                                <RadioGroupItem value={opt.value} id={`${constituency.id}-${opt.value}`} className="sr-only" />
+                                {opt.value === 'slp' && isSpecialConstituency ? 'IND' : opt.label}
+                            </Label>
+                        ))}
                     </RadioGroup>
                 </div>
             )}
