@@ -3,13 +3,13 @@
 
 import { useParams } from 'next/navigation';
 import { useMemo } from 'react';
-import type { Party, Candidate, Constituency } from '@/lib/types';
+import type { Party, Candidate, Constituency, Election, PartyLogo } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import { UserSquare, Shield } from 'lucide-react';
 import { useDoc, useFirebase, useMemoFirebase, useCollection } from '@/firebase';
-import { doc, collection } from 'firebase/firestore';
+import { doc, collection, query, where } from 'firebase/firestore';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 function CandidatePageSkeleton() {
@@ -52,13 +52,30 @@ export default function CandidateDetailPage() {
   const candidateRef = useMemoFirebase(() => (firestore && candidateId ? doc(firestore, 'candidates', candidateId) : null), [firestore, candidateId]);
   const { data: candidate, isLoading: loadingCandidate } = useDoc<Candidate>(candidateRef);
   
-  const partyRef = useMemoFirebase(() => (firestore && candidate ? doc(firestore, 'parties', candidate.partyId) : null), [firestore, candidate]);
+  const partyRef = useMemoFirebase(() => (firestore && candidate && !candidate.isIndependentCastriesNorth && !candidate.isIndependentCastriesCentral ? doc(firestore, 'parties', candidate.partyId) : null), [firestore, candidate]);
   const { data: party, isLoading: loadingParty } = useDoc<Party>(partyRef);
 
   const constituencyRef = useMemoFirebase(() => (firestore && candidate ? doc(firestore, 'constituencies', candidate.constituencyId) : null), [firestore, candidate]);
   const { data: constituency, isLoading: loadingConstituency } = useDoc<Constituency>(constituencyRef);
 
-  const isLoading = loadingCandidate || loadingParty || loadingConstituency;
+  const currentElectionQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), where('isCurrent', '==', true)) : null, [firestore]);
+  const { data: currentElections, isLoading: loadingElections } = useCollection<Election>(currentElectionQuery);
+  const currentElection = useMemo(() => currentElections?.[0], [currentElections]);
+  
+  const independentLogoQuery = useMemoFirebase(() => {
+    if (!firestore || !candidate || !currentElection || (!candidate.isIndependentCastriesNorth && !candidate.isIndependentCastriesCentral)) return null;
+    return query(
+        collection(firestore, 'party_logos'),
+        where('partyId', '==', 'independent'),
+        where('electionId', '==', currentElection.id),
+        where('constituencyId', '==', candidate.constituencyId)
+    );
+  }, [firestore, candidate, currentElection]);
+  const { data: independentLogos, isLoading: loadingLogos } = useCollection<PartyLogo>(independentLogoQuery);
+  const independentLogo = useMemo(() => independentLogos?.[0], [independentLogos]);
+
+
+  const isLoading = loadingCandidate || loadingParty || loadingConstituency || loadingElections || loadingLogos;
 
   if (isLoading || !candidate) {
     return (
@@ -70,6 +87,10 @@ export default function CandidateDetailPage() {
 
   const candidateName = `${candidate.firstName} ${candidate.lastName}`;
   const displayName = `${candidateName} ${candidate.isIncumbent ? '(Inc.)' : ''}`.trim();
+  const isIndependent = candidate.isIndependentCastriesNorth || candidate.isIndependentCastriesCentral;
+  
+  const displayParty = isIndependent ? { name: 'Independent', acronym: 'IND', color: '#808080' } : party;
+  const displayLogoUrl = isIndependent ? (independentLogo?.logoUrl || currentElection?.independentLogoUrl) : party?.logoUrl;
 
 
   return (
@@ -90,17 +111,17 @@ export default function CandidateDetailPage() {
                 <CardDescription className="text-lg">
                   Candidate for <span className="font-semibold text-foreground">{constituency?.name}</span>
                 </CardDescription>
-                {party && (
+                {displayParty && (
                   <div className="flex items-center gap-2 pt-2">
                      <div className="relative h-8 w-8 flex-shrink-0">
-                        {party.logoUrl ? (
-                            <Image src={party.logoUrl} alt={`${party.name} logo`} fill className="object-contain" />
+                        {displayLogoUrl ? (
+                            <Image src={displayLogoUrl} alt={`${displayParty.name} logo`} fill className="object-contain" />
                         ) : (
                              <Shield className="w-8 h-8 text-muted-foreground" />
                         )}
                     </div>
-                    <span className="font-semibold" style={{ color: party.color }}>
-                      {party.name} ({party.acronym})
+                    <span className="font-semibold" style={{ color: displayParty.color }}>
+                      {displayParty.name} {displayParty.acronym && `(${displayParty.acronym})`}
                     </span>
                   </div>
                 )}
@@ -108,7 +129,7 @@ export default function CandidateDetailPage() {
             </div>
           </CardHeader>
 
-          <CardContent className="space-y-6 text-sm">
+          <CardContent className="space-y-6 text-sm px-6">
             {candidate.bio && (
                 <div>
                     <h4 className="font-semibold text-base mb-1 uppercase tracking-wider text-muted-foreground">Meet the Candidate</h4>
