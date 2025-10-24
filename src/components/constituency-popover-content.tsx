@@ -204,10 +204,15 @@ export function ConstituencyPopoverContent({
             } else if (constituency.name === 'Castries Central') {
                 indCand = candidates.find(c => c.firstName === 'Richard' && c.lastName === 'Frederick');
             }
+        }
+        
+        // Ensure indCand is only set for the special constituencies in 2021, and slpCand is cleared for them.
+        if (isSpecialConstituency) {
             slpCand = null;
         } else {
-            indCand = candidates.find(c => c.partyId !== slp?.id && c.partyId !== uwp?.id) || null;
+            indCand = null; // Clear independent candidate for all other cases
         }
+
 
         return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand, slpParty: slp, uwpParty: uwp };
     }, [parties, candidates, constituency.name, election]);
@@ -237,10 +242,10 @@ export function ConstituencyPopoverContent({
         let uwpVotePercentageChange = null;
         let otherVotePercentageChange = null;
 
-        if (previousElectionResults) {
+        if (previousElectionResults && previousElection) {
             const previousResult = previousElectionResults.find(r => r.constituencyId === constituency.id);
             if (previousResult) {
-                const prevIsSpecialConstituency = previousElection?.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
+                const prevIsSpecialConstituency = previousElection.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
                 const prevIndVotes = prevIsSpecialConstituency ? previousResult.slpVotes : previousResult.otherVotes;
                 const prevSlpVotes = prevIsSpecialConstituency ? 0 : previousResult.slpVotes;
 
@@ -388,7 +393,7 @@ export function ConstituencyPopoverContent({
                       votePercentageChange={uwpVotePercentageChange}
                       logoUrl={uwpLogoUrl}
                   />
-                  {(independentCandidate || indVotes || 0 > 0) && (
+                  {(independentCandidate || (indVotes || 0) > 0) && (
                       <CandidateBox 
                         candidate={independentCandidate}
                         party={null}
