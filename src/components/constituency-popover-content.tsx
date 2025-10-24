@@ -67,7 +67,7 @@ function CandidateBox({
     logoUrl?: string;
 }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
-    const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}` : 'Candidate TBD';
+    const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}` : 'Candidate(s) N/A';
 
     const votePercentage = totalVotes && votes ? (votes / totalVotes) * 100 : 0;
 
@@ -303,11 +303,11 @@ export function ConstituencyPopoverContent({
             otherVotePercentageChange,
             slpLogoUrl: getLogo(slpParty.id),
             uwpLogoUrl: getLogo(uwpParty.id),
-            indLogoUrl: independentLogo?.logoUrl || election?.independentLogoUrl,
+            indLogoUrl: independentCandidate?.customLogoUrl || independentLogo?.logoUrl || election?.independentLogoUrl,
             indVotes,
         };
 
-    }, [constituency.id, electionResults, previousElectionResults, previousElection, slpParty, uwpParty, partyLogos, election, parties]);
+    }, [constituency.id, electionResults, previousElectionResults, previousElection, slpParty, uwpParty, partyLogos, election, parties, independentCandidate]);
 
 
     const isLoading = loadingCandidates || loadingParties;
@@ -469,3 +469,5 @@ export function ConstituencyPopoverContent({
         </div>
     );
 }
+
+    
