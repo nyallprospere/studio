@@ -244,8 +244,8 @@ export default function AdminConstituenciesPage() {
         <div className="container mx-auto px-4 py-8">
             <div className="flex justify-between items-start mb-8">
                 <PageHeader
-                title="Manage Constituencies"
-                description="Update details for each electoral district."
+                title="Manage Projection Map"
+                description="Update details for each electoral district to affect the main projection map."
                 />
                  <div className="flex items-center gap-2">
                     {(constituencies === null || constituencies?.length === 0) && (

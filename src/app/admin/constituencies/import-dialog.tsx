@@ -123,7 +123,7 @@ export function ImportDialog({ isOpen, onClose, onImport }: ImportDialogProps) {
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Import Constituencies</DialogTitle>
+          <DialogTitle>Import Projection Data</DialogTitle>
           <DialogDescription>
             Upload a CSV or Excel file. Then map the columns from your file to the required fields.
           </DialogDescription>

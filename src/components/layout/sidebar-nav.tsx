@@ -45,7 +45,7 @@ export const adminNavItems = [
     { href: '/admin/logos', icon: ImageIcon, label: 'Manage Logos' },
     { href: '/admin/events', icon: Calendar, label: 'Manage Events'},
     { href: '/admin/results', icon: Landmark, label: 'Manage Election Results' },
-    { href: '/admin/constituencies', icon: FilePlus, label: 'Manage Constituencies' },
+    { href: '/admin/constituencies', icon: FilePlus, label: 'Manage Projection Map' },
     { href: '/admin/regions', icon: Globe, label: 'Manage Regions' },
     { href: '/admin/mailing-list', icon: Mail, label: 'Manage Mailing List' },
     { href: '/admin/ads', icon: Megaphone, label: 'Manage Ads' },
