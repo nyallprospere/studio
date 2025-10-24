@@ -6,7 +6,7 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Users, BarChart3, TrendingUp, Landmark, Shield, Vote, Map, GripVertical, FilePlus, Settings, Calendar } from 'lucide-react';
+import { Users, BarChart3, TrendingUp, Landmark, Shield, Vote, Map, GripVertical, FilePlus, Settings, Calendar, Pencil } from 'lucide-react';
 import Countdown from '@/components/countdown';
 import { PageHeader } from '@/components/page-header';
 import {
@@ -154,32 +154,10 @@ export default function Home() {
           </CardContent>
         </Card>
       </div>
-
-      <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card>
-            <CardHeader>
-                <div>
-                    <CardTitle>Events</CardTitle>
-                    <CardDescription>Upcoming and past political events.</CardDescription>
-                </div>
-                 <div className="flex w-full items-center gap-1 p-1 bg-muted rounded-md mt-4">
-                    <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')} className="flex-1">Upcoming</Button>
-                    <Button size="sm" variant={allEventsViewMode === 'past' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('past')} className="flex-1">Past</Button>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-4">
-                {loadingEvents || loadingParties ? <p>Loading events...</p> : visibleAllEvents.length > 0 ? (
-                    visibleAllEvents.map((event) => (
-                       <EventCard key={event.id} event={event} party={getParty(event.partyId)} />
-                    ))
-                ) : (
-                    <p className="text-center text-muted-foreground py-8">No {allEventsViewMode} events found.</p>
-                )}
-                </div>
-            </CardContent>
-        </Card>
-        <Card>
+      
+       <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+           <Card>
             <CardHeader>
                 <CardTitle>Interactive Map</CardTitle>
                 <CardDescription>Click on a constituency to learn more.</CardDescription>
@@ -193,6 +171,96 @@ export default function Home() {
                  />
             </CardContent>
         </Card>
+        </div>
+        <div className="space-y-8">
+             <Card>
+                <CardHeader>
+                     <div className="flex items-center justify-between">
+                         <div>
+                            <CardTitle className="font-headline">Seat Count</CardTitle>
+                            <CardDescription>Current political leaning of the 17 constituencies.</CardDescription>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="flex flex-col items-center">
+                    <ChartContainer config={chartConfig} className="h-40 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <ChartTooltip 
+                                    cursor={false}
+                                    content={<ChartTooltipContent hideLabel />}
+                                />
+                                <Pie 
+                                    data={chartData} 
+                                    dataKey="value"
+                                    nameKey="name"
+                                    cx="50%" 
+                                    cy="100%" 
+                                    startAngle={180} 
+                                    endAngle={0} 
+                                    innerRadius="60%"
+                                    outerRadius="100%"
+                                    paddingAngle={2}
+                                >
+                                     {chartData.map((entry) => (
+                                        <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                                    ))}
+                                    <Label
+                                        content={({ viewBox }) => {
+                                            if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
+                                                return (
+                                                    <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
+                                                        <tspan x={viewBox.cx} dy="-0.5em" className="text-3xl font-bold">{constituencies?.length || 0}</tspan>
+                                                        <tspan x={viewBox.cx} dy="1.2em" className="text-sm text-muted-foreground">Seats</tspan>
+                                                    </text>
+                                                )
+                                            }
+                                        }}
+                                    />
+                                </Pie>
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </ChartContainer>
+                    <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-xs">
+                        {politicalLeaningOptions.map((option) => {
+                            const count = chartData.find(d => d.name === option.label)?.value || 0;
+                            if (count === 0) return null;
+                            return (
+                                <div key={option.value} className="flex items-center gap-1.5">
+                                    <span className="w-3 h-3 rounded-full" style={{ backgroundColor: option.color }}></span>
+                                    <span>{option.label}</span>
+                                    <span className="font-bold">({count})</span>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </CardContent>
+            </Card>
+
+             <Card>
+                <CardHeader>
+                    <div>
+                        <CardTitle>Events</CardTitle>
+                        <CardDescription>Upcoming and past political events.</CardDescription>
+                    </div>
+                    <div className="flex w-full items-center gap-1 p-1 bg-muted rounded-md mt-4">
+                        <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')} className="flex-1">Upcoming</Button>
+                        <Button size="sm" variant={allEventsViewMode === 'past' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('past')} className="flex-1">Past</Button>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                    {loadingEvents || loadingParties ? <p>Loading events...</p> : visibleAllEvents.length > 0 ? (
+                        visibleAllEvents.map((event) => (
+                        <EventCard key={event.id} event={event} party={getParty(event.partyId)} />
+                        ))
+                    ) : (
+                        <p className="text-center text-muted-foreground py-8">No {allEventsViewMode} events found.</p>
+                    )}
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
       </div>
 
        <Card className="mt-8">
