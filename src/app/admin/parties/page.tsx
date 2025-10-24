@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useCollection, useFirebase, useMemoFirebase, useDoc } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
 import type { Party, Election } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
@@ -48,36 +48,27 @@ export default function AdminPartiesPage() {
 
   const handleFormSubmit = async (values: any) => {
     if (!firestore || !partiesCollection) return;
+    
+    let logoUrl = values.logoUrl;
+    let expandedLogoUrl = values.expandedLogoUrl;
+    let oldLogoUrl = values.oldLogoUrl;
+    let manifestoUrl = values.manifestoUrl;
+
     try {
-      let logoUrl = values.logoUrl;
       if (values.logoFile) {
-        if(editingParty?.logoUrl) {
-            await deleteFile(editingParty.logoUrl);
-        }
+        if(editingParty?.logoUrl) await deleteFile(editingParty.logoUrl);
         logoUrl = await uploadFile(values.logoFile, `parties/${values.logoFile.name}`);
       }
-
-      let oldLogoUrl = values.oldLogoUrl;
-      if (values.oldLogoFile) {
-        if(editingParty?.oldLogoUrl) {
-            await deleteFile(editingParty.oldLogoUrl);
-        }
-        oldLogoUrl = await uploadFile(values.oldLogoFile, `parties/old_${values.oldLogoFile.name}`);
-      }
-
-      let expandedLogoUrl = values.expandedLogoUrl;
       if (values.expandedLogoFile) {
-        if(editingParty?.expandedLogoUrl) {
-            await deleteFile(editingParty.expandedLogoUrl);
-        }
+        if(editingParty?.expandedLogoUrl) await deleteFile(editingParty.expandedLogoUrl);
         expandedLogoUrl = await uploadFile(values.expandedLogoFile, `parties/expanded_${values.expandedLogoFile.name}`);
       }
-
-      let manifestoUrl = values.manifestoUrl;
+      if (values.oldLogoFile) {
+        if(editingParty?.oldLogoUrl) await deleteFile(editingParty.oldLogoUrl);
+        oldLogoUrl = await uploadFile(values.oldLogoFile, `parties/old_${values.oldLogoFile.name}`);
+      }
       if (values.manifestoFile) {
-        if(editingParty?.manifestoUrl) {
-            await deleteFile(editingParty.manifestoUrl);
-        }
+        if(editingParty?.manifestoUrl) await deleteFile(editingParty.manifestoUrl);
         manifestoUrl = await uploadFile(values.manifestoFile, `parties/${values.manifestoFile.name}`);
       }
 
@@ -96,15 +87,27 @@ export default function AdminPartiesPage() {
 
       if (editingParty) {
         const partyDoc = doc(firestore, 'parties', editingParty.id);
-        await updateDoc(partyDoc, partyData);
-        toast({ title: "Party Updated", description: `${partyData.name} has been successfully updated.` });
+        updateDoc(partyDoc, partyData)
+        .then(() => {
+          toast({ title: "Party Updated", description: `${partyData.name} has been successfully updated.` });
+        })
+        .catch(error => {
+            const contextualError = new FirestorePermissionError({ path: partyDoc.path, operation: 'update', requestResourceData: partyData });
+            errorEmitter.emit('permission-error', contextualError);
+        });
       } else {
-        await addDoc(partiesCollection, partyData);
-        toast({ title: "Party Added", description: `${partyData.name} has been successfully added.` });
+        addDoc(partiesCollection, partyData)
+        .then(() => {
+            toast({ title: "Party Added", description: `${partyData.name} has been successfully added.` });
+        })
+        .catch(error => {
+            const contextualError = new FirestorePermissionError({ path: partiesCollection.path, operation: 'create', requestResourceData: partyData });
+            errorEmitter.emit('permission-error', contextualError);
+        });
       }
     } catch (error) {
-      console.error("Error saving party: ", error);
-      toast({ variant: "destructive", title: "Error", description: "Failed to save party. Check console for details." });
+      console.error("Error during file upload: ", error);
+      toast({ variant: "destructive", title: "File Upload Error", description: "Could not upload a file. Check console for details." });
     } finally {
       setIsFormOpen(false);
       setEditingParty(null);
@@ -115,29 +118,29 @@ export default function AdminPartiesPage() {
     if (!firestore || !currentElection) return;
 
     try {
-      let independentLogoUrl = values.independentLogoUrl;
+      let independentLogoUrl = values.independentLogoUrl || currentElection.independentLogoUrl;
       if (values.independentLogoFile) {
-        if (currentElection.independentLogoUrl) {
-          await deleteFile(currentElection.independentLogoUrl);
-        }
+        if (currentElection.independentLogoUrl) await deleteFile(currentElection.independentLogoUrl);
         independentLogoUrl = await uploadFile(values.independentLogoFile, `logos/independent_${currentElection.year}.png`);
       }
 
-      let independentExpandedLogoUrl = values.independentExpandedLogoUrl;
+      let independentExpandedLogoUrl = values.independentExpandedLogoUrl || currentElection.independentExpandedLogoUrl;
       if (values.independentExpandedLogoFile) {
-        if (currentElection.independentExpandedLogoUrl) {
-          await deleteFile(currentElection.independentExpandedLogoUrl);
-        }
+        if (currentElection.independentExpandedLogoUrl) await deleteFile(currentElection.independentExpandedLogoUrl);
         independentExpandedLogoUrl = await uploadFile(values.independentExpandedLogoFile, `logos/independent_expanded_${currentElection.year}.png`);
       }
 
       const electionDocRef = doc(firestore, 'elections', currentElection.id);
-      await updateDoc(electionDocRef, {
-        independentLogoUrl,
-        independentExpandedLogoUrl
-      });
+      const dataToUpdate = { independentLogoUrl, independentExpandedLogoUrl };
       
-      toast({ title: "Independent Logos Updated", description: "The logos for independent candidates have been updated." });
+      updateDoc(electionDocRef, dataToUpdate)
+        .then(() => {
+          toast({ title: "Independent Logos Updated", description: "The logos for independent candidates have been updated." });
+        })
+        .catch(error => {
+            const contextualError = new FirestorePermissionError({ path: electionDocRef.path, operation: 'update', requestResourceData: dataToUpdate });
+            errorEmitter.emit('permission-error', contextualError);
+        });
 
     } catch (error) {
        console.error("Error saving independent logos: ", error);
@@ -150,19 +153,21 @@ export default function AdminPartiesPage() {
 
   const handleDelete = async (party: Party) => {
     if (!firestore) return;
-    try {
-      if(party.logoUrl) await deleteFile(party.logoUrl);
-      if(party.expandedLogoUrl) await deleteFile(party.expandedLogoUrl);
-      if(party.oldLogoUrl) await deleteFile(party.oldLogoUrl);
-      if(party.manifestoUrl) await deleteFile(party.manifestoUrl);
 
-      const partyDoc = doc(firestore, 'parties', party.id);
-      await deleteDoc(partyDoc);
-      toast({ title: "Party Deleted", description: `${party.name} has been deleted.` });
-    } catch (error) {
-        console.error("Error deleting party: ", error);
-        toast({ variant: "destructive", title: "Error", description: "Failed to delete party." });
-    }
+    if(party.logoUrl) await deleteFile(party.logoUrl).catch(console.warn);
+    if(party.expandedLogoUrl) await deleteFile(party.expandedLogoUrl).catch(console.warn);
+    if(party.oldLogoUrl) await deleteFile(party.oldLogoUrl).catch(console.warn);
+    if(party.manifestoUrl) await deleteFile(party.manifestoUrl).catch(console.warn);
+
+    const partyDoc = doc(firestore, 'parties', party.id);
+    deleteDoc(partyDoc)
+        .then(() => {
+            toast({ title: "Party Deleted", description: `${party.name} has been deleted.` });
+        })
+        .catch(error => {
+            const contextualError = new FirestorePermissionError({ path: partyDoc.path, operation: 'delete' });
+            errorEmitter.emit('permission-error', contextualError);
+        });
   };
 
   return (

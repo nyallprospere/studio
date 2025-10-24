@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -123,48 +124,54 @@ export default function AdminAdsPage() {
     if (!firestore || !adsCollection) return;
     
     let imageUrl = values.imageUrl;
-    if (values.imageFile) {
-      if (editingAd?.imageUrl) {
-        await deleteFile(editingAd.imageUrl).catch(console.warn);
+    
+    try {
+      if (values.imageFile) {
+        if (editingAd?.imageUrl) {
+          await deleteFile(editingAd.imageUrl).catch(console.warn);
+        }
+        imageUrl = await uploadFile(values.imageFile, `ads/${values.imageFile.name}`);
       }
-      imageUrl = await uploadFile(values.imageFile, `ads/${values.imageFile.name}`);
-    }
 
-    const adData = { 
-      ...values, 
-      imageUrl,
-      publishDate: values.publishDate ? Timestamp.fromDate(values.publishDate) : null,
-      unpublishDate: values.unpublishDate ? Timestamp.fromDate(values.unpublishDate) : null,
-    };
-    delete adData.imageFile;
+      const adData = { 
+        ...values, 
+        imageUrl,
+        publishDate: values.publishDate ? Timestamp.fromDate(values.publishDate) : null,
+        unpublishDate: values.unpublishDate ? Timestamp.fromDate(values.unpublishDate) : null,
+      };
+      delete adData.imageFile;
 
-    if (editingAd) {
-      const adDoc = doc(firestore, 'ads', editingAd.id);
-      updateDoc(adDoc, adData)
-        .then(() => {
-          toast({ title: "Ad Updated", description: `The ad "${adData.name}" has been successfully updated.` });
-        })
-        .catch(error => {
-          const contextualError = new FirestorePermissionError({
-            path: adDoc.path,
-            operation: 'update',
-            requestResourceData: adData,
+      if (editingAd) {
+        const adDoc = doc(firestore, 'ads', editingAd.id);
+        updateDoc(adDoc, adData)
+          .then(() => {
+            toast({ title: "Ad Updated", description: `The ad "${adData.name}" has been successfully updated.` });
+          })
+          .catch(error => {
+            const contextualError = new FirestorePermissionError({
+              path: adDoc.path,
+              operation: 'update',
+              requestResourceData: adData,
+            });
+            errorEmitter.emit('permission-error', contextualError);
           });
-          errorEmitter.emit('permission-error', contextualError);
-        });
-    } else {
-      addDoc(adsCollection, adData)
-        .then(() => {
-          toast({ title: "Ad Added", description: `The ad "${adData.name}" has been successfully added.` });
-        })
-        .catch(error => {
-          const contextualError = new FirestorePermissionError({
-            path: (adsCollection as CollectionReference).path,
-            operation: 'create',
-            requestResourceData: adData,
+      } else {
+        addDoc(adsCollection, adData)
+          .then(() => {
+            toast({ title: "Ad Added", description: `The ad "${adData.name}" has been successfully added.` });
+          })
+          .catch(error => {
+            const contextualError = new FirestorePermissionError({
+              path: (adsCollection as CollectionReference).path,
+              operation: 'create',
+              requestResourceData: adData,
+            });
+            errorEmitter.emit('permission-error', contextualError);
           });
-          errorEmitter.emit('permission-error', contextualError);
-        });
+      }
+    } catch(e) {
+      console.error("Error uploading file:", e);
+      toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload the ad image."});
     }
 
     setIsFormOpen(false);
@@ -183,11 +190,15 @@ export default function AdminAdsPage() {
         await deleteFile(ad.imageUrl);
       }
       const adDoc = doc(firestore, 'ads', ad.id);
-      await deleteDoc(adDoc);
-      toast({ title: "Ad Deleted", description: `The ad "${ad.name}" has been deleted.` });
+      deleteDoc(adDoc)
+        .then(() => toast({ title: "Ad Deleted", description: `The ad "${ad.name}" has been deleted.` }))
+        .catch(error => {
+            const contextualError = new FirestorePermissionError({ path: adDoc.path, operation: 'delete' });
+            errorEmitter.emit('permission-error', contextualError);
+        });
     } catch (error) {
       console.error("Error deleting ad: ", error);
-      toast({ variant: "destructive", title: "Error", description: "Failed to delete ad." });
+      toast({ variant: "destructive", title: "Error", description: "Failed to delete ad's storage object." });
     }
   };
 

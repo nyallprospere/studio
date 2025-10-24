@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, deleteDoc, doc, addDoc, serverTimestamp, where, getDocs, Timestamp } from 'firebase/firestore';
+import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
+import { collection, query, orderBy, deleteDoc, doc, addDoc, serverTimestamp, where, getDocs, Timestamp, CollectionReference } from 'firebase/firestore';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -82,36 +83,43 @@ export default function ManageMailingListPage() {
       return;
     }
 
-    try {
-        const subscribersCollection = collection(firestore, 'mailing_list_subscribers');
-        const q = query(subscribersCollection, where("email", "==", values.email));
-        const existingSubscriber = await getDocs(q);
-        if (!existingSubscriber.empty) {
-            toast({ variant: 'destructive', title: 'Subscriber Exists', description: 'This email is already on the mailing list.'});
-            return;
-        }
-
-        await addDoc(subscribersCollection, {
-            ...values,
-            subscribedAt: serverTimestamp(),
-        });
-        toast({ title: "Subscriber Added", description: "The new subscriber has been added to the mailing list." });
-        setIsFormOpen(false);
-    } catch (e) {
-        console.error("Error adding subscriber:", e);
-        toast({ variant: "destructive", title: "Error", description: "Could not add subscriber." });
+    const subscribersCollection = collection(firestore, 'mailing_list_subscribers');
+    const q = query(subscribersCollection, where("email", "==", values.email));
+    const existingSubscriber = await getDocs(q);
+    if (!existingSubscriber.empty) {
+        toast({ variant: 'destructive', title: 'Subscriber Exists', description: 'This email is already on the mailing list.'});
+        return;
     }
+
+    const dataToSave = {
+        ...values,
+        subscribedAt: serverTimestamp(),
+    };
+
+    addDoc(subscribersCollection, dataToSave)
+        .then(() => {
+            toast({ title: "Subscriber Added", description: "The new subscriber has been added to the mailing list." });
+            setIsFormOpen(false);
+        })
+        .catch(e => {
+            const contextualError = new FirestorePermissionError({
+                path: (subscribersCollection as CollectionReference).path,
+                operation: 'create',
+                requestResourceData: dataToSave,
+            });
+            errorEmitter.emit('permission-error', contextualError);
+        });
   };
 
   const handleDelete = async (subscriberId: string) => {
     if (!firestore) return;
-    try {
-      await deleteDoc(doc(firestore, 'mailing_list_subscribers', subscriberId));
-      toast({ title: "Subscriber Removed", description: "The subscriber has been removed from the mailing list." });
-    } catch (error) {
-      console.error("Error removing subscriber:", error);
-      toast({ variant: "destructive", title: "Error", description: "Could not remove subscriber." });
-    }
+    const subDoc = doc(firestore, 'mailing_list_subscribers', subscriberId);
+    deleteDoc(subDoc)
+        .then(() => toast({ title: "Subscriber Removed", description: "The subscriber has been removed from the mailing list." }))
+        .catch(error => {
+             const contextualError = new FirestorePermissionError({ path: subDoc.path, operation: 'delete' });
+             errorEmitter.emit('permission-error', contextualError);
+        });
   };
 
   const handleExport = () => {

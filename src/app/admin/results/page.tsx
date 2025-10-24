@@ -1,8 +1,9 @@
 
+
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc, writeBatch, query, where, orderBy, getDocs } from 'firebase/firestore';
 import type { Election, ElectionResult, Party, Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
@@ -67,46 +68,51 @@ export default function AdminResultsPage() {
   const getElection = (electionId: string) => elections?.find(e => e.id === electionId);
 
   const handleFormSubmit = async (values: any) => {
-    try {
-      const totalVotes = values.slpVotes + values.uwpVotes + values.otherVotes;
-      
-      let registeredVoters = values.registeredVoters;
-      let turnout = 0;
+    if (!firestore) return;
+    
+    const totalVotes = values.slpVotes + values.uwpVotes + values.otherVotes;
+    
+    let registeredVoters = values.registeredVoters;
+    let turnout = 0;
 
-      if (values.votersNotAvailable) {
-        registeredVoters = 0;
-        turnout = 0;
-      } else if (registeredVoters > 0) {
-        turnout = (totalVotes / registeredVoters) * 100;
-      }
-      
-      const resultData = { 
-        electionId: values.electionId,
-        constituencyId: values.constituencyId,
-        slpVotes: values.slpVotes,
-        uwpVotes: values.uwpVotes,
-        otherVotes: values.otherVotes,
-        registeredVoters,
-        totalVotes,
-        turnout: parseFloat(turnout.toFixed(2))
-      };
-
-      if (editingResult) {
-        const resultDoc = doc(firestore, 'election_results', editingResult.id);
-        await updateDoc(resultDoc, resultData);
-        toast({ title: "Result Updated", description: `The result has been successfully updated.` });
-      } else {
-        const resultsCollection = collection(firestore, 'election_results');
-        await addDoc(resultsCollection, resultData);
-        toast({ title: "Result Added", description: `The result has been successfully added.` });
-      }
-    } catch (error) {
-      console.error("Error saving result: ", error);
-      toast({ variant: "destructive", title: "Error", description: "Failed to save result. Check console for details." });
-    } finally {
-      setIsFormOpen(false);
-      setEditingResult(null);
+    if (values.votersNotAvailable) {
+      registeredVoters = 0;
+      turnout = 0;
+    } else if (registeredVoters > 0) {
+      turnout = (totalVotes / registeredVoters) * 100;
     }
+    
+    const resultData = { 
+      electionId: values.electionId,
+      constituencyId: values.constituencyId,
+      slpVotes: values.slpVotes,
+      uwpVotes: values.uwpVotes,
+      otherVotes: values.otherVotes,
+      registeredVoters,
+      totalVotes,
+      turnout: parseFloat(turnout.toFixed(2))
+    };
+
+    if (editingResult) {
+      const resultDoc = doc(firestore, 'election_results', editingResult.id);
+      updateDoc(resultDoc, resultData)
+        .then(() => toast({ title: "Result Updated", description: `The result has been successfully updated.` }))
+        .catch(error => {
+          const contextualError = new FirestorePermissionError({ path: resultDoc.path, operation: 'update', requestResourceData: resultData });
+          errorEmitter.emit('permission-error', contextualError);
+        });
+    } else {
+      const resultsCollection = collection(firestore, 'election_results');
+      addDoc(resultsCollection, resultData)
+        .then(() => toast({ title: "Result Added", description: `The result has been successfully added.` }))
+        .catch(error => {
+          const contextualError = new FirestorePermissionError({ path: resultsCollection.path, operation: 'create', requestResourceData: resultData });
+          errorEmitter.emit('permission-error', contextualError);
+        });
+    }
+    
+    setIsFormOpen(false);
+    setEditingResult(null);
   };
 
   const handleLeaderFormSubmit = async (values: any) => {
@@ -136,8 +142,12 @@ export default function AdminResultsPage() {
       };
 
       const electionDoc = doc(firestore, 'elections', selectedElectionId);
-      await updateDoc(electionDoc, leaderData);
-      toast({ title: "Leaders Updated", description: `Party leaders for ${election.name} have been updated.` });
+      updateDoc(electionDoc, leaderData)
+        .then(() => toast({ title: "Leaders Updated", description: `Party leaders for ${election.name} have been updated.` }))
+        .catch(error => {
+            const contextualError = new FirestorePermissionError({ path: electionDoc.path, operation: 'update', requestResourceData: leaderData });
+            errorEmitter.emit('permission-error', contextualError);
+        });
 
     } catch (error) {
       console.error("Error saving leaders: ", error);
@@ -150,14 +160,14 @@ export default function AdminResultsPage() {
 
 
   const handleDelete = async (result: ElectionResult) => {
-    try {
-      const resultDoc = doc(firestore, 'election_results', result.id);
-      await deleteDoc(resultDoc);
-      toast({ title: "Result Deleted", description: `The result has been deleted.` });
-    } catch (error) {
-        console.error("Error deleting result: ", error);
-        toast({ variant: "destructive", title: "Error", description: "Failed to delete result." });
-    }
+    if (!firestore) return;
+    const resultDoc = doc(firestore, 'election_results', result.id);
+    deleteDoc(resultDoc)
+        .then(() => toast({ title: "Result Deleted", description: `The result has been deleted.` }))
+        .catch(error => {
+            const contextualError = new FirestorePermissionError({ path: resultDoc.path, operation: 'delete' });
+            errorEmitter.emit('permission-error', contextualError);
+        });
   };
 
   const handleDeleteAllForYear = async () => {
