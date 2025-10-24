@@ -190,16 +190,19 @@ export function ConstituencyPopoverContent({
         const slp = parties.find(p => p.acronym === 'SLP');
         const uwp = parties.find(p => p.acronym === 'UWP');
 
-        const slpCand = slp ? candidates.find(c => c.partyId === slp.id) : null;
+        let slpCand = slp ? candidates.find(c => c.partyId === slp.id) : null;
         const uwpCand = uwp ? candidates.find(c => c.partyId === uwp.id) : null;
         
         let indCand = null;
-        if (election?.year === 2021) {
+        const isSpecialConstituency = election?.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
+        
+        if (isSpecialConstituency) {
             if (constituency.name === 'Castries North') {
                 indCand = candidates.find(c => c.firstName === 'Stephenson' && c.lastName === 'King');
             } else if (constituency.name === 'Castries Central') {
                 indCand = candidates.find(c => c.firstName === 'Richard' && c.lastName === 'Frederick');
             }
+            slpCand = null;
         }
 
         return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand, slpParty: slp, uwpParty: uwp };
