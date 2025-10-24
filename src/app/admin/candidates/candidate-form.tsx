@@ -393,29 +393,38 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
         </div>
         
         <FormField
-            control={form.control}
-            name="partyLevel"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Party Level</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a level" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="higher">Higher</SelectItem>
-                    <SelectItem value="lower">Lower</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                    Higher level candidates appear first in the list on the public candidates page.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          control={form.control}
+          name="partyLevel"
+          render={({ field }) => (
+            <FormItem className="space-y-3">
+              <FormLabel>Party Level</FormLabel>
+              <FormControl>
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  className="flex items-center space-x-4"
+                >
+                  <FormItem className="flex items-center space-x-2 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="higher" />
+                    </FormControl>
+                    <FormLabel className="font-normal">Higher</FormLabel>
+                  </FormItem>
+                  <FormItem className="flex items-center space-x-2 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="lower" />
+                    </FormControl>
+                    <FormLabel className="font-normal">Lower</FormLabel>
+                  </FormItem>
+                </RadioGroup>
+              </FormControl>
+              <FormDescription>
+                Higher level candidates appear first in the list on the public candidates page.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="flex justify-end gap-4 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>
