@@ -70,12 +70,24 @@ export default function ManageLogosPage() {
 
   const allParties = useMemo(() => {
     if (!parties) return [];
-    const partyList = [...parties, { id: 'independent', name: 'Independent', acronym: 'IND', color: '#808080' } as Party];
-    if (!activeTab && partyList.length > 0) {
+    
+    let partyList: Party[] = [...parties];
+    
+    const selectedElection = sortedElections.find(e => e.id === electionFilter);
+    const showIndependent = !selectedElection || (selectedElection.year !== 2026 && selectedElection.year !== 2021);
+
+    if (showIndependent) {
+        partyList.push({ id: 'independent', name: 'Independent', acronym: 'IND', color: '#808080' } as Party);
+    }
+    
+    if (activeTab && !partyList.some(p => p.id === activeTab)) {
+        setActiveTab(partyList[0]?.id || '');
+    } else if (!activeTab && partyList.length > 0) {
       setActiveTab(partyList[0].id);
     }
+
     return partyList;
-  }, [parties, activeTab]);
+  }, [parties, activeTab, electionFilter, sortedElections]);
   
   const handleUploadClick = (party: Party) => {
     setSelectedPartyForUpload(party);
@@ -347,4 +359,5 @@ export default function ManageLogosPage() {
     </div>
   );
 }
+
 
