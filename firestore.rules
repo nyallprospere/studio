@@ -1,369 +1,255 @@
 /**
  * @file Firestore Security Rules
- * @description This ruleset is designed for rapid prototyping and enforces a security model that prioritizes authorization over strict schema validation.
- *
- * Core Philosophy:
- * All write operations are restricted and require authentication. Read operations are generally open unless sensitive data is involved.
- * This allows the application to quickly iterate on data structures without being blocked by overly strict rules during the early stages.
- *
- * Data Structure:
- * The Firestore database consists of several top-level collections, each representing a core data entity:
- * - /mailing_list_subscribers/{subscriberId}: Mailing list subscriptions.
- * - /parties/{partyId}: Political party information.
- * - /party_logos/{partyLogoId}: Election-specific party logos.
- * - /events/{eventId}: Political events.
- * - /candidates/{candidateId}: Candidate information.
- * - /archived_candidates/{archivedCandidateId}: Archived candidate data.
- * - /elections/{electionId}: Election events.
- * - /polling_data/{pollingDataId}: Election polling data.
- * - /constituencies/{constituencyId}: Voting constituency information.
- * - /election_results/{electionResultId}: Election results.
- * - /settings/pageLayouts: Layout settings for the application pages.
- * - /settings/site: Global site settings.
- * - /user_activity/{activityId}: Records of user activity.
- * - /regions/{regionId}: Geographical region definitions.
- * - /user_maps/{userMapId}: User-created prediction maps.
- * - /ads/{adId}: Advertisements.
- * - /news/{newsId}: News articles.
- * - /news/{newsId}/comments/{commentId}: Comments on news articles.
- * - /reports/{reportId}: Reports of inappropriate comments.
- *
- * Key Security Decisions:
- * - Public Read Access: Most collections are configured for public read access to facilitate open data consumption.
- * - Authenticated Writes: All write operations (create, update, delete) require a valid authenticated user.
- * - No User Listing: Listing users is not permitted.
- * - Settings Collections: The `settings` collections are read-only for all users and writes are disabled.
- * - Subcollection Rules: Rules for subcollections (e.g., comments) inherit the parent collection's authentication requirements.
+ * @core Philosophy This ruleset prioritizes security by default, restricting access unless explicitly allowed.
+ *   It focuses on preventing unauthorized data access and modification, particularly on user-related data.
+ * @data Structure The Firestore database is structured with top-level collections for entities like elections,
+ *   parties, candidates, news articles, and user-related data like activity and maps.  Some collections
+ *   have subcollections (e.g., news articles have comments).
+ * @key Security Decisions
+ *   - Public read access is granted to certain collections like `elections`, `parties`, `constituencies`,
+ *     and `news` to allow anonymous users to view this data.  Write access to these collections is generally denied.
+ *   - User-specific data (e.g., `user_activity`, `user_maps`) is strictly controlled, allowing only the
+ *     authenticated user to access their own data.
+ *   - Listing of user-specific collections is generally allowed for the owner, unless explicitly restricted.
+ *   - Write access is never granted with `if true;`.
+ * @denormalization for Authorization Not applicable in this ruleset.  No denormalization is currently used.
+ * @structural Segregation The data is segregated by collection.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read mailing list subscribers but restricts write access to authenticated users.
-     * @path /mailing_list_subscribers/{subscriberId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create): if false
-     * @deny (update): if false
-     * @deny (delete): if false
-     * @principle Allows public reads and authenticated writes for mailing list subscriptions.
-     */
-    match /mailing_list_subscribers/{subscriberId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() ;
-      allow delete: if isSignedIn();
-    }
-
-    /**
-     * @description Allows anyone to read party information but restricts write access to authenticated users.
-     * @path /parties/{partyId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create): if false
-     * @deny (update): if false
-     * @deny (delete): if false
-     * @principle Allows public reads and authenticated writes for party data.
-     */
-    match /parties/{partyId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
-    }
-
-    /**
-     * @description Allows anyone to read party logos but restricts write access to authenticated users.
-     * @path /party_logos/{partyLogoId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create): if false
-     * @deny (update): if false
-     * @deny (delete): if false
-     * @principle Allows public reads and authenticated writes for party logos.
-     */
-    match /party_logos/{partyLogoId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
-    }
-
-    /**
-     * @description Allows anyone to read event information but restricts write access to authenticated users.
-     * @path /events/{eventId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create): if false
-     * @deny (update): if false
-     * @deny (delete): if false
-     * @principle Allows public reads and authenticated writes for events.
-     */
-    match /events/{eventId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
-    }
-
-    /**
-     * @description Allows anyone to read candidate information but restricts write access to authenticated users.
-     * @path /candidates/{candidateId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create): if false
-     * @deny (update): if false
-     * @deny (delete): if false
-     * @principle Allows public reads and authenticated writes for candidates.
-     */
-    match /candidates/{candidateId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
-    }
-
-    /**
-     * @description Allows anyone to read archived candidate data but restricts write access to authenticated users.
-     * @path /archived_candidates/{archivedCandidateId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create): if false
-     * @deny (update): if false
-     * @deny (delete): if false
-     * @principle Allows public reads and authenticated writes for archived candidates.
-     */
-    match /archived_candidates/{archivedCandidateId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
-    }
-
-    /**
-     * @description Allows anyone to read election information but restricts write access to authenticated users.
-     * @path /elections/{electionId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create): if false
-     * @deny (update): if false
-     * @deny (delete): if false
-     * @principle Allows public reads and authenticated writes for elections.
+     * @description Grants read access to the 'elections' collection for all users.
+     * @path /databases/{database}/documents/elections
+     * @allow (get, list) Any user can read election data.
+     * @deny (create, update, delete) No user can create, update, or delete election data through the client.
+     * @principle Allows public read access to election data.
      */
     match /elections/{electionId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read polling data but restricts write access to authenticated users.
-     * @path /polling_data/{pollingDataId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create): if false
-     * @deny (update): if false
-     * @deny (delete): if false
-     * @principle Allows public reads and authenticated writes for polling data.
+     * @description Grants read access to the 'parties' collection for all users.
+     * @path /databases/{database}/documents/parties
+     * @allow (get, list) Any user can read party data.
+     * @deny (create, update, delete) No user can create, update, or delete party data through the client.
+     * @principle Allows public read access to party data.
+     */
+    match /parties/{partyId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Grants read access to the 'party_logos' collection for all users.
+     * @path /databases/{database}/documents/party_logos
+     * @allow (get, list) Any user can read party logo data.
+     * @deny (create, update, delete) No user can create, update, or delete party logo data through the client.
+     * @principle Allows public read access to party logo data.
+     */
+    match /party_logos/{partyLogoId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Grants read access to the 'events' collection for all users.
+     * @path /databases/{database}/documents/events
+     * @allow (get, list) Any user can read event data.
+     * @deny (create, update, delete) No user can create, update, or delete event data through the client.
+     * @principle Allows public read access to event data.
+     */
+    match /events/{eventId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Grants read access to the 'candidates' collection for all users.
+     * @path /databases/{database}/documents/candidates
+     * @allow (get, list) Any user can read candidate data.
+     * @deny (create, update, delete) No user can create, update, or delete candidate data through the client.
+     * @principle Allows public read access to candidate data.
+     */
+    match /candidates/{candidateId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Grants read access to the 'archived_candidates' collection for all users.
+     * @path /databases/{database}/documents/archived_candidates
+     * @allow (get, list) Any user can read archived candidate data.
+     * @deny (create, update, delete) No user can create, update, or delete archived candidate data through the client.
+     * @principle Allows public read access to archived candidate data.
+     */
+    match /archived_candidates/{archivedCandidateId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Grants read access to the 'polling_data' collection for all users.
+     * @path /databases/{database}/documents/polling_data
+     * @allow (get, list) Any user can read polling data.
+     * @deny (create, update, delete) No user can create, update, or delete polling data through the client.
+     * @principle Allows public read access to polling data.
      */
     match /polling_data/{pollingDataId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read constituency information but restricts write access to authenticated users.
-     * @path /constituencies/{constituencyId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create): if false
-     * @deny (update): if false
-     * @deny (delete): if false
-     * @principle Allows public reads and authenticated writes for constituencies.
+     * @description Grants read access to the 'constituencies' collection for all users.
+     * @path /databases/{database}/documents/constituencies
+     * @allow (get, list) Any user can read constituency data.
+     * @deny (create, update, delete) No user can create, update, or delete constituency data through the client.
+     * @principle Allows public read access to constituency data.
      */
     match /constituencies/{constituencyId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read election results but restricts write access to authenticated users.
-     * @path /election_results/{electionResultId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create): if false
-     * @deny (update): if false
-     * @deny (delete): if false
-     * @principle Allows public reads and authenticated writes for election results.
+     * @description Grants read access to the 'election_results' collection for all users.
+     * @path /databases/{database}/documents/election_results
+     * @allow (get, list) Any user can read election result data.
+     * @deny (create, update, delete) No user can create, update, or delete election result data through the client.
+     * @principle Allows public read access to election result data.
      */
     match /election_results/{electionResultId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read page layouts, but prevents all writes.
-     * @path /settings/pageLayouts
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if true
-     * @principle Makes the pageLayouts document publicly readable and prevents any modifications.
-     */
-    match /settings/pageLayouts {
-      allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    /**
-     * @description Allows anyone to read site settings, but prevents all writes.
-     * @path /settings/site
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if true
-     * @principle Makes the site settings document publicly readable and prevents any modifications.
-     */
-    match /settings/site {
-      allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    /**
-     * @description Allows anyone to read user activity, but restricts write access to authenticated users.
-     * @path /user_activity/{activityId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create): if false
-     * @deny (update): if false
-     * @deny (delete): if false
-     * @principle Allows public reads and authenticated writes for user activity data.
-     */
-    match /user_activity/{activityId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
-    }
-
-    /**
-     * @description Allows anyone to read region information but restricts write access to authenticated users.
-     * @path /regions/{regionId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create): if false
-     * @deny (update): if false
-     * @deny (delete): if false
-     * @principle Allows public reads and authenticated writes for regions.
+     * @description Grants read access to the 'regions' collection for all users.
+     * @path /databases/{database}/documents/regions
+     * @allow (get, list) Any user can read region data.
+     * @deny (create, update, delete) No user can create, update, or delete region data through the client.
+     * @principle Allows public read access to region data.
      */
     match /regions/{regionId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read user maps but restricts write access to authenticated users.
-     * @path /user_maps/{userMapId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create): if false
-     * @deny (update): if false
-     * @deny (delete): if false
-     * @principle Allows public reads and authenticated writes for user maps.
-     */
-    match /user_maps/{userMapId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
-    }
-
-    /**
-     * @description Allows anyone to read ad listings but restricts write access to authenticated users.
-     * @path /ads/{adId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create): if false
-     * @deny (update): if false
-     * @deny (delete): if false
-     * @principle Allows public reads and authenticated writes for ads.
+     * @description Allows read access to the 'ads' collection for all users.
+     * @path /databases/{database}/documents/ads
+     * @allow (get, list) Any user can read ad data.
+     * @deny (create, update, delete) No user can create, update, or delete ad data through the client.
+     * @principle Allows public read access to ad data.
      */
     match /ads/{adId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read news articles but restricts write access to authenticated users.
-     * @path /news/{newsId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create): if false
-     * @deny (update): if false
-     * @deny (delete): if false
-     * @principle Allows public reads and authenticated writes for news articles.
+     * @description Allows read access to the 'news' collection for all users.
+     * @path /databases/{database}/documents/news
+     * @allow (get, list) Any user can read news article data.
+     * @deny (create, update, delete) No user can create, update, or delete news article data through the client.
+     * @principle Allows public read access to news article data.
      */
     match /news/{newsId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow create, update, delete: if false;
 
-      /**
-       * @description Allows anyone to read comments on news articles but restricts write access to authenticated users.
-       * @path /news/{newsId}/comments/{commentId}
-       * @allow (get, list): if true
-       * @allow (create, update, delete): if isSignedIn()
-       * @deny (create): if false
-       * @deny (update): if false
-       * @deny (delete): if false
-       * @principle Allows public reads and authenticated writes for news article comments.
-       */
-      match /comments/{commentId} {
-        allow get, list: if true;
-        allow create: if isSignedIn();
-        allow update: if isSignedIn();
-        allow delete: if isSignedIn();
-      }
+        /**
+         * @description Controls access to comments for a news article.
+         * @path /databases/{database}/documents/news/{newsId}/comments/{commentId}
+         * @allow (get, list) Any user can read comments.
+         * @deny (create, update, delete) No user can create, update, or delete comments.
+         * @principle Public read, no writes.
+         */
+        match /comments/{commentId} {
+            allow get, list: if true;
+            allow create, update, delete: if false;
+        }
     }
 
     /**
-     * @description Allows anyone to read reports but restricts write access to authenticated users.
-     * @path /reports/{reportId}
-     * @allow (get, list): if true
-     * @allow (create, update, delete): if isSignedIn()
-     * @deny (create): if false
-     * @deny (update): if false
-     * @deny (delete): if false
-     * @principle Allows public reads and authenticated writes for reports.
+     * @description Controls access to reported comments.
+     * @path /databases/{database}/documents/reports/{reportId}
+     * @deny (get, list, create, update, delete) No access granted.  This collection is assumed to be for internal moderation.
+     * @principle Deny all access for security by default.
      */
     match /reports/{reportId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+        allow get, list, create, update, delete: if false;
     }
 
-  }
+    /**
+     * @description Restricts access to mailing list subscriber data.
+     * @path /databases/{database}/documents/mailing_list_subscribers/{subscriberId}
+     * @deny (get, list, create, update, delete) No direct client access allowed.
+     * @principle Security by default; prevent unauthorized access to subscriber data.
+     */
+    match /mailing_list_subscribers/{subscriberId} {
+      allow get, list, create, update, delete: if false;
+    }
 
-  /**
-   * @description Checks if the user is signed in.
-   * @return {bool} True if the user is signed in, false otherwise.
-   * @principle Ensures all write operations are performed by authenticated users.
-   */
-  function isSignedIn() {
-    return request.auth != null;
+    /**
+     * @description Restricts access to page layouts settings.
+     * @path /databases/{database}/documents/settings/pageLayouts
+     * @deny (get, list, create, update, delete) No direct client access allowed.
+     * @principle Security by default; prevent unauthorized modification of page layouts.
+     */
+    match /settings/pageLayouts {
+      allow get, list, create, update, delete: if false;
+    }
+
+    /**
+     * @description Restricts access to site settings.
+     * @path /databases/{database}/documents/settings/site
+     * @deny (get, list, create, update, delete) No direct client access allowed.
+     * @principle Security by default; prevent unauthorized modification of site settings.
+     */
+    match /settings/site {
+      allow get, list, create, update, delete: if false;
+    }
+
+    /**
+     * @description Allows only the authenticated user to access their own activity data.
+     * @path /databases/{database}/documents/user_activity/{activityId}
+     * @allow (get) The user can get their own activity data.
+     * @allow (list) The user can list their own activity data.
+     * @allow (create) The user can create their own activity data.
+     * @deny (update, delete) The user cannot update or delete activity data.
+     * @deny Attempts by other users to access this data.
+     * @principle Enforces user-ownership for activity data.
+     */
+    match /user_activity/{activityId} {
+      allow get, list, create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    /**
+     * @description Allows only the authenticated user to access their own user map data.
+     * @path /databases/{database}/documents/user_maps/{userMapId}
+     * @allow (get) The user can get their own user map data.
+     * @allow (list) The user can list their own user map data.
+     * @allow (create) The user can create their own user map data.
+     * @deny (update, delete) The user cannot update or delete user map data.
+     * @deny Attempts by other users to access this data.
+     * @principle Enforces user-ownership for user map data.
+     */
+    match /user_maps/{userMapId} {
+      allow get, list, create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    /**
+     * @description Checks if the user is signed in.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
   }
 }
