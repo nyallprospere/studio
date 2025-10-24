@@ -40,7 +40,7 @@ const uploadSchema = z.object({
   candidateName: z.string().optional(),
   constituencyIds: z.array(z.string()).optional(),
 }).refine(data => {
-    if(data.candidateName || data.constituencyIds) return true; // allow saving candidate info without logo
+    if(data.candidateName || (data.constituencyIds && data.constituencyIds.length > 0)) return true; // allow saving candidate info without logo
     return data.standardLogoFile || data.expandedLogoFile || (data.standardLogoFiles && data.standardLogoFiles.length > 0)
 }, {
   message: 'At least one logo file is required.',
@@ -84,27 +84,30 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
         const batch = writeBatch(firestore);
         
         if (isIndependent && values.constituencyIds && values.constituencyIds.length > 0) {
-             for (const electionId of values.electionIds) {
-                for (const constituencyId of values.constituencyIds) {
-                
-                    const logoData: Omit<PartyLogo, 'id'> = {
+            const standardFiles = values.standardLogoFiles ? Array.from(values.standardLogoFiles) : [];
+            if (standardFiles.length > 0 && standardFiles.length !== values.constituencyIds.length) {
+                toast({ variant: 'destructive', title: 'Mismatch', description: 'The number of standard logos must match the number of selected constituencies.' });
+                setIsLoading(false);
+                return;
+            }
+
+             for (const [index, constituencyId] of values.constituencyIds.entries()) {
+                for (const electionId of values.electionIds) {
+                    const logoData: Partial<PartyLogo> = {
                         partyId: 'independent',
                         electionId,
                         constituencyId: constituencyId,
-                        logoUrl: '', // Will be updated if a file is provided
-                        expandedLogoUrl: '',
                     }
 
-                    if (values.standardLogoFile) {
+                    if (standardFiles[index]) {
                         const path = `logos/ind_${electionId}_${constituencyId}_std.png`;
-                        logoData.logoUrl = await uploadFile(values.standardLogoFile, path);
+                        logoData.logoUrl = await uploadFile(standardFiles[index] as File, path);
                     }
-                    if (values.expandedLogoFile) {
+                    if (values.expandedLogoFile) { // Assuming one expanded logo for all
                         const path = `logos/ind_${electionId}_${constituencyId}_exp.png`;
                         logoData.expandedLogoUrl = await uploadFile(values.expandedLogoFile, path);
                     }
 
-                    // Check for existing logo for this election/constituency
                     const q = query(
                         collection(firestore, 'party_logos'),
                         where('electionId', '==', electionId),
@@ -115,44 +118,17 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                     if(!existingLogoSnap.empty) {
                         const docRef = existingLogoSnap.docs[0].ref;
                         const existingData = existingLogoSnap.docs[0].data();
-                        if (values.standardLogoFile && existingData.logoUrl) await deleteFile(existingData.logoUrl);
-                        if (values.expandedLogoFile && existingData.expandedLogoUrl) await deleteFile(existingData.expandedLogoUrl);
+                        if (logoData.logoUrl && existingData.logoUrl) await deleteFile(existingData.logoUrl);
+                        if (logoData.expandedLogoUrl && existingData.expandedLogoUrl) await deleteFile(existingData.expandedLogoUrl);
                         
-                        batch.update(docRef, { 
-                            logoUrl: logoData.logoUrl || existingData.logoUrl, 
-                            expandedLogoUrl: logoData.expandedLogoUrl || existingData.expandedLogoUrl,
-                        });
+                        batch.update(docRef, logoData);
                     } else if (logoData.logoUrl || logoData.expandedLogoUrl) {
                         const newLogoRef = doc(collection(firestore, 'party_logos'));
                         batch.set(newLogoRef, logoData);
                     }
-
-                    if (values.candidateName) {
-                        const candQuery = query(
-                            collection(firestore, 'candidates'),
-                            where('constituencyId', '==', constituencyId),
-                            where('partyId', '==', 'independent')
-                        );
-                        const existingCandSnap = await getDocs(candQuery);
-                        
-                        const candidateData = {
-                            name: values.candidateName,
-                            firstName: values.candidateName.split(' ')[0] || '',
-                            lastName: values.candidateName.split(' ').slice(1).join(' ') || '',
-                            constituencyId: constituencyId,
-                            partyId: 'independent',
-                        };
-
-                        if(!existingCandSnap.empty) {
-                            batch.update(existingCandSnap.docs[0].ref, candidateData);
-                        } else {
-                            const newCandRef = doc(collection(firestore, 'candidates'));
-                            batch.set(newCandRef, candidateData);
-                        }
-                    }
                 }
             }
-             toast({ title: 'Independent Candidate Processed', description: 'Independent candidate logo and details have been saved.' });
+             toast({ title: 'Independent Logos Processed', description: 'Independent logos have been saved.' });
 
         } else {
             // Handle party logo uploads
@@ -234,6 +210,8 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
     form.reset();
     onClose();
   };
+  
+  const selectedConstituenciesCount = form.watch('constituencyIds')?.length || 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -293,48 +271,55 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                             name="constituencyIds"
                             render={({ field }) => (
                                 <FormItem>
-                                    <div className="flex items-center justify-between">
-                                      <FormLabel>Constituency</FormLabel>
-                                    </div>
-                                    <Select onValueChange={(value) => field.onChange([value])} value={field.value?.[0] || ''}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select a constituency" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {constituencyOptions.map((option) => (
-                                                <SelectItem key={option.value} value={option.value}>
-                                                    {option.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormLabel>Constituencies</FormLabel>
+                                     <MultiSelect
+                                        options={constituencyOptions}
+                                        selected={field.value || []}
+                                        onChange={field.onChange}
+                                        placeholder="Select constituencies..."
+                                    >
+                                        <CommandInput placeholder="Search constituencies..." />
+                                        <ScrollArea className="h-48">
+                                            <CommandGroup>
+                                                {constituencyOptions.map((option) => (
+                                                    <CommandItem
+                                                        key={option.value}
+                                                        onSelect={() => {
+                                                            const newValue = field.value?.includes(option.value)
+                                                            ? field.value.filter((v) => v !== option.value)
+                                                            : [...(field.value || []), option.value];
+                                                            field.onChange(newValue);
+                                                        }}
+                                                        className="flex items-center justify-between"
+                                                        >
+                                                        <span>{option.label}</span>
+                                                        <Check
+                                                            className={cn(
+                                                            'h-4 w-4',
+                                                            field.value?.includes(option.value) ? 'opacity-100' : 'opacity-0'
+                                                            )}
+                                                        />
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </ScrollArea>
+                                    </MultiSelect>
                                 </FormItem>
                             )}
                         />
                          <FormField
                             control={form.control}
-                            name="candidateName"
+                            name="standardLogoFiles"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Candidate Name</FormLabel>
+                                    <FormLabel>Standard Logos</FormLabel>
                                     <FormControl>
-                                        <Input {...field} placeholder="e.g., Stephenson King" />
-                                    </FormControl>
-                                </FormItem>
-                            )}
-                        />
-                         <FormField
-                            control={form.control}
-                            name="standardLogoFile"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Standard Logo - Castries North</FormLabel>
-                                    <FormControl>
-                                        <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
+                                        <Input type="file" accept="image/png, image/jpeg" multiple onChange={(e) => field.onChange(e.target.files)} />
                                     </FormControl>
                                     <FormMessage />
+                                    <p className="text-xs text-muted-foreground">
+                                        Upload multiple files. Ensure the number of files matches the number of constituencies selected ({selectedConstituenciesCount}).
+                                    </p>
                                 </FormItem>
                             )}
                         />
@@ -343,11 +328,14 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                             name="expandedLogoFile"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Expanded Logo (Banner)</FormLabel>
+                                <FormLabel>Expanded Logo (Banner) (Optional)</FormLabel>
                                 <FormControl>
                                     <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
                                 </FormControl>
-                                <FormMessage />
+                                 <FormMessage />
+                                 <p className="text-xs text-muted-foreground">
+                                    One expanded logo will be applied to all selected constituencies.
+                                </p>
                                 </FormItem>
                             )}
                         />
