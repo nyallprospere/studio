@@ -85,13 +85,15 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
         
         if (isIndependent && values.constituencyIds && values.constituencyIds.length > 0) {
             const standardFiles = values.standardLogoFiles ? Array.from(values.standardLogoFiles) : [];
-            if (standardFiles.length > 0 && standardFiles.length !== values.constituencyIds.length) {
+            const constituencyIds = values.constituencyIds;
+
+            if (standardFiles.length > 1 && standardFiles.length !== constituencyIds.length) {
                 toast({ variant: 'destructive', title: 'Mismatch', description: 'The number of standard logos must match the number of selected constituencies.' });
                 setIsLoading(false);
                 return;
             }
 
-             for (const [index, constituencyId] of values.constituencyIds.entries()) {
+             for (const [index, constituencyId] of constituencyIds.entries()) {
                 for (const electionId of values.electionIds) {
                     const logoData: Partial<PartyLogo> = {
                         partyId: 'independent',
@@ -99,9 +101,11 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                         constituencyId: constituencyId,
                     }
 
-                    if (standardFiles[index]) {
+                    const fileToUpload = standardFiles.length > 1 ? standardFiles[index] : standardFiles[0];
+
+                    if (fileToUpload) {
                         const path = `logos/ind_${electionId}_${constituencyId}_std.png`;
-                        logoData.logoUrl = await uploadFile(standardFiles[index] as File, path);
+                        logoData.logoUrl = await uploadFile(fileToUpload as File, path);
                     }
                     if (values.expandedLogoFile) { // Assuming one expanded logo for all
                         const path = `logos/ind_${electionId}_${constituencyId}_exp.png`;
@@ -318,7 +322,7 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                                     </FormControl>
                                     <FormMessage />
                                     <p className="text-xs text-muted-foreground">
-                                        Upload multiple files. Ensure the number of files matches the number of constituencies selected ({selectedConstituenciesCount}).
+                                        Upload a single file to apply to all, or multiple files that correspond to each selected constituency.
                                     </p>
                                 </FormItem>
                             )}
