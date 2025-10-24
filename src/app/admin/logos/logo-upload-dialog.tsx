@@ -195,7 +195,6 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                 requestResourceData: values,
             });
             errorEmitter.emit('permission-error', permissionError);
-            throw error;
         });
 
         onSuccess();
