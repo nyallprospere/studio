@@ -712,13 +712,16 @@ export default function ResultsPage() {
                                           const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
                                           
                                           let currentWinner = 'TBD';
-                                          if (isSpecialConstituency) {
-                                              currentWinner = 'IND';
-                                          } else if (cr.slpVotes > cr.uwpVotes) {
-                                              currentWinner = 'SLP';
-                                          } else if (cr.uwpVotes > cr.slpVotes) {
-                                              currentWinner = 'UWP';
-                                          }
+                                           const indVotes = isSpecialConstituency ? cr.slpVotes : cr.otherVotes;
+                                           const slpVotes = isSpecialConstituency ? 0 : cr.slpVotes;
+
+                                            if (indVotes > cr.uwpVotes && indVotes > slpVotes) {
+                                                currentWinner = 'IND';
+                                            } else if (slpVotes > cr.uwpVotes) {
+                                                currentWinner = 'SLP';
+                                            } else if (cr.uwpVotes > slpVotes) {
+                                                currentWinner = 'UWP';
+                                            }
 
                                           const previousResult = previousElectionResults?.find(r => r.constituencyId === cr.constituencyId);
                                           const previousWinner = previousResult ? (previousResult.slpVotes > previousResult.uwpVotes ? 'SLP' : 'UWP') : null;
@@ -743,9 +746,9 @@ export default function ResultsPage() {
                                            let turnoutChange = null;
 
                                            if (previousResult) {
-                                               const currentSlpPercent = cr.totalVotes > 0 ? (cr.slpVotes / cr.totalVotes) * 100 : 0;
+                                               const currentSlpPercent = cr.totalVotes > 0 ? (slpVotes / cr.totalVotes) * 100 : 0;
                                                const currentUwpPercent = cr.totalVotes > 0 ? (cr.uwpVotes / cr.totalVotes) * 100 : 0;
-                                               const currentIndPercent = cr.totalVotes > 0 ? (isSpecialConstituency ? cr.slpVotes / cr.totalVotes : cr.otherVotes / cr.totalVotes) * 100 : 0;
+                                               const currentIndPercent = cr.totalVotes > 0 ? (indVotes / cr.totalVotes) * 100 : 0;
 
                                                const prevTotalVotes = previousResult.totalVotes;
                                                 if (prevTotalVotes > 0) {
@@ -774,11 +777,11 @@ export default function ResultsPage() {
                                                   <TableCell className="font-medium">{constituency?.name || cr.constituencyId}</TableCell>
                                                   <TableCell className="font-medium" style={{color: winnerColor}}>{resultStatus}</TableCell>
                                                   <TableCell>
-                                                    {isSpecialConstituency ? '-' : cr.slpVotes.toLocaleString()}
+                                                    {slpVotes > 0 ? slpVotes.toLocaleString() : '-'}
                                                   </TableCell>
                                                   <TableCell>
                                                     <div className="flex flex-col">
-                                                      <span>{isSpecialConstituency ? '-' : (cr.totalVotes > 0 ? `${(cr.slpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%')}</span>
+                                                      <span>{slpVotes > 0 ? (cr.totalVotes > 0 ? `${(slpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%') : '-'}</span>
                                                       {!isSpecialConstituency && <VotePercentageChangeIndicator change={slpVotePercentageChange} />}
                                                     </div>
                                                   </TableCell>
@@ -792,12 +795,12 @@ export default function ResultsPage() {
                                                     </div>
                                                   </TableCell>
                                                   <TableCell>
-                                                    {isSpecialConstituency ? cr.slpVotes.toLocaleString() : cr.otherVotes > 0 ? cr.otherVotes.toLocaleString() : '-'}
+                                                    {indVotes > 0 ? indVotes.toLocaleString() : '-'}
                                                   </TableCell>
                                                   <TableCell>
                                                     <div className="flex flex-col">
                                                         <span>
-                                                        {isSpecialConstituency ? (cr.totalVotes > 0 ? `${(cr.slpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%') : (cr.otherVotes > 0 ? `${(cr.otherVotes / cr.totalVotes * 100).toFixed(1)}%` : '-')}
+                                                            {indVotes > 0 ? (cr.totalVotes > 0 ? `${(indVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%') : '-'}
                                                         </span>
                                                         <VotePercentageChangeIndicator change={indVotePercentageChange} />
                                                     </div>
