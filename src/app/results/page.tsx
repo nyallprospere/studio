@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -712,8 +713,8 @@ export default function ResultsPage() {
                                           const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
                                           
                                           let currentWinner = 'TBD';
-                                           const indVotes = isSpecialConstituency ? cr.slpVotes : cr.otherVotes;
-                                           const slpVotes = isSpecialConstituency ? 0 : cr.slpVotes;
+                                          const indVotes = isSpecialConstituency ? cr.slpVotes : cr.otherVotes;
+                                          const slpVotes = isSpecialConstituency ? 0 : cr.slpVotes;
 
                                             if (indVotes > cr.uwpVotes && indVotes > slpVotes) {
                                                 currentWinner = 'IND';
