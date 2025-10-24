@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { collection, addDoc, updateDoc, doc, query, where, getDocs, writeBatch, deleteDoc } from 'firebase/firestore';
 import type { Party, Election, PartyLogo, Constituency, Candidate } from '@/lib/types';
@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { uploadFile, deleteFile } from '@/firebase/storage';
 import Image from 'next/image';
-import { Upload, Shield, Pencil, Trash2, Lock, Unlock } from 'lucide-react';
+import { Upload, Shield, Pencil, Trash2, Lock, Unlock, Map } from 'lucide-react';
 import { LogoUploadDialog } from './logo-upload-dialog';
 import { groupBy } from 'lodash';
 import { Button } from '@/components/ui/button';
@@ -57,6 +57,7 @@ export default function ManageLogosPage() {
   const [deleteLocks, setDeleteLocks] = useState<Record<string, boolean>>({});
   const [electionFilter, setElectionFilter] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string>('');
+  const [constituencyLogoFile, setConstituencyLogoFile] = useState<Record<string, File | null>>({});
 
   const sortedElections = useMemo(() => elections?.sort((a, b) => b.year - a.year) || [], [elections]);
 
@@ -74,6 +75,7 @@ export default function ManageLogosPage() {
     let partyList: Party[] = [...parties];
     
     partyList.push({ id: 'independent', name: 'Independent', acronym: 'IND', color: '#808080' } as Party);
+    partyList.push({id: 'constituencies', name: 'Constituencies', acronym: 'C', color: '#808080'} as Party);
     
     if (activeTab && !partyList.some(p => p.id === activeTab)) {
         setActiveTab(partyList[0]?.id || '');
@@ -200,6 +202,25 @@ export default function ManageLogosPage() {
 
   }
 
+  const handleConstituencyLogoUpload = async (constituencyId: string) => {
+    const file = constituencyLogoFile[constituencyId];
+    if (!file || !firestore) return;
+
+    try {
+        const constituency = constituencies?.find(c => c.id === constituencyId);
+        if(constituency?.logoUrl) {
+            await deleteFile(constituency.logoUrl).catch(console.warn);
+        }
+        const logoUrl = await uploadFile(file, `constituency-logos/${constituencyId}/${file.name}`);
+        await updateDoc(doc(firestore, 'constituencies', constituencyId), { logoUrl });
+        toast({ title: 'Logo Uploaded', description: `Logo for ${constituency?.name} has been updated.` });
+        setConstituencyLogoFile(prev => ({...prev, [constituencyId]: null}));
+    } catch(e) {
+         console.error("Error uploading constituency logo:", e);
+        toast({variant: 'destructive', title: 'Upload Failed', description: 'Could not upload logo.'});
+    }
+  }
+
 
   const isLoading = loadingParties || loadingElections || loadingLogos || loadingConstituencies || loadingCandidates;
 
@@ -247,6 +268,44 @@ export default function ManageLogosPage() {
                   ))}
               </TabsList>
               {allParties.map(party => {
+                if (party.id === 'constituencies') {
+                  return (
+                    <TabsContent key={party.id} value={party.id}>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Constituency Logos</CardTitle>
+                          <CardDescription>Manage logos for each individual constituency.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {constituencies?.sort((a,b) => a.name.localeCompare(b.name)).map(c => (
+                            <div key={c.id} className="p-4 border rounded-md flex flex-col gap-4">
+                               <h4 className="font-semibold">{c.name}</h4>
+                               <div className="relative h-24 w-full flex items-center justify-center">
+                                    {c.logoUrl ? (
+                                        <Image src={c.logoUrl} alt={`${c.name} Logo`} fill className="object-contain" />
+                                    ) : (
+                                        <Map className="h-12 w-12 text-muted-foreground" />
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                     <Input 
+                                        type="file" 
+                                        accept="image/png, image/jpeg" 
+                                        className="text-xs"
+                                        onChange={(e) => setConstituencyLogoFile(prev => ({ ...prev, [c.id]: e.target.files?.[0] || null }))}
+                                      />
+                                    <Button onClick={() => handleConstituencyLogoUpload(c.id)} disabled={!constituencyLogoFile[c.id]}>
+                                        <Upload className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                  )
+                }
+
                 const logoGroups = logoGroupsByParty[party.id] || [];
                 return (
                   <TabsContent key={party.id} value={party.id}>

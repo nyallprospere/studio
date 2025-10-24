@@ -66,6 +66,7 @@ export interface Constituency {
   politicalLeaning?: 'solid-slp' | 'lean-slp' | 'tossup' | 'lean-uwp' | 'solid-uwp' | 'slp' | 'uwp' | 'unselected';
   predictedSlpPercentage?: number;
   predictedUwpPercentage?: number;
+  logoUrl?: string;
 }
 
 export interface Poll {

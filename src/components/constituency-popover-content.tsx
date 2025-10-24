@@ -240,7 +240,7 @@ export function ConstituencyPopoverContent({
         } else if (slpVotes > uwpVotes) {
             winnerAcronym = 'SLP';
             margin = slpVotes - uwpVotes;
-        } else {
+        } else if (uwpVotes > slpVotes) {
             winnerAcronym = 'UWP';
             margin = uwpVotes - slpVotes;
         }
@@ -339,7 +339,10 @@ export function ConstituencyPopoverContent({
 
     return (
         <div className="space-y-3 w-80">
-            <h4 className="font-bold leading-none text-center text-xl">{constituency.name}</h4>
+            <h4 className="font-bold leading-none text-center text-xl flex items-center justify-center gap-2">
+                {constituency.logoUrl && <Image src={constituency.logoUrl} alt={constituency.name} width={24} height={24} />}
+                {constituency.name}
+            </h4>
             
             {(election?.isCurrent || !election) && !isMakeYourOwn ? (
                 <div className="grid grid-cols-2 gap-4">
@@ -358,7 +361,7 @@ export function ConstituencyPopoverContent({
                             )}
                             </div>
                             <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!slpCandidate}>
-                            {slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'TBD'}
+                            {slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'Candidate(s) N/A'}
                             </Button>
                         </div>
                         <div className="flex flex-col items-center p-2 rounded-md bg-muted">
@@ -375,7 +378,7 @@ export function ConstituencyPopoverContent({
                             )}
                             </div>
                             <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!uwpCandidate}>
-                            {uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'TBD'}
+                            {uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'Candidate(s) N/A'}
                             </Button>
                         </div>
                     </div>
