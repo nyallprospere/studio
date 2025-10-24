@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -7,7 +6,7 @@ import type { Election, ElectionResult, Party, Constituency, PartyLogo, Region }
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { collection, orderBy, query, getDocs } from 'firebase/firestore';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Bar, BarChart, ResponsiveContainer, XAxis, Tooltip, CartesianGrid, LabelList, Cell, YAxis } from "recharts"
@@ -94,20 +93,28 @@ export default function ResultsPage() {
       if (!firestore) return;
       setLoadingResults(true);
       const resultsRef = collection(firestore, 'election_results');
-      const resultsSnap = await getDocs(resultsRef);
-      const allResults = resultsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as ElectionResult));
-      
-      const groupedResults = allResults.reduce((acc, result) => {
-        const electionId = result.electionId;
-        if (!acc[electionId]) {
-          acc[electionId] = [];
-        }
-        acc[electionId].push(result);
-        return acc;
-      }, {} as Record<string, ElectionResult[]>);
+      getDocs(resultsRef).then(resultsSnap => {
+        const allResults = resultsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as ElectionResult));
+        
+        const groupedResults = allResults.reduce((acc, result) => {
+          const electionId = result.electionId;
+          if (!acc[electionId]) {
+            acc[electionId] = [];
+          }
+          acc[electionId].push(result);
+          return acc;
+        }, {} as Record<string, ElectionResult[]>);
 
-      setResultsByYear(groupedResults);
-      setLoadingResults(false);
+        setResultsByYear(groupedResults);
+      }).catch(error => {
+          const contextualError = new FirestorePermissionError({
+              path: 'election_results',
+              operation: 'list',
+          });
+          errorEmitter.emit('permission-error', contextualError);
+      }).finally(() => {
+          setLoadingResults(false);
+      });
     }
     fetchAllResults();
   }, [firestore]);
