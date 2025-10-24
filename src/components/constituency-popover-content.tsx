@@ -29,7 +29,6 @@ const politicalLeaningOptions = [
 const makeYourOwnLeaningOptions = [
   { value: 'slp', label: 'SLP' },
   { value: 'uwp', label: 'UWP' },
-  { value: 'tossup', label: 'Toss Up' },
   { value: 'unselected', label: 'To be selected' },
 ];
 
@@ -278,6 +277,8 @@ export function ConstituencyPopoverContent({
         return <Skeleton className="h-40 w-full" />;
     }
 
+    const isSpecialConstituency = isMakeYourOwn && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
+
     return (
         <div className="space-y-3 w-80">
             <h4 className="font-bold leading-none text-center text-xl">{constituency.name}</h4>
@@ -374,7 +375,7 @@ export function ConstituencyPopoverContent({
                                 )}
                             >
                                 <RadioGroupItem value={opt.value} id={`${constituency.id}-${opt.value}`} className="sr-only" />
-                                {opt.label}
+                                {opt.value === 'slp' && isSpecialConstituency ? 'IND' : opt.label}
                             </Label>
                         ))}
                     </RadioGroup>
