@@ -10,7 +10,8 @@ import Image from 'next/image';
 import { UserSquare, CheckCircle2, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from './ui/button';
 import { CandidateProfileDialog } from './candidate-profile-dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { Progress } from './ui/progress';
@@ -356,16 +357,27 @@ export function ConstituencyPopoverContent({
             {onLeaningChange && (
                 <div className="space-y-2 pt-2">
                     <h5 className="text-xs font-medium text-muted-foreground">Choose Your Pick</h5>
-                     <Select value={constituency.politicalLeaning} onValueChange={onLeaningChange}>
-                        <SelectTrigger className="w-full h-8 text-xs">
-                            <SelectValue placeholder="Select leaning" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {makeYourOwnLeaningOptions.filter(opt => opt.value !== 'unselected').map(opt => (
-                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                     <RadioGroup 
+                        value={constituency.politicalLeaning} 
+                        onValueChange={onLeaningChange}
+                        className="flex gap-2"
+                    >
+                        {makeYourOwnLeaningOptions.filter(opt => opt.value !== 'unselected').map(opt => (
+                            <Label 
+                                key={opt.value} 
+                                htmlFor={`${constituency.id}-${opt.value}`}
+                                className={cn(
+                                    "flex-1 text-center border rounded-md px-3 py-1.5 text-xs font-medium cursor-pointer transition-colors",
+                                    constituency.politicalLeaning === opt.value 
+                                        ? "bg-primary text-primary-foreground" 
+                                        : "hover:bg-muted"
+                                )}
+                            >
+                                <RadioGroupItem value={opt.value} id={`${constituency.id}-${opt.value}`} className="sr-only" />
+                                {opt.label}
+                            </Label>
+                        ))}
+                    </RadioGroup>
                 </div>
             )}
             {onPredictionChange && (
