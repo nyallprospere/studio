@@ -126,71 +126,32 @@ export function InteractiveSvgMap({ constituencies, selectedConstituencyId, elec
                 const constituency = constituencyMap.get(name);
                 if (!constituency) return null;
                 
+                const electionYear = election?.year;
+                const isSpecialYear = electionYear === 2021 || election?.isCurrent;
+
+                const result = electionResults?.find(r => r.constituencyId === constituency.id);
+                const slpWon = result && result.slpVotes > result.uwpVotes;
+                
+                let isStriped = false;
+                let stripesId = "stripes";
+                
                 if (isMakeYourOwn) {
-                  if (constituency.politicalLeaning === 'slp') {
-                    if (name === 'Castries North') {
-                      return (
-                        <Popover key={constituency.id}>
-                          <PopoverTrigger asChild>
-                            <path
-                              d={pathData}
-                              id={constituency.name}
-                              className={cn(
-                                "cursor-pointer transition-all duration-300",
-                                "stroke-white stroke-2 hover:stroke-black hover:stroke-[4]",
-                                constituency.id === selectedConstituencyId ? "stroke-black stroke-[4]" : ""
-                              )}
-                              fill="url(#stripes)"
-                              onClick={() => onConstituencyClick(constituency.id)}
-                            />
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto" side="right">
-                            <ConstituencyPopoverContent
-                              constituency={constituency}
-                              election={election}
-                              onLeaningChange={onLeaningChange ? (leaning) => onLeaningChange(constituency.id, leaning) : undefined}
-                              onPredictionChange={onPredictionChange ? (slp, uwp) => onPredictionChange(constituency.id, slp, uwp) : undefined}
-                              electionResults={electionResults}
-                              previousElectionResults={previousElectionResults}
-                              partyLogos={partyLogos}
-                              isMakeYourOwn={isMakeYourOwn}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      );
+                    if (constituency.politicalLeaning === 'ind') {
+                        isStriped = true;
+                        if (name === 'Castries North') {
+                            stripesId = "stripes";
+                        } else if (name === 'Castries Central') {
+                            stripesId = "red-white-stripes";
+                        }
                     }
-                    if (name === 'Castries Central') {
-                      return (
-                        <Popover key={constituency.id}>
-                          <PopoverTrigger asChild>
-                            <path
-                              d={pathData}
-                              id={constituency.name}
-                              className={cn(
-                                "cursor-pointer transition-all duration-300",
-                                "stroke-white stroke-2 hover:stroke-black hover:stroke-[4]",
-                                constituency.id === selectedConstituencyId ? "stroke-black stroke-[4]" : ""
-                              )}
-                              fill="url(#red-white-stripes)"
-                              onClick={() => onConstituencyClick(constituency.id)}
-                            />
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto" side="right">
-                            <ConstituencyPopoverContent
-                              constituency={constituency}
-                              election={election}
-                              onLeaningChange={onLeaningChange ? (leaning) => onLeaningChange(constituency.id, leaning) : undefined}
-                              onPredictionChange={onPredictionChange ? (slp, uwp) => onPredictionChange(constituency.id, slp, uwp) : undefined}
-                              electionResults={electionResults}
-                              previousElectionResults={previousElectionResults}
-                              partyLogos={partyLogos}
-                              isMakeYourOwn={isMakeYourOwn}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      );
+                } else if (isSpecialYear) {
+                    if (name === 'Castries North' && slpWon) {
+                        isStriped = true;
+                        stripesId = "stripes";
+                    } else if (name === 'Castries Central' && slpWon) {
+                        isStriped = true;
+                        stripesId = "red-white-stripes";
                     }
-                  }
                 }
                 
                 const { className: leaningClassName } = getLeaningInfo(constituency.politicalLeaning, isMakeYourOwn);
@@ -204,10 +165,11 @@ export function InteractiveSvgMap({ constituencies, selectedConstituencyId, elec
                                 id={constituency.name}
                                 className={cn(
                                     "cursor-pointer transition-all duration-300",
-                                    leaningClassName,
+                                    !isStriped && leaningClassName,
                                     "stroke-white stroke-2 hover:stroke-black hover:stroke-[4]",
                                     isSelected ? "stroke-black stroke-[4]" : ""
                                 )}
+                                fill={isStriped ? `url(#${stripesId})` : undefined}
                                 onClick={() => onConstituencyClick(constituency.id)}
                             />
                         </PopoverTrigger>
