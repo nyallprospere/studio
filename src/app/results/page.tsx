@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { Election, ElectionResult, Party, Constituency, PartyLogo, Region } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -41,7 +41,7 @@ const constituencyMapOrder = [
 
 export default function ResultsPage() {
   const { firestore } = useFirebase();
-  const searchParams = useSearchParams();
+  const searchParams = React.use(useSearchParams());
   const router = useRouter();
   const yearFromQuery = searchParams.get('year');
 
@@ -829,6 +829,3 @@ export default function ResultsPage() {
   );
 }
 
-
-
-    
