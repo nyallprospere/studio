@@ -204,15 +204,8 @@ export function ConstituencyPopoverContent({
             } else if (constituency.name === 'Castries Central') {
                 indCand = candidates.find(c => c.firstName === 'Richard' && c.lastName === 'Frederick');
             }
+            slpCand = null; 
         }
-        
-        // Ensure indCand is only set for the special constituencies in 2021, and slpCand is cleared for them.
-        if (isSpecialConstituency) {
-            slpCand = null;
-        } else {
-            indCand = null; // Clear independent candidate for all other cases
-        }
-
 
         return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand, slpParty: slp, uwpParty: uwp };
     }, [parties, candidates, constituency.name, election]);
@@ -225,7 +218,7 @@ export function ConstituencyPopoverContent({
         
         if (!currentResult) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null, slpVotePercentageChange: null, uwpVotePercentageChange: null, otherVotePercentageChange: null, slpLogoUrl: null, uwpLogoUrl: null, indLogoUrl: null };
         
-        const totalVotes = currentResult.slpVotes + currentResult.uwpVotes + currentResult.otherVotes;
+        const totalVotes = currentResult.totalVotes;
         const isSpecialConstituency = election?.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
 
         const indVotes = isSpecialConstituency ? currentResult.slpVotes : currentResult.otherVotes;
@@ -393,7 +386,7 @@ export function ConstituencyPopoverContent({
                       votePercentageChange={uwpVotePercentageChange}
                       logoUrl={uwpLogoUrl}
                   />
-                  {(independentCandidate || (indVotes || 0) > 0) && (
+                  {(independentCandidate || (indVotes || 0) > 0) && (isSpecialConstituency || (currentResult?.otherVotes || 0) > 0) && (
                       <CandidateBox 
                         candidate={independentCandidate}
                         party={null}
