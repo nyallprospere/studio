@@ -123,9 +123,11 @@ export default function ManageLogosPage() {
           };
         }).sort((a, b) => b.maxYear - a.maxYear);
       } else {
-        const groupedByLogo = groupBy(logosForParty, logo => `${logo.logoUrl || ''}|${logo.expandedLogoUrl || ''}`);
+        // Group by a combination of standard and expanded logo URLs to treat them as a single visual identity
+        const groupedByLogoPair = groupBy(logosForParty, logo => `${logo.logoUrl || 'null'}|${logo.expandedLogoUrl || 'null'}`);
   
-        allLogoGroups[partyId] = Object.entries(groupedByLogo).map(([key, group]) => {
+        allLogoGroups[partyId] = Object.entries(groupedByLogoPair).map(([key, group]) => {
+          if (group.length === 0) return null;
           const first = group[0];
           const electionIds = group.map(g => g.electionId);
           const groupElections = sortedElections.filter(e => electionIds.includes(e.id));
@@ -140,7 +142,8 @@ export default function ManageLogosPage() {
             dateRange: years.join(', '),
             maxYear: Math.max(...years),
             electionIds: electionIds,
-            key: key,
+            key: key, 
+            logoIds: group.map(g => g.id),
             candidateName: null,
             constituencyName: null,
           };
@@ -152,19 +155,23 @@ export default function ManageLogosPage() {
   }, [allParties, partyLogos, sortedElections, candidates, constituencies, activeTab, electionFilter]);
   
   
-  const handleDeleteLogos = async (partyId: string, electionIds: string[], logoId?: string) => {
+  const handleDeleteLogos = async (partyId: string, logoIds: string[], electionIds: string[]) => {
     if (!firestore || !partyLogos) return;
     
     let logoDocsToDelete: PartyLogo[] = [];
 
-    if (partyId === 'independent' && logoId) {
-        logoDocsToDelete = partyLogos.filter(logo => logo.id === logoId);
+    // If logoIds are provided (from party grouping), use them
+    if (logoIds && logoIds.length > 0) {
+        logoDocsToDelete = partyLogos.filter(logo => logoIds.includes(logo.id));
+    } 
+    // Fallback for independents or if logoIds aren't available
+    else if (partyId === 'independent' && electionIds.length > 0) {
+        logoDocsToDelete = partyLogos.filter(logo => logo.partyId === partyId && electionIds.includes(logo.electionId));
     } else {
         logoDocsToDelete = partyLogos.filter(logo => 
             logo.partyId === partyId && electionIds.includes(logo.electionId)
         );
     }
-
 
     if (logoDocsToDelete.length === 0) {
         toast({variant: 'destructive', title: 'Error', description: 'Could not find logo entries to delete.'});
@@ -314,7 +321,7 @@ export default function ManageLogosPage() {
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
                                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleDeleteLogos(party.id, group.electionIds, party.id === 'independent' ? group.key : undefined)}>
+                                                <AlertDialogAction onClick={() => handleDeleteLogos(party.id, group.logoIds || [], group.electionIds)}>
                                                     Yes, Delete
                                                 </AlertDialogAction>
                                             </AlertDialogFooter>
@@ -340,3 +347,4 @@ export default function ManageLogosPage() {
     </div>
   );
 }
+
