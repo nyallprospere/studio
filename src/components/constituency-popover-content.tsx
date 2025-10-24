@@ -194,14 +194,16 @@ export function ConstituencyPopoverContent({
         const uwpCand = uwp ? candidates.find(c => c.partyId === uwp.id) : null;
         
         let indCand = null;
-        if (constituency.name === 'Castries North') {
-            indCand = candidates.find(c => c.firstName === 'Stephenson' && c.lastName === 'King');
-        } else if (constituency.name === 'Castries Central') {
-            indCand = candidates.find(c => c.firstName === 'Richard' && c.lastName === 'Frederick');
+        if (election?.year === 2021) {
+            if (constituency.name === 'Castries North') {
+                indCand = candidates.find(c => c.firstName === 'Stephenson' && c.lastName === 'King');
+            } else if (constituency.name === 'Castries Central') {
+                indCand = candidates.find(c => c.firstName === 'Richard' && c.lastName === 'Frederick');
+            }
         }
 
         return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand, slpParty: slp, uwpParty: uwp };
-    }, [parties, candidates, constituency.name]);
+    }, [parties, candidates, constituency.name, election]);
 
 
     const { electionStatus, statusColor, margin, totalConstituencyVotes, winnerAcronym, slpVotePercentageChange, uwpVotePercentageChange, slpLogoUrl, uwpLogoUrl, indLogoUrl } = useMemo(() => {
@@ -382,7 +384,9 @@ export function ConstituencyPopoverContent({
                         onValueChange={onLeaningChange}
                         className="flex gap-2"
                     >
-                        {makeYourOwnLeaningOptions.map(opt => (
+                        {makeYourOwnLeaningOptions
+                            .filter(opt => isSpecialConstituency ? opt.value !== 'slp' : opt.value !== 'ind')
+                            .map(opt => (
                             <Label 
                                 key={opt.value} 
                                 htmlFor={`${constituency.id}-${opt.value}`}
