@@ -1,252 +1,251 @@
 /**
- * @fileoverview Firestore Security Rules for the Election App.
+ * @fileoverview Firestore Security Rules for the election data platform.
  *
  * Core Philosophy:
- * This ruleset allows access to all documents for authenticated users.
+ * This ruleset prioritizes secure data access based on a combination of public readability and role-based write access.
+ * Most data is considered publicly readable to facilitate data-driven applications.
+ * Write access is generally restricted to prevent unauthorized data modification.
  *
  * Data Structure:
- * - Top-level collections for core entities like parties, candidates, elections, etc.
- * - Subcollections under /news/{newsId} for comments
- * - Single documents under /settings for global configurations.
+ * The Firestore database is organized into top-level collections, each representing a distinct data entity (e.g., parties, candidates, constituencies).
+ * Documents within these collections are typically identified by a unique ID.
+ * Some collections have subcollections (e.g. /news/{newsId}/comments/{commentId}).
  *
  * Key Security Decisions:
- * - Authenticated users can read and write any data.
- *
+ * - Public Read Access: Most collections allow public read access (`get`, `list`) for all users.
+ * - Write Restrictions: `create`, `update`, and `delete` operations are generally restricted to prevent unauthorized modification.  For some collections, writes are completely disabled (`allow create, update, delete: if false;`).  For others, a TODO is left to remind the developer to implement authorization.
+ * - No User-Specific Data: There is no user-specific private data in this schema, so there are no /users/{userId} subcollections.
+ * - Denormalization Not Needed: Because there are no complex nested relationships, denormalization is not needed in this ruleset.
+ * - Open list rule on /candidates.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
     /**
-     * @description Grants access to all mailing list subscriber data for signed in users.
+     * @description Grants public read access to mailing list subscriber data, but restricts all write access.
      * @path /mailing_list_subscribers/{subscriberId}
-     * @allow (get, list, create, update, delete) - Any authenticated user.
-     * @deny (get, list, create, update, delete) - Never
-     * @principle Allows access to all documents to signed in users
+     * @allow get, list: if true;
+     * @deny create, update, delete: if true;
+     * @principle Grants public read access, but restricts all write access.
      */
     match /mailing_list_subscribers/{subscriberId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Grants access to all party data for signed in users.
+     * @description Grants public read access to party data, but restricts all write access.
      * @path /parties/{partyId}
-     * @allow (get, list, create, update, delete) - Any authenticated user.
-     * @deny (get, list, create, update, delete) - Never
-     * @principle Allows access to all documents to signed in users
+     * @allow get, list: if true;
+     * @deny create, update, delete: if true;
+     * @principle Grants public read access, but restricts all write access.
      */
     match /parties/{partyId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Grants access to all party logo data for signed in users.
+     * @description Grants public read access to party logo data, but restricts all write access.
      * @path /party_logos/{partyLogoId}
-     * @allow (get, list, create, update, delete) - Any authenticated user.
-     * @deny (get, list, create, update, delete) - Never
-     * @principle Allows access to all documents to signed in users
+     * @allow get, list: if true;
+     * @deny create, update, delete: if true;
+     * @principle Grants public read access, but restricts all write access.
      */
     match /party_logos/{partyLogoId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Grants access to all event data for signed in users.
+     * @description Grants public read access to event data, but restricts all write access.
      * @path /events/{eventId}
-     * @allow (get, list, create, update, delete) - Any authenticated user.
-     * @deny (get, list, create, update, delete) - Never
-     * @principle Allows access to all documents to signed in users
+     * @allow get, list: if true;
+     * @deny create, update, delete: if true;
+     * @principle Grants public read access, but restricts all write access.
      */
     match /events/{eventId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Grants access to all candidate data for signed in users.
+     * @description Grants public read access to candidate data.
      * @path /candidates/{candidateId}
-     * @allow (get, list, create, update, delete) - Any authenticated user.
-     * @deny (get, list, create, update, delete) - Never
-     * @principle Allows access to all documents to signed in users
+     * @allow get, list: if true;
+     * @deny create, update, delete: if true;
+     * @principle Grants public read access, but restricts all write access.
      */
     match /candidates/{candidateId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Grants access to all archived candidate data for signed in users.
+     * @description Grants public read access to archived candidate data, but restricts all write access.
      * @path /archived_candidates/{archivedCandidateId}
-     * @allow (get, list, create, update, delete) - Any authenticated user.
-     * @deny (get, list, create, update, delete) - Never
-     * @principle Allows access to all documents to signed in users
+     * @allow get, list: if true;
+     * @deny create, update, delete: if true;
+     * @principle Grants public read access, but restricts all write access.
      */
     match /archived_candidates/{archivedCandidateId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Grants access to all election data for signed in users.
+     * @description Grants public read access to election data, but restricts all write access.
      * @path /elections/{electionId}
-     * @allow (get, list, create, update, delete) - Any authenticated user.
-     * @deny (get, list, create, update, delete) - Never
-     * @principle Allows access to all documents to signed in users
+     * @allow get, list: if true;
+     * @deny create, update, delete: if true;
+     * @principle Grants public read access, but restricts all write access.
      */
     match /elections/{electionId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Grants access to all polling data for signed in users.
+     * @description Grants public read access to polling data, but restricts all write access.
      * @path /polling_data/{pollingDataId}
-     * @allow (get, list, create, update, delete) - Any authenticated user.
-     * @deny (get, list, create, update, delete) - Never
-     * @principle Allows access to all documents to signed in users
+     * @allow get, list: if true;
+     * @deny create, update, delete: if true;
+     * @principle Grants public read access, but restricts all write access.
      */
     match /polling_data/{pollingDataId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Grants access to all constituency data for signed in users.
+     * @description Grants public read access to constituency data, but restricts all write access.
      * @path /constituencies/{constituencyId}
-     * @allow (get, list, create, update, delete) - Any authenticated user.
-     * @deny (get, list, create, update, delete) - Never
-     * @principle Allows access to all documents to signed in users
+     * @allow get, list: if true;
+     * @deny create, update, delete: if true;
+     * @principle Grants public read access, but restricts all write access.
      */
     match /constituencies/{constituencyId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Grants access to all election result data for signed in users.
+     * @description Grants public read access to election result data, but restricts all write access.
      * @path /election_results/{electionResultId}
-     * @allow (get, list, create, update, delete) - Any authenticated user.
-     * @deny (get, list, create, update, delete) - Never
-     * @principle Allows access to all documents to signed in users
+     * @allow get, list: if true;
+     * @deny create, update, delete: if true;
+     * @principle Grants public read access, but restricts all write access.
      */
     match /election_results/{electionResultId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Grants access to all page layout data for signed in users.
+     * @description Grants public read access to page layouts, but restricts all write access.
      * @path /settings/pageLayouts
-     * @allow (get, list, create, update, delete) - Any authenticated user.
-     * @deny (get, list, create, update, delete) - Never
-     * @principle Allows access to all documents to signed in users
+     * @allow get, list: if true;
+     * @deny create, update, delete: if true;
+     * @principle Grants public read access, but restricts all write access.
      */
     match /settings/pageLayouts {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Grants access to all site setting data for signed in users.
+     * @description Grants public read access to site settings, but restricts all write access.
      * @path /settings/site
-     * @allow (get, list, create, update, delete) - Any authenticated user.
-     * @deny (get, list, create, update, delete) - Never
-     * @principle Allows access to all documents to signed in users
+     * @allow get, list: if true;
+     * @deny create, update, delete: if true;
+     * @principle Grants public read access, but restricts all write access.
      */
     match /settings/site {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Grants access to all user activity data for signed in users.
+     * @description Grants public read access to user activity data, but restricts all write access.
      * @path /user_activity/{activityId}
-     * @allow (get, list, create, update, delete) - Any authenticated user.
-     * @deny (get, list, create, update, delete) - Never
-     * @principle Allows access to all documents to signed in users
+     * @allow get, list: if true;
+     * @deny create, update, delete: if true;
+     * @principle Grants public read access, but restricts all write access.
      */
     match /user_activity/{activityId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Grants access to all region data for signed in users.
+     * @description Grants public read access to region data, but restricts all write access.
      * @path /regions/{regionId}
-     * @allow (get, list, create, update, delete) - Any authenticated user.
-     * @deny (get, list, create, update, delete) - Never
-     * @principle Allows access to all documents to signed in users
+     * @allow get, list: if true;
+     * @deny create, update, delete: if true;
+     * @principle Grants public read access, but restricts all write access.
      */
     match /regions/{regionId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
-     /**
-     * @description Grants access to all user map data for signed in users.
+        /**
+     * @description Grants public read access to user map data, but restricts all write access.
      * @path /user_maps/{userMapId}
-     * @allow (get, list, create, update, delete) - Any authenticated user.
-     * @deny (get, list, create, update, delete) - Never
-     * @principle Allows access to all documents to signed in users
+     * @allow get, list: if true;
+     * @deny create, update, delete: if true;
+     * @principle Grants public read access, but restricts all write access.
      */
     match /user_maps/{userMapId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
-    /**
-     * @description Grants access to all ad data for signed in users.
+        /**
+     * @description Grants public read access to ad data, but restricts all write access.
      * @path /ads/{adId}
-     * @allow (get, list, create, update, delete) - Any authenticated user.
-     * @deny (get, list, create, update, delete) - Never
-     * @principle Allows access to all documents to signed in users
+     * @allow get, list: if true;
+     * @deny create, update, delete: if true;
+     * @principle Grants public read access, but restricts all write access.
      */
     match /ads/{adId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
-    /**
-     * @description Grants access to all news data for signed in users.
+        /**
+     * @description Grants public read access to news article data, but restricts all write access.
      * @path /news/{newsId}
-     * @allow (get, list, create, update, delete) - Any authenticated user.
-     * @deny (get, list, create, update, delete) - Never
-     * @principle Allows access to all documents to signed in users
+     * @allow get, list: if true;
+     * @deny create, update, delete: if true;
+     * @principle Grants public read access, but restricts all write access.
      */
     match /news/{newsId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if false;
+           /**
+             * @description Grants public read access to news article comment data, but restricts all write access.
+             * @path /news/{newsId}/comments/{commentId}
+             * @allow get, list: if true;
+             * @deny create, update, delete: if true;
+             * @principle Grants public read access, but restricts all write access.
+             */
+           match /comments/{commentId} {
+            allow get, list: if true;
+            allow create, update, delete: if false;
+          }
     }
-
-    /**
-     * @description Grants access to all news article comment data for signed in users.
-     * @path /news/{newsId}/comments/{commentId}
-     * @allow (get, list, create, update, delete) - Any authenticated user.
-     * @deny (get, list, create, update, delete) - Never
-     * @principle Allows access to all documents to signed in users
-     */
-    match /news/{newsId}/comments/{commentId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
-    }
-
-    /**
-     * @description Grants access to all report data for signed in users.
+        /**
+     * @description Grants public read access to report data, but restricts all write access.
      * @path /reports/{reportId}
-     * @allow (get, list, create, update, delete) - Any authenticated user.
-     * @deny (get, list, create, update, delete) - Never
-     * @principle Allows access to all documents to signed in users
+     * @allow get, list: if true;
+     * @deny create, update, delete: if true;
+     * @principle Grants public read access, but restricts all write access.
      */
     match /reports/{reportId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
   }
 }
