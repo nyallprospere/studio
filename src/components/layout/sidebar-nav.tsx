@@ -36,7 +36,6 @@ export const mainNavItems = [
   { href: '/predictions', icon: TrendingUp, label: 'Predictions' },
   { href: '/election-news', icon: Rss, label: 'Election News' },
   { href: '/make-your-own', icon: Pencil, label: 'Make Your Own' },
-  { href: '/interactive-maps', icon: Map, label: 'Interactive Maps' },
 ];
 
 export const adminNavItems = [
@@ -576,7 +575,3 @@ export function SidebarNav() {
     </Sidebar>
   );
 }
-
-    
-
-    

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -24,7 +25,7 @@ function InteractiveMapPageSkeleton() {
 }
 
 
-export default function InteractiveMapsPage() {
+export default function ConstituenciesPage() {
     const { firestore } = useFirebase();
     const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
     const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
@@ -40,7 +41,7 @@ export default function InteractiveMapsPage() {
         return (
              <div className="container mx-auto px-4 py-8">
                 <PageHeader
-                    title="Interactive Map"
+                    title="Constituency Map"
                     description="Click on a constituency to see more details."
                 />
                 <InteractiveMapPageSkeleton />
@@ -51,7 +52,7 @@ export default function InteractiveMapsPage() {
     return (
         <div className="container mx-auto px-4 py-8">
             <PageHeader
-                title="Interactive Map"
+                title="Constituency Map"
                 description="Click on a constituency to see more details."
             />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
