@@ -5,7 +5,7 @@
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useFirebase } from '@/firebase';
+import { useFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, getDocs, writeBatch, doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
@@ -49,6 +49,7 @@ export default function SettingsPage() {
                     description: 'Elections data already exists. Seeding was skipped to prevent duplicates.',
                     variant: 'default'
                 });
+                setIsLoading(false);
                 return;
             }
             
@@ -59,19 +60,28 @@ export default function SettingsPage() {
                 batch.set(docRef, { ...election, isCurrent: false });
             });
             
-            await batch.commit();
-
-            toast({
-                title: 'Seeding Successful',
-                description: 'Election years have been added to the database.'
-            });
+            await batch.commit()
+              .then(() => {
+                toast({
+                    title: 'Seeding Successful',
+                    description: 'Election years have been added to the database.'
+                });
+              })
+              .catch(error => {
+                const contextualError = new FirestorePermissionError({
+                    path: electionsCollection.path,
+                    operation: 'write',
+                    requestResourceData: electionYearsToSeed,
+                });
+                errorEmitter.emit('permission-error', contextualError);
+              });
 
         } catch (error) {
-            console.error('Error seeding elections:', error);
+            console.error('Error checking for existing elections:', error);
             toast({
                 variant: 'destructive',
                 title: 'Seeding Failed',
-                description: 'An error occurred while seeding election data. See the console for details.'
+                description: 'An error occurred while preparing to seed election data. See the console for details.'
             });
         } finally {
             setIsLoading(false);
