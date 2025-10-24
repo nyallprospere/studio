@@ -95,7 +95,7 @@ const VictoryStatusBar = ({ slpSeats, uwpSeats }: { slpSeats: number, uwpSeats: 
   const slpStatus = getStatus(slpSeats);
   const uwpStatus = getUWPStatus(uwpSeats);
 
-  let status = 'Toss Up';
+  let status = 'Too Early To Tell';
   let color = 'bg-purple-500';
 
   if (slpStatus) {
@@ -438,6 +438,7 @@ export default function MakeYourOwnPage() {
     </div>
   );
 }
+
 
 
 
