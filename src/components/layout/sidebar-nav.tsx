@@ -194,7 +194,7 @@ export function SidebarNav() {
     setIsAnalyticsOpen(pathname.startsWith('/admin/analytics'));
     setIsNewsOpen(pathname.startsWith('/admin/news') || pathname.startsWith('/admin/reports'));
     setIsMapSubmissionsOpen(pathname.startsWith('/admin/map-submissions'));
-    setIsMakeYourOwnOpen(pathname.startsWith('/make-your-own') || pathname.startsWith('/admin/map-submissions/sharing'));
+    setIsMakeYourOwnOpen(pathname.startsWith('/make-your-own'));
 
     const isUwpRelated = uwpParty && (
         pathname.startsWith(`/parties/${uwpParty.id}`) || 
@@ -245,40 +245,6 @@ export function SidebarNav() {
               </Button>
             </SidebarMenuItem>
           ))}
-
-          <SidebarMenuItem>
-              <Collapsible open={isMakeYourOwnOpen} onOpenChange={setIsMakeYourOwnOpen}>
-                  <CollapsibleTrigger asChild>
-                      <Button variant={isMakeYourOwnOpen ? 'secondary' : 'ghost'} className="w-full justify-between">
-                          <div className="flex items-center gap-2">
-                              <Pencil className="mr-2 h-4 w-4" />
-                              Make Your Own
-                          </div>
-                          <ChevronRight className={`h-4 w-4 transition-transform ${isMakeYourOwnOpen ? 'rotate-90' : ''}`} />
-                      </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                      <SidebarMenuSub>
-                          <SidebarMenuItem>
-                              <SidebarMenuSubButton asChild isActive={pathname === '/make-your-own'}>
-                                  <Link href="/make-your-own">
-                                      Prediction Map
-                                  </Link>
-                              </SidebarMenuSubButton>
-                          </SidebarMenuItem>
-                          {user && (
-                            <SidebarMenuItem>
-                                <SidebarMenuSubButton asChild isActive={pathname.startsWith('/admin/map-submissions/sharing')}>
-                                    <Link href="/admin/map-submissions/sharing">
-                                        Sharing Settings
-                                    </Link>
-                                </SidebarMenuSubButton>
-                            </SidebarMenuItem>
-                          )}
-                      </SidebarMenuSub>
-                  </CollapsibleContent>
-              </Collapsible>
-          </SidebarMenuItem>
 
           <SidebarMenuItem>
               <Collapsible open={isResultsOpen} onOpenChange={setIsResultsOpen}>
@@ -557,6 +523,15 @@ export function SidebarNav() {
                                                   </Link>
                                               </SidebarMenuSubButton>
                                           </SidebarMenuItem>
+                                          {user && (
+                                            <SidebarMenuItem>
+                                                <SidebarMenuSubButton asChild isActive={pathname.startsWith('/admin/map-submissions/sharing')}>
+                                                    <Link href="/admin/map-submissions/sharing">
+                                                        Sharing Settings
+                                                    </Link>
+                                                </SidebarMenuSubButton>
+                                            </SidebarMenuItem>
+                                          )}
                                       </SidebarMenuSub>
                                   </CollapsibleContent>
                               </Collapsible>
@@ -575,3 +550,5 @@ export function SidebarNav() {
     </Sidebar>
   );
 }
+
+    
