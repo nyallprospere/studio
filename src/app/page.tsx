@@ -240,7 +240,7 @@ export default function Home() {
                 <CardTitle>Interactive Map</CardTitle>
                 <CardDescription>Click on a constituency to learn more.</CardDescription>
             </CardHeader>
-            <CardContent className="p-2">
+            <CardContent className="p-0.5">
                  <InteractiveSvgMap 
                     constituencies={constituencies ?? []} 
                     selectedConstituencyId={selectedConstituencyId}
