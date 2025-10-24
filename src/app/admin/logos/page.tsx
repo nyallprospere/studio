@@ -73,12 +73,7 @@ export default function ManageLogosPage() {
     
     let partyList: Party[] = [...parties];
     
-    const selectedElection = sortedElections.find(e => e.id === electionFilter);
-    const showIndependent = !selectedElection || (selectedElection.year !== 2026 && selectedElection.year !== 2021);
-
-    if (showIndependent) {
-        partyList.push({ id: 'independent', name: 'Independent', acronym: 'IND', color: '#808080' } as Party);
-    }
+    partyList.push({ id: 'independent', name: 'Independent', acronym: 'IND', color: '#808080' } as Party);
     
     if (activeTab && !partyList.some(p => p.id === activeTab)) {
         setActiveTab(partyList[0]?.id || '');
@@ -359,5 +354,3 @@ export default function ManageLogosPage() {
     </div>
   );
 }
-
-
