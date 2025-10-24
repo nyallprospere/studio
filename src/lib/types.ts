@@ -34,6 +34,7 @@ export interface Candidate {
   constituencyId: string;
   bio: string;
   imageUrl?: string; // URL to photo in storage
+  customLogoUrl?: string; // URL to a custom logo for this candidate
   policyPositions: { title: string; description: string }[];
   isIncumbent?: boolean;
   isPartyLeader?: boolean;

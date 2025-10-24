@@ -25,7 +25,9 @@ const candidateSchema = z.object({
   constituencyId: z.string().min(1, "Constituency is required"),
   bio: z.string().optional(),
   photoFile: z.any().optional(),
+  customLogoFile: z.any().optional(),
   imageUrl: z.string().url().optional().or(z.literal('')),
+  customLogoUrl: z.string().url().optional().or(z.literal('')),
   isIncumbent: z.boolean().default(false),
   isPartyLeader: z.boolean().default(false),
   isDeputyLeader: z.boolean().default(false),
@@ -55,6 +57,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
       constituencyId: '',
       bio: '',
       imageUrl: '',
+      customLogoUrl: '',
       isIncumbent: false,
       isPartyLeader: false,
       isDeputyLeader: false,
@@ -63,6 +66,8 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
       isIndependentCastriesCentral: false,
     },
   });
+
+  const isIndependent = form.watch('isIndependentCastriesNorth') || form.watch('isIndependentCastriesCentral');
 
   useEffect(() => {
     if (initialData) {
@@ -74,6 +79,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
         partyLevel: initialData.partyLevel ?? 'lower',
         isIndependentCastriesNorth: initialData.isIndependentCastriesNorth ?? false,
         isIndependentCastriesCentral: initialData.isIndependentCastriesCentral ?? false,
+        customLogoUrl: initialData.customLogoUrl ?? '',
       });
     } else {
         form.reset({
@@ -83,6 +89,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
           constituencyId: '',
           bio: '',
           imageUrl: '',
+          customLogoUrl: '',
           isIncumbent: false,
           isPartyLeader: false,
           isDeputyLeader: false,
@@ -252,21 +259,40 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
           )}
         />
         
-        <FormField
-          control={form.control}
-          name="photoFile"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Candidate Photo</FormLabel>
-              <FormControl>
-                  <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
-              </FormControl>
-              <FormDescription>Upload a PNG or JPG file. A square image works best.</FormDescription>
-              {initialData?.imageUrl && <a href={initialData.imageUrl} target="_blank" className="text-sm text-blue-500 hover:underline">View current photo</a>}
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+            control={form.control}
+            name="photoFile"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Candidate Photo</FormLabel>
+                <FormControl>
+                    <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
+                </FormControl>
+                <FormDescription>Upload a PNG or JPG file. A square image works best.</FormDescription>
+                {initialData?.imageUrl && <a href={initialData.imageUrl} target="_blank" className="text-sm text-blue-500 hover:underline">View current photo</a>}
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            {isIndependent && (
+                 <FormField
+                    control={form.control}
+                    name="customLogoFile"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Custom Party Logo</FormLabel>
+                        <FormControl>
+                            <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
+                        </FormControl>
+                        <FormDescription>Upload a logo for this independent candidate.</FormDescription>
+                        {initialData?.customLogoUrl && <a href={initialData.customLogoUrl} target="_blank" className="text-sm text-blue-500 hover:underline">View current logo</a>}
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            )}
+        </div>
         
         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           <FormField

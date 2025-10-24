@@ -63,9 +63,18 @@ export default function AdminCandidatesPage() {
         }
         imageUrl = await uploadFile(values.photoFile, `candidates/${values.photoFile.name}`);
       }
+
+      let customLogoUrl = values.customLogoUrl;
+      if (values.customLogoFile) {
+        if (editingCandidate?.customLogoUrl) {
+          await deleteFile(editingCandidate.customLogoUrl);
+        }
+        customLogoUrl = await uploadFile(values.customLogoFile, `logos/ind_${values.lastName}_${Date.now()}.png`);
+      }
       
-      const candidateData = { ...values, imageUrl };
+      const candidateData = { ...values, imageUrl, customLogoUrl };
       delete candidateData.photoFile;
+      delete candidateData.customLogoFile;
 
       if (editingCandidate) {
         const candidateDoc = doc(firestore, 'candidates', editingCandidate.id);
