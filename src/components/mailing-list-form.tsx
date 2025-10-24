@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -58,7 +57,7 @@ export function MailingListForm() {
           render={({ field }) => (
             <FormItem className="w-full sm:w-1/3">
               <FormControl>
-                <Input placeholder="First Name" {...field} />
+                <Input placeholder="First Name" {...field} autoComplete="off" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -70,7 +69,7 @@ export function MailingListForm() {
           render={({ field }) => (
             <FormItem className="w-full sm:w-1/3">
               <FormControl>
-                <Input type="email" placeholder="Email Address" {...field} />
+                <Input type="email" placeholder="Email Address" {...field} autoComplete="off" />
               </FormControl>
               <FormMessage />
             </FormItem>

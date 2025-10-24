@@ -30,7 +30,7 @@ import { SortableFeatureCard } from '@/components/sortable-feature-card';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Pie, PieChart, ResponsiveContainer, Cell, Label } from 'recharts';
-import { MailingListForm } from '@/components/mailing-list-form';
+import { ClientMailingListForm } from '@/components/client-mailing-list-form';
 
 const adminSections = [
     { id: 'admin-elections', title: 'Manage Elections', href: '/admin/elections', icon: Vote },
@@ -257,7 +257,7 @@ export default function Home() {
           <CardDescription>Get the latest election news and analysis delivered to your inbox.</CardDescription>
         </CardHeader>
         <CardContent>
-          <MailingListForm />
+          <ClientMailingListForm />
         </CardContent>
       </Card>
 
