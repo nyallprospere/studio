@@ -30,7 +30,6 @@ const makeYourOwnLeaningOptions = [
     { value: 'slp', label: 'SLP' },
     { value: 'uwp', label: 'UWP' },
     { value: 'ind', label: 'IND' },
-    { value: 'tossup', label: 'Toss Up' },
     { value: 'unselected', label: 'To be selected' },
 ];
 
@@ -332,6 +331,13 @@ export function ConstituencyPopoverContent({
 
     const isSpecialConstituency = election?.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
     const isMakeYourOwnSpecial = isMakeYourOwn && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
+    const makeYourOwnOptions = useMemo(() => {
+        let options = makeYourOwnLeaningOptions.filter(o => o.value === 'slp' || o.value === 'uwp' || o.value === 'unselected');
+        if (isMakeYourOwnSpecial) {
+            options.splice(2, 0, { value: 'ind', label: 'IND' });
+        }
+        return options;
+    }, [isMakeYourOwnSpecial]);
 
     if (isLoading) {
         return <Skeleton className="h-40 w-full" />;
@@ -428,7 +434,36 @@ export function ConstituencyPopoverContent({
               </div>
             ) : null}
             
-            {onLeaningChange && (
+            {onLeaningChange && isMakeYourOwn && (
+                <div className="space-y-2 pt-2">
+                    <h5 className="text-xs font-medium text-muted-foreground">Choose Your Pick</h5>
+                     <RadioGroup 
+                        value={constituency.politicalLeaning} 
+                        onValueChange={onLeaningChange}
+                        className={cn("grid gap-1", makeYourOwnOptions.length === 3 ? "grid-cols-3" : "grid-cols-2")}
+                    >
+                        {makeYourOwnOptions.map(opt => {
+                            if (opt.value === 'unselected') return null;
+                            return (
+                                <Label 
+                                    key={opt.value} 
+                                    htmlFor={`${constituency.id}-${opt.value}`}
+                                    className={cn(
+                                        "flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors",
+                                        constituency.politicalLeaning === opt.value 
+                                            ? "bg-primary text-primary-foreground" 
+                                            : "hover:bg-muted"
+                                    )}
+                                >
+                                    <RadioGroupItem value={opt.value} id={`${constituency.id}-${opt.value}`} className="sr-only" />
+                                    {opt.label}
+                                </Label>
+                            )
+                        })}
+                    </RadioGroup>
+                </div>
+            )}
+            {onLeaningChange && !isMakeYourOwn && (
                 <div className="space-y-2 pt-2">
                     <h5 className="text-xs font-medium text-muted-foreground">Choose Your Pick</h5>
                      <RadioGroup 
