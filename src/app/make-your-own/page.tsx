@@ -224,7 +224,6 @@ export default function MakeYourOwnPage() {
         let slpCount = 0;
         let uwpCount = 0;
         let indCount = 0;
-        let tossupCount = 0;
         let unselectedCount = 0;
     
         myMapConstituencies.forEach(c => {
@@ -239,8 +238,6 @@ export default function MakeYourOwnPage() {
                 }
             } else if (leaning === 'uwp') {
                 uwpCount++;
-            } else if (leaning === 'tossup') {
-                tossupCount++;
             } else if (leaning === 'unselected') {
                 unselectedCount++;
             }
@@ -250,24 +247,24 @@ export default function MakeYourOwnPage() {
             slp: slpCount,
             uwp: uwpCount,
             ind: indCount,
-            tossup: tossupCount,
             unselected: unselectedCount
         };
     
         const allSelected = seatCounts.unselected === 0;
     
-        const chartData = makeYourOwnLeaningOptions.map(opt => {
+        const chartData = makeYourOwnLeaningOptions
+        .filter(opt => opt.value !== 'tossup')
+        .map(opt => {
             let value = 0;
             if (opt.value === 'slp') value = slpCount;
             else if (opt.value === 'uwp') value = uwpCount;
             else if (opt.value === 'ind') value = indCount;
-            else if (opt.value === 'tossup') value = tossupCount;
             else if (opt.value === 'unselected') value = unselectedCount;
             
             return {
                 name: opt.label,
                 value: value,
-                fill: opt.value === 'slp' ? 'hsl(var(--chart-5))' : opt.value === 'uwp' ? 'hsl(var(--chart-1))' : opt.value === 'ind' ? 'hsl(var(--chart-2))' : opt.value === 'tossup' ? 'hsl(var(--chart-4))' : '#d1d5db',
+                fill: opt.value === 'slp' ? 'hsl(var(--chart-5))' : opt.value === 'uwp' ? 'hsl(var(--chart-1))' : opt.value === 'ind' ? 'hsl(var(--primary))' : '#d1d5db',
             };
         });
 
@@ -346,7 +343,7 @@ export default function MakeYourOwnPage() {
                     </CardHeader>
                     <CardContent className="flex flex-col items-center">
                         <VictoryStatusBar slpSeats={seatCounts.slp} uwpSeats={seatCounts.uwp} />
-                        <div className="grid grid-cols-4 gap-4 w-full text-center mb-4">
+                        <div className="grid grid-cols-3 gap-4 w-full text-center mb-4">
                             <div>
                                 <p className="font-bold text-lg" style={{color: 'hsl(var(--chart-5))'}}>{seatCounts.slp}</p>
                                 <p className="text-muted-foreground font-semibold text-sm">SLP Seats {allSelected && <SeatChangeIndicator change={seatChanges.slp} />}</p>
@@ -356,12 +353,8 @@ export default function MakeYourOwnPage() {
                                 <p className="text-muted-foreground font-semibold text-sm">UWP Seats {allSelected && <SeatChangeIndicator change={seatChanges.uwp} />}</p>
                             </div>
                              <div>
-                                <p className="font-bold text-lg" style={{color: 'hsl(var(--chart-2))'}}>{seatCounts.ind}</p>
+                                <p className="font-bold text-lg" style={{color: 'hsl(var(--primary))'}}>{seatCounts.ind}</p>
                                 <p className="text-muted-foreground font-semibold text-sm">IND Seats</p>
-                            </div>
-                            <div>
-                                <p className="font-bold text-lg" style={{color: 'hsl(var(--chart-4))'}}>{seatCounts.tossup}</p>
-                                <p className="text-muted-foreground font-semibold text-sm">Tossups</p>
                             </div>
                         </div>
                         <ChartContainer config={chartConfig} className="h-40 w-full">
@@ -445,5 +438,6 @@ export default function MakeYourOwnPage() {
     </div>
   );
 }
+
 
 
