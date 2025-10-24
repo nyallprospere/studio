@@ -7,6 +7,12 @@ type CountdownProps = {
 };
 
 export default function Countdown({ date }: CountdownProps) {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const calculateTimeLeft = () => {
     const difference = +date - +new Date();
     let timeLeft = {};
@@ -33,6 +39,9 @@ export default function Countdown({ date }: CountdownProps) {
   }>({});
 
   useEffect(() => {
+    if (!isClient) {
+        return;
+    }
     // Set initial time left on mount to avoid hydration mismatch
     setTimeLeft(calculateTimeLeft());
     
@@ -42,7 +51,7 @@ export default function Countdown({ date }: CountdownProps) {
 
     return () => clearInterval(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date]);
+  }, [date, isClient]);
 
   const timeParts = [
     { label: 'Days', value: timeLeft.days },
@@ -50,6 +59,21 @@ export default function Countdown({ date }: CountdownProps) {
     { label: 'Minutes', value: timeLeft.minutes },
     { label: 'Seconds', value: timeLeft.seconds },
   ];
+
+  if (!isClient) {
+    return (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            {timeParts.map(({ label }) => (
+                <div key={label} className="bg-primary/10 p-4 rounded-lg">
+                <div className="text-4xl md:text-6xl font-bold text-primary font-headline">
+                    00
+                </div>
+                <div className="text-sm md:text-base text-muted-foreground uppercase tracking-wider">{label}</div>
+                </div>
+            ))}
+        </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
