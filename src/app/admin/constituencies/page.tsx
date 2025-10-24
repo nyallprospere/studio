@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { collection, doc, updateDoc, writeBatch, getDocs, setDoc } from 'firebase/firestore';
 import type { Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
@@ -82,28 +82,32 @@ export default function AdminConstituenciesPage() {
     const handleSeedConstituencies = async () => {
         if (!firestore) return;
         setIsSeeding(true);
+        const batch = writeBatch(firestore);
         try {
             if (constituencies && constituencies.length > 0) {
                 toast({ title: 'Seeding Skipped', description: 'Constituencies already exist.' });
                 return;
             }
-            const batch = writeBatch(firestore);
             initialConstituencies.forEach(c => {
                 const docRef = doc(collection(firestore, 'constituencies'));
-                batch.set(docRef, { 
+                const dataToSave = { 
                     name: c.name, 
                     demographics: { registeredVoters: c.registeredVoters },
                     mapCoordinates: { top: "50", left: "50"}, // Default coordinates
                     politicalLeaning: "tossup",
                     predictedSlpPercentage: 50,
                     predictedUwpPercentage: 50,
-                });
+                };
+                batch.set(docRef, dataToSave);
             });
             await batch.commit();
             toast({ title: 'Success', description: 'Seeded 17 constituencies.' });
         } catch (e) {
-            console.error(e);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not seed constituencies.' });
+            const permissionError = new FirestorePermissionError({
+                path: 'constituencies',
+                operation: 'write',
+            });
+            errorEmitter.emit('permission-error', permissionError);
         } finally {
             setIsSeeding(false);
         }
@@ -154,21 +158,27 @@ export default function AdminConstituenciesPage() {
     const handleSaveAll = async () => {
         if (!firestore) return;
         setIsSaving(true);
-        try {
-            const batch = writeBatch(firestore);
-            editableConstituencies.forEach(c => {
-                const { id, ...dataToSave } = c;
-                const docRef = doc(firestore, 'constituencies', id);
-                batch.update(docRef, dataToSave);
+        const batch = writeBatch(firestore);
+        editableConstituencies.forEach(c => {
+            const { id, ...dataToSave } = c;
+            const docRef = doc(firestore, 'constituencies', id);
+            batch.update(docRef, dataToSave);
+        });
+
+        batch.commit()
+            .then(() => {
+                toast({ title: 'Success', description: 'All changes have been saved.' });
+            })
+            .catch(error => {
+                const permissionError = new FirestorePermissionError({
+                    path: 'constituencies',
+                    operation: 'write',
+                });
+                errorEmitter.emit('permission-error', permissionError);
+            })
+            .finally(() => {
+                setIsSaving(false);
             });
-            await batch.commit();
-            toast({ title: 'Success', description: 'All changes have been saved.' });
-        } catch (e) {
-            console.error(e);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not save changes.' });
-        } finally {
-            setIsSaving(false);
-        }
     }
 
     const handleExport = () => {
@@ -233,8 +243,12 @@ export default function AdminConstituenciesPage() {
             toast({ title: 'Import Successful', description: `${count} constituencies imported/updated successfully.` });
     
         } catch(e) {
-            console.error("Error importing constituencies:", e);
-            toast({ variant: 'destructive', title: 'Import Failed', description: 'An error occurred during import. Check console for details.' });
+            const permissionError = new FirestorePermissionError({
+                path: 'constituencies',
+                operation: 'write',
+                requestResourceData: data,
+            });
+            errorEmitter.emit('permission-error', permissionError);
         } finally {
             setIsImportOpen(false);
         }
