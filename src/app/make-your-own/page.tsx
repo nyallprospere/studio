@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import type { Constituency, UserMap, ElectionResult, Election } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirebase, useMemoFirebase, useUser, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog"
 import { Copy } from 'lucide-react';
 import { saveUserMap } from '@/lib/actions';
+import ReCAPTCHA from "react-google-recaptcha";
 
 
 const politicalLeaningOptions = [
@@ -120,6 +121,7 @@ const VictoryStatusBar = ({ slpSeats, uwpSeats, indSeats }: { slpSeats: number, 
 export default function MakeYourOwnPage() {
     const { firestore } = useFirebase();
     const { toast } = useToast();
+    const recaptchaRef = useRef<ReCAPTCHA>(null);
 
     const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
     const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
@@ -191,13 +193,20 @@ export default function MakeYourOwnPage() {
     
     const handleSaveAndShare = async () => {
         setIsSaving(true);
+        const token = await recaptchaRef.current?.executeAsync();
+        if (!token) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Please complete the CAPTCHA.' });
+            setIsSaving(false);
+            return;
+        }
+
         try {
             const mapData = myMapConstituencies.map(c => ({
                 constituencyId: c.id,
                 politicalLeaning: c.politicalLeaning || 'unselected'
             }));
 
-            const result = await saveUserMap(mapData);
+            const result = await saveUserMap(mapData, token);
 
             if(result.error) {
                 toast({ variant: 'destructive', title: 'Error', description: result.error });
@@ -214,6 +223,7 @@ export default function MakeYourOwnPage() {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not save your map. Please try again.' });
         } finally {
             setIsSaving(false);
+            recaptchaRef.current?.reset();
         }
     }
 
@@ -309,6 +319,11 @@ export default function MakeYourOwnPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+        <ReCAPTCHA
+            ref={recaptchaRef}
+            size="invisible"
+            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+        />
         <div className="mb-8">
             <h1 className="text-3xl font-bold tracking-tight font-headline text-primary md:text-4xl">
                 {pageTitle}
@@ -436,6 +451,7 @@ export default function MakeYourOwnPage() {
     </div>
   );
 }
+
 
 
 

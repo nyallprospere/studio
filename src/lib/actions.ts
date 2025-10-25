@@ -65,8 +65,17 @@ export async function getPrediction(newsSummary: string) {
   }
 }
 
-export async function saveUserMap(mapData: UserMap['mapData']) {
+export async function saveUserMap(mapData: UserMap['mapData'], token: string) {
     try {
+        const response = await fetch(`https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${token}`, {
+            method: 'POST',
+        });
+        const captchaValidation = await response.json();
+
+        if (!captchaValidation.success) {
+            return { error: 'reCAPTCHA verification failed.' };
+        }
+
         const { firestore } = getFirebaseAdmin();
         const headersList = headers();
         const ip = headersList.get('x-forwarded-for') || 'unknown';
