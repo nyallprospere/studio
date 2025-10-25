@@ -171,14 +171,12 @@ export function ConstituencyPopoverContent({
 
     const candidatesQuery = useMemoFirebase(() => {
         if (!firestore) return null;
+        const collectionName = election ? 'archived_candidates' : 'candidates';
+        let q = query(collection(firestore, collectionName), where('constituencyId', '==', constituency.id));
         if (election) {
-            return query(
-                collection(firestore, 'archived_candidates'),
-                where('constituencyId', '==', constituency.id),
-                where('electionId', '==', election.id)
-            );
+            q = query(q, where('electionId', '==', election.id));
         }
-        return query(collection(firestore, 'candidates'), where('constituencyId', '==', constituency.id));
+        return q;
     }, [firestore, constituency.id, election]);
 
     const { data: candidates, isLoading: loadingCandidates } = useCollection<Candidate | ArchivedCandidate>(candidatesQuery);
@@ -197,17 +195,16 @@ export function ConstituencyPopoverContent({
         const uwpCand = uwp ? candidates.find(c => c.partyId === uwp.id) : null;
         
         let indCand = null;
-        
+
+        const isCurrentElection = !election || election.isCurrent;
+
         if (election?.year === 2021) {
-            if (constituency.name === 'Castries North') {
-                indCand = slpCand; // Stephenson King ran on SLP ticket in 2021 results data, but was independent
-                slpCand = null; // No official SLP candidate
-            } else if (constituency.name === 'Castries Central') {
-                indCand = slpCand; // Richard Frederick, same situation
+            if (constituency.name === 'Castries North' || constituency.name === 'Castries Central') {
+                indCand = slpCand;
                 slpCand = null;
             }
-        } else if (election?.isCurrent) {
-             indCand = candidates.find(c => (c as Candidate).isIndependentCastriesNorth || (c as Candidate).isIndependentCastriesCentral);
+        } else if (isCurrentElection) {
+            indCand = candidates.find(c => (c as Candidate).isIndependentCastriesNorth || (c as Candidate).isIndependentCastriesCentral);
         } else {
              indCand = candidates.find(c => c.partyId !== slp?.id && c.partyId !== uwp?.id);
         }
@@ -452,6 +449,29 @@ export function ConstituencyPopoverContent({
             
             {onLeaningChange && isMakeYourOwn && (
                 <div className="space-y-2 pt-2">
+                    <div className="flex justify-around items-start text-center mb-2">
+                        {slpCandidate && !isMakeYourOwnSpecial && (
+                            <div className="flex flex-col items-center gap-1">
+                                <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
+                                    {slpCandidate.imageUrl ? <Image src={slpCandidate.imageUrl} alt={slpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
+                                </div>
+                            </div>
+                        )}
+                        {uwpCandidate && (
+                            <div className="flex flex-col items-center gap-1">
+                                <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
+                                    {uwpCandidate.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
+                                </div>
+                            </div>
+                        )}
+                         {independentCandidate && isMakeYourOwnSpecial && (
+                            <div className="flex flex-col items-center gap-1">
+                                <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
+                                    {independentCandidate.imageUrl ? <Image src={independentCandidate.imageUrl} alt={independentCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                     <h5 className="text-xs font-medium text-muted-foreground">Choose Your Pick</h5>
                      <RadioGroup 
                         value={constituency.politicalLeaning} 
@@ -460,6 +480,9 @@ export function ConstituencyPopoverContent({
                     >
                         {makeYourOwnOptions.map(opt => {
                             if (opt.value === 'unselected') return null;
+                            if(isMakeYourOwnSpecial && opt.value === 'slp') return null;
+                            if(!isMakeYourOwnSpecial && opt.value === 'ind') return null;
+                            
                             return (
                                 <Label 
                                     key={opt.value} 
