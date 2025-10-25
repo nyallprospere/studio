@@ -29,7 +29,7 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
   }
 
   const candidateName = `${candidate.firstName} ${candidate.lastName}`;
-  const displayName = `${candidateName} ${candidate.isIncumbent ? '(Inc.)' : ''}`.trim();
+  const displayName = `${candidateName}`;
 
 
   return (
@@ -49,6 +49,7 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
                 <DialogTitle className="font-headline text-3xl">{displayName}</DialogTitle>
                 <DialogDescription className="text-lg">
                   Candidate for <span className="font-semibold text-foreground">{constituency?.name}</span>
+                  {candidate.isIncumbent && <span className="font-normal text-primary text-sm ml-2">(Incumbent)</span>}
                 </DialogDescription>
                 {party && (
                   <div className="flex items-center gap-2 pt-2">

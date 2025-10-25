@@ -67,7 +67,7 @@ function CandidateBox({
 }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}` : 'Candidate(s) N/A';
-    const displayName = candidate ? `${candidate.firstName} ${candidate.lastName} ${candidate.isIncumbent ? '(I)' : ''}` : 'Candidate(s) N/A';
+    const displayName = candidate ? `${candidate.firstName} ${candidate.lastName}` : 'Candidate(s) N/A';
 
 
     const votePercentage = totalVotes && votes ? (votes / totalVotes) * 100 : 0;
@@ -81,6 +81,11 @@ function CandidateBox({
                     <div className="absolute -top-3 right-0 text-center">
                          <p className="font-bold text-xs -mb-5" style={{color: statusColor}}>{electionStatus}</p>
                         
+                    </div>
+                )}
+                {candidate?.isIncumbent && (
+                    <div className="absolute -top-2 right-1 text-center">
+                        <p className="font-bold text-xs text-muted-foreground">Incumbent</p>
                     </div>
                 )}
                 
@@ -364,7 +369,8 @@ export function ConstituencyPopoverContent({
                             )}
                             </div>
                             <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!slpCandidate}>
-                                {slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName} ${slpCandidate.isIncumbent ? '(I)' : ''}` : 'Candidate(s) N/A'}
+                                {slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'Candidate(s) N/A'}
+                                {slpCandidate?.isIncumbent && <span className="font-normal text-muted-foreground ml-1">(Inc.)</span>}
                             </Button>
                         </div>
                          {independentCandidate && (
@@ -380,7 +386,8 @@ export function ConstituencyPopoverContent({
                                 )}
                                 </div>
                                 <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!independentCandidate}>
-                                    {independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName} ${independentCandidate.isIncumbent ? '(I)' : ''}` : 'Candidate(s) N/A'}
+                                    {independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName}` : 'Candidate(s) N/A'}
+                                    {independentCandidate?.isIncumbent && <span className="font-normal text-muted-foreground ml-1">(Inc.)</span>}
                                 </Button>
                             </div>
                         )}
@@ -400,7 +407,8 @@ export function ConstituencyPopoverContent({
                             )}
                             </div>
                             <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!uwpCandidate}>
-                                {uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName} ${uwpCandidate.isIncumbent ? '(I)' : ''}` : 'Candidate(s) N/A'}
+                                {uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'Candidate(s) N/A'}
+                                {uwpCandidate?.isIncumbent && <span className="font-normal text-muted-foreground ml-1">(Inc.)</span>}
                             </Button>
                         </div>
                     </div>
