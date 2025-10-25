@@ -67,6 +67,8 @@ function CandidateBox({
 }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}` : 'Candidate(s) N/A';
+    const displayName = candidate ? `${candidate.firstName} ${candidate.lastName} ${candidate.isIncumbent ? '(I)' : ''}` : 'Candidate(s) N/A';
+
 
     const votePercentage = totalVotes && votes ? (votes / totalVotes) * 100 : 0;
 
@@ -92,7 +94,7 @@ function CandidateBox({
                             )}
                         </div>
                          <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold whitespace-normal leading-tight" onClick={() => setProfileOpen(true)} disabled={!candidate}>
-                           {candidateName}
+                           {displayName}
                         </Button>
                         {isWinner && <CheckCircle2 className="h-4 w-4 text-green-600 absolute top-[-4px] right-[-4px] bg-white rounded-full" />}
                     </div>
@@ -133,12 +135,6 @@ function CandidateBox({
                         </div>
                     </div>
                 </div>
-
-                {candidate?.isIncumbent && (
-                    <div className="absolute top-1 right-2 text-xs font-semibold text-muted-foreground">
-                        Incumbent
-                    </div>
-                )}
             </div>
             {candidate && <CandidateProfileDialog candidate={candidate as Candidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />}
         </>
@@ -199,9 +195,15 @@ export function ConstituencyPopoverContent({
         const slpCand = slp ? candidates.find(c => c.partyId === slp.id) : null;
         const uwpCand = uwp ? candidates.find(c => c.partyId === uwp.id) : null;
         
-        const indCand = candidates.find(c => 
-            (c as Candidate).isIndependentCastriesCentral || (c as Candidate).isIndependentCastriesNorth
-        );
+        let indCand = null;
+        if (election?.isCurrent) {
+            if (constituency.name === 'Castries North') {
+                indCand = candidates.find(c => (c as Candidate).isIndependentCastriesNorth);
+            } else if (constituency.name === 'Castries Central') {
+                indCand = candidates.find(c => (c as Candidate).isIndependentCastriesCentral);
+            }
+        }
+
 
         return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand, slpParty: slp, uwpParty: uwp };
     }, [parties, candidates, constituency.name, election]);
@@ -323,11 +325,11 @@ export function ConstituencyPopoverContent({
     const isSpecialConstituency = election?.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
     const isMakeYourOwnSpecial = isMakeYourOwn && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
     const makeYourOwnOptions = useMemo(() => {
-        if (isMakeYourOwnSpecial) {
+        if (constituency.name === 'Castries North' || constituency.name === 'Castries Central') {
             return makeYourOwnLeaningOptions.filter(o => o.value === 'uwp' || o.value === 'ind' || o.value === 'unselected');
         }
         return makeYourOwnLeaningOptions.filter(o => o.value === 'slp' || o.value === 'uwp' || o.value === 'unselected');
-    }, [isMakeYourOwnSpecial]);
+    }, [constituency.name]);
 
     if (isLoading) {
         return <Skeleton className="h-40 w-full" />;
@@ -341,7 +343,7 @@ export function ConstituencyPopoverContent({
                     {constituency.name}
                 </h4>
                 {onLeaningChange && isMakeYourOwn && (
-                    <h5 className="col-span-full text-xs font-medium text-muted-foreground text-center mb-1">Choose Your Pick</h5>
+                    <h5 className="col-span-full text-xs font-medium text-muted-foreground text-center mt-1">Choose Your Pick</h5>
                 )}
             </div>
             
@@ -362,7 +364,7 @@ export function ConstituencyPopoverContent({
                             )}
                             </div>
                             <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!slpCandidate}>
-                            {slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'Candidate(s) N/A'}
+                                {slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName} ${slpCandidate.isIncumbent ? '(I)' : ''}` : 'Candidate(s) N/A'}
                             </Button>
                         </div>
                          {independentCandidate && (
@@ -378,7 +380,7 @@ export function ConstituencyPopoverContent({
                                 )}
                                 </div>
                                 <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!independentCandidate}>
-                                    {independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName}` : 'Candidate(s) N/A'}
+                                    {independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName} ${independentCandidate.isIncumbent ? '(I)' : ''}` : 'Candidate(s) N/A'}
                                 </Button>
                             </div>
                         )}
@@ -398,7 +400,7 @@ export function ConstituencyPopoverContent({
                             )}
                             </div>
                             <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!uwpCandidate}>
-                            {uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'Candidate(s) N/A'}
+                                {uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName} ${uwpCandidate.isIncumbent ? '(I)' : ''}` : 'Candidate(s) N/A'}
                             </Button>
                         </div>
                     </div>
@@ -450,21 +452,41 @@ export function ConstituencyPopoverContent({
             
             {onLeaningChange && isMakeYourOwn && (
                  <div className="space-y-2 pt-2">
-                     <div className={cn("grid gap-2 text-center text-xs font-semibold items-start", isMakeYourOwnSpecial ? "grid-cols-2" : "grid-cols-2")}>
+                     <div className={cn("grid gap-2 text-center text-xs font-semibold items-start", (constituency.name === 'Castries North' || constituency.name === 'Castries Central') ? "grid-cols-2" : "grid-cols-2")}>
                          
-                         {isMakeYourOwnSpecial ? (
+                         {(constituency.name === 'Castries North' || constituency.name === 'Castries Central') ? (
                             <>
-                                 <div className="flex flex-col items-center gap-1">
+                                <div className="flex flex-col items-center gap-1">
                                      <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
                                          {uwpCandidate?.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                      </div>
                                      <p className="font-semibold">{uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'UWP Candidate'}</p>
+                                     <RadioGroup 
+                                         value={constituency.politicalLeaning} 
+                                         onValueChange={onLeaningChange}
+                                         className="grid grid-cols-1 gap-1 pt-1"
+                                     >
+                                        <Label htmlFor={`${constituency.id}-uwp`} className={cn("flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors", constituency.politicalLeaning === 'uwp' ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
+                                            <RadioGroupItem value="uwp" id={`${constituency.id}-uwp`} className="sr-only" />
+                                            UWP
+                                        </Label>
+                                     </RadioGroup>
                                  </div>
                                  <div className="flex flex-col items-center gap-1">
                                      <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
                                          {independentCandidate?.imageUrl ? <Image src={independentCandidate.imageUrl} alt={independentCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                      </div>
                                      <p className="font-semibold">{independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName}` : 'IND Candidate'}</p>
+                                     <RadioGroup 
+                                         value={constituency.politicalLeaning} 
+                                         onValueChange={onLeaningChange}
+                                         className="grid grid-cols-1 gap-1 pt-1"
+                                     >
+                                         <Label htmlFor={`${constituency.id}-ind`} className={cn("flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors", constituency.politicalLeaning === 'ind' ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
+                                            <RadioGroupItem value="ind" id={`${constituency.id}-ind`} className="sr-only" />
+                                            IND
+                                        </Label>
+                                     </RadioGroup>
                                  </div>
                             </>
                          ) : (
@@ -474,42 +496,37 @@ export function ConstituencyPopoverContent({
                                          {slpCandidate?.imageUrl ? <Image src={slpCandidate.imageUrl} alt={slpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                      </div>
                                      <p className="font-semibold">{slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'SLP Candidate'}</p>
+                                     <RadioGroup 
+                                         value={constituency.politicalLeaning} 
+                                         onValueChange={onLeaningChange}
+                                         className="grid grid-cols-1 gap-1 pt-1"
+                                     >
+                                        <Label htmlFor={`${constituency.id}-slp`} className={cn("flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors", constituency.politicalLeaning === 'slp' ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
+                                            <RadioGroupItem value="slp" id={`${constituency.id}-slp`} className="sr-only" />
+                                            SLP
+                                        </Label>
+                                    </RadioGroup>
                                  </div>
                                  <div className="flex flex-col items-center gap-1">
                                      <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
                                          {uwpCandidate?.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                      </div>
                                      <p className="font-semibold">{uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'UWP Candidate'}</p>
+                                     <RadioGroup 
+                                         value={constituency.politicalLeaning} 
+                                         onValueChange={onLeaningChange}
+                                         className="grid grid-cols-1 gap-1 pt-1"
+                                     >
+                                        <Label htmlFor={`${constituency.id}-uwp`} className={cn("flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors", constituency.politicalLeaning === 'uwp' ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
+                                            <RadioGroupItem value="uwp" id={`${constituency.id}-uwp`} className="sr-only" />
+                                            UWP
+                                        </Label>
+                                    </RadioGroup>
                                  </div>
                             </>
                          )}
                          
                      </div>
-                     <RadioGroup 
-                         value={constituency.politicalLeaning} 
-                         onValueChange={onLeaningChange}
-                         className={cn("grid gap-1 pt-2", makeYourOwnOptions.length === 2 ? "grid-cols-2" : (isMakeYourOwnSpecial ? "grid-cols-2" : "grid-cols-2"))}
-                     >
-                         {makeYourOwnOptions.map(opt => {
-                             if (opt.value === 'unselected') return null;
-                             
-                             return (
-                                 <Label 
-                                     key={opt.value} 
-                                     htmlFor={`${constituency.id}-${opt.value}`}
-                                     className={cn(
-                                         "flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors",
-                                         constituency.politicalLeaning === opt.value 
-                                             ? "bg-primary text-primary-foreground" 
-                                             : "hover:bg-muted"
-                                     )}
-                                 >
-                                     <RadioGroupItem value={opt.value} id={`${constituency.id}-${opt.value}`} className="sr-only" />
-                                     {opt.label}
-                                 </Label>
-                             )
-                         })}
-                     </RadioGroup>
                  </div>
             )}
             {onLeaningChange && !isMakeYourOwn && (
