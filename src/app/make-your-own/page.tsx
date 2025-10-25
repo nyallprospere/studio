@@ -75,7 +75,7 @@ const DEFAULT_LAYOUT = {
 
 type LayoutConfiguration = typeof DEFAULT_LAYOUT;
 
-const VictoryStatusBar = ({ slpSeats, uwpSeats }: { slpSeats: number, uwpSeats: number }) => {
+const VictoryStatusBar = ({ slpSeats, uwpSeats, indSeats }: { slpSeats: number, uwpSeats: number, indSeats: number }) => {
   const getStatus = (seats: number) => {
     if (seats >= 16) return 'SLP Wins a Landslide!';
     if (seats >= 14) return 'SLP Wins a Decisive Victory';
@@ -104,6 +104,9 @@ const VictoryStatusBar = ({ slpSeats, uwpSeats }: { slpSeats: number, uwpSeats: 
   } else if (uwpStatus) {
     status = uwpStatus;
     color = 'bg-yellow-400 text-black';
+  } else if (slpSeats + indSeats >= 9) {
+    status = 'SLP Wins Very Close Victory';
+    color = 'bg-red-500';
   }
 
 
@@ -337,7 +340,7 @@ export default function MakeYourOwnPage() {
                         <CardDescription>{seatCountDescription}</CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col items-center">
-                        <VictoryStatusBar slpSeats={seatCounts.slp} uwpSeats={seatCounts.uwp} />
+                        <VictoryStatusBar slpSeats={seatCounts.slp} uwpSeats={seatCounts.uwp} indSeats={seatCounts.ind} />
                         <div className="grid grid-cols-3 gap-4 w-full text-center mb-4">
                             <div>
                                 <p className="font-bold text-lg" style={{color: 'hsl(var(--chart-5))'}}>{seatCounts.slp}</p>
@@ -433,6 +436,7 @@ export default function MakeYourOwnPage() {
     </div>
   );
 }
+
 
 
 
