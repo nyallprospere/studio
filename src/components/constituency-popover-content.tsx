@@ -27,10 +27,10 @@ const politicalLeaningOptions = [
 ];
 
 const makeYourOwnLeaningOptions = [
-    { value: 'slp', label: 'SLP' },
-    { value: 'uwp', label: 'UWP' },
-    { value: 'ind', label: 'IND' },
-    { value: 'unselected', label: 'To be selected' },
+  { value: 'slp', label: 'SLP' },
+  { value: 'uwp', label: 'UWP' },
+  { value: 'ind', label: 'IND' },
+  { value: 'unselected', label: 'To be selected' },
 ];
 
 
@@ -210,9 +210,6 @@ export function ConstituencyPopoverContent({
             }
         } else if (isCurrentElection) {
              indCand = candidates.find(c => (c as Candidate).isIndependentCastriesCentral || (c as Candidate).isIndependentCastriesNorth);
-             if (indCand) {
-                slpCand = null;
-             }
         } else {
              indCand = candidates.find(c => c.partyId !== slp?.id && c.partyId !== uwp?.id);
         }
@@ -349,10 +346,15 @@ export function ConstituencyPopoverContent({
 
     return (
         <div className="space-y-3 w-80">
-            <h4 className="font-bold leading-none text-center text-xl flex items-center justify-center gap-2">
-                {constituency.logoUrl && <Image src={constituency.logoUrl} alt={constituency.name} width={24} height={24} />}
-                {constituency.name}
-            </h4>
+            <div className="text-center">
+                <h4 className="font-bold leading-none text-xl flex items-center justify-center gap-2">
+                    {constituency.logoUrl && <Image src={constituency.logoUrl} alt={constituency.name} width={24} height={24} />}
+                    {constituency.name}
+                </h4>
+                {onLeaningChange && isMakeYourOwn && (
+                    <h5 className="text-xs font-medium text-muted-foreground text-center mt-1">Choose Your Pick</h5>
+                )}
+            </div>
             
             {(election?.isCurrent || !election) && !isMakeYourOwn ? (
                  <div className="grid grid-cols-2 gap-4">
@@ -459,17 +461,13 @@ export function ConstituencyPopoverContent({
             
             {onLeaningChange && isMakeYourOwn && (
                 <div className="space-y-2 pt-2">
-                    <div className="grid grid-cols-3 gap-2 text-center text-xs font-semibold items-start">
-                        {!isMakeYourOwnSpecial && (
+                    <div className="grid grid-cols-2 gap-2 text-center text-xs font-semibold items-start">
+                        {slpCandidate && !isMakeYourOwnSpecial &&(
                              <div className="flex flex-col items-center gap-1">
-                                {slpCandidate && (
-                                    <>
-                                        <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
-                                            {slpCandidate.imageUrl ? <Image src={slpCandidate.imageUrl} alt={slpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
-                                        </div>
-                                        <p>{slpCandidate.firstName} {slpCandidate.lastName}</p>
-                                    </>
-                                )}
+                                <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
+                                    {slpCandidate.imageUrl ? <Image src={slpCandidate.imageUrl} alt={slpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
+                                </div>
+                                <p>{slpCandidate.firstName} {slpCandidate.lastName}</p>
                             </div>
                         )}
                         {uwpCandidate && (
@@ -492,13 +490,10 @@ export function ConstituencyPopoverContent({
                      <RadioGroup 
                         value={constituency.politicalLeaning} 
                         onValueChange={onLeaningChange}
-                        className={cn("grid gap-1 pt-2", makeYourOwnOptions.length === 3 ? "grid-cols-3" : "grid-cols-2")}
+                        className={cn("grid gap-1 pt-2", makeYourOwnOptions.length === 2 ? "grid-cols-2" : "grid-cols-3")}
                     >
-                         <h5 className="col-span-full text-xs font-medium text-muted-foreground text-center mb-1">Choose Your Pick</h5>
                         {makeYourOwnOptions.map(opt => {
                             if (opt.value === 'unselected') return null;
-                            if(isMakeYourOwnSpecial && opt.value === 'slp') return null;
-                            if(!isMakeYourOwnSpecial && opt.value === 'ind') return null;
                             
                             return (
                                 <Label 
