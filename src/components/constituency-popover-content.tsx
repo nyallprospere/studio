@@ -77,12 +77,6 @@ function CandidateBox({
              <div className={cn(
                 "p-2 rounded-md bg-muted relative h-full flex flex-col items-center gap-2 text-center"
             )}>
-                {isWinner && (
-                    <div className="absolute -top-3 right-0 text-center">
-                         <p className="font-bold text-xs -mb-5" style={{color: statusColor}}>{electionStatus}</p>
-                        
-                    </div>
-                )}
                 {candidate?.isIncumbent && (
                     <div className="absolute -top-2 right-1 text-center">
                         <p className="font-bold text-xs text-muted-foreground">Incumbent</p>
@@ -197,18 +191,15 @@ export function ConstituencyPopoverContent({
         const slp = parties.find(p => p.acronym === 'SLP');
         const uwp = parties.find(p => p.acronym === 'UWP');
 
-        const slpCand = slp ? candidates.find(c => c.partyId === slp.id) : null;
-        const uwpCand = uwp ? candidates.find(c => c.partyId === uwp.id) : null;
+        let slpCand = slp ? candidates.find(c => c.partyId === slp.id) : null;
+        let uwpCand = uwp ? candidates.find(c => c.partyId === uwp.id) : null;
+        let indCand: Candidate | ArchivedCandidate | null = null;
         
-        let indCand = null;
         if (election?.isCurrent) {
-            if (constituency.name === 'Castries North') {
-                indCand = candidates.find(c => (c as Candidate).isIndependentCastriesNorth);
-            } else if (constituency.name === 'Castries Central') {
-                indCand = candidates.find(c => (c as Candidate).isIndependentCastriesCentral);
-            }
+            indCand = candidates.find(c => (c as Candidate).isIndependentCastriesNorth || (c as Candidate).isIndependentCastriesCentral) || null;
+            if (constituency.name === 'Castries North' && !(indCand as Candidate)?.isIndependentCastriesNorth) indCand = null;
+            if (constituency.name === 'Castries Central' && !(indCand as Candidate)?.isIndependentCastriesCentral) indCand = null;
         }
-
 
         return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand, slpParty: slp, uwpParty: uwp };
     }, [parties, candidates, constituency.name, election]);
