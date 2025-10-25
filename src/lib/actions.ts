@@ -5,7 +5,7 @@ import { generateElectionPredictions } from '@/ai/flows/generate-election-predic
 import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
 import { summarizeArticle as summarizeArticleFlow } from '@/ai/flows/summarize-article';
 import { getFirebaseAdmin } from '@/firebase/server';
-import { collection, getDocs, query, orderBy, limit, addDoc, serverTimestamp, where } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, addDoc, where } from 'firebase/firestore';
 import { headers } from 'next/headers';
 import type { UserMap } from './types';
 
@@ -75,7 +75,7 @@ export async function saveUserMap(mapData: UserMap['mapData']) {
 
         const docRef = await addDoc(collection(firestore, 'user_maps'), {
             mapData,
-            createdAt: serverTimestamp(),
+            createdAt: new Date(),
             ipAddress: ip,
             city,
             country,
@@ -102,7 +102,7 @@ export async function subscribeToMailingList(data: { firstName: string; email: s
 
         const dataToSave = {
             ...data,
-            subscribedAt: serverTimestamp(),
+            subscribedAt: new Date(),
         };
 
         await addDoc(subscribersCollection, dataToSave);
