@@ -332,11 +332,10 @@ export function ConstituencyPopoverContent({
     const isSpecialConstituency = election?.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
     const isMakeYourOwnSpecial = isMakeYourOwn && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
     const makeYourOwnOptions = useMemo(() => {
-        let options = makeYourOwnLeaningOptions.filter(o => o.value === 'slp' || o.value === 'uwp' || o.value === 'unselected');
         if (isMakeYourOwnSpecial) {
-            options.splice(2, 0, { value: 'ind', label: 'IND' });
+            return makeYourOwnLeaningOptions.filter(o => o.value === 'uwp' || o.value === 'ind' || o.value === 'unselected');
         }
-        return options;
+        return makeYourOwnLeaningOptions.filter(o => o.value === 'slp' || o.value === 'uwp' || o.value === 'unselected');
     }, [isMakeYourOwnSpecial]);
 
     if (isLoading) {
@@ -387,6 +386,23 @@ export function ConstituencyPopoverContent({
                             {uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'Candidate(s) N/A'}
                             </Button>
                         </div>
+                         {independentCandidate && (
+                            <div className="flex flex-col items-center p-2 rounded-md bg-muted">
+                                <div className="relative h-8 w-8 mb-2">
+                                    {indLogoUrl && <Image src={indLogoUrl} alt="Independent" fill className="object-contain" />}
+                                </div>
+                                <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
+                                {independentCandidate?.imageUrl ? (
+                                    <Image src={independentCandidate.imageUrl} alt={independentCandidate?.name || 'Independent Candidate'} fill className="object-cover" />
+                                ) : (
+                                    <UserSquare className="h-full w-full text-gray-400" />
+                                )}
+                                </div>
+                                <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!independentCandidate}>
+                                    {independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName}` : 'Candidate(s) N/A'}
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 </div>
             ) : !isMakeYourOwn ? (
@@ -507,5 +523,3 @@ export function ConstituencyPopoverContent({
         </div>
     );
 }
-
-    
