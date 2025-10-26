@@ -3,7 +3,7 @@
 
 import { useMemo, useState } from 'react';
 import type { Constituency, Candidate, Party, ArchivedCandidate, ElectionResult, Election, PartyLogo } from '@/lib/types';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import Image from 'next/image';
@@ -51,7 +51,8 @@ function CandidateBox({
     isStriped, 
     barFill, 
     votePercentageChange,
-    logoUrl
+    logoUrl,
+    hideLogo,
 }: { 
     candidate: Candidate | ArchivedCandidate | null;
     party: Party | null;
@@ -65,6 +66,7 @@ function CandidateBox({
     barFill?: string;
     votePercentageChange?: number | null;
     logoUrl?: string;
+    hideLogo?: boolean;
 }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}` : 'Candidate(s) N/A';
@@ -100,11 +102,13 @@ function CandidateBox({
                     </div>
 
                      <div className="flex-grow flex flex-col items-center gap-2">
-                        <div className="relative h-10 w-10">
-                            {logoUrl ? (
-                                <Image src={logoUrl} alt={party?.name || ''} fill className="object-contain" />
-                            ) : null}
-                        </div>
+                        {!hideLogo && (
+                            <div className="relative h-10 w-10">
+                                {logoUrl ? (
+                                    <Image src={logoUrl} alt={party?.name || ''} fill className="object-contain" />
+                                ) : null}
+                            </div>
+                        )}
                         <div className="relative w-full h-8 bg-gray-200 rounded overflow-hidden self-center">
                             <div 
                                 className={cn("absolute top-0 left-0 h-full rounded", isStriped && barFill === 'blue-red-stripes' && 'bg-blue-600')}
@@ -151,7 +155,8 @@ export function ConstituencyPopoverContent({
     previousElectionResults,
     previousElection,
     partyLogos,
-    isMakeYourOwn
+    isMakeYourOwn,
+    showCandidateBoxes = true,
 }: { 
     constituency: Constituency,
     election?: Election | null;
@@ -162,6 +167,7 @@ export function ConstituencyPopoverContent({
     previousElection?: Election | null;
     partyLogos?: PartyLogo[];
     isMakeYourOwn?: boolean;
+    showCandidateBoxes?: boolean;
 }) {
     const { firestore } = useFirebase();
 
@@ -198,14 +204,11 @@ export function ConstituencyPopoverContent({
         
         if (election?.isCurrent) {
             indCand = candidates.find(c => (c as Candidate).isIndependentCastriesNorth || (c as Candidate).isIndependentCastriesCentral) || null;
-            if (constituency.name === 'Castries North' && !(indCand as Candidate)?.isIndependentCastriesNorth) indCand = null;
-            if (constituency.name === 'Castries Central' && !(indCand as Candidate)?.isIndependentCastriesCentral) indCand = null;
-
             if (constituency.name === 'Castries North' || constituency.name === 'Castries Central') {
               slpCand = null;
             }
         }
-
+        
         return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand, slpParty: slp, uwpParty: uwp };
     }, [parties, candidates, constituency.name, election]);
 
@@ -348,27 +351,29 @@ export function ConstituencyPopoverContent({
                 )}
             </div>
             
-            {(election?.isCurrent || !election) && !isMakeYourOwn ? (
+            {showCandidateBoxes && (election?.isCurrent || !election) && !isMakeYourOwn ? (
                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <div className="flex flex-col items-center p-2 rounded-md bg-muted">
-                            <div className="relative h-8 w-8 mb-2">
-                                {slpParty?.logoUrl ? (
-                                    <Image src={slpParty.logoUrl} alt={slpParty.name} fill className="object-contain" />
-                                ): null}
+                        {slpCandidate && (
+                            <div className="flex flex-col items-center p-2 rounded-md bg-muted">
+                                <div className="relative h-8 w-8 mb-2">
+                                    {slpParty?.logoUrl ? (
+                                        <Image src={slpParty.logoUrl} alt={slpParty.name} fill className="object-contain" />
+                                    ): null}
+                                </div>
+                                <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
+                                {slpCandidate?.imageUrl ? (
+                                    <Image src={slpCandidate.imageUrl} alt={slpCandidate?.name || 'SLP Candidate'} fill className="object-cover" />
+                                ) : (
+                                    <UserSquare className="h-full w-full text-gray-400" />
+                                )}
+                                </div>
+                                <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!slpCandidate}>
+                                    {slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'Candidate(s) N/A'}
+                                    {slpCandidate?.isIncumbent && <span className="font-normal text-muted-foreground ml-1">(Inc.)</span>}
+                                </Button>
                             </div>
-                            <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
-                            {slpCandidate?.imageUrl ? (
-                                <Image src={slpCandidate.imageUrl} alt={slpCandidate?.name || 'SLP Candidate'} fill className="object-cover" />
-                            ) : (
-                                <UserSquare className="h-full w-full text-gray-400" />
-                            )}
-                            </div>
-                            <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!slpCandidate}>
-                                {slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'Candidate(s) N/A'}
-                                {slpCandidate?.isIncumbent && <span className="font-normal text-muted-foreground ml-1">(Inc.)</span>}
-                            </Button>
-                        </div>
+                        )}
                          {independentCandidate && (
                             <div className="flex flex-col items-center p-2 rounded-md bg-muted">
                                 <div className="relative h-8 w-8 mb-2">

@@ -432,6 +432,10 @@
               "additionalProperties": {
                 "type": "number"
               }
+            },
+            "showCandidateBoxes": {
+              "type": "boolean",
+              "description": "Whether to show candidate boxes in the constituency map popover."
             }
           }
         }
