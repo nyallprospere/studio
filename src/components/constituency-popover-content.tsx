@@ -182,7 +182,6 @@ export function ConstituencyPopoverContent({
     const { firestore } = useFirebase();
 
     const isCurrentElection = !election || election.isCurrent;
-
     const collectionName = useMemo(() => (isCurrentElection ? 'candidates' : 'archived_candidates'), [isCurrentElection]);
 
     const candidatesQuery = useMemoFirebase(() => {
@@ -514,6 +513,7 @@ export function ConstituencyPopoverContent({
                             votePercentageChange={slpVotePercentageChange}
                             logoUrl={slpLogoUrl}
                             hideLogo={hideLogos}
+                            popoverVariant={popoverVariant}
                         />
                     )}
                     <CandidateBox 
@@ -528,6 +528,7 @@ export function ConstituencyPopoverContent({
                         votePercentageChange={uwpVotePercentageChange}
                         logoUrl={uwpLogoUrl}
                         hideLogo={hideLogos}
+                        popoverVariant={popoverVariant}
                     />
                     {(isSpecialConstituency || (currentResult?.otherVotes || 0) > 0) && (
                         <CandidateBox 
@@ -542,6 +543,7 @@ export function ConstituencyPopoverContent({
                             votePercentageChange={otherVotePercentageChange}
                             logoUrl={indLogoUrl}
                             hideLogo={hideLogos}
+                            popoverVariant={popoverVariant}
                         />
                     )}
                 </div>
