@@ -10,21 +10,9 @@ import * as admin from 'firebase-admin';
 // Helper to initialize Firebase Admin SDK - cached for performance
 function initializeFirebaseAdmin() {
   if (!admin.apps.length) {
-    const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-    if (!serviceAccountKey) {
-      throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set.');
-    }
-    
-    try {
-        const credentials = JSON.parse(serviceAccountKey);
-        admin.initializeApp({
-            credential: admin.credential.cert(credentials),
-            storageBucket: `${credentials.project_id}.appspot.com`,
-        });
-    } catch(e) {
-        console.error("Failed to parse service account key", e)
-        throw new Error("Failed to initialize Firebase Admin. Service account key may be invalid.");
-    }
+    // This environment is automatically configured with the necessary
+    // Firebase service account credentials.
+    admin.initializeApp();
   }
   return admin.app();
 }
@@ -112,3 +100,4 @@ export async function saveUserMap(data: SaveMapData) {
     return { error: 'Could not save your map. Please try again.' };
   }
 }
+
