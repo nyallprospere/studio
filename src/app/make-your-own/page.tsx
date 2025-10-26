@@ -27,6 +27,7 @@ import { useSearchParams } from 'next/navigation';
 import { saveUserMap } from '@/lib/actions';
 import { toPng } from 'html-to-image';
 import Image from 'next/image';
+import ReCAPTCHA from "react-google-recaptcha";
 
 
 const politicalLeaningOptions = [
@@ -183,6 +184,8 @@ export default function MakeYourOwnPage() {
     const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
     
     const [previousElectionResults, setPreviousElectionResults] = useState<ElectionResult[]>([]);
+    const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+
 
     useEffect(() => {
         if (!firestore || !elections || elections.length < 2) return;
@@ -261,6 +264,15 @@ export default function MakeYourOwnPage() {
             return;
         }
 
+        if (!recaptchaToken) {
+            toast({
+                variant: 'destructive',
+                title: 'Security Check Failed',
+                description: 'Please complete the reCAPTCHA before sharing.',
+            });
+            return;
+        }
+
         setIsSaving(true);
         try {
             const dataUrl = await toPng(mapRef.current);
@@ -269,7 +281,7 @@ export default function MakeYourOwnPage() {
                 politicalLeaning: c.politicalLeaning || 'unselected',
             }));
 
-            const result = await saveUserMap({ mapData, imageDataUrl: dataUrl });
+            const result = await saveUserMap({ mapData, imageDataUrl: dataUrl, recaptchaToken });
 
             if (result.error) {
                 throw new Error(result.error);
@@ -368,7 +380,8 @@ export default function MakeYourOwnPage() {
         return acc;
     }, {});
 
-    const shareTitle = "Check out my St. Lucian Election Prediction!";
+    const shareTitle = siteSettings?.defaultShareTitle || "Check out my St. Lucian Election Prediction!";
+    const shareDescription = siteSettings?.defaultShareDescription || "I made my own prediction for the 2026 St. Lucian General Election. See what you think!";
     const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`;
     const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
     
@@ -477,10 +490,16 @@ export default function MakeYourOwnPage() {
                                 <Button variant="outline" size="sm" onClick={() => handleSelectAll('unselected')}>Clear All</Button>
                             </div>
                         )}
-                        <Button onClick={handleSaveAndShare} disabled={!allSelected || isSaving} className="w-full mt-6">
-                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
-                            Save & Share
-                        </Button>
+                        <div className="mt-6 w-full space-y-4">
+                            <ReCAPTCHA
+                                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ''}
+                                onChange={setRecaptchaToken}
+                            />
+                            <Button onClick={handleSaveAndShare} disabled={!allSelected || isSaving || !recaptchaToken} className="w-full">
+                                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
+                                Save & Share
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
             </div>
@@ -490,9 +509,9 @@ export default function MakeYourOwnPage() {
       <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
           <DialogContent>
               <DialogHeader>
-                  <DialogTitle>Share Your Prediction Map</DialogTitle>
+                  <DialogTitle>{shareTitle}</DialogTitle>
                   <DialogDescription>
-                      Check out my St. Lucian Election Prediction!
+                      {shareDescription}
                   </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">

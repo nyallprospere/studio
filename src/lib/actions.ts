@@ -7,29 +7,34 @@ import { summarizeArticle as summarizeArticleFlow } from '@/ai/flows/summarize-a
 import { v4 as uuidv4 } from 'uuid';
 import * as admin from 'firebase-admin';
 
-// Helper to initialize Firebase Admin SDK
+// Helper to initialize Firebase Admin SDK - cached for performance
+let adminApp: admin.app.App;
 function initializeFirebaseAdmin() {
-  if (admin.apps.length) {
-    return admin.app();
+  if (!admin.apps.length) {
+    const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    if (!serviceAccountKey) {
+      throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set.');
+    }
+    
+    try {
+        const credentials = JSON.parse(serviceAccountKey);
+        adminApp = admin.initializeApp({
+            credential: admin.credential.cert(credentials),
+            storageBucket: credentials.project_id + '.appspot.com',
+        });
+    } catch(e) {
+        console.error("Failed to parse service account key", e)
+        throw new Error("Failed to initialize Firebase Admin. Service account key may be invalid.");
+    }
+
+  } else {
+    adminApp = admin.app();
   }
-
-  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-  if (!serviceAccountKey) {
-    throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set.');
-  }
-
-  const credentials = JSON.parse(serviceAccountKey);
-
-  return admin.initializeApp({
-    credential: admin.credential.cert(credentials),
-    storageBucket: credentials.project_id + '.appspot.com',
-  });
+  return adminApp;
 }
 
 export async function getPrediction(newsSummary: string) {
   try {
-    // This function is now simplified as it doesn't fetch data from Firestore.
-    // In a real application, you might fetch data here if needed.
     const initialPrediction = {
         summary: 'SLP projected to win a majority.',
         detailedPredictions: 'SLP wins 12 seats, UWP wins 5 seats.',
@@ -54,8 +59,6 @@ export async function getPrediction(newsSummary: string) {
 }
 
 export async function subscribeToMailingList(data: { firstName: string; email: string }) {
-    // In a real application, this would save to a database.
-    // For this example, we'll simulate a successful subscription.
     console.log('Subscribing:', data);
     return { success: true };
 }
@@ -76,10 +79,30 @@ interface SaveMapData {
     politicalLeaning: string;
   }[];
   imageDataUrl: string;
+  recaptchaToken: string;
+}
+
+async function verifyRecaptcha(token: string): Promise<boolean> {
+    const secret = process.env.RECAPTCHA_SECRET_KEY;
+    if (!secret) {
+        console.error('reCAPTCHA secret key is not set.');
+        return false;
+    }
+    const response = await fetch(`https://www.google.com/recaptcha/api/siteverify?secret=${secret}&response=${token}`, {
+        method: 'POST',
+    });
+    const data = await response.json();
+    return data.success;
 }
 
 export async function saveUserMap(data: SaveMapData) {
   try {
+
+    const isRecaptchaValid = await verifyRecaptcha(data.recaptchaToken);
+    if (!isRecaptchaValid) {
+        return { error: 'reCAPTCHA verification failed. Please try again.' };
+    }
+
     const adminApp = initializeFirebaseAdmin();
     const firestore = admin.firestore();
     const storage = admin.storage();
@@ -104,7 +127,7 @@ export async function saveUserMap(data: SaveMapData) {
     const mapDocRef = await firestore.collection('user_maps').add({
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       mapData: data.mapData,
-      imageUrl: imageUrl, // Save the public URL
+      imageUrl: imageUrl, 
     });
 
     return { id: mapDocRef.id, imageUrl: imageUrl };
