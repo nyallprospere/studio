@@ -265,10 +265,10 @@ export default function MakeYourOwnPage() {
             return;
         }
 
-        if (!recaptchaToken) {
+        if (isRecaptchaConfigured && !recaptchaToken) {
             toast({
                 variant: 'destructive',
-                title: 'Security Check Failed',
+                title: 'Security Check Required',
                 description: 'Please complete the reCAPTCHA before sharing.',
             });
             return;
@@ -282,7 +282,7 @@ export default function MakeYourOwnPage() {
                 politicalLeaning: c.politicalLeaning || 'unselected',
             }));
 
-            const result = await saveUserMap({ mapData, imageDataUrl: dataUrl, recaptchaToken });
+            const result = await saveUserMap({ mapData, imageDataUrl: dataUrl, recaptchaToken: recaptchaToken || '' });
 
             if (result.error) {
                 throw new Error(result.error);
@@ -296,12 +296,12 @@ export default function MakeYourOwnPage() {
             } else {
                  throw new Error("Failed to get back a map ID after saving.");
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Save and share error:', error);
             toast({
                 variant: 'destructive',
                 title: 'Error',
-                description: 'Could not save your map. Please try again.',
+                description: error.message || 'Could not save your map. Please try again.',
             });
         } finally {
             setIsSaving(false);
@@ -399,7 +399,7 @@ export default function MakeYourOwnPage() {
     };
 
     const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-    const isRecaptchaConfigured = siteKey && siteKey !== '6LfpTvcrAAAAAFX4Ckm0BO054EvAycmhhpHLe-A0';
+    const isRecaptchaConfigured = siteKey && siteKey !== 'YOUR_RECAPTCHA_SITE_KEY';
 
 
   return (
@@ -498,7 +498,7 @@ export default function MakeYourOwnPage() {
                         <div className="mt-6 w-full space-y-4">
                             {isRecaptchaConfigured && (
                                 <ReCAPTCHA
-                                    sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ''}
+                                    sitekey={siteKey}
                                     onChange={setRecaptchaToken}
                                 />
                             )}
@@ -507,20 +507,15 @@ export default function MakeYourOwnPage() {
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <div className="w-full">
-                                            <Button onClick={handleSaveAndShare} disabled={!allSelected || isSaving || !recaptchaToken || !isRecaptchaConfigured} className="w-full">
+                                            <Button onClick={handleSaveAndShare} disabled={!allSelected || isSaving} className="w-full">
                                                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
                                                 Save & Share
                                             </Button>
                                         </div>
                                     </TooltipTrigger>
-                                    {!isRecaptchaConfigured && (
+                                     {!allSelected && (
                                         <TooltipContent>
-                                            <p>This feature is disabled until reCAPTCHA is configured by the site administrator.</p>
-                                        </TooltipContent>
-                                    )}
-                                     {(!allSelected || !recaptchaToken) && isRecaptchaConfigured && (
-                                        <TooltipContent>
-                                            <p>Please make a selection for all constituencies and complete the reCAPTCHA to share.</p>
+                                            <p>Please make a selection for all constituencies to share your map.</p>
                                         </TooltipContent>
                                     )}
                                 </Tooltip>
