@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import type { Constituency, UserMap, ElectionResult, Election } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirebase, useMemoFirebase, useUser, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog"
 import { Copy } from 'lucide-react';
 import { saveUserMap } from '@/lib/actions';
+import * as htmlToImage from 'html-to-image';
 
 
 const politicalLeaningOptions = [
@@ -120,6 +121,7 @@ const VictoryStatusBar = ({ slpSeats, uwpSeats, indSeats }: { slpSeats: number, 
 export default function MakeYourOwnPage() {
     const { firestore } = useFirebase();
     const { toast } = useToast();
+    const mapRef = useRef<HTMLDivElement>(null);
 
     const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
     const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
@@ -190,14 +192,21 @@ export default function MakeYourOwnPage() {
     }, []);
     
     const handleSaveAndShare = async () => {
+        if (!mapRef.current) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Map element not found.' });
+            return;
+        }
+
         setIsSaving(true);
         try {
+            const mapImage = await htmlToImage.toPng(mapRef.current);
+
             const mapData = myMapConstituencies.map(c => ({
                 constituencyId: c.id,
                 politicalLeaning: c.politicalLeaning || 'unselected'
             }));
 
-            const result = await saveUserMap(mapData);
+            const result = await saveUserMap(mapData, mapImage);
 
             if(result.error) {
                 toast({ variant: 'destructive', title: 'Error', description: result.error });
@@ -322,7 +331,7 @@ export default function MakeYourOwnPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="lg:col-span-1">
              <Card>
-                <CardContent className="p-2">
+                <CardContent className="p-2" ref={mapRef}>
                     <InteractiveSvgMap 
                         constituencies={myMapConstituencies} 
                         selectedConstituencyId={selectedMyMapConstituencyId}
@@ -436,6 +445,7 @@ export default function MakeYourOwnPage() {
     </div>
   );
 }
+
 
 
 

@@ -6,24 +6,28 @@ import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
 import { summarizeArticle as summarizeArticleFlow } from '@/ai/flows/summarize-article';
 import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
 import type { UserMap } from './types';
 
-// This function should be defined within the actions file that uses it.
+let adminApp: App;
+
 function getFirebaseAdminApp(): App {
   if (getApps().length > 0) {
     return getApps()[0];
   }
 
-  // Check for service account credentials in environment variables
   if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
     const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-    return initializeApp({
-      credential: cert(serviceAccount)
+    adminApp = initializeApp({
+      credential: cert(serviceAccount),
+      storageBucket: `${serviceAccount.project_id}.appspot.com`,
     });
   } else {
-    // This is a fallback for environments where Application Default Credentials are set up.
-    return initializeApp();
+    adminApp = initializeApp({
+        storageBucket: `${process.env.GCLOUD_PROJECT}.appspot.com`,
+    });
   }
+  return adminApp;
 }
 
 async function getCollectionData(collectionName: string) {
@@ -83,13 +87,31 @@ export async function getPrediction(newsSummary: string) {
   }
 }
 
-export async function saveUserMap(mapData: UserMap['mapData']) {
+export async function saveUserMap(mapData: UserMap['mapData'], mapImage: string) {
     try {
         const adminApp = getFirebaseAdminApp();
         const firestore = getFirestore(adminApp);
+        const storage = getStorage(adminApp);
+
+        // Upload image
+        const imageBuffer = Buffer.from(mapImage.split(',')[1], 'base64');
+        const fileName = `SavedMaps/${Date.now()}.png`;
+        const file = storage.bucket().file(fileName);
+        
+        await file.save(imageBuffer, {
+            metadata: {
+                contentType: 'image/png',
+            },
+        });
+        
+        const [imageUrl] = await file.getSignedUrl({
+            action: 'read',
+            expires: '03-09-2491' // A very long time in the future
+        });
         
         const docRef = await firestore.collection('user_maps').add({
             mapData,
+            imageUrl,
             createdAt: new Date(),
         });
 
