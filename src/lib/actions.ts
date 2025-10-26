@@ -1,3 +1,4 @@
+
 'use server';
 
 import { generateElectionPredictions } from '@/ai/flows/generate-election-predictions';
@@ -141,15 +142,18 @@ export async function saveUserMap(
     const imageBuffer = Buffer.from(imageDataUrl.split(',')[1], 'base64');
     const imageId = uuidv4();
     const imagePath = `SavedMaps/${imageId}.png`;
-    const file = storage.bucket().file(imagePath);
+    const bucket = storage.bucket();
+    const file = bucket.file(imagePath);
 
     await file.save(imageBuffer, {
       metadata: {
         contentType: 'image/png',
+        cacheControl: 'public, max-age=31536000',
       },
     });
-    
-    const imageUrl = `https://storage.googleapis.com/${storage.bucket().name}/${imagePath}`;
+
+    // Manually construct the public URL
+    const imageUrl = `https://storage.googleapis.com/${bucket.name}/${imagePath}`;
 
     const mapDocRef = await firestore.collection('user_maps').add({
       createdAt: new Date(),

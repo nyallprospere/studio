@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
@@ -265,7 +266,11 @@ export default function MakeYourOwnPage() {
             const result = await saveUserMap(mapDataToSave, imageDataUrl);
     
             if (result.error) {
-                throw new Error(result.error);
+                toast({
+                    variant: 'destructive',
+                    title: 'Error',
+                    description: result.error,
+                });
             }
     
             if (result.id) {
