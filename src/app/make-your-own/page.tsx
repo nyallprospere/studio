@@ -397,6 +397,8 @@ export default function MakeYourOwnPage() {
         return <span className={`text-xs font-semibold ml-1 ${color}`}>({sign}{change})</span>;
     };
 
+    const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+
   return (
     <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
@@ -491,10 +493,12 @@ export default function MakeYourOwnPage() {
                             </div>
                         )}
                         <div className="mt-6 w-full space-y-4">
-                            <ReCAPTCHA
-                                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ''}
-                                onChange={setRecaptchaToken}
-                            />
+                            {siteKey && (
+                                <ReCAPTCHA
+                                    sitekey={siteKey}
+                                    onChange={setRecaptchaToken}
+                                />
+                            )}
                             <Button onClick={handleSaveAndShare} disabled={!allSelected || isSaving || !recaptchaToken} className="w-full">
                                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
                                 Save & Share
