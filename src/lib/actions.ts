@@ -1,4 +1,3 @@
-
 'use server';
 
 import { generateElectionPredictions } from '@/ai/flows/generate-election-predictions';
@@ -79,30 +78,10 @@ interface SaveMapData {
     politicalLeaning: string;
   }[];
   imageDataUrl: string;
-  recaptchaToken: string;
-}
-
-async function verifyRecaptcha(token: string): Promise<boolean> {
-    const secret = process.env.RECAPTCHA_SECRET_KEY;
-    if (!secret) {
-        console.error('reCAPTCHA secret key is not set.');
-        return false;
-    }
-    const response = await fetch(`https://www.google.com/recaptcha/api/siteverify?secret=${secret}&response=${token}`, {
-        method: 'POST',
-    });
-    const data = await response.json();
-    return data.success;
 }
 
 export async function saveUserMap(data: SaveMapData) {
   try {
-
-    const isRecaptchaValid = await verifyRecaptcha(data.recaptchaToken);
-    if (!isRecaptchaValid) {
-        return { error: 'reCAPTCHA verification failed. Please try again.' };
-    }
-
     const adminApp = initializeFirebaseAdmin();
     const firestore = admin.firestore();
     const storage = admin.storage();

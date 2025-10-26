@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
@@ -27,7 +26,6 @@ import { useSearchParams } from 'next/navigation';
 import { saveUserMap } from '@/lib/actions';
 import { toPng } from 'html-to-image';
 import Image from 'next/image';
-import ReCAPTCHA from "react-google-recaptcha";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
@@ -185,7 +183,7 @@ export default function MakeYourOwnPage() {
     const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
     
     const [previousElectionResults, setPreviousElectionResults] = useState<ElectionResult[]>([]);
-    const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+    
 
 
     useEffect(() => {
@@ -265,15 +263,6 @@ export default function MakeYourOwnPage() {
             return;
         }
 
-        if (isRecaptchaConfigured && !recaptchaToken) {
-            toast({
-                variant: 'destructive',
-                title: 'Security Check Required',
-                description: 'Please complete the reCAPTCHA before sharing.',
-            });
-            return;
-        }
-
         setIsSaving(true);
         try {
             const dataUrl = await toPng(mapRef.current);
@@ -282,7 +271,7 @@ export default function MakeYourOwnPage() {
                 politicalLeaning: c.politicalLeaning || 'unselected',
             }));
 
-            const result = await saveUserMap({ mapData, imageDataUrl: dataUrl, recaptchaToken: recaptchaToken || '' });
+            const result = await saveUserMap({ mapData, imageDataUrl: dataUrl });
 
             if (result.error) {
                 throw new Error(result.error);
@@ -398,10 +387,6 @@ export default function MakeYourOwnPage() {
         return <span className={`text-xs font-semibold ml-1 ${color}`}>({sign}{change})</span>;
     };
 
-    const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-    const isRecaptchaConfigured = siteKey && siteKey !== 'YOUR_RECAPTCHA_SITE_KEY';
-
-
   return (
     <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
@@ -496,13 +481,6 @@ export default function MakeYourOwnPage() {
                             </div>
                         )}
                         <div className="mt-6 w-full space-y-4">
-                            {isRecaptchaConfigured && (
-                                <ReCAPTCHA
-                                    sitekey={siteKey}
-                                    onChange={setRecaptchaToken}
-                                />
-                            )}
-
                              <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
