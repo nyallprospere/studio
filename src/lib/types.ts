@@ -144,9 +144,6 @@ export interface UserMap {
     politicalLeaning: string;
   }[];
   imageUrl?: string;
-  ipAddress?: string;
-  city?: string;
-  country?: string;
 }
 
 export interface SiteSettings {

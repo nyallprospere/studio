@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import type { Constituency, ElectionResult, Election, UserMap, SiteSettings } from '@/lib/types';
+import type { Constituency, ElectionResult, Election, SiteSettings } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirebase, useMemoFirebase, useUser, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, doc, serverTimestamp, query, orderBy, where, getDocs } from 'firebase/firestore';
@@ -481,7 +482,7 @@ export default function MakeYourOwnPage() {
                             </div>
                         )}
                         <div className="mt-6 w-full space-y-4">
-                             <TooltipProvider>
+                            <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <div className="w-full">

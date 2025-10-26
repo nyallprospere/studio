@@ -1,3 +1,4 @@
+
 'use server';
 
 import { generateElectionPredictions } from '@/ai/flows/generate-election-predictions';
@@ -7,7 +8,6 @@ import { v4 as uuidv4 } from 'uuid';
 import * as admin from 'firebase-admin';
 
 // Helper to initialize Firebase Admin SDK - cached for performance
-let adminApp: admin.app.App;
 function initializeFirebaseAdmin() {
   if (!admin.apps.length) {
     const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
@@ -17,19 +17,16 @@ function initializeFirebaseAdmin() {
     
     try {
         const credentials = JSON.parse(serviceAccountKey);
-        adminApp = admin.initializeApp({
+        admin.initializeApp({
             credential: admin.credential.cert(credentials),
-            storageBucket: credentials.project_id + '.appspot.com',
+            storageBucket: `${credentials.project_id}.appspot.com`,
         });
     } catch(e) {
         console.error("Failed to parse service account key", e)
         throw new Error("Failed to initialize Firebase Admin. Service account key may be invalid.");
     }
-
-  } else {
-    adminApp = admin.app();
   }
-  return adminApp;
+  return admin.app();
 }
 
 export async function getPrediction(newsSummary: string) {
