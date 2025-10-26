@@ -98,7 +98,7 @@ function CandidateBox({
                             {candidate?.imageUrl ? (
                                 <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
                             ) : (
-                                <span className="text-2xl font-bold text-gray-500">X</span>
+                                <UserSquare className="h-full w-full text-muted-foreground" />
                             )}
                         </div>
                          <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold whitespace-normal leading-tight" onClick={() => setProfileOpen(true)} disabled={!candidate}>
@@ -331,6 +331,19 @@ export function ConstituencyPopoverContent({
 
     }, [constituency.id, electionResults, previousElectionResults, previousElection, slpParty, uwpParty, partyLogos, election, parties, independentCandidate]);
 
+    const { chartData, chartConfig } = useMemo(() => {
+        const config: ChartConfig = {
+          slp: { label: 'SLP', color: slpParty?.color || 'hsl(var(--chart-5))' },
+          uwp: { label: 'UWP', color: uwpParty?.color || 'hsl(var(--chart-1))' },
+        };
+    
+        const data = [
+          { party: 'uwp', votes: constituency.predictedUwpPercentage || 50, fill: `var(--color-uwp)` },
+          { party: 'slp', votes: constituency.predictedSlpPercentage || 50, fill: `var(--color-slp)` },
+        ];
+        return { chartData: data, chartConfig: config };
+    }, [constituency.predictedSlpPercentage, constituency.predictedUwpPercentage, slpParty, uwpParty]);
+
     const isLoading = loadingCandidates || loadingParties;
     const currentResult = electionResults?.find(r => r.constituencyId === constituency.id);
     const uwpIsWinner = winnerAcronym === 'UWP';
@@ -345,20 +358,7 @@ export function ConstituencyPopoverContent({
         }
         return makeYourOwnLeaningOptions.filter(o => o.value === 'slp' || o.value === 'uwp' || o.value === 'unselected');
     }, [constituency.name]);
-
-    const { chartData, chartConfig } = useMemo(() => {
-        const config = {
-          slp: { label: 'SLP', color: 'hsl(var(--chart-5))' },
-          uwp: { label: 'UWP', color: 'hsl(var(--chart-1))' },
-        } satisfies ChartConfig;
     
-        const data = [
-          { party: 'uwp', votes: constituency.predictedUwpPercentage || 50, fill: 'var(--color-uwp)' },
-          { party: 'slp', votes: constituency.predictedSlpPercentage || 50, fill: 'var(--color-slp)' },
-        ];
-        return { chartData: data, chartConfig: config };
-    }, [constituency.predictedSlpPercentage, constituency.predictedUwpPercentage]);
-
     const popoverText = useMemo(() => {
         const lean = constituency.politicalLeaning;
         if (lean?.includes('slp') && constituency.slpDashboardPopoverText) {
@@ -376,51 +376,51 @@ export function ConstituencyPopoverContent({
     }
 
     const dashboardContent = (
-        <div className="space-y-4">
-            <div className="space-y-2">
-                <ChartContainer config={chartConfig} className="mx-auto w-full h-24">
-                    <ResponsiveContainer>
-                        <PieChart>
-                            <ChartTooltip
-                                cursor={false}
-                                content={<ChartTooltipContent hideLabel />}
-                            />
-                            <Pie
-                                data={chartData}
-                                dataKey="votes"
-                                nameKey="party"
-                                startAngle={-90}
-                                endAngle={90}
-                                innerRadius="70%"
-                                cy="100%"
-                                paddingAngle={2}
-                            >
-                                {chartData.map((entry) => (
-                                    <Cell key={entry.party} fill={entry.fill} />
-                                ))}
-                            </Pie>
-                        </PieChart>
-                    </ResponsiveContainer>
-                </ChartContainer>
-                <div className="flex justify-between text-sm font-medium -mt-10">
-                    <div style={{ color: slpParty?.color }}>
-                        <p>SLP</p>
-                        <p>{constituency.predictedSlpPercentage}%</p>
-                    </div>
-                    <div style={{ color: uwpParty?.color }} className="text-right">
-                        <p>UWP</p>
-                        <p>{constituency.predictedUwpPercentage}%</p>
-                    </div>
+      <div className="space-y-4">
+        <div className="space-y-2">
+            <ChartContainer config={chartConfig} className="mx-auto w-full h-24">
+                <ResponsiveContainer>
+                    <PieChart>
+                        <ChartTooltip
+                            cursor={false}
+                            content={<ChartTooltipContent hideLabel />}
+                        />
+                        <Pie
+                            data={chartData}
+                            dataKey="votes"
+                            nameKey="party"
+                            startAngle={180}
+                            endAngle={0}
+                            innerRadius="70%"
+                            cy="100%"
+                            paddingAngle={2}
+                        >
+                            {chartData.map((entry) => (
+                                <Cell key={entry.party} fill={entry.fill} />
+                            ))}
+                        </Pie>
+                    </PieChart>
+                </ResponsiveContainer>
+            </ChartContainer>
+            <div className="flex justify-between text-sm font-medium -mt-10">
+                <div style={{ color: slpParty?.color }}>
+                    <p>SLP</p>
+                    <p>{constituency.predictedSlpPercentage}%</p>
+                </div>
+                <div style={{ color: uwpParty?.color }} className="text-right">
+                    <p>UWP</p>
+                    <p>{constituency.predictedUwpPercentage}%</p>
                 </div>
             </div>
-            {popoverText && (
-                <div className="text-sm text-center text-muted-foreground pt-2 border-t mt-2">
-                    {popoverText}
-                </div>
-            )}
         </div>
+        {popoverText && (
+            <div className="text-sm text-center text-muted-foreground pt-2 border-t mt-2">
+                {popoverText}
+            </div>
+        )}
+      </div>
     );
-
+    
     const defaultContent = (
       <>
         {showCandidateBoxes && (election?.isCurrent || !election) && !isMakeYourOwn ? (
