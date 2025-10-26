@@ -216,6 +216,7 @@ export default function MakeYourOwnPage() {
     const [shareUrl, setShareUrl] = useState('');
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
     const [sharedMapImageUrl, setSharedMapImageUrl] = useState<string | null>(null);
+    const [dynamicShareTitle, setDynamicShareTitle] = useState('');
 
 
     useEffect(() => {
@@ -281,18 +282,36 @@ export default function MakeYourOwnPage() {
         await uploadString(imageRef, dataUrl, 'data_url');
         const imageUrl = await getDownloadURL(imageRef);
 
-        // Client-side Firestore Write
         const mapsCollection = collection(firestore, 'user_maps');
-        const mapDocRef = await addDoc(mapsCollection, {
+        
+        const docRef = await addDoc(mapsCollection, {
             mapData: mapData,
             createdAt: serverTimestamp(),
             imageUrl: imageUrl,
-        });
+        }).catch(error => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: 'user_maps',
+                operation: 'create',
+                requestResourceData: {mapData}
+            }))
+            // Propagate a generic error message to the user
+            throw new Error("Could not save your map. Please try again.");
+        })
 
-        const url = `${window.location.origin}/maps/${mapDocRef.id}`;
-        setShareUrl(url);
-        setSharedMapImageUrl(imageUrl);
-        setIsShareDialogOpen(true);
+        if (docRef) {
+            const url = `${window.location.origin}/maps/${docRef.id}`;
+            setShareUrl(url);
+            setSharedMapImageUrl(imageUrl);
+
+            let title = `I predict `;
+            if(seatCounts.slp > 0) title += `SLP ${seatCounts.slp}`;
+            if(seatCounts.uwp > 0) title += `${seatCounts.slp > 0 ? ', ' : ''}UWP ${seatCounts.uwp}`;
+            if(seatCounts.ind > 0) title += `${seatCounts.slp > 0 || seatCounts.uwp > 0 ? ', ' : ''}IND ${seatCounts.ind}`;
+            title += ` for the Election.`;
+            setDynamicShareTitle(title);
+            
+            setIsShareDialogOpen(true);
+        }
 
     } catch (error: any) {
         console.error('Save and share error:', error);
@@ -301,13 +320,6 @@ export default function MakeYourOwnPage() {
             title: 'Error',
             description: error.message || 'Could not save your map. Please try again.',
         });
-        // Emit a contextual error if it's a permission issue
-        if (error.code?.includes('permission-denied')) {
-            errorEmitter.emit('permission-error', new FirestorePermissionError({
-                path: 'user_maps',
-                operation: 'create'
-            }));
-        }
     } finally {
         setIsSaving(false);
     }
@@ -386,9 +398,8 @@ export default function MakeYourOwnPage() {
         return acc;
     }, {});
 
-    const shareTitle = siteSettings?.defaultShareTitle || "Check out my St. Lucian Election Prediction!";
     const shareDescription = siteSettings?.defaultShareDescription || "I made my own prediction for the 2026 St. Lucian General Election. See what you think!";
-    const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`;
+    const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(dynamicShareTitle)}&url=${encodeURIComponent(shareUrl)}`;
     const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
     
     const copyToClipboard = () => {
@@ -524,7 +535,7 @@ export default function MakeYourOwnPage() {
       <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
           <DialogContent>
               <DialogHeader>
-                  <DialogTitle>{shareTitle}</DialogTitle>
+                  <DialogTitle>{dynamicShareTitle}</DialogTitle>
                   <DialogDescription>
                       {shareDescription}
                   </DialogDescription>
