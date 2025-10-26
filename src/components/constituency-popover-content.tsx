@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -181,7 +182,7 @@ export function ConstituencyPopoverContent({
     const { firestore } = useFirebase();
 
     const isCurrentElection = !election || election.isCurrent;
-    const collectionName = isCurrentElection ? 'candidates' : 'archived_candidates';
+    const collectionName = useMemo(() => (isCurrentElection ? 'candidates' : 'archived_candidates'), [isCurrentElection]);
 
     const candidatesQuery = useMemoFirebase(() => {
         if (!firestore) return null;
