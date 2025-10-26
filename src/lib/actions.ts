@@ -4,20 +4,20 @@
 import { generateElectionPredictions } from '@/ai/flows/generate-election-predictions';
 import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
 import { summarizeArticle as summarizeArticleFlow } from '@/ai/flows/summarize-article';
-import { getFirebaseAdmin } from '@/firebase/server';
+import { initializeFirebase } from '@/firebase';
 import { collection, getDocs, query, orderBy, limit, addDoc, where } from 'firebase/firestore';
 import type { UserMap } from './types';
 
 
 async function getCollectionData(collectionName: string) {
-    const { firestore } = getFirebaseAdmin();
+    const { firestore } = initializeFirebase();
     const collRef = collection(firestore, collectionName);
     const snapshot = await getDocs(collRef);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
 async function getLatestHistoricalResult() {
-    const { firestore } = getFirebaseAdmin();
+    const { firestore } = initializeFirebase();
     const resultsRef = collection(firestore, 'election_results');
     const q = query(resultsRef, orderBy('year', 'desc'), limit(1));
     const snapshot = await getDocs(q);
@@ -66,7 +66,7 @@ export async function getPrediction(newsSummary: string) {
 
 export async function saveUserMap(mapData: UserMap['mapData']) {
     try {
-        const { firestore } = getFirebaseAdmin();
+        const { firestore } = initializeFirebase();
         
         const docRef = await addDoc(collection(firestore, 'user_maps'), {
             mapData,
@@ -81,7 +81,7 @@ export async function saveUserMap(mapData: UserMap['mapData']) {
 }
 
 export async function subscribeToMailingList(data: { firstName: string; email: string }) {
-    const { firestore } = getFirebaseAdmin();
+    const { firestore } = initializeFirebase();
     const subscribersCollection = collection(firestore, 'mailing_list_subscribers');
     
     try {
