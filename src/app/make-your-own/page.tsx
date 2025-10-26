@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
@@ -303,11 +304,7 @@ export default function MakeYourOwnPage() {
             setShareUrl(url);
             setSharedMapImageUrl(imageUrl);
 
-            let title = `I predict `;
-            if(seatCounts.slp > 0) title += `SLP ${seatCounts.slp}`;
-            if(seatCounts.uwp > 0) title += `${seatCounts.slp > 0 ? ', ' : ''}UWP ${seatCounts.uwp}`;
-            if(seatCounts.ind > 0) title += `${seatCounts.slp > 0 || seatCounts.uwp > 0 ? ', ' : ''}IND ${seatCounts.ind}`;
-            title += ` for the Election.`;
+            let title = `I predict SLP ${seatCounts.slp}, UWP ${seatCounts.uwp}, and IND ${seatCounts.ind} for the Election.`;
             setDynamicShareTitle(title);
             
             setIsShareDialogOpen(true);
