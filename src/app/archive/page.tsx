@@ -621,13 +621,13 @@ export default function ArchivePage() {
                                             <div className="flex items-center gap-3">
                                                 <Dialog>
                                                     <DialogTrigger asChild>
-                                                        <div className="relative h-10 w-10 flex-shrink-0 rounded-full overflow-hidden bg-muted cursor-pointer">
+                                                        <div className="relative h-10 w-10 flex-shrink-0 rounded-full overflow-hidden bg-muted flex items-center justify-center cursor-pointer">
                                                             {c.imageUrl ? (
                                                                 <Image src={c.imageUrl} alt={`${c.firstName} ${c.lastName}`} fill className="object-cover" />
                                                             ) : party?.logoUrl ? (
                                                                 <Image src={party.logoUrl} alt={`${party.name} logo`} fill className="object-contain p-1" />
                                                             ) : (
-                                                                <UserSquare className="h-6 w-6 text-muted-foreground m-auto" />
+                                                                <span className="text-xl font-bold text-gray-500">X</span>
                                                             )}
                                                         </div>
                                                     </DialogTrigger>

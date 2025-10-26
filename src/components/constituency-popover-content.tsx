@@ -88,11 +88,11 @@ function CandidateBox({
                 
                 <div className="flex w-full items-center gap-2">
                     <div className={cn("relative w-20 flex-shrink-0 flex flex-col items-center gap-1 p-1 rounded-md", isWinner && "ring-2 ring-green-500")}>
-                        <div className="relative h-12 w-12 rounded-full overflow-hidden bg-transparent">
+                        <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
                             {candidate?.imageUrl ? (
                                 <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
                             ) : (
-                                <UserSquare className="h-full w-full text-gray-400" />
+                                <span className="text-2xl font-bold text-gray-500">X</span>
                             )}
                         </div>
                          <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold whitespace-normal leading-tight" onClick={() => setProfileOpen(true)} disabled={!candidate}>

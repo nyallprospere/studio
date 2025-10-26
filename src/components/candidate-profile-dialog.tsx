@@ -38,11 +38,11 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
         <ScrollArea className="h-full pr-6">
           <DialogHeader className="mb-4">
             <div className="flex flex-col sm:flex-row items-start gap-4">
-              <div className="relative h-32 w-32 flex-shrink-0 rounded-full overflow-hidden bg-muted">
+              <div className="relative h-32 w-32 flex-shrink-0 rounded-full overflow-hidden bg-muted flex items-center justify-center">
                 {candidate.imageUrl ? (
                   <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
                 ) : (
-                  <UserSquare className="h-full w-full text-muted-foreground" />
+                  <span className="text-4xl font-bold text-gray-500">X</span>
                 )}
               </div>
               <div className="space-y-1">

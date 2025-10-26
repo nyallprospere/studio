@@ -129,11 +129,11 @@ export default function PartyDetailPage() {
                         </CardHeader>
                         <CardContent>
                             <Link href={`/candidates/${leader.id}`} className="flex flex-col items-center text-center gap-4 group">
-                                <div className="relative h-32 w-32 rounded-full overflow-hidden bg-muted">
+                                <div className="relative h-32 w-32 rounded-full overflow-hidden bg-muted flex items-center justify-center">
                                 {leader.imageUrl ? (
                                     <Image src={leader.imageUrl} alt={`Photo of ${leader.firstName} ${leader.lastName}`} fill className="object-cover group-hover:scale-105 transition-transform" />
                                 ) : (
-                                    <UserSquare className="h-full w-full text-muted-foreground" />
+                                    <span className="text-4xl font-bold text-gray-500">X</span>
                                 )}
                                 </div>
                                 <div>

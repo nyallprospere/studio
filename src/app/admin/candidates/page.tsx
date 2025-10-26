@@ -388,7 +388,7 @@ export default function AdminCandidatesPage() {
                             <Image src={candidate.imageUrl} alt={`${candidate.firstName} ${candidate.lastName}`} width={48} height={48} className="rounded-full object-cover" />
                         ) : (
                             <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                                <UserSquare className="h-6 w-6 text-muted-foreground" />
+                                <span className="text-2xl font-bold text-gray-500">X</span>
                             </div>
                         )}
                         <div>
