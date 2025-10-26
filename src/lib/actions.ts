@@ -84,23 +84,6 @@ export async function getPrediction(newsSummary: string) {
   }
 }
 
-export async function saveUserMap(mapData: UserMap['mapData']) {
-    try {
-        const adminApp = getFirebaseAdminApp();
-        const firestore = getFirestore(adminApp);
-        
-        const docRef = await firestore.collection('user_maps').add({
-            mapData,
-            createdAt: new Date(),
-        });
-
-        return { id: docRef.id };
-    } catch (e) {
-        console.error('Error saving map:', e);
-        return { error: 'Could not save your map. Please try again.' };
-    }
-}
-
 export async function subscribeToMailingList(data: { firstName: string; email: string }) {
     const adminApp = getFirebaseAdminApp();
     const firestore = getFirestore(adminApp);

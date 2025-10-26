@@ -63,7 +63,7 @@ export interface Constituency {
     top: string;
     left: string;
   };
-  politicalLeaning?: 'solid-slp' | 'lean-slp' | 'tossup' | 'lean-uwp' | 'solid-uwp' | 'slp' | 'uwp' | 'unselected';
+  politicalLeaning?: 'solid-slp' | 'lean-slp' | 'tossup' | 'lean-uwp' | 'solid-uwp' | 'slp' | 'uwp' | 'unselected' | 'ind';
   predictedSlpPercentage?: number;
   predictedUwpPercentage?: number;
   logoUrl?: string;

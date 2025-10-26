@@ -1,11 +1,10 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import type { Constituency, UserMap, ElectionResult, Election } from '@/lib/types';
+import type { Constituency, ElectionResult, Election } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirebase, useMemoFirebase, useUser, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, doc, setDoc, addDoc, serverTimestamp, query, orderBy, where, getDocs } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, orderBy, where, getDocs } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Pie, PieChart, ResponsiveContainer, Cell, Label } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -13,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { debounce } from 'lodash';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
-import { Save, Share2, Twitter, Facebook } from 'lucide-react';
+import { Share2, Twitter, Facebook } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -23,7 +22,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { Copy } from 'lucide-react';
-import { saveUserMap } from '@/lib/actions';
+import { useSearchParams } from 'next/navigation';
 
 
 const politicalLeaningOptions = [
@@ -116,10 +115,55 @@ const VictoryStatusBar = ({ slpSeats, uwpSeats, indSeats }: { slpSeats: number, 
   );
 };
 
+// Encoding/Decoding functions
+const leaningToChar: { [key: string]: string } = {
+    'slp': 's',
+    'uwp': 'u',
+    'ind': 'i',
+    'tossup': 't',
+    'unselected': 'x'
+};
+
+const charToLeaning: { [key: string]: string } = {
+    's': 'slp',
+    'u': 'uwp',
+    'i': 'ind',
+    't': 'tossup',
+    'x': 'unselected'
+};
+
+const encodeMapData = (constituencies: Constituency[]): string => {
+    const orderedConstituencies = [...constituencies].sort((a, b) => a.id.localeCompare(b.id));
+    const encodedString = orderedConstituencies.map(c => leaningToChar[c.politicalLeaning || 'unselected']).join('');
+    return btoa(encodedString);
+};
+
+const decodeMapData = (encodedData: string, initialConstituencies: Constituency[]): Constituency[] => {
+    try {
+        const decodedString = atob(encodedData);
+        const orderedConstituencies = [...initialConstituencies].sort((a, b) => a.id.localeCompare(b.id));
+        
+        if (decodedString.length !== orderedConstituencies.length) {
+            console.error("Decoded data length mismatch");
+            return initialConstituencies;
+        }
+
+        return orderedConstituencies.map((c, index) => ({
+            ...c,
+            politicalLeaning: charToLeaning[decodedString[index]] || 'unselected'
+        }));
+    } catch (e) {
+        console.error("Failed to decode map data:", e);
+        return initialConstituencies;
+    }
+};
+
+
 export default function MakeYourOwnPage() {
     const { firestore } = useFirebase();
     const { toast } = useToast();
     const { user } = useUser();
+    const searchParams = useSearchParams();
 
     const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
     const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
@@ -161,15 +205,21 @@ export default function MakeYourOwnPage() {
     const [selectedMyMapConstituencyId, setSelectedMyMapConstituencyId] = useState<string | null>(null);
 
     const [isSaving, setIsSaving] = useState(false);
-    const [savedMapId, setSavedMapId] = useState<string | null>(null);
+    const [shareUrl, setShareUrl] = useState('');
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
 
 
     useEffect(() => {
         if(constituencies) {
-            setMyMapConstituencies(constituencies.map(c => ({...c, politicalLeaning: 'unselected'})))
+            const mapData = searchParams.get('map');
+            if (mapData) {
+                const decodedConstituencies = decodeMapData(mapData, constituencies);
+                setMyMapConstituencies(decodedConstituencies);
+            } else {
+                 setMyMapConstituencies(constituencies.map(c => ({...c, politicalLeaning: 'unselected'})))
+            }
         }
-    }, [constituencies])
+    }, [constituencies, searchParams])
 
     useEffect(() => {
         const savedConstituenciesLayout = savedLayouts?.constituenciesPage as LayoutConfiguration | undefined;
@@ -195,33 +245,12 @@ export default function MakeYourOwnPage() {
         );
     };
     
-    const handleSaveAndShare = async () => {
-        setIsSaving(true);
-        try {
-            const mapData = myMapConstituencies.map(c => ({
-                constituencyId: c.id,
-                politicalLeaning: c.politicalLeaning || 'unselected'
-            }));
-
-            const result = await saveUserMap(mapData);
-
-            if(result.error) {
-                toast({ variant: 'destructive', title: 'Error', description: result.error });
-                return;
-            }
-
-            if(result.id) {
-                setSavedMapId(result.id);
-                setIsShareDialogOpen(true);
-                toast({ title: 'Map Saved!', description: 'Your prediction map has been saved and is ready to share.' });
-            }
-        } catch (e) {
-            console.error('Error saving map:', e);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not save your map. Please try again.' });
-        } finally {
-            setIsSaving(false);
-        }
-    }
+    const handleShare = () => {
+        const encodedData = encodeMapData(myMapConstituencies);
+        const url = `${window.location.origin}/make-your-own?map=${encodedData}`;
+        setShareUrl(url);
+        setIsShareDialogOpen(true);
+    };
 
     const isLoading = loadingConstituencies || loadingLayout || loadingElections;
 
@@ -295,7 +324,6 @@ export default function MakeYourOwnPage() {
         return acc;
     }, {});
 
-    const shareUrl = savedMapId ? `${window.location.origin}/maps/${savedMapId}` : '';
     const shareTitle = siteSettings?.defaultShareTitle || "Check out my St. Lucia election prediction!";
     const shareDescription = siteSettings?.defaultShareDescription || "I made my own 2026 election prediction on LucianVotes. See my map and create your own!";
     const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`;
@@ -406,9 +434,9 @@ export default function MakeYourOwnPage() {
                                 <Button variant="outline" size="sm" onClick={() => handleSelectAll('unselected')}>Clear All</Button>
                             </div>
                         )}
-                        <Button onClick={handleSaveAndShare} disabled={isSaving || !allSelected} className="w-full mt-6">
+                        <Button onClick={handleShare} disabled={!allSelected} className="w-full mt-6">
                             <Share2 className="mr-2 h-4 w-4" />
-                            {isSaving ? 'Saving...' : 'Save &amp; Share'}
+                            Share
                         </Button>
                     </CardContent>
                 </Card>
@@ -421,7 +449,7 @@ export default function MakeYourOwnPage() {
               <DialogHeader>
                   <DialogTitle>Share Your Prediction Map</DialogTitle>
                   <DialogDescription>
-                      Your custom map has been saved. Share it with your friends!
+                      Share your custom map with your friends!
                   </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
