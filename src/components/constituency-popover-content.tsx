@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -53,7 +54,7 @@ function CandidateBox({
     votePercentageChange,
     logoUrl,
     hideLogo,
-    popoverVariant
+    popoverVariant = 'default',
 }: { 
     candidate: Candidate | ArchivedCandidate | null;
     party: Party | null;
@@ -377,6 +378,7 @@ export function ConstituencyPopoverContent({
             </div>
 
             {popoverVariant === 'dashboard' && (
+                <>
                 <div className="space-y-2">
                     <ChartContainer config={chartConfig} className="mx-auto w-full h-24">
                         <ResponsiveContainer>
@@ -413,6 +415,12 @@ export function ConstituencyPopoverContent({
                         </div>
                     </div>
                 </div>
+                {constituency.dashboardPopoverText && (
+                    <div className="text-sm text-center text-muted-foreground pt-2 border-t mt-2">
+                        {constituency.dashboardPopoverText}
+                    </div>
+                )}
+                </>
             )}
             
             {showCandidateBoxes && (election?.isCurrent || !election) && !isMakeYourOwn && popoverVariant === 'default' ? (

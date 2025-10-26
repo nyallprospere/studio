@@ -19,6 +19,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { isEqual } from 'lodash';
 import { ImportDialog } from './import-dialog';
 import * as XLSX from 'xlsx';
+import { Textarea } from '@/components/ui/textarea';
 
 const initialConstituencies = [
     { name: "Castries Central", registeredVoters: 0 },
@@ -97,6 +98,7 @@ export default function AdminConstituenciesPage() {
                     politicalLeaning: "tossup",
                     predictedSlpPercentage: 50,
                     predictedUwpPercentage: 50,
+                    dashboardPopoverText: '',
                 };
                 batch.set(docRef, dataToSave);
             });
@@ -192,6 +194,7 @@ export default function AdminConstituenciesPage() {
           'Political Leaning': c.politicalLeaning || 'tossup',
           'Predicted SLP %': c.predictedSlpPercentage || 50,
           'Predicted UWP %': c.predictedUwpPercentage || 50,
+          'Dashboard Popover Text': c.dashboardPopoverText || '',
         }));
         const worksheet = XLSX.utils.json_to_sheet(dataToExport);
         const workbook = XLSX.utils.book_new();
@@ -229,6 +232,7 @@ export default function AdminConstituenciesPage() {
                     politicalLeaning: row.politicalLeaning || 'tossup',
                     predictedSlpPercentage: Number(row.predictedSlpPercentage) || 50,
                     predictedUwpPercentage: Number(row.predictedUwpPercentage) || 50,
+                    dashboardPopoverText: row.dashboardPopoverText || '',
                 };
     
                 if (docId) {
@@ -325,6 +329,7 @@ export default function AdminConstituenciesPage() {
                                         <TableHead>Political Leaning</TableHead>
                                         <TableHead>Pred. SLP %</TableHead>
                                         <TableHead>Pred. UWP %</TableHead>
+                                        <TableHead>Popover Text</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -372,6 +377,14 @@ export default function AdminConstituenciesPage() {
                                                     className="w-24"
                                                     min="0"
                                                     max="100"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Textarea
+                                                    value={c.dashboardPopoverText || ''}
+                                                    onChange={(e) => handleFieldChange(c.id, 'dashboardPopoverText', e.target.value)}
+                                                    className="w-48"
+                                                    rows={1}
                                                 />
                                             </TableCell>
                                         </TableRow>

@@ -67,6 +67,7 @@ export interface Constituency {
   predictedSlpPercentage?: number;
   predictedUwpPercentage?: number;
   logoUrl?: string;
+  dashboardPopoverText?: string;
 }
 
 export interface Poll {

@@ -358,6 +358,10 @@
           "type": "string",
           "format": "uri",
           "description": "URL to the constituency's logo."
+        },
+        "dashboardPopoverText": {
+          "type": "string",
+          "description": "Custom text to display in the popover on the main dashboard map."
         }
       },
       "required": [
