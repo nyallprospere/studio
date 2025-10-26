@@ -182,6 +182,7 @@ export function ConstituencyPopoverContent({
     const { firestore } = useFirebase();
 
     const isCurrentElection = !election || election.isCurrent;
+
     const collectionName = useMemo(() => (isCurrentElection ? 'candidates' : 'archived_candidates'), [isCurrentElection]);
 
     const candidatesQuery = useMemoFirebase(() => {
@@ -223,9 +224,10 @@ export function ConstituencyPopoverContent({
     }, [parties, candidates, constituency.name, election]);
     
     const { chartData, chartConfig } = useMemo(() => {
+        if (!constituency || !slpParty || !uwpParty) return { chartData: [], chartConfig: {} };
         const config: ChartConfig = {
-            slp: { label: 'SLP', color: slpParty?.color || 'hsl(var(--chart-5))' },
-            uwp: { label: 'UWP', color: uwpParty?.color || 'hsl(var(--chart-1))' },
+            slp: { label: 'SLP', color: slpParty.color },
+            uwp: { label: 'UWP', color: uwpParty.color },
         };
 
         const data = [
@@ -233,7 +235,7 @@ export function ConstituencyPopoverContent({
             { party: 'slp', votes: constituency.predictedSlpPercentage || 50, fill: `var(--color-slp)` },
         ];
         return { chartData: data, chartConfig: config };
-    }, [constituency.predictedSlpPercentage, constituency.predictedUwpPercentage, slpParty, uwpParty]);
+    }, [constituency, slpParty, uwpParty]);
 
     const { electionStatus, statusColor, margin, totalConstituencyVotes, winnerAcronym, slpVotePercentageChange, uwpVotePercentageChange, otherVotePercentageChange, slpLogoUrl, uwpLogoUrl, indLogoUrl, indVotes } = useMemo(() => {
         if (!electionResults || !slpParty || !uwpParty) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null, slpVotePercentageChange: null, uwpVotePercentageChange: null, otherVotePercentageChange: null, slpLogoUrl: null, uwpLogoUrl: null, indLogoUrl: null, indVotes: 0 };
