@@ -14,7 +14,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
-import { Share2, Twitter, Facebook, Loader2 } from 'lucide-react';
+import { Share2, Twitter, Facebook, Loader2, Instagram, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -29,6 +29,7 @@ import { toPng } from 'html-to-image';
 import Image from 'next/image';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { v4 as uuidv4 } from 'uuid';
+import { Label as UiLabel } from '@/components/ui/label';
 
 
 const politicalLeaningOptions = [
@@ -40,11 +41,10 @@ const politicalLeaningOptions = [
 ];
 
 const makeYourOwnLeaningOptions = [
-  { value: 'slp', label: 'SLP' },
-  { value: 'uwp', label: 'UWP' },
-  { value: 'ind', label: 'IND' },
-  { value: 'tossup', label: 'Toss Up' },
-  { value: 'unselected', label: 'To be selected' },
+  { value: 'slp', label: 'SLP', color: '#ef4444' }, // red-500
+  { value: 'uwp', label: 'UWP', color: '#f59e0b' }, // amber-500
+  { value: 'ind', label: 'IND', color: '#3b82f6' }, // blue-500
+  { value: 'unselected', label: 'To be selected', color: '#d1d5db' }, // gray-300
 ];
 
 
@@ -318,7 +318,7 @@ export default function MakeYourOwnPage() {
             setDynamicShareTitle(title);
             
             const victoryStatus = getVictoryStatus(slp, uwp, ind).status;
-            const description = `${victoryStatus}!`;
+            const description = `${victoryStatus}`;
             setDynamicShareDescription(description);
             
             setIsShareDialogOpen(true);
@@ -382,7 +382,7 @@ export default function MakeYourOwnPage() {
             return {
                 name: opt.label,
                 value: value,
-                fill: opt.value === 'slp' ? 'hsl(var(--chart-5))' : opt.value === 'uwp' ? 'hsl(var(--chart-1))' : opt.value === 'ind' ? 'hsl(var(--primary))' : '#d1d5db',
+                fill: opt.value === 'slp' ? '#ef4444' : opt.value === 'uwp' ? '#f59e0b' : opt.value === 'ind' ? '#3b82f6' : '#d1d5db',
             };
         });
 
@@ -409,9 +409,10 @@ export default function MakeYourOwnPage() {
         return acc;
     }, {});
 
-    const shareDescription = siteSettings?.defaultShareDescription || "I made my own prediction for the 2026 St. Lucian General Election. See what you think!";
     const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(dynamicShareTitle)}&url=${encodeURIComponent(shareUrl)}`;
     const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+    const emailShareUrl = `mailto:?subject=${encodeURIComponent(dynamicShareTitle)}&body=${encodeURIComponent(dynamicShareDescription + ' See my prediction: ' + shareUrl)}`;
+
     
     const copyToClipboard = () => {
         navigator.clipboard.writeText(shareUrl);
@@ -425,8 +426,8 @@ export default function MakeYourOwnPage() {
         return <span className={`text-xs font-semibold ml-1 ${color}`}>({sign}{change})</span>;
     };
 
-    const slpColor = parties?.find(p => p.acronym === 'SLP')?.color || 'hsl(var(--chart-5))';
-    const uwpColor = parties?.find(p => p.acronym === 'UWP')?.color || 'hsl(var(--chart-1))';
+    const slpColor = parties?.find(p => p.acronym === 'SLP')?.color || '#ef4444';
+    const uwpColor = parties?.find(p => p.acronym === 'UWP')?.color || '#f59e0b';
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -464,15 +465,15 @@ export default function MakeYourOwnPage() {
                         <VictoryStatusBar slpSeats={seatCounts.slp} uwpSeats={seatCounts.uwp} indSeats={seatCounts.ind} />
                         <div className="grid grid-cols-3 gap-4 w-full text-center mb-4">
                             <div>
-                                <p className="font-bold text-lg" style={{color: 'hsl(var(--chart-5))'}}>{seatCounts.slp}</p>
+                                <p className="font-bold text-lg" style={{color: slpColor}}>{seatCounts.slp}</p>
                                 <p className="text-muted-foreground font-semibold text-sm">SLP Seats {allSelected && <SeatChangeIndicator change={seatChanges.slp} />}</p>
                             </div>
                             <div>
-                                <p className="font-bold text-lg" style={{color: 'hsl(var(--chart-1))'}}>{seatCounts.uwp}</p>
+                                <p className="font-bold text-lg" style={{color: uwpColor}}>{seatCounts.uwp}</p>
                                 <p className="text-muted-foreground font-semibold text-sm">UWP Seats {allSelected && <SeatChangeIndicator change={seatChanges.uwp} />}</p>
                             </div>
                              <div>
-                                <p className="font-bold text-lg" style={{color: 'hsl(var(--primary))'}}>{seatCounts.ind}</p>
+                                <p className="font-bold text-lg" style={{color: '#3b82f6'}}>{seatCounts.ind}</p>
                                 <p className="text-muted-foreground font-semibold text-sm">IND Seats</p>
                             </div>
                         </div>
@@ -553,34 +554,49 @@ export default function MakeYourOwnPage() {
                         I predict{' '}
                         <span style={{ color: slpColor }} className="font-bold">SLP {seatCounts.slp}</span>,{' '}
                         <span style={{ color: uwpColor }} className="font-bold">UWP {seatCounts.uwp}</span>, and{' '}
-                        <span style={{ color: 'hsl(var(--primary))' }} className="font-bold">IND {seatCounts.ind}</span> for the Election.
+                        <span style={{ color: '#3b82f6' }} className="font-bold">IND {seatCounts.ind}</span> for the Election.
                   </DialogTitle>
                   <DialogDescription>
                         {dynamicShareDescription}{' '}
-                        <a href={shareUrl.replace(/\/maps\/.*/, '/make-your-own')} className="text-primary underline">Make your own prediction</a>
+                        <a href={shareUrl.replace(/\/maps\/.*/, '/make-your-own')} className="text-primary underline">
+                            Make your own prediction
+                        </a>
                   </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                   {sharedMapImageUrl && (
-                      <div className="relative h-[400px] w-full rounded-lg overflow-hidden border">
+                      <div className="relative h-64 w-full rounded-lg overflow-hidden border">
                           <Image src={sharedMapImageUrl} alt="User prediction map" fill className="object-contain" />
                       </div>
                   )}
-                    <div className="flex items-center space-x-2">
-                        <Input value={shareUrl} readOnly className="break-all" />
-                        <Button type="button" size="icon" onClick={copyToClipboard}>
-                            <Copy className="h-4 w-4" />
-                        </Button>
+                    <div className="space-y-1.5">
+                        <UiLabel htmlFor="share-link">Copy Direct Link</UiLabel>
+                        <div className="flex items-center space-x-2">
+                            <Input id="share-link" value={shareUrl} readOnly className="break-all" />
+                            <Button type="button" size="icon" onClick={copyToClipboard}>
+                                <Copy className="h-4 w-4" />
+                            </Button>
+                        </div>
                     </div>
-                  <div className="flex justify-center gap-4">
+                  <div className="flex justify-center gap-2 flex-wrap">
                       <Button asChild>
                           <a href={twitterShareUrl} target="_blank" rel="noopener noreferrer">
-                            <Twitter className="mr-2 h-4 w-4" /> Share on Twitter
+                            <Twitter className="mr-2 h-4 w-4" /> Twitter
                           </a>
                       </Button>
                        <Button asChild>
                           <a href={facebookShareUrl} target="_blank" rel="noopener noreferrer">
-                            <Facebook className="mr-2 h-4 w-4" /> Share on Facebook
+                            <Facebook className="mr-2 h-4 w-4" /> Facebook
+                          </a>
+                      </Button>
+                       <Button asChild>
+                          <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer">
+                            <Instagram className="mr-2 h-4 w-4" /> Instagram
+                          </a>
+                      </Button>
+                      <Button asChild>
+                          <a href={emailShareUrl}>
+                            <Mail className="mr-2 h-4 w-4" /> Email
                           </a>
                       </Button>
                   </div>
@@ -590,6 +606,7 @@ export default function MakeYourOwnPage() {
     </div>
   );
 }
+
 
 
 
