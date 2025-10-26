@@ -53,6 +53,7 @@ function CandidateBox({
     votePercentageChange,
     logoUrl,
     hideLogo,
+    popoverVariant
 }: { 
     candidate: Candidate | ArchivedCandidate | null;
     party: Party | null;
@@ -67,6 +68,7 @@ function CandidateBox({
     votePercentageChange?: number | null;
     logoUrl?: string;
     hideLogo?: boolean;
+    popoverVariant?: 'default' | 'dashboard';
 }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}` : 'Candidate(s) N/A';
@@ -88,6 +90,9 @@ function CandidateBox({
                 
                 <div className="flex w-full items-center gap-2">
                     <div className={cn("relative w-20 flex-shrink-0 flex flex-col items-center gap-1 p-1 rounded-md", isWinner && "ring-2 ring-green-500")}>
+                        {popoverVariant === 'dashboard' && party?.name && (
+                            <p className="font-semibold text-xs mb-1">{party.name}</p>
+                        )}
                         <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
                             {candidate?.imageUrl ? (
                                 <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
@@ -158,7 +163,7 @@ export function ConstituencyPopoverContent({
     isMakeYourOwn,
     showCandidateBoxes = true,
     hideLogos = false,
-    variant = 'default',
+    popoverVariant = 'default',
 }: { 
     constituency: Constituency,
     election?: Election | null;
@@ -171,7 +176,7 @@ export function ConstituencyPopoverContent({
     isMakeYourOwn?: boolean;
     showCandidateBoxes?: boolean;
     hideLogos?: boolean;
-    variant?: 'default' | 'dashboard';
+    popoverVariant?: 'default' | 'dashboard';
 }) {
     const { firestore } = useFirebase();
 
@@ -366,11 +371,13 @@ export function ConstituencyPopoverContent({
                 {onLeaningChange && isMakeYourOwn && (
                     <h5 className="col-span-full text-xs font-medium text-muted-foreground text-center mt-1">Choose Your Pick</h5>
                 )}
+                 {popoverVariant === 'dashboard' && (
+                    <p className="text-sm text-center mt-1"><span className="font-semibold">Status:</span> {getLeaningLabel(constituency.politicalLeaning)}</p>
+                )}
             </div>
 
-            {variant === 'dashboard' && (
+            {popoverVariant === 'dashboard' && (
                 <div className="space-y-2">
-                    <p className="text-sm text-center"><span className="font-semibold">Status:</span> {getLeaningLabel(constituency.politicalLeaning)}</p>
                     <ChartContainer config={chartConfig} className="mx-auto w-full h-24">
                         <ResponsiveContainer>
                             <PieChart>
@@ -408,7 +415,7 @@ export function ConstituencyPopoverContent({
                 </div>
             )}
             
-            {showCandidateBoxes && (election?.isCurrent || !election) && !isMakeYourOwn && variant === 'default' ? (
+            {showCandidateBoxes && (election?.isCurrent || !election) && !isMakeYourOwn && popoverVariant === 'default' ? (
                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         {slpCandidate && (
@@ -471,7 +478,7 @@ export function ConstituencyPopoverContent({
                         </div>
                     </div>
                 </div>
-            ) : !isMakeYourOwn && variant === 'default' ? (
+            ) : !isMakeYourOwn && popoverVariant === 'default' ? (
               <div className="space-y-2">
                    {!isSpecialConstituency && slpCandidate && (
                     <CandidateBox 
