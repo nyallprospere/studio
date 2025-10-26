@@ -331,19 +331,6 @@ export function ConstituencyPopoverContent({
 
     }, [constituency.id, electionResults, previousElectionResults, previousElection, slpParty, uwpParty, partyLogos, election, parties, independentCandidate]);
 
-    const { chartData, chartConfig } = useMemo(() => {
-        const config: ChartConfig = {
-          slp: { label: 'SLP', color: slpParty?.color || 'hsl(var(--chart-5))' },
-          uwp: { label: 'UWP', color: uwpParty?.color || 'hsl(var(--chart-1))' },
-        };
-    
-        const data = [
-          { party: 'uwp', votes: constituency.predictedUwpPercentage || 50, fill: `var(--color-uwp)` },
-          { party: 'slp', votes: constituency.predictedSlpPercentage || 50, fill: `var(--color-slp)` },
-        ];
-        return { chartData: data, chartConfig: config };
-    }, [constituency.predictedSlpPercentage, constituency.predictedUwpPercentage, slpParty, uwpParty]);
-
     const isLoading = loadingCandidates || loadingParties;
     const currentResult = electionResults?.find(r => r.constituencyId === constituency.id);
     const uwpIsWinner = winnerAcronym === 'UWP';
@@ -370,293 +357,24 @@ export function ConstituencyPopoverContent({
         return null;
     }, [constituency]);
 
+    const { chartData, chartConfig } = useMemo(() => {
+        const config: ChartConfig = {
+          slp: { label: 'SLP', color: slpParty?.color || 'hsl(var(--chart-5))' },
+          uwp: { label: 'UWP', color: uwpParty?.color || 'hsl(var(--chart-1))' },
+        };
+    
+        const data = [
+          { party: 'uwp', votes: constituency.predictedUwpPercentage || 50, fill: `var(--color-uwp)` },
+          { party: 'slp', votes: constituency.predictedSlpPercentage || 50, fill: `var(--color-slp)` },
+        ];
+        return { chartData: data, chartConfig: config };
+    }, [constituency.predictedSlpPercentage, constituency.predictedUwpPercentage, slpParty, uwpParty]);
+
 
     if (isLoading) {
         return <Skeleton className="h-40 w-full" />;
     }
-
-    const dashboardContent = (
-      <div className="space-y-4">
-        <div className="space-y-2">
-            <ChartContainer config={chartConfig} className="mx-auto w-full h-24">
-                <ResponsiveContainer>
-                    <PieChart>
-                        <ChartTooltip
-                            cursor={false}
-                            content={<ChartTooltipContent hideLabel />}
-                        />
-                        <Pie
-                            data={chartData}
-                            dataKey="votes"
-                            nameKey="party"
-                            startAngle={180}
-                            endAngle={0}
-                            innerRadius="70%"
-                            cy="100%"
-                            paddingAngle={2}
-                        >
-                            {chartData.map((entry) => (
-                                <Cell key={entry.party} fill={entry.fill} />
-                            ))}
-                        </Pie>
-                    </PieChart>
-                </ResponsiveContainer>
-            </ChartContainer>
-            <div className="flex justify-between text-sm font-medium -mt-10">
-                <div style={{ color: slpParty?.color }}>
-                    <p>SLP</p>
-                    <p>{constituency.predictedSlpPercentage}%</p>
-                </div>
-                <div style={{ color: uwpParty?.color }} className="text-right">
-                    <p>UWP</p>
-                    <p>{constituency.predictedUwpPercentage}%</p>
-                </div>
-            </div>
-        </div>
-        {popoverText && (
-            <div className="text-sm text-center text-muted-foreground pt-2 border-t mt-2">
-                {popoverText}
-            </div>
-        )}
-      </div>
-    );
     
-    const defaultContent = (
-      <>
-        {showCandidateBoxes && (election?.isCurrent || !election) && !isMakeYourOwn ? (
-             <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    {slpCandidate && (
-                        <div className="flex flex-col items-center p-2 rounded-md bg-muted">
-                            <div className="relative h-8 w-8 mb-2">
-                                {slpParty?.logoUrl && !hideLogos ? (
-                                    <Image src={slpParty.logoUrl} alt={slpParty.name} fill className="object-contain" />
-                                ): null}
-                            </div>
-                            <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
-                            {slpCandidate?.imageUrl ? (
-                                <Image src={slpCandidate.imageUrl} alt={slpCandidate?.name || 'SLP Candidate'} fill className="object-cover" />
-                            ) : (
-                                <UserSquare className="h-full w-full text-gray-400" />
-                            )}
-                            </div>
-                            <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!slpCandidate}>
-                                {slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'Candidate(s) N/A'}
-                                {slpCandidate?.isIncumbent && <span className="font-normal text-muted-foreground ml-1">(Inc.)</span>}
-                            </Button>
-                        </div>
-                    )}
-                     {independentCandidate && (
-                        <div className="flex flex-col items-center p-2 rounded-md bg-muted">
-                            <div className="relative h-8 w-8 mb-2">
-                                {indLogoUrl && !hideLogos && <Image src={indLogoUrl} alt="Independent" fill className="object-contain" />}
-                            </div>
-                            <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
-                            {independentCandidate?.imageUrl ? (
-                                <Image src={independentCandidate.imageUrl} alt={independentCandidate?.name || 'Independent Candidate'} fill className="object-cover" />
-                            ) : (
-                                <UserSquare className="h-full w-full text-gray-400" />
-                            )}
-                            </div>
-                            <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!independentCandidate}>
-                                {independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName}` : 'Candidate(s) N/A'}
-                                {independentCandidate?.isIncumbent && <span className="font-normal text-muted-foreground ml-1">(Inc.)</span>}
-                            </Button>
-                        </div>
-                    )}
-                </div>
-                 <div className="space-y-2">
-                    <div className="flex flex-col items-center p-2 rounded-md bg-muted">
-                        <div className="relative h-8 w-8 mb-2">
-                            {uwpParty?.logoUrl && !hideLogos ? (
-                                <Image src={uwpParty.logoUrl} alt={uwpParty.name} fill className="object-contain" />
-                            ): null}
-                        </div>
-                        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
-                        {uwpCandidate?.imageUrl ? (
-                            <Image src={uwpCandidate.imageUrl} alt={uwpCandidate?.name || 'UWP Candidate'} fill className="object-cover" />
-                        ) : (
-                            <UserSquare className="h-full w-full text-gray-400" />
-                        )}
-                        </div>
-                        <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!uwpCandidate}>
-                            {uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'Candidate(s) N/A'}
-                            {uwpCandidate?.isIncumbent && <span className="font-normal text-muted-foreground ml-1">(Inc.)</span>}
-                        </Button>
-                    </div>
-                </div>
-            </div>
-        ) : !isMakeYourOwn ? (
-          <div className="space-y-2">
-               {!isSpecialConstituency && slpCandidate && (
-                <CandidateBox 
-                    candidate={slpCandidate} 
-                    party={slpParty} 
-                    isWinner={slpIsWinner} 
-                    votes={currentResult?.slpVotes} 
-                    totalVotes={totalConstituencyVotes}
-                    margin={margin}
-                    electionStatus={electionStatus}
-                    statusColor={statusColor}
-                    votePercentageChange={slpVotePercentageChange}
-                    logoUrl={slpLogoUrl}
-                    hideLogo={hideLogos}
-                />
-               )}
-              <CandidateBox 
-                  candidate={uwpCandidate} 
-                  party={uwpParty} 
-                  isWinner={uwpIsWinner} 
-                  votes={currentResult?.uwpVotes}
-                  totalVotes={totalConstituencyVotes}
-                  margin={margin}
-                  electionStatus={electionStatus}
-                  statusColor={statusColor}
-                  votePercentageChange={uwpVotePercentageChange}
-                  logoUrl={uwpLogoUrl}
-                  hideLogo={hideLogos}
-              />
-              {(isSpecialConstituency || (currentResult?.otherVotes || 0) > 0) && (
-                  <CandidateBox 
-                      candidate={independentCandidate}
-                      party={null}
-                      isWinner={otherIsWinner}
-                      votes={indVotes}
-                      totalVotes={totalConstituencyVotes}
-                      margin={margin}
-                      electionStatus={electionStatus}
-                      statusColor={statusColor}
-                      votePercentageChange={otherVotePercentageChange}
-                      logoUrl={indLogoUrl}
-                      hideLogo={hideLogos}
-                  />
-              )}
-          </div>
-        ) : null}
-        
-        {onLeaningChange && isMakeYourOwn && (
-             <div className="space-y-2 pt-2">
-                 <div className={cn("grid gap-2 text-center text-xs font-semibold items-start", (constituency.name === 'Castries North' || constituency.name === 'Castries Central') ? "grid-cols-2" : "grid-cols-2")}>
-                     
-                     {(constituency.name === 'Castries North' || constituency.name === 'Castries Central') ? (
-                        <>
-                            <div className="flex flex-col items-center gap-1">
-                                 <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
-                                     {uwpCandidate?.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
-                                 </div>
-                                 <p className="font-semibold">{uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'UWP Candidate'}</p>
-                                 <RadioGroup 
-                                     value={constituency.politicalLeaning} 
-                                     onValueChange={onLeaningChange}
-                                     className="grid grid-cols-1 gap-1 pt-1"
-                                 >
-                                    <Label htmlFor={`${constituency.id}-uwp`} className={cn("flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors", constituency.politicalLeaning === 'uwp' ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
-                                        <RadioGroupItem value="uwp" id={`${constituency.id}-uwp`} className="sr-only" />
-                                        UWP
-                                    </Label>
-                                 </RadioGroup>
-                             </div>
-                             <div className="flex flex-col items-center gap-1">
-                                 <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
-                                     {independentCandidate?.imageUrl ? <Image src={independentCandidate.imageUrl} alt={independentCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
-                                 </div>
-                                 <p className="font-semibold">{independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName}` : 'IND Candidate'}</p>
-                                 <RadioGroup 
-                                     value={constituency.politicalLeaning} 
-                                     onValueChange={onLeaningChange}
-                                     className="grid grid-cols-1 gap-1 pt-1"
-                                 >
-                                     <Label htmlFor={`${constituency.id}-ind`} className={cn("flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors", constituency.politicalLeaning === 'ind' ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
-                                        <RadioGroupItem value="ind" id={`${constituency.id}-ind`} className="sr-only" />
-                                        IND
-                                    </Label>
-                                 </RadioGroup>
-                             </div>
-                        </>
-                     ) : (
-                        <>
-                             <div className="flex flex-col items-center gap-1">
-                                 <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
-                                     {slpCandidate?.imageUrl ? <Image src={slpCandidate.imageUrl} alt={slpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
-                                 </div>
-                                 <p className="font-semibold">{slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'SLP Candidate'}</p>
-                                 <RadioGroup 
-                                     value={constituency.politicalLeaning} 
-                                     onValueChange={onLeaningChange}
-                                     className="grid grid-cols-1 gap-1 pt-1"
-                                 >
-                                    <Label htmlFor={`${constituency.id}-slp`} className={cn("flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors", constituency.politicalLeaning === 'slp' ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
-                                        <RadioGroupItem value="slp" id={`${constituency.id}-slp`} className="sr-only" />
-                                        SLP
-                                    </Label>
-                                </RadioGroup>
-                             </div>
-                             <div className="flex flex-col items-center gap-1">
-                                 <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
-                                     {uwpCandidate?.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
-                                 </div>
-                                 <p className="font-semibold">{uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'UWP Candidate'}</p>
-                                 <RadioGroup 
-                                     value={constituency.politicalLeaning} 
-                                     onValueChange={onLeaningChange}
-                                     className="grid grid-cols-1 gap-1 pt-1"
-                                 >
-                                    <Label htmlFor={`${constituency.id}-uwp`} className={cn("flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors", constituency.politicalLeaning === 'uwp' ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
-                                        <RadioGroupItem value="uwp" id={`${constituency.id}-uwp`} className="sr-only" />
-                                        UWP
-                                    </Label>
-                                </RadioGroup>
-                             </div>
-                        </>
-                     )}
-                     
-                 </div>
-             </div>
-        )}
-        {onLeaningChange && !isMakeYourOwn && (
-            <div className="space-y-2 pt-2">
-                <h5 className="text-xs font-medium text-muted-foreground">Choose Your Pick</h5>
-                 <RadioGroup 
-                    value={constituency.politicalLeaning} 
-                    onValueChange={onLeaningChange}
-                    className="grid grid-cols-5 gap-1"
-                >
-                    {politicalLeaningOptions.map(opt => (
-                        <Label 
-                            key={opt.value} 
-                            htmlFor={`${constituency.id}-${opt.value}`}
-                            className={cn(
-                                "flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors",
-                                constituency.politicalLeaning === opt.value 
-                                    ? "bg-primary text-primary-foreground" 
-                                    : "hover:bg-muted"
-                            )}
-                        >
-                            <RadioGroupItem value={opt.value} id={`${constituency.id}-${opt.value}`} className="sr-only" />
-                            {opt.label}
-                        </Label>
-                    ))}
-                </RadioGroup>
-            </div>
-        )}
-        {onPredictionChange && (
-             <div className="space-y-2 pt-2">
-                <h5 className="text-xs font-medium text-muted-foreground">Edit Prediction</h5>
-                <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold" style={{color: slpParty?.color}}>SLP: {constituency.predictedSlpPercentage}%</span>
-                    <Slider
-                        value={[constituency.predictedSlpPercentage || 50]}
-                        onValueChange={(value) => onPredictionChange(value[0], 100 - value[0])}
-                        max={100}
-                        step={1}
-                    />
-                    <span className="text-xs font-semibold" style={{color: uwpParty?.color}}>UWP: {constituency.predictedUwpPercentage}%</span>
-                </div>
-             </div>
-        )}
-      </>
-    );
-
     return (
         <div className="space-y-3 w-80">
              <div className="text-center">
@@ -671,7 +389,285 @@ export function ConstituencyPopoverContent({
                     <p className="text-sm text-center mt-1"><span className="font-semibold">Status:</span> {getLeaningLabel(constituency.politicalLeaning)}</p>
                 )}
             </div>
-            {popoverVariant === 'dashboard' ? dashboardContent : defaultContent}
+            {popoverVariant === 'dashboard' ? (
+                 <div className="space-y-4">
+                    <div className="space-y-2">
+                        <ChartContainer config={chartConfig} className="mx-auto w-full h-24">
+                            <ResponsiveContainer>
+                                <PieChart>
+                                    <ChartTooltip
+                                        cursor={false}
+                                        content={<ChartTooltipContent hideLabel />}
+                                    />
+                                    <Pie
+                                        data={chartData}
+                                        dataKey="votes"
+                                        nameKey="party"
+                                        startAngle={180}
+                                        endAngle={0}
+                                        innerRadius="70%"
+                                        cy="100%"
+                                        paddingAngle={2}
+                                    >
+                                        {chartData.map((entry) => (
+                                            <Cell key={entry.party} fill={entry.fill} />
+                                        ))}
+                                    </Pie>
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
+                        <div className="flex justify-between text-sm font-medium -mt-10">
+                            <div style={{ color: slpParty?.color }}>
+                                <p>SLP</p>
+                                <p>{constituency.predictedSlpPercentage}%</p>
+                            </div>
+                            <div style={{ color: uwpParty?.color }} className="text-right">
+                                <p>UWP</p>
+                                <p>{constituency.predictedUwpPercentage}%</p>
+                            </div>
+                        </div>
+                    </div>
+                    {popoverText && (
+                        <div className="text-sm text-center text-muted-foreground pt-2 border-t mt-2">
+                            {popoverText}
+                        </div>
+                    )}
+                </div>
+            ) : (
+              <>
+                {showCandidateBoxes && (election?.isCurrent || !election) && !isMakeYourOwn ? (
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            {slpCandidate && (
+                                <div className="flex flex-col items-center p-2 rounded-md bg-muted">
+                                    <div className="relative h-8 w-8 mb-2">
+                                        {slpParty?.logoUrl && !hideLogos ? (
+                                            <Image src={slpParty.logoUrl} alt={slpParty.name} fill className="object-contain" />
+                                        ): null}
+                                    </div>
+                                    <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
+                                    {slpCandidate?.imageUrl ? (
+                                        <Image src={slpCandidate.imageUrl} alt={slpCandidate?.name || 'SLP Candidate'} fill className="object-cover" />
+                                    ) : (
+                                        <UserSquare className="h-full w-full text-gray-400" />
+                                    )}
+                                    </div>
+                                    <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!slpCandidate}>
+                                        {slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'Candidate(s) N/A'}
+                                        {slpCandidate?.isIncumbent && <span className="font-normal text-muted-foreground ml-1">(Inc.)</span>}
+                                    </Button>
+                                </div>
+                            )}
+                            {independentCandidate && (
+                                <div className="flex flex-col items-center p-2 rounded-md bg-muted">
+                                    <div className="relative h-8 w-8 mb-2">
+                                        {indLogoUrl && !hideLogos && <Image src={indLogoUrl} alt="Independent" fill className="object-contain" />}
+                                    </div>
+                                    <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
+                                    {independentCandidate?.imageUrl ? (
+                                        <Image src={independentCandidate.imageUrl} alt={independentCandidate?.name || 'Independent Candidate'} fill className="object-cover" />
+                                    ) : (
+                                        <UserSquare className="h-full w-full text-gray-400" />
+                                    )}
+                                    </div>
+                                    <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!independentCandidate}>
+                                        {independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName}` : 'Candidate(s) N/A'}
+                                        {independentCandidate?.isIncumbent && <span className="font-normal text-muted-foreground ml-1">(Inc.)</span>}
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                        <div className="space-y-2">
+                            <div className="flex flex-col items-center p-2 rounded-md bg-muted">
+                                <div className="relative h-8 w-8 mb-2">
+                                    {uwpParty?.logoUrl && !hideLogos ? (
+                                        <Image src={uwpParty.logoUrl} alt={uwpParty.name} fill className="object-contain" />
+                                    ): null}
+                                </div>
+                                <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
+                                {uwpCandidate?.imageUrl ? (
+                                    <Image src={uwpCandidate.imageUrl} alt={uwpCandidate?.name || 'UWP Candidate'} fill className="object-cover" />
+                                ) : (
+                                    <UserSquare className="h-full w-full text-gray-400" />
+                                )}
+                                </div>
+                                <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!uwpCandidate}>
+                                    {uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'Candidate(s) N/A'}
+                                    {uwpCandidate?.isIncumbent && <span className="font-normal text-muted-foreground ml-1">(Inc.)</span>}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                ) : !isMakeYourOwn ? (
+                <div className="space-y-2">
+                    {!isSpecialConstituency && slpCandidate && (
+                        <CandidateBox 
+                            candidate={slpCandidate} 
+                            party={slpParty} 
+                            isWinner={slpIsWinner} 
+                            votes={currentResult?.slpVotes} 
+                            totalVotes={totalConstituencyVotes}
+                            margin={margin}
+                            electionStatus={electionStatus}
+                            statusColor={statusColor}
+                            votePercentageChange={slpVotePercentageChange}
+                            logoUrl={slpLogoUrl}
+                            hideLogo={hideLogos}
+                        />
+                    )}
+                    <CandidateBox 
+                        candidate={uwpCandidate} 
+                        party={uwpParty} 
+                        isWinner={uwpIsWinner} 
+                        votes={currentResult?.uwpVotes}
+                        totalVotes={totalConstituencyVotes}
+                        margin={margin}
+                        electionStatus={electionStatus}
+                        statusColor={statusColor}
+                        votePercentageChange={uwpVotePercentageChange}
+                        logoUrl={uwpLogoUrl}
+                        hideLogo={hideLogos}
+                    />
+                    {(isSpecialConstituency || (currentResult?.otherVotes || 0) > 0) && (
+                        <CandidateBox 
+                            candidate={independentCandidate}
+                            party={null}
+                            isWinner={otherIsWinner}
+                            votes={indVotes}
+                            totalVotes={totalConstituencyVotes}
+                            margin={margin}
+                            electionStatus={electionStatus}
+                            statusColor={statusColor}
+                            votePercentageChange={otherVotePercentageChange}
+                            logoUrl={indLogoUrl}
+                            hideLogo={hideLogos}
+                        />
+                    )}
+                </div>
+                ) : null}
+                
+                {onLeaningChange && isMakeYourOwn && (
+                    <div className="space-y-2 pt-2">
+                        <div className={cn("grid gap-2 text-center text-xs font-semibold items-start", (constituency.name === 'Castries North' || constituency.name === 'Castries Central') ? "grid-cols-2" : "grid-cols-2")}>
+                            
+                            {(constituency.name === 'Castries North' || constituency.name === 'Castries Central') ? (
+                                <>
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
+                                            {uwpCandidate?.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
+                                        </div>
+                                        <p className="font-semibold">{uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'UWP Candidate'}</p>
+                                        <RadioGroup 
+                                            value={constituency.politicalLeaning} 
+                                            onValueChange={onLeaningChange}
+                                            className="grid grid-cols-1 gap-1 pt-1"
+                                        >
+                                            <Label htmlFor={`${constituency.id}-uwp`} className={cn("flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors", constituency.politicalLeaning === 'uwp' ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
+                                                <RadioGroupItem value="uwp" id={`${constituency.id}-uwp`} className="sr-only" />
+                                                UWP
+                                            </Label>
+                                        </RadioGroup>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
+                                            {independentCandidate?.imageUrl ? <Image src={independentCandidate.imageUrl} alt={independentCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
+                                        </div>
+                                        <p className="font-semibold">{independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName}` : 'IND Candidate'}</p>
+                                        <RadioGroup 
+                                            value={constituency.politicalLeaning} 
+                                            onValueChange={onLeaningChange}
+                                            className="grid grid-cols-1 gap-1 pt-1"
+                                        >
+                                            <Label htmlFor={`${constituency.id}-ind`} className={cn("flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors", constituency.politicalLeaning === 'ind' ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
+                                                <RadioGroupItem value="ind" id={`${constituency.id}-ind`} className="sr-only" />
+                                                IND
+                                            </Label>
+                                        </RadioGroup>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
+                                            {slpCandidate?.imageUrl ? <Image src={slpCandidate.imageUrl} alt={slpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
+                                        </div>
+                                        <p className="font-semibold">{slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'SLP Candidate'}</p>
+                                        <RadioGroup 
+                                            value={constituency.politicalLeaning} 
+                                            onValueChange={onLeaningChange}
+                                            className="grid grid-cols-1 gap-1 pt-1"
+                                        >
+                                            <Label htmlFor={`${constituency.id}-slp`} className={cn("flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors", constituency.politicalLeaning === 'slp' ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
+                                                <RadioGroupItem value="slp" id={`${constituency.id}-slp`} className="sr-only" />
+                                                SLP
+                                            </Label>
+                                        </RadioGroup>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
+                                            {uwpCandidate?.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
+                                        </div>
+                                        <p className="font-semibold">{uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'UWP Candidate'}</p>
+                                        <RadioGroup 
+                                            value={constituency.politicalLeaning} 
+                                            onValueChange={onLeaningChange}
+                                            className="grid grid-cols-1 gap-1 pt-1"
+                                        >
+                                            <Label htmlFor={`${constituency.id}-uwp`} className={cn("flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors", constituency.politicalLeaning === 'uwp' ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
+                                                <RadioGroupItem value="uwp" id={`${constituency.id}-uwp`} className="sr-only" />
+                                                UWP
+                                            </Label>
+                                        </RadioGroup>
+                                    </div>
+                                </>
+                            )}
+                            
+                        </div>
+                    </div>
+                )}
+                {onLeaningChange && !isMakeYourOwn && (
+                    <div className="space-y-2 pt-2">
+                        <h5 className="text-xs font-medium text-muted-foreground">Choose Your Pick</h5>
+                        <RadioGroup 
+                            value={constituency.politicalLeaning} 
+                            onValueChange={onLeaningChange}
+                            className="grid grid-cols-5 gap-1"
+                        >
+                            {politicalLeaningOptions.map(opt => (
+                                <Label 
+                                    key={opt.value} 
+                                    htmlFor={`${constituency.id}-${opt.value}`}
+                                    className={cn(
+                                        "flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors",
+                                        constituency.politicalLeaning === opt.value 
+                                            ? "bg-primary text-primary-foreground" 
+                                            : "hover:bg-muted"
+                                    )}
+                                >
+                                    <RadioGroupItem value={opt.value} id={`${constituency.id}-${opt.value}`} className="sr-only" />
+                                    {opt.label}
+                                </Label>
+                            ))}
+                        </RadioGroup>
+                    </div>
+                )}
+                {onPredictionChange && (
+                    <div className="space-y-2 pt-2">
+                        <h5 className="text-xs font-medium text-muted-foreground">Edit Prediction</h5>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold" style={{color: slpParty?.color}}>SLP: {constituency.predictedSlpPercentage}%</span>
+                            <Slider
+                                value={[constituency.predictedSlpPercentage || 50]}
+                                onValueChange={(value) => onPredictionChange(value[0], 100 - value[0])}
+                                max={100}
+                                step={1}
+                            />
+                            <span className="text-xs font-semibold" style={{color: uwpParty?.color}}>UWP: {constituency.predictedUwpPercentage}%</span>
+                        </div>
+                    </div>
+                )}
+              </>
+            )}
         </div>
     );
 }
