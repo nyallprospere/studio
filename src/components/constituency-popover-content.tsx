@@ -15,7 +15,8 @@ import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { Progress } from './ui/progress';
 import { Pie, PieChart, Cell, ResponsiveContainer } from 'recharts';
-import { ChartContainer } from './ui/chart';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from './ui/chart';
+import type { ChartConfig } from './ui/chart';
 
 const politicalLeaningOptions = [
     { value: 'solid-uwp', label: 'Solid UWP', color: 'fill-yellow-500' },
@@ -157,6 +158,7 @@ export function ConstituencyPopoverContent({
     isMakeYourOwn,
     showCandidateBoxes = true,
     hideLogos = false,
+    variant = 'default',
 }: { 
     constituency: Constituency,
     election?: Election | null;
@@ -169,6 +171,7 @@ export function ConstituencyPopoverContent({
     isMakeYourOwn?: boolean;
     showCandidateBoxes?: boolean;
     hideLogos?: boolean;
+    variant?: 'default' | 'dashboard';
 }) {
     const { firestore } = useFirebase();
 
@@ -339,6 +342,16 @@ export function ConstituencyPopoverContent({
         return makeYourOwnLeaningOptions.filter(o => o.value === 'slp' || o.value === 'uwp' || o.value === 'unselected');
     }, [constituency.name]);
 
+    const chartConfig = {
+      slp: { label: 'SLP', color: 'hsl(var(--chart-5))' },
+      uwp: { label: 'UWP', color: 'hsl(var(--chart-1))' },
+    } satisfies ChartConfig;
+
+    const chartData = [
+        { party: 'uwp', votes: constituency.predictedUwpPercentage || 50, fill: 'var(--color-uwp)' },
+        { party: 'slp', votes: constituency.predictedSlpPercentage || 50, fill: 'var(--color-slp)' },
+      ];
+
     if (isLoading) {
         return <Skeleton className="h-40 w-full" />;
     }
@@ -354,8 +367,48 @@ export function ConstituencyPopoverContent({
                     <h5 className="col-span-full text-xs font-medium text-muted-foreground text-center mt-1">Choose Your Pick</h5>
                 )}
             </div>
+
+            {variant === 'dashboard' && (
+                <div className="space-y-2">
+                    <p className="text-sm text-center"><span className="font-semibold">Status:</span> {getLeaningLabel(constituency.politicalLeaning)}</p>
+                    <ChartContainer config={chartConfig} className="mx-auto w-full h-24">
+                        <ResponsiveContainer>
+                            <PieChart>
+                                <ChartTooltip
+                                    cursor={false}
+                                    content={<ChartTooltipContent hideLabel />}
+                                />
+                                <Pie
+                                    data={chartData}
+                                    dataKey="votes"
+                                    nameKey="party"
+                                    startAngle={-90}
+                                    endAngle={90}
+                                    innerRadius="70%"
+                                    cy="100%"
+                                    paddingAngle={2}
+                                >
+                                    {chartData.map((entry) => (
+                                        <Cell key={entry.party} fill={entry.fill} />
+                                    ))}
+                                </Pie>
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </ChartContainer>
+                     <div className="flex justify-between text-sm font-medium -mt-10">
+                        <div style={{ color: slpParty?.color }}>
+                            <p>SLP</p>
+                            <p>{constituency.predictedSlpPercentage}%</p>
+                        </div>
+                        <div style={{ color: uwpParty?.color }} className="text-right">
+                             <p>UWP</p>
+                            <p>{constituency.predictedUwpPercentage}%</p>
+                        </div>
+                    </div>
+                </div>
+            )}
             
-            {showCandidateBoxes && (election?.isCurrent || !election) && !isMakeYourOwn ? (
+            {showCandidateBoxes && (election?.isCurrent || !election) && !isMakeYourOwn && variant === 'default' ? (
                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         {slpCandidate && (
@@ -418,7 +471,7 @@ export function ConstituencyPopoverContent({
                         </div>
                     </div>
                 </div>
-            ) : !isMakeYourOwn ? (
+            ) : !isMakeYourOwn && variant === 'default' ? (
               <div className="space-y-2">
                    {!isSpecialConstituency && slpCandidate && (
                     <CandidateBox 

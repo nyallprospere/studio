@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -20,6 +19,7 @@ interface InteractiveSvgMapProps {
     partyLogos?: PartyLogo[];
     isMakeYourOwn?: boolean;
     hideLogos?: boolean;
+    popoverVariant?: 'default' | 'dashboard';
 }
 
 const politicalLeaningOptions = [
@@ -48,14 +48,14 @@ const getLeaningInfo = (leaning: string | undefined, isMakeYourOwn?: boolean) =>
 
 const SVGPaths: Record<string, string> = {};
 
-export function InteractiveSvgMap({ constituencies, selectedConstituencyId, election, onConstituencyClick, onLeaningChange, onPredictionChange, electionResults, previousElectionResults, previousElection, partyLogos, isMakeYourOwn, hideLogos }: InteractiveSvgMapProps) {
+export function InteractiveSvgMap({ constituencies, selectedConstituencyId, election, onConstituencyClick, onLeaningChange, onPredictionChange, electionResults, previousElectionResults, previousElection, partyLogos, isMakeYourOwn, hideLogos, popoverVariant }: InteractiveSvgMapProps) {
     const constituencyMap = useMemo(() => {
         const map = new Map<string, Constituency>();
         const anseLaRayeCanariesId = '4CRZlKXDXQCBPzvXjYeD';
 
         const anseLaRayeConstituency = constituencies.find(c => c.id === anseLaRayeCanariesId);
         if (anseLaRayeConstituency) {
-            map.set("Anse-la-Raye/Canaries", anseLaRayeConstituency);
+            map.set("Anse-La-Raye/Canaries", anseLaRayeConstituency);
         } else {
             // Create a fallback if not found in Firestore
             const fallback: Constituency = {
@@ -64,7 +64,7 @@ export function InteractiveSvgMap({ constituencies, selectedConstituencyId, elec
                 demographics: { registeredVoters: 0 },
                 politicalLeaning: isMakeYourOwn ? 'unselected' : 'tossup',
             };
-            map.set("Anse-la-Raye/Canaries", fallback);
+            map.set("Anse-La-Raye/Canaries", fallback);
         }
 
         const remainingConstituencies = constituencies.filter(c => c.id !== anseLaRayeCanariesId);
@@ -75,7 +75,7 @@ export function InteractiveSvgMap({ constituencies, selectedConstituencyId, elec
 
         // Ensure all 17 constituencies from SVGPaths are in the map
         for (const name in SVGPaths) {
-            if (!map.has(name) && name !== "Anse-la-Raye/Canaries") {
+            if (!map.has(name) && name !== "Anse-La-Raye/Canaries") {
                  const fallback: Constituency = {
                     id: name, // Use name as a fallback ID
                     name: name,
@@ -161,6 +161,7 @@ export function InteractiveSvgMap({ constituencies, selectedConstituencyId, elec
                                 partyLogos={partyLogos}
                                 isMakeYourOwn={isMakeYourOwn}
                                 hideLogos={hideLogos}
+                                variant={popoverVariant}
                            />
                         </PopoverContent>
                     </Popover>
