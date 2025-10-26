@@ -30,6 +30,7 @@ const makeYourOwnLeaningOptions = [
   { value: 'slp', label: 'SLP' },
   { value: 'uwp', label: 'UWP' },
   { value: 'ind', label: 'IND' },
+  { value: 'tossup', label: 'Toss Up' },
   { value: 'unselected', label: 'To be selected' },
 ];
 
@@ -199,6 +200,10 @@ export function ConstituencyPopoverContent({
             indCand = candidates.find(c => (c as Candidate).isIndependentCastriesNorth || (c as Candidate).isIndependentCastriesCentral) || null;
             if (constituency.name === 'Castries North' && !(indCand as Candidate)?.isIndependentCastriesNorth) indCand = null;
             if (constituency.name === 'Castries Central' && !(indCand as Candidate)?.isIndependentCastriesCentral) indCand = null;
+
+            if (constituency.name === 'Castries North' || constituency.name === 'Castries Central') {
+              slpCand = null;
+            }
         }
 
         return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand, slpParty: slp, uwpParty: uwp };
