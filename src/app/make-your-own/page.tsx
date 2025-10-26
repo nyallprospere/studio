@@ -274,7 +274,6 @@ export default function MakeYourOwnPage() {
             politicalLeaning: c.politicalLeaning || 'unselected',
         }));
 
-        // Client-side Storage Upload
         const storage = getStorage();
         const imageId = uuidv4();
         const imagePath = `SavedMaps/${imageId}.png`;
@@ -304,7 +303,7 @@ export default function MakeYourOwnPage() {
             setShareUrl(url);
             setSharedMapImageUrl(imageUrl);
 
-            let title = `I predict SLP ${seatCounts.slp}, UWP ${seatCounts.uwp}, and IND ${seatCounts.ind} for the Election.`;
+            const title = `I predict SLP ${seatCounts.slp}, UWP ${seatCounts.uwp}, and IND ${seatCounts.ind} for the Election.`;
             setDynamicShareTitle(title);
             
             setIsShareDialogOpen(true);
@@ -534,7 +533,7 @@ export default function MakeYourOwnPage() {
               <DialogHeader>
                   <DialogTitle>{dynamicShareTitle}</DialogTitle>
                   <DialogDescription>
-                      {shareDescription}
+                      {dynamicShareTitle}
                   </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
@@ -567,3 +566,4 @@ export default function MakeYourOwnPage() {
     </div>
   );
 }
+
