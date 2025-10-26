@@ -120,6 +120,7 @@ const VictoryStatusBar = ({ slpSeats, uwpSeats, indSeats }: { slpSeats: number, 
 export default function MakeYourOwnPage() {
     const { firestore } = useFirebase();
     const { toast } = useToast();
+    const { user } = useUser();
     const mapRef = useRef<HTMLDivElement>(null);
 
     const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
@@ -189,6 +190,12 @@ export default function MakeYourOwnPage() {
             )
         );
     }, []);
+
+    const handleSelectAll = (party: 'slp' | 'uwp' | 'unselected') => {
+        setMyMapConstituencies(prev =>
+            prev.map(c => ({ ...c, politicalLeaning: party }))
+        );
+    };
     
     const handleSaveAndShare = async () => {
         if (!mapRef.current) {
@@ -401,6 +408,13 @@ export default function MakeYourOwnPage() {
                                 )
                             })}
                         </div>
+                        {user && (
+                            <div className="mt-4 flex w-full justify-center gap-2">
+                                <Button variant="outline" size="sm" onClick={() => handleSelectAll('slp')}>Select All SLP</Button>
+                                <Button variant="outline" size="sm" onClick={() => handleSelectAll('uwp')}>Select All UWP</Button>
+                                <Button variant="outline" size="sm" onClick={() => handleSelectAll('unselected')}>Clear All</Button>
+                            </div>
+                        )}
                         <Button onClick={handleSaveAndShare} disabled={isSaving || !allSelected} className="w-full mt-6">
                             <Share2 className="mr-2 h-4 w-4" />
                             {isSaving ? 'Saving...' : 'Save & Share'}
