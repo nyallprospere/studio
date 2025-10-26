@@ -27,7 +27,7 @@ import { Copy } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { toPng } from 'html-to-image';
 import Image from 'next/image';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -79,40 +79,46 @@ const DEFAULT_LAYOUT = {
 
 type LayoutConfiguration = typeof DEFAULT_LAYOUT;
 
+const getVictoryStatus = (slpSeats: number, uwpSeats: number, indSeats: number) => {
+    const getStatus = (seats: number) => {
+        if (seats >= 16) return 'SLP Wins a Landslide!';
+        if (seats >= 14) return 'SLP Wins a Decisive Victory';
+        if (seats >= 11) return 'SLP Wins The Election.';
+        if (seats >= 9) return 'SLP Wins Close Victory';
+        return null;
+    };
+
+    const getUWPStatus = (seats: number) => {
+        if (seats >= 16) return 'UWP Wins a Landslide!';
+        if (seats >= 14) return 'UWP Wins a Decisive Victory';
+        if (seats >= 11) return 'UWP Wins The Election.';
+        if (seats >= 9) return 'UWP Wins Close Victory';
+        return null;
+    }
+
+    const slpStatus = getStatus(slpSeats);
+    const uwpStatus = getUWPStatus(uwpSeats);
+
+    let status = 'Too Early To Tell';
+    let color = 'bg-purple-500';
+
+    if (slpStatus) {
+        status = slpStatus;
+        color = 'bg-red-500';
+    } else if (uwpStatus) {
+        status = uwpStatus;
+        color = 'bg-yellow-400 text-black';
+    } else if (slpSeats + indSeats >= 9) {
+        status = 'SLP Wins Very Close Victory';
+        color = 'bg-red-500';
+    }
+    
+    return { status, color };
+};
+
+
 const VictoryStatusBar = ({ slpSeats, uwpSeats, indSeats }: { slpSeats: number, uwpSeats: number, indSeats: number }) => {
-  const getStatus = (seats: number) => {
-    if (seats >= 16) return 'SLP Wins a Landslide!';
-    if (seats >= 14) return 'SLP Wins a Decisive Victory';
-    if (seats >= 11) return 'SLP Wins The Election.';
-    if (seats >= 9) return 'SLP Wins Close Victory';
-    return null;
-  };
-  
-  const getUWPStatus = (seats: number) => {
-    if (seats >= 16) return 'UWP Wins a Landslide!';
-    if (seats >= 14) return 'UWP Wins a Decisive Victory';
-    if (seats >= 11) return 'UWP Wins The Election.';
-    if (seats >= 9) return 'UWP Wins Close Victory';
-    return null;
-  }
-
-  const slpStatus = getStatus(slpSeats);
-  const uwpStatus = getUWPStatus(uwpSeats);
-
-  let status = 'Too Early To Tell';
-  let color = 'bg-purple-500';
-
-  if (slpStatus) {
-    status = slpStatus;
-    color = 'bg-red-500';
-  } else if (uwpStatus) {
-    status = uwpStatus;
-    color = 'bg-yellow-400 text-black';
-  } else if (slpSeats + indSeats >= 9) {
-    status = 'SLP Wins Very Close Victory';
-    color = 'bg-red-500';
-  }
-
+  const { status, color } = getVictoryStatus(slpSeats, uwpSeats, indSeats);
 
   return (
     <div className={`p-2 rounded-md text-center text-white font-bold mb-4 ${color}`}>
@@ -218,6 +224,7 @@ export default function MakeYourOwnPage() {
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
     const [sharedMapImageUrl, setSharedMapImageUrl] = useState<string | null>(null);
     const [dynamicShareTitle, setDynamicShareTitle] = useState('');
+    const [dynamicShareDescription, setDynamicShareDescription] = useState('');
 
 
     useEffect(() => {
@@ -303,8 +310,13 @@ export default function MakeYourOwnPage() {
             setShareUrl(url);
             setSharedMapImageUrl(imageUrl);
 
-            const title = `I predict SLP ${seatCounts.slp}, UWP ${seatCounts.uwp}, and IND ${seatCounts.ind} for the Election.`;
+            const { slp, uwp, ind } = seatCounts;
+            const title = `I predict SLP ${slp}, UWP ${uwp}, and IND ${ind} for the Election.`;
             setDynamicShareTitle(title);
+            
+            const victoryStatus = getVictoryStatus(slp, uwp, ind).status;
+            const description = `${victoryStatus} Make your own prediction:`;
+            setDynamicShareDescription(description);
             
             setIsShareDialogOpen(true);
         }
@@ -533,7 +545,8 @@ export default function MakeYourOwnPage() {
               <DialogHeader>
                   <DialogTitle>{dynamicShareTitle}</DialogTitle>
                   <DialogDescription>
-                      {dynamicShareTitle}
+                        {dynamicShareDescription}
+                        <a href={shareUrl} className="text-primary underline">{shareUrl}</a>
                   </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
@@ -566,4 +579,5 @@ export default function MakeYourOwnPage() {
     </div>
   );
 }
+
 
