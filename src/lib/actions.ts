@@ -4,23 +4,42 @@
 import { generateElectionPredictions } from '@/ai/flows/generate-election-predictions';
 import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
 import { summarizeArticle as summarizeArticleFlow } from '@/ai/flows/summarize-article';
-import { initializeFirebase } from '@/firebase';
+import { initializeApp, getApps, App } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 import { collection, getDocs, query, orderBy, limit, addDoc, where } from 'firebase/firestore';
 import type { UserMap } from './types';
+import { firebaseConfig } from '@/firebase/config';
+
+
+function getFirebaseAdmin(): App {
+    if (getApps().length > 0) {
+        return getApps()[0];
+    }
+    
+    // In a server environment, you can use service account credentials
+    // For simplicity here, we'll rely on ADC or previously set credentials
+    // Make sure your server environment is authenticated (e.g., running on Google Cloud)
+    return initializeApp({
+        credential: undefined, // Rely on Application Default Credentials
+        projectId: firebaseConfig.projectId,
+    });
+}
 
 
 async function getCollectionData(collectionName: string) {
-    const { firestore } = initializeFirebase();
-    const collRef = collection(firestore, collectionName);
-    const snapshot = await getDocs(collRef);
+    const adminApp = getFirebaseAdmin();
+    const firestore = getFirestore(adminApp);
+    const collRef = firestore.collection(collectionName);
+    const snapshot = await collRef.get();
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
 async function getLatestHistoricalResult() {
-    const { firestore } = initializeFirebase();
-    const resultsRef = collection(firestore, 'election_results');
-    const q = query(resultsRef, orderBy('year', 'desc'), limit(1));
-    const snapshot = await getDocs(q);
+    const adminApp = getFirebaseAdmin();
+    const firestore = getFirestore(adminApp);
+    const resultsRef = firestore.collection('election_results');
+    const q = resultsRef.orderBy('year', 'desc').limit(1);
+    const snapshot = await q.get();
     if (snapshot.empty) {
         return null;
     }
@@ -66,9 +85,10 @@ export async function getPrediction(newsSummary: string) {
 
 export async function saveUserMap(mapData: UserMap['mapData']) {
     try {
-        const { firestore } = initializeFirebase();
+        const adminApp = getFirebaseAdmin();
+        const firestore = getFirestore(adminApp);
         
-        const docRef = await addDoc(collection(firestore, 'user_maps'), {
+        const docRef = await firestore.collection('user_maps').add({
             mapData,
             createdAt: new Date(),
         });
@@ -81,13 +101,14 @@ export async function saveUserMap(mapData: UserMap['mapData']) {
 }
 
 export async function subscribeToMailingList(data: { firstName: string; email: string }) {
-    const { firestore } = initializeFirebase();
-    const subscribersCollection = collection(firestore, 'mailing_list_subscribers');
+    const adminApp = getFirebaseAdmin();
+    const firestore = getFirestore(adminApp);
+    const subscribersCollection = firestore.collection('mailing_list_subscribers');
     
     try {
         // Check if email already exists
-        const q = query(subscribersCollection, where("email", "==", data.email));
-        const existingSubscriber = await getDocs(q);
+        const q = subscribersCollection.where("email", "==", data.email);
+        const existingSubscriber = await q.get();
         if (!existingSubscriber.empty) {
             return { error: "This email is already subscribed." };
         }
@@ -97,23 +118,10 @@ export async function subscribeToMailingList(data: { firstName: string; email: s
             subscribedAt: new Date(),
         };
 
-        await addDoc(subscribersCollection, dataToSave);
+        await subscribersCollection.add(dataToSave);
         return { success: true };
     } catch (e: any) {
         console.error('Error subscribing to mailing list:', e);
-
-        // This is a server action, so we can't use the client-side errorEmitter.
-        // We will simulate the error message that the client-side architecture would create.
-        if (e.code === 'permission-denied' || (e.message && e.message.includes('permission-denied'))) {
-             const errorMessage = `FirestoreError: Missing or insufficient permissions: The following request was denied by Firestore Security Rules:
-{
-  "auth": null,
-  "method": "create",
-  "path": "/databases/(default)/documents/${subscribersCollection.path}"
-}`;
-            return { error: errorMessage }
-        }
-
         return { error: 'Could not subscribe. Please try again.' };
     }
 }
