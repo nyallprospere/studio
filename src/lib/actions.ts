@@ -5,24 +5,33 @@ import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
 import { summarizeArticle as summarizeArticleFlow } from '@/ai/flows/summarize-article';
 import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
 import type { UserMap } from './types';
+import { v4 as uuidv4 } from 'uuid';
 
 let adminApp: App;
+let serviceAccount: any;
 
-function getFirebaseAdminApp(): App {
-  if (getApps().length > 0) {
-    return getApps()[0];
-  }
-
-  const serviceAccount = JSON.parse(
+try {
+  serviceAccount = JSON.parse(
     process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string
   );
+} catch (e) {
+  console.error("Failed to parse Firebase service account key. Ensure it's set correctly in environment variables.");
+}
 
-  adminApp = initializeApp({
-    credential: cert(serviceAccount),
-    storageBucket: `${serviceAccount.project_id}.appspot.com`,
-  });
-
+function getFirebaseAdminApp(): App {
+  if (!getApps().length) {
+    if (!serviceAccount) {
+      throw new Error("Firebase service account credentials are not loaded.");
+    }
+    adminApp = initializeApp({
+      credential: cert(serviceAccount),
+      storageBucket: `${serviceAccount.project_id}.appspot.com`,
+    });
+  } else {
+    adminApp = getApps()[0];
+  }
   return adminApp;
 }
 
@@ -118,4 +127,39 @@ export async function summarizeArticle(content: string): Promise<string> {
         console.error("Error summarizing article:", e);
         return "Could not generate summary.";
     }
+}
+
+export async function saveUserMap(
+  mapData: UserMap['mapData'],
+  imageDataUrl: string
+): Promise<{ id?: string; error?: string }> {
+  try {
+    const adminApp = getFirebaseAdminApp();
+    const firestore = getFirestore(adminApp);
+    const storage = getStorage(adminApp);
+
+    const imageBuffer = Buffer.from(imageDataUrl.split(',')[1], 'base64');
+    const imageId = uuidv4();
+    const imagePath = `SavedMaps/${imageId}.png`;
+    const file = storage.bucket().file(imagePath);
+
+    await file.save(imageBuffer, {
+      metadata: {
+        contentType: 'image/png',
+      },
+    });
+    
+    const imageUrl = `https://storage.googleapis.com/${storage.bucket().name}/${imagePath}`;
+
+    const mapDocRef = await firestore.collection('user_maps').add({
+      createdAt: new Date(),
+      mapData,
+      imageUrl,
+    });
+
+    return { id: mapDocRef.id };
+  } catch (error: any) {
+    console.error('Error in saveUserMap:', error);
+    return { error: 'Could not save your map. Please try again.' };
+  }
 }

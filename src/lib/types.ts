@@ -155,6 +155,7 @@ export interface UserMap {
         constituencyId: string;
         politicalLeaning: string;
     }[];
+    imageUrl?: string;
 }
 
 export interface Ad {

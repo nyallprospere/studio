@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import type { Constituency, ElectionResult, Election } from '@/lib/types';
+import type { Constituency, ElectionResult, Election, UserMap } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirebase, useMemoFirebase, useUser, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, doc, serverTimestamp, query, orderBy, where, getDocs } from 'firebase/firestore';
@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { debounce } from 'lodash';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
-import { Share2, Twitter, Facebook } from 'lucide-react';
+import { Share2, Twitter, Facebook, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/dialog"
 import { Copy } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+import { saveUserMap } from '@/lib/actions';
+import { toPng } from 'html-to-image';
 
 
 const politicalLeaningOptions = [
@@ -164,6 +166,7 @@ export default function MakeYourOwnPage() {
     const { toast } = useToast();
     const { user } = useUser();
     const searchParams = useSearchParams();
+    const mapRef = useRef<HTMLDivElement>(null);
 
     const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
     const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
@@ -245,11 +248,41 @@ export default function MakeYourOwnPage() {
         );
     };
     
-    const handleShare = () => {
-        const encodedData = encodeMapData(myMapConstituencies);
-        const url = `${window.location.origin}/make-your-own?map=${encodedData}`;
-        setShareUrl(url);
-        setIsShareDialogOpen(true);
+    const handleSaveAndShare = async () => {
+        setIsSaving(true);
+        try {
+            if (!mapRef.current) {
+                throw new Error("Map element not found");
+            }
+    
+            const imageDataUrl = await toPng(mapRef.current, { cacheBust: true });
+    
+            const mapDataToSave = myMapConstituencies.map(c => ({
+                constituencyId: c.id,
+                politicalLeaning: c.politicalLeaning || 'unselected',
+            }));
+    
+            const result = await saveUserMap(mapDataToSave, imageDataUrl);
+    
+            if (result.error) {
+                throw new Error(result.error);
+            }
+    
+            if (result.id) {
+                const url = `${window.location.origin}/maps/${result.id}`;
+                setShareUrl(url);
+                setIsShareDialogOpen(true);
+            }
+        } catch (error: any) {
+            console.error("Error saving map:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: "Could not save your map. Please try again."
+            });
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const isLoading = loadingConstituencies || loadingLayout || loadingElections;
@@ -356,7 +389,7 @@ export default function MakeYourOwnPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="lg:col-span-1">
              <Card>
-                <CardContent className="p-2">
+                <CardContent className="p-2" ref={mapRef}>
                     <InteractiveSvgMap 
                         constituencies={myMapConstituencies} 
                         selectedConstituencyId={selectedMyMapConstituencyId}
@@ -434,9 +467,13 @@ export default function MakeYourOwnPage() {
                                 <Button variant="outline" size="sm" onClick={() => handleSelectAll('unselected')}>Clear All</Button>
                             </div>
                         )}
-                        <Button onClick={handleShare} disabled={!allSelected} className="w-full mt-6">
-                            <Share2 className="mr-2 h-4 w-4" />
-                            Share
+                        <Button onClick={handleSaveAndShare} disabled={!allSelected || isSaving} className="w-full mt-6">
+                            {isSaving ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <Share2 className="mr-2 h-4 w-4" />
+                            )}
+                            Save & Share
                         </Button>
                     </CardContent>
                 </Card>
