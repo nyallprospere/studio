@@ -112,12 +112,12 @@ export async function subscribeToMailingList(data: { firstName: string; email: s
 
         // This is a server action, so we can't use the client-side errorEmitter.
         // We will simulate the error message that the client-side architecture would create.
-        if (e.code === 'permission-denied') {
-             const errorMessage = `Missing or insufficient permissions: The following request was denied by Firestore Security Rules:
+        if (e.code === 'permission-denied' || (e.message && e.message.includes('permission-denied'))) {
+             const errorMessage = `FirestoreError: Missing or insufficient permissions: The following request was denied by Firestore Security Rules:
 {
   "auth": null,
   "method": "create",
-  "path": "/databases/(default)/documents/mailing_list_subscribers"
+  "path": "/databases/(default)/documents/${subscribersCollection.path}"
 }`;
             return { error: errorMessage }
         }
