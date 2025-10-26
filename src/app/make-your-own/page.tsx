@@ -28,6 +28,7 @@ import { saveUserMap } from '@/lib/actions';
 import { toPng } from 'html-to-image';
 import Image from 'next/image';
 import ReCAPTCHA from "react-google-recaptcha";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 const politicalLeaningOptions = [
@@ -398,6 +399,8 @@ export default function MakeYourOwnPage() {
     };
 
     const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    const isRecaptchaConfigured = siteKey && siteKey !== 'your-recaptcha-site-key-here';
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -493,16 +496,35 @@ export default function MakeYourOwnPage() {
                             </div>
                         )}
                         <div className="mt-6 w-full space-y-4">
-                            {siteKey && (
+                            {isRecaptchaConfigured ? (
                                 <ReCAPTCHA
                                     sitekey={siteKey}
                                     onChange={setRecaptchaToken}
                                 />
-                            )}
-                            <Button onClick={handleSaveAndShare} disabled={!allSelected || isSaving || !recaptchaToken} className="w-full">
-                                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
-                                Save & Share
-                            </Button>
+                            ) : null}
+
+                             <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div className="w-full">
+                                            <Button onClick={handleSaveAndShare} disabled={!allSelected || isSaving || !recaptchaToken || !isRecaptchaConfigured} className="w-full">
+                                                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
+                                                Save & Share
+                                            </Button>
+                                        </div>
+                                    </TooltipTrigger>
+                                    {!isRecaptchaConfigured && (
+                                        <TooltipContent>
+                                            <p>This feature is disabled until reCAPTCHA is configured by the site administrator.</p>
+                                        </TooltipContent>
+                                    )}
+                                     {!allSelected && isRecaptchaConfigured && (
+                                        <TooltipContent>
+                                            <p>Please make a selection for all constituencies to share.</p>
+                                        </TooltipContent>
+                                    )}
+                                </Tooltip>
+                            </TooltipProvider>
                         </div>
                     </CardContent>
                 </Card>
