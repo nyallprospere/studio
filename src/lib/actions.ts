@@ -6,7 +6,6 @@ import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
 import { summarizeArticle as summarizeArticleFlow } from '@/ai/flows/summarize-article';
 import { getFirebaseAdmin } from '@/firebase/server';
 import { collection, getDocs, query, orderBy, limit, addDoc, where } from 'firebase/firestore';
-import { headers } from 'next/headers';
 import type { UserMap } from './types';
 
 
@@ -68,17 +67,10 @@ export async function getPrediction(newsSummary: string) {
 export async function saveUserMap(mapData: UserMap['mapData']) {
     try {
         const { firestore } = getFirebaseAdmin();
-        const headersList = headers();
-        const ip = headersList.get('x-forwarded-for') || 'unknown';
-        const city = headersList.get('x-vercel-ip-city') || 'unknown';
-        const country = headersList.get('x-vercel-ip-country') || 'unknown';
-
+        
         const docRef = await addDoc(collection(firestore, 'user_maps'), {
             mapData,
             createdAt: new Date(),
-            ipAddress: ip,
-            city,
-            country,
         });
 
         return { id: docRef.id };
