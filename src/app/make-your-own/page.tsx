@@ -557,12 +557,12 @@ export default function MakeYourOwnPage() {
                   </DialogTitle>
                   <DialogDescription>
                         {dynamicShareDescription}{' '}
-                        <a href={shareUrl} className="text-primary underline">{shareUrl}</a>
+                        <a href={shareUrl} className="text-primary underline">Make your own prediction</a>
                   </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                   {sharedMapImageUrl && (
-                      <div className="relative w-full h-64 rounded-lg overflow-hidden border">
+                      <div className="relative h-64 w-full rounded-lg overflow-hidden border">
                           <Image src={sharedMapImageUrl} alt="User prediction map" fill className="object-contain" />
                       </div>
                   )}
@@ -590,6 +590,7 @@ export default function MakeYourOwnPage() {
     </div>
   );
 }
+
 
 
 
