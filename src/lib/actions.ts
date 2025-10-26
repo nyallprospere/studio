@@ -1,4 +1,3 @@
-
 'use server';
 
 import { generateElectionPredictions } from '@/ai/flows/generate-election-predictions';
@@ -16,17 +15,15 @@ function getFirebaseAdminApp(): App {
     return getApps()[0];
   }
 
-  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-    adminApp = initializeApp({
-      credential: cert(serviceAccount),
-      storageBucket: `${serviceAccount.project_id}.appspot.com`,
-    });
-  } else {
-    adminApp = initializeApp({
-        storageBucket: `${process.env.GCLOUD_PROJECT}.appspot.com`,
-    });
-  }
+  const serviceAccount = JSON.parse(
+    process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string
+  );
+
+  adminApp = initializeApp({
+    credential: cert(serviceAccount),
+    storageBucket: `${serviceAccount.project_id}.appspot.com`,
+  });
+
   return adminApp;
 }
 
@@ -93,22 +90,20 @@ export async function saveUserMap(mapData: UserMap['mapData'], mapImage: string)
         const adminApp = getFirebaseAdminApp();
         const firestore = getFirestore(adminApp);
         const storage = getStorage(adminApp);
+        const bucket = storage.bucket();
 
-        // Upload image
         const imageBuffer = Buffer.from(mapImage.split(',')[1], 'base64');
         const fileName = `SavedMaps/${Date.now()}.png`;
-        const file = storage.bucket().file(fileName);
+        const file = bucket.file(fileName);
         
         await file.save(imageBuffer, {
             metadata: {
                 contentType: 'image/png',
+                cacheControl: 'public, max-age=31536000',
             },
         });
         
-        const [imageUrl] = await file.getSignedUrl({
-            action: 'read',
-            expires: '03-09-2491' // A very long time in the future
-        });
+        const imageUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
         
         const docRef = await firestore.collection('user_maps').add({
             mapData,
@@ -158,4 +153,3 @@ export async function summarizeArticle(content: string): Promise<string> {
         return "Could not generate summary.";
     }
 }
-
