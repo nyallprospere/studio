@@ -399,7 +399,7 @@ export default function MakeYourOwnPage() {
     };
 
     const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-    const isRecaptchaConfigured = siteKey && siteKey !== 'your-recaptcha-site-key-here';
+    const isRecaptchaConfigured = siteKey && siteKey !== '6LfpTvcrAAAAAFX4Ckm0BO054EvAycmhhpHLe-A0';
 
 
   return (
@@ -496,12 +496,12 @@ export default function MakeYourOwnPage() {
                             </div>
                         )}
                         <div className="mt-6 w-full space-y-4">
-                            {isRecaptchaConfigured ? (
+                            {isRecaptchaConfigured && (
                                 <ReCAPTCHA
-                                    sitekey={siteKey}
+                                    sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ''}
                                     onChange={setRecaptchaToken}
                                 />
-                            ) : null}
+                            )}
 
                              <TooltipProvider>
                                 <Tooltip>
@@ -518,9 +518,9 @@ export default function MakeYourOwnPage() {
                                             <p>This feature is disabled until reCAPTCHA is configured by the site administrator.</p>
                                         </TooltipContent>
                                     )}
-                                     {!allSelected && isRecaptchaConfigured && (
+                                     {(!allSelected || !recaptchaToken) && isRecaptchaConfigured && (
                                         <TooltipContent>
-                                            <p>Please make a selection for all constituencies to share.</p>
+                                            <p>Please make a selection for all constituencies and complete the reCAPTCHA to share.</p>
                                         </TooltipContent>
                                     )}
                                 </Tooltip>
