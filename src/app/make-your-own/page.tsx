@@ -3,7 +3,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import type { Constituency, ElectionResult, Election, SiteSettings, UserMap } from '@/lib/types';
+import type { Constituency, ElectionResult, Election, SiteSettings, UserMap, Party } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirebase, useMemoFirebase, useUser, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, doc, serverTimestamp, query, orderBy, where, getDocs, addDoc } from 'firebase/firestore';
@@ -181,6 +181,9 @@ export default function MakeYourOwnPage() {
     const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
     const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
 
+    const partiesQuery = useMemoFirebase(() => (firestore ? collection(firestore, 'parties') : null), [firestore]);
+    const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
+
     const layoutRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'pageLayouts') : null, [firestore]);
     const { data: savedLayouts, isLoading: loadingLayout } = useDoc(layoutRef);
 
@@ -334,7 +337,7 @@ export default function MakeYourOwnPage() {
 };
 
 
-    const isLoading = loadingConstituencies || loadingLayout || loadingElections;
+    const isLoading = loadingConstituencies || loadingLayout || loadingElections || loadingParties;
 
     const { myMapChartData, seatCounts, allSelected, seatChanges } = useMemo(() => {
         if (!myMapConstituencies) return { myMapChartData: [], seatCounts: {}, allSelected: false, seatChanges: {} };
@@ -421,6 +424,9 @@ export default function MakeYourOwnPage() {
         const sign = change > 0 ? '+' : '';
         return <span className={`text-xs font-semibold ml-1 ${color}`}>({sign}{change})</span>;
     };
+
+    const slpColor = parties?.find(p => p.acronym === 'SLP')?.color || 'hsl(var(--chart-5))';
+    const uwpColor = parties?.find(p => p.acronym === 'UWP')?.color || 'hsl(var(--chart-1))';
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -543,7 +549,12 @@ export default function MakeYourOwnPage() {
       <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
           <DialogContent>
               <DialogHeader>
-                  <DialogTitle>{dynamicShareTitle}</DialogTitle>
+                  <DialogTitle>
+                        I predict{' '}
+                        <span style={{ color: slpColor }} className="font-bold">SLP {seatCounts.slp}</span>,{' '}
+                        <span style={{ color: uwpColor }} className="font-bold">UWP {seatCounts.uwp}</span>, and{' '}
+                        <span style={{ color: 'hsl(var(--primary))' }} className="font-bold">IND {seatCounts.ind}</span> for the Election.
+                  </DialogTitle>
                   <DialogDescription>
                         {dynamicShareDescription}
                         <a href={shareUrl} className="text-primary underline">{shareUrl}</a>
@@ -551,8 +562,8 @@ export default function MakeYourOwnPage() {
               </DialogHeader>
               <div className="space-y-4">
                   {sharedMapImageUrl && (
-                      <div className="relative aspect-video w-full rounded-lg overflow-hidden border">
-                          <Image src={sharedMapImageUrl} alt="User prediction map" fill className="object-cover" />
+                      <div className="relative w-full rounded-lg overflow-hidden border">
+                          <Image src={sharedMapImageUrl} alt="User prediction map" width={1200} height={675} className="object-contain" />
                       </div>
                   )}
                     <div className="flex items-center space-x-2">
@@ -579,5 +590,6 @@ export default function MakeYourOwnPage() {
     </div>
   );
 }
+
 
 
