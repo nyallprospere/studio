@@ -10,6 +10,7 @@ import { PageHeader } from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import Image from 'next/image';
 
 function MapPageSkeleton() {
     return (
@@ -68,15 +69,20 @@ export default function SavedMapPage() {
             <PageHeader title="User Prediction Map" description={`A prediction created on ${new Date(userMap.createdAt.toDate()).toLocaleDateString()}`} />
             <Card>
                 <CardContent className="p-2">
-                    <InteractiveSvgMap 
-                        constituencies={mapConstituencies}
-                        selectedConstituencyId={null}
-                        onConstituencyClick={() => {}} // Read-only
-                        isMakeYourOwn={true}
-                    />
+                    {userMap.imageUrl ? (
+                        <div className="relative aspect-video">
+                            <Image src={userMap.imageUrl} alt="User Prediction Map" fill className="object-contain" />
+                        </div>
+                    ) : (
+                        <InteractiveSvgMap 
+                            constituencies={mapConstituencies}
+                            selectedConstituencyId={null}
+                            onConstituencyClick={() => {}} // Read-only
+                            isMakeYourOwn={true}
+                        />
+                    )}
                 </CardContent>
             </Card>
         </div>
     );
 }
-

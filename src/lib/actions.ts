@@ -5,6 +5,26 @@ import { generateElectionPredictions } from '@/ai/flows/generate-election-predic
 import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
 import { summarizeArticle as summarizeArticleFlow } from '@/ai/flows/summarize-article';
 import { v4 as uuidv4 } from 'uuid';
+import * as admin from 'firebase-admin';
+
+// Helper to initialize Firebase Admin SDK
+function initializeFirebaseAdmin() {
+  if (admin.apps.length) {
+    return admin.app();
+  }
+
+  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  if (!serviceAccountKey) {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set.');
+  }
+
+  const credentials = JSON.parse(serviceAccountKey);
+
+  return admin.initializeApp({
+    credential: admin.credential.cert(credentials),
+    storageBucket: credentials.project_id + '.appspot.com',
+  });
+}
 
 export async function getPrediction(newsSummary: string) {
   try {
@@ -48,4 +68,48 @@ export async function summarizeArticle(content: string): Promise<string> {
         console.error("Error summarizing article:", e);
         return "Could not generate summary.";
     }
+}
+
+interface SaveMapData {
+  mapData: {
+    constituencyId: string;
+    politicalLeaning: string;
+  }[];
+  imageDataUrl: string;
+}
+
+export async function saveUserMap(data: SaveMapData) {
+  try {
+    const adminApp = initializeFirebaseAdmin();
+    const firestore = admin.firestore();
+    const storage = admin.storage();
+    const bucket = storage.bucket();
+
+    // 1. Handle Image Upload
+    const imageBuffer = Buffer.from(data.imageDataUrl.split(',')[1], 'base64');
+    const imageId = uuidv4();
+    const imagePath = `SavedMaps/${imageId}.png`;
+    const file = bucket.file(imagePath);
+
+    await file.save(imageBuffer, {
+      metadata: {
+        contentType: 'image/png',
+      },
+    });
+    
+    // The public URL is constructed manually.
+    const imageUrl = `https://storage.googleapis.com/${bucket.name}/${imagePath}`;
+
+    // 2. Save Map Data to Firestore
+    const mapDocRef = await firestore.collection('user_maps').add({
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      mapData: data.mapData,
+      imageUrl: imageUrl, // Save the public URL
+    });
+
+    return { id: mapDocRef.id, imageUrl: imageUrl };
+  } catch (error) {
+    console.error('Error saving user map:', error);
+    return { error: 'Could not save your map. Please try again.' };
+  }
 }

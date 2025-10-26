@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import type { Constituency, ElectionResult, Election, UserMap } from '@/lib/types';
+import type { Constituency, ElectionResult, Election, UserMap, SiteSettings } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirebase, useMemoFirebase, useUser, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, doc, serverTimestamp, query, orderBy, where, getDocs } from 'firebase/firestore';
@@ -26,6 +26,7 @@ import { Copy } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { saveUserMap } from '@/lib/actions';
 import { toPng } from 'html-to-image';
+import Image from 'next/image';
 
 
 const politicalLeaningOptions = [
@@ -176,7 +177,7 @@ export default function MakeYourOwnPage() {
     const { data: savedLayouts, isLoading: loadingLayout } = useDoc(layoutRef);
 
     const siteSettingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'site') : null, [firestore]);
-    const { data: siteSettings } = useDoc(siteSettingsRef);
+    const { data: siteSettings } = useDoc<SiteSettings>(siteSettingsRef);
 
     const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
     const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
@@ -211,6 +212,7 @@ export default function MakeYourOwnPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [shareUrl, setShareUrl] = useState('');
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+    const [sharedMapImageUrl, setSharedMapImageUrl] = useState<string | null>(null);
 
 
     useEffect(() => {
@@ -249,12 +251,50 @@ export default function MakeYourOwnPage() {
         );
     };
     
-    const handleShare = () => {
-        const encodedMap = encodeMapData(myMapConstituencies);
-        const url = `${window.location.origin}/make-your-own?map=${encodedMap}`;
-        setShareUrl(url);
-        setIsShareDialogOpen(true);
+   const handleSaveAndShare = async () => {
+        if (!mapRef.current) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not capture map image. Please try again.',
+            });
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            const dataUrl = await toPng(mapRef.current);
+            const mapData = myMapConstituencies.map(c => ({
+                constituencyId: c.id,
+                politicalLeaning: c.politicalLeaning || 'unselected',
+            }));
+
+            const result = await saveUserMap({ mapData, imageDataUrl: dataUrl });
+
+            if (result.error) {
+                throw new Error(result.error);
+            }
+    
+            if (result.id) {
+                const url = `${window.location.origin}/maps/${result.id}`;
+                setShareUrl(url);
+                setSharedMapImageUrl(result.imageUrl || null);
+                setIsShareDialogOpen(true);
+            } else {
+                 throw new Error("Failed to get back a map ID after saving.");
+            }
+        } catch (error) {
+            console.error('Save and share error:', error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not save your map. Please try again.',
+            });
+        } finally {
+            setIsSaving(false);
+        }
     };
+
 
     const isLoading = loadingConstituencies || loadingLayout || loadingElections;
 
@@ -328,8 +368,7 @@ export default function MakeYourOwnPage() {
         return acc;
     }, {});
 
-    const shareTitle = siteSettings?.defaultShareTitle || "Check out my St. Lucia election prediction!";
-    const shareDescription = siteSettings?.defaultShareDescription || "I made my own 2026 election prediction on LucianVotes. See my map and create your own!";
+    const shareTitle = "Check out my St. Lucian Election Prediction!";
     const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`;
     const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
     
@@ -438,9 +477,9 @@ export default function MakeYourOwnPage() {
                                 <Button variant="outline" size="sm" onClick={() => handleSelectAll('unselected')}>Clear All</Button>
                             </div>
                         )}
-                        <Button onClick={handleShare} disabled={!allSelected} className="w-full mt-6">
-                            <Share2 className="mr-2 h-4 w-4" />
-                            Share
+                        <Button onClick={handleSaveAndShare} disabled={!allSelected || isSaving} className="w-full mt-6">
+                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
+                            Save & Share
                         </Button>
                     </CardContent>
                 </Card>
@@ -453,10 +492,15 @@ export default function MakeYourOwnPage() {
               <DialogHeader>
                   <DialogTitle>Share Your Prediction Map</DialogTitle>
                   <DialogDescription>
-                      Share your custom map with your friends!
+                      Check out my St. Lucian Election Prediction!
                   </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
+                  {sharedMapImageUrl && (
+                      <div className="relative aspect-video w-full rounded-lg overflow-hidden border">
+                          <Image src={sharedMapImageUrl} alt="User prediction map" fill className="object-cover" />
+                      </div>
+                  )}
                     <div className="flex items-center space-x-2">
                         <Input value={shareUrl} readOnly />
                         <Button type="button" size="icon" onClick={copyToClipboard}>

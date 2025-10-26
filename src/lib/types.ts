@@ -136,8 +136,20 @@ export interface ElectionYearResult {
   }[];
 }
 
+export interface UserMap {
+  id: string;
+  createdAt: any;
+  mapData: {
+    constituencyId: string;
+    politicalLeaning: string;
+  }[];
+  imageUrl?: string;
+  ipAddress?: string;
+  city?: string;
+  country?: string;
+}
+
 export interface SiteSettings {
-    mapUrl?: string;
     defaultShareTitle: string;
     defaultShareDescription: string;
 }

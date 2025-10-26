@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Eye, Trash2, Calendar as CalendarIcon, Download } from 'lucide-react';
+import { Eye, Trash2, Calendar as CalendarIcon, Download, Image as ImageIcon } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import * as XLSX from 'xlsx';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import Image from 'next/image';
 
 export default function ManageMapSubmissionsPage() {
     const { firestore } = useFirebase();
@@ -84,12 +85,12 @@ export default function ManageMapSubmissionsPage() {
         return userMaps.map(map => {
             const slpSeats = map.mapData.filter(d => d.politicalLeaning === 'slp').length;
             const uwpSeats = map.mapData.filter(d => d.politicalLeaning === 'uwp').length;
-            const tossups = map.mapData.filter(d => d.politicalLeaning === 'tossup').length;
+            const indSeats = map.mapData.filter(d => d.politicalLeaning === 'ind').length;
             return {
                 ...map,
                 slpSeats,
                 uwpSeats,
-                tossups,
+                indSeats,
             };
         }).filter(map => {
             const countryMatch = countryFilter ? map.country?.toLowerCase().includes(countryFilter.toLowerCase()) : true;
@@ -111,8 +112,9 @@ export default function ManageMapSubmissionsPage() {
             'Country': map.country || 'N/A',
             'SLP': map.slpSeats,
             'UWP': map.uwpSeats,
-            'Tossups': map.tossups,
-            'Map URL': `${window.location.origin}/maps/${map.id}`
+            'IND': map.indSeats,
+            'Map URL': `${window.location.origin}/maps/${map.id}`,
+            'Image URL': map.imageUrl || 'N/A'
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -184,12 +186,13 @@ export default function ManageMapSubmissionsPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Date</TableHead>
+                                    <TableHead>Image</TableHead>
                                     <TableHead>IP Address</TableHead>
                                     <TableHead>City</TableHead>
                                     <TableHead>Country</TableHead>
                                     <TableHead>SLP</TableHead>
                                     <TableHead>UWP</TableHead>
-                                    <TableHead>Tossups</TableHead>
+                                    <TableHead>IND</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -198,12 +201,19 @@ export default function ManageMapSubmissionsPage() {
                                     processedMaps.map(map => (
                                         <TableRow key={map.id}>
                                             <TableCell>{map.createdAt?.toDate ? new Date(map.createdAt.toDate()).toLocaleString() : 'N/A'}</TableCell>
+                                            <TableCell>
+                                                {map.imageUrl ? (
+                                                    <a href={map.imageUrl} target="_blank" rel="noopener noreferrer">
+                                                        <ImageIcon className="h-5 w-5" />
+                                                    </a>
+                                                ) : 'N/A'}
+                                            </TableCell>
                                             <TableCell>{map.ipAddress || 'N/A'}</TableCell>
                                             <TableCell>{map.city || 'N/A'}</TableCell>
                                             <TableCell>{map.country || 'N/A'}</TableCell>
                                             <TableCell>{map.slpSeats}</TableCell>
                                             <TableCell>{map.uwpSeats}</TableCell>
-                                            <TableCell>{map.tossups}</TableCell>
+                                            <TableCell>{map.indSeats}</TableCell>
                                             <TableCell className="text-right">
                                                 <Button asChild variant="ghost" size="icon">
                                                     <Link href={`/maps/${map.id}`} target="_blank">
@@ -232,7 +242,7 @@ export default function ManageMapSubmissionsPage() {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={8} className="text-center h-24">
+                                        <TableCell colSpan={9} className="text-center h-24">
                                             No map submissions match the current filters.
                                         </TableCell>
                                     </TableRow>
