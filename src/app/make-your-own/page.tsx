@@ -562,12 +562,12 @@ export default function MakeYourOwnPage() {
               </DialogHeader>
               <div className="space-y-4">
                   {sharedMapImageUrl && (
-                      <div className="relative w-full aspect-[16/9] rounded-lg overflow-hidden border">
+                      <div className="relative w-full h-64 rounded-lg overflow-hidden border">
                           <Image src={sharedMapImageUrl} alt="User prediction map" fill className="object-contain" />
                       </div>
                   )}
                     <div className="flex items-center space-x-2">
-                        <Input value={shareUrl} readOnly />
+                        <Input value={shareUrl} readOnly className="break-all" />
                         <Button type="button" size="icon" onClick={copyToClipboard}>
                             <Copy className="h-4 w-4" />
                         </Button>
@@ -590,6 +590,7 @@ export default function MakeYourOwnPage() {
     </div>
   );
 }
+
 
 
 
