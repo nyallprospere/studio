@@ -30,6 +30,7 @@ function getFirebaseAdminApp(): App {
   return adminApp;
 }
 
+
 async function getCollectionData(collectionName: string) {
     const adminApp = getFirebaseAdminApp();
     const firestore = getFirestore(adminApp);
@@ -157,3 +158,4 @@ export async function summarizeArticle(content: string): Promise<string> {
         return "Could not generate summary.";
     }
 }
+
