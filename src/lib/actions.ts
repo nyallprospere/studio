@@ -4,30 +4,30 @@
 import { generateElectionPredictions } from '@/ai/flows/generate-election-predictions';
 import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
 import { summarizeArticle as summarizeArticleFlow } from '@/ai/flows/summarize-article';
-import { initializeApp, getApps, App } from 'firebase-admin/app';
+import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { collection, getDocs, query, orderBy, limit, addDoc, where } from 'firebase/firestore';
 import type { UserMap } from './types';
-import { firebaseConfig } from '@/firebase/config';
 
+// This function should be defined within the actions file that uses it.
+function getFirebaseAdminApp(): App {
+  if (getApps().length > 0) {
+    return getApps()[0];
+  }
 
-function getFirebaseAdmin(): App {
-    if (getApps().length > 0) {
-        return getApps()[0];
-    }
-    
-    // In a server environment, you can use service account credentials
-    // For simplicity here, we'll rely on ADC or previously set credentials
-    // Make sure your server environment is authenticated (e.g., running on Google Cloud)
+  // Check for service account credentials in environment variables
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
     return initializeApp({
-        credential: undefined, // Rely on Application Default Credentials
-        projectId: firebaseConfig.projectId,
+      credential: cert(serviceAccount)
     });
+  } else {
+    // This is a fallback for environments where Application Default Credentials are set up.
+    return initializeApp();
+  }
 }
 
-
 async function getCollectionData(collectionName: string) {
-    const adminApp = getFirebaseAdmin();
+    const adminApp = getFirebaseAdminApp();
     const firestore = getFirestore(adminApp);
     const collRef = firestore.collection(collectionName);
     const snapshot = await collRef.get();
@@ -35,7 +35,7 @@ async function getCollectionData(collectionName: string) {
 }
 
 async function getLatestHistoricalResult() {
-    const adminApp = getFirebaseAdmin();
+    const adminApp = getFirebaseAdminApp();
     const firestore = getFirestore(adminApp);
     const resultsRef = firestore.collection('election_results');
     const q = resultsRef.orderBy('year', 'desc').limit(1);
@@ -85,7 +85,7 @@ export async function getPrediction(newsSummary: string) {
 
 export async function saveUserMap(mapData: UserMap['mapData']) {
     try {
-        const adminApp = getFirebaseAdmin();
+        const adminApp = getFirebaseAdminApp();
         const firestore = getFirestore(adminApp);
         
         const docRef = await firestore.collection('user_maps').add({
@@ -101,7 +101,7 @@ export async function saveUserMap(mapData: UserMap['mapData']) {
 }
 
 export async function subscribeToMailingList(data: { firstName: string; email: string }) {
-    const adminApp = getFirebaseAdmin();
+    const adminApp = getFirebaseAdminApp();
     const firestore = getFirestore(adminApp);
     const subscribersCollection = firestore.collection('mailing_list_subscribers');
     
