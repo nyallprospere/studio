@@ -5,7 +5,6 @@ import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
 import { summarizeArticle as summarizeArticleFlow } from '@/ai/flows/summarize-article';
 import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { getStorage } from 'firebase-admin/storage';
 import type { UserMap } from './types';
 
 let adminApp: App;
@@ -85,29 +84,13 @@ export async function getPrediction(newsSummary: string) {
   }
 }
 
-export async function saveUserMap(mapData: UserMap['mapData'], mapImage: string) {
+export async function saveUserMap(mapData: UserMap['mapData']) {
     try {
         const adminApp = getFirebaseAdminApp();
         const firestore = getFirestore(adminApp);
-        const storage = getStorage(adminApp);
-        const bucket = storage.bucket();
-
-        const imageBuffer = Buffer.from(mapImage.split(',')[1], 'base64');
-        const fileName = `SavedMaps/${Date.now()}.png`;
-        const file = bucket.file(fileName);
-        
-        await file.save(imageBuffer, {
-            metadata: {
-                contentType: 'image/png',
-                cacheControl: 'public, max-age=31536000',
-            },
-        });
-        
-        const imageUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
         
         const docRef = await firestore.collection('user_maps').add({
             mapData,
-            imageUrl,
             createdAt: new Date(),
         });
 

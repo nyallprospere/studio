@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/dialog"
 import { Copy } from 'lucide-react';
 import { saveUserMap } from '@/lib/actions';
-import * as htmlToImage from 'html-to-image';
 
 
 const politicalLeaningOptions = [
@@ -121,7 +120,6 @@ export default function MakeYourOwnPage() {
     const { firestore } = useFirebase();
     const { toast } = useToast();
     const { user } = useUser();
-    const mapRef = useRef<HTMLDivElement>(null);
 
     const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
     const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
@@ -198,21 +196,14 @@ export default function MakeYourOwnPage() {
     };
     
     const handleSaveAndShare = async () => {
-        if (!mapRef.current) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Map element not found.' });
-            return;
-        }
-
         setIsSaving(true);
         try {
-            const mapImage = await htmlToImage.toPng(mapRef.current);
-
             const mapData = myMapConstituencies.map(c => ({
                 constituencyId: c.id,
                 politicalLeaning: c.politicalLeaning || 'unselected'
             }));
 
-            const result = await saveUserMap(mapData, mapImage);
+            const result = await saveUserMap(mapData);
 
             if(result.error) {
                 toast({ variant: 'destructive', title: 'Error', description: result.error });
@@ -308,7 +299,7 @@ export default function MakeYourOwnPage() {
     const shareTitle = siteSettings?.defaultShareTitle || "Check out my St. Lucia election prediction!";
     const shareDescription = siteSettings?.defaultShareDescription || "I made my own 2026 election prediction on LucianVotes. See my map and create your own!";
     const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`;
-    const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareDescription)}`;
+    const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
     
     const copyToClipboard = () => {
         navigator.clipboard.writeText(shareUrl);
@@ -337,7 +328,7 @@ export default function MakeYourOwnPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="lg:col-span-1">
              <Card>
-                <CardContent className="p-2" ref={mapRef}>
+                <CardContent className="p-2">
                     <InteractiveSvgMap 
                         constituencies={myMapConstituencies} 
                         selectedConstituencyId={selectedMyMapConstituencyId}
@@ -417,7 +408,7 @@ export default function MakeYourOwnPage() {
                         )}
                         <Button onClick={handleSaveAndShare} disabled={isSaving || !allSelected} className="w-full mt-6">
                             <Share2 className="mr-2 h-4 w-4" />
-                            {isSaving ? 'Saving...' : 'Save & Share'}
+                            {isSaving ? 'Saving...' : 'Save &amp; Share'}
                         </Button>
                     </CardContent>
                 </Card>
