@@ -127,7 +127,6 @@ export function SidebarNav() {
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [isNewsOpen, setIsNewsOpen] = useState(false);
   const [isMapSubmissionsOpen, setIsMapSubmissionsOpen] = useState(false);
-  const [isMakeYourOwnOpen, setIsMakeYourOwnOpen] = useState(false);
 
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
@@ -195,7 +194,6 @@ export function SidebarNav() {
     setIsAnalyticsOpen(pathname.startsWith('/admin/analytics'));
     setIsNewsOpen(pathname.startsWith('/admin/news') || pathname.startsWith('/admin/reports'));
     setIsMapSubmissionsOpen(pathname.startsWith('/admin/map-submissions'));
-    setIsMakeYourOwnOpen(pathname.startsWith('/make-your-own') || pathname.startsWith('/admin/map-submissions/sharing'));
 
 
     const isUwpRelated = uwpParty && (
@@ -529,13 +527,6 @@ export function SidebarNav() {
                                                   </Link>
                                               </SidebarMenuSubButton>
                                           </SidebarMenuItem>
-                                          <SidebarMenuItem>
-                                            <SidebarMenuSubButton asChild isActive={pathname === '/admin/map-submissions/sharing'}>
-                                                <Link href="/admin/map-submissions/sharing">
-                                                    Sharing Settings
-                                                </Link>
-                                            </SidebarMenuSubButton>
-                                          </SidebarMenuItem>
                                       </SidebarMenuSub>
                                   </CollapsibleContent>
                               </Collapsible>
@@ -554,7 +545,3 @@ export function SidebarNav() {
     </Sidebar>
   );
 }
-
-    
-
-    

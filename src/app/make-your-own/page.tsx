@@ -249,45 +249,11 @@ export default function MakeYourOwnPage() {
         );
     };
     
-    const handleSaveAndShare = async () => {
-        setIsSaving(true);
-        try {
-            if (!mapRef.current) {
-                throw new Error("Map element not found");
-            }
-    
-            const imageDataUrl = await toPng(mapRef.current, { cacheBust: true });
-    
-            const mapDataToSave = myMapConstituencies.map(c => ({
-                constituencyId: c.id,
-                politicalLeaning: c.politicalLeaning || 'unselected',
-            }));
-    
-            const result = await saveUserMap(mapDataToSave, imageDataUrl);
-    
-            if (result.error) {
-                toast({
-                    variant: 'destructive',
-                    title: 'Error',
-                    description: result.error,
-                });
-            }
-    
-            if (result.id) {
-                const url = `${window.location.origin}/maps/${result.id}`;
-                setShareUrl(url);
-                setIsShareDialogOpen(true);
-            }
-        } catch (error: any) {
-            console.error("Error saving map:", error);
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: "Could not save your map. Please try again."
-            });
-        } finally {
-            setIsSaving(false);
-        }
+    const handleShare = () => {
+        const encodedMap = encodeMapData(myMapConstituencies);
+        const url = `${window.location.origin}/make-your-own?map=${encodedMap}`;
+        setShareUrl(url);
+        setIsShareDialogOpen(true);
     };
 
     const isLoading = loadingConstituencies || loadingLayout || loadingElections;
@@ -472,13 +438,9 @@ export default function MakeYourOwnPage() {
                                 <Button variant="outline" size="sm" onClick={() => handleSelectAll('unselected')}>Clear All</Button>
                             </div>
                         )}
-                        <Button onClick={handleSaveAndShare} disabled={!allSelected || isSaving} className="w-full mt-6">
-                            {isSaving ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                <Share2 className="mr-2 h-4 w-4" />
-                            )}
-                            Save & Share
+                        <Button onClick={handleShare} disabled={!allSelected} className="w-full mt-6">
+                            <Share2 className="mr-2 h-4 w-4" />
+                            Share
                         </Button>
                     </CardContent>
                 </Card>

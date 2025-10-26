@@ -148,16 +148,6 @@ export interface Region {
   constituencyIds?: string[];
 }
 
-export interface UserMap {
-    id: string;
-    createdAt: any;
-    mapData: {
-        constituencyId: string;
-        politicalLeaning: string;
-    }[];
-    imageUrl?: string;
-}
-
 export interface Ad {
   id: string;
   name: string;

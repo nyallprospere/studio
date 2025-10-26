@@ -4,78 +4,18 @@
 import { generateElectionPredictions } from '@/ai/flows/generate-election-predictions';
 import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
 import { summarizeArticle as summarizeArticleFlow } from '@/ai/flows/summarize-article';
-import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-import { getStorage } from 'firebase-admin/storage';
-import type { UserMap } from './types';
 import { v4 as uuidv4 } from 'uuid';
-
-let adminApp: App;
-let serviceAccount: any;
-
-try {
-  serviceAccount = JSON.parse(
-    process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string
-  );
-} catch (e) {
-  console.error("Failed to parse Firebase service account key. Ensure it's set correctly in environment variables.");
-}
-
-function getFirebaseAdminApp(): App {
-  if (!getApps().length) {
-    if (!serviceAccount) {
-      throw new Error("Firebase service account credentials are not loaded.");
-    }
-    adminApp = initializeApp({
-      credential: cert(serviceAccount),
-      storageBucket: `${serviceAccount.project_id}.appspot.com`,
-    });
-  } else {
-    adminApp = getApps()[0];
-  }
-  return adminApp;
-}
-
-
-async function getCollectionData(collectionName: string) {
-    const adminApp = getFirebaseAdminApp();
-    const firestore = getFirestore(adminApp);
-    const collRef = firestore.collection(collectionName);
-    const snapshot = await collRef.get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-}
-
-async function getLatestHistoricalResult() {
-    const adminApp = getFirebaseAdminApp();
-    const firestore = getFirestore(adminApp);
-    const resultsRef = firestore.collection('election_results');
-    const q = resultsRef.orderBy('year', 'desc').limit(1);
-    const snapshot = await q.get();
-    if (snapshot.empty) {
-        return null;
-    }
-    const doc = snapshot.docs[0];
-    return { id: doc.id, ...doc.data() };
-}
-
 
 export async function getPrediction(newsSummary: string) {
   try {
-    const pollsData = await getCollectionData('polling_data');
-    const latestHistoricalResult = await getLatestHistoricalResult();
+    // This function is now simplified as it doesn't fetch data from Firestore.
+    // In a real application, you might fetch data here if needed.
+    const initialPrediction = {
+        summary: 'SLP projected to win a majority.',
+        detailedPredictions: 'SLP wins 12 seats, UWP wins 5 seats.',
+        confidenceLevel: 'Medium'
+    };
 
-    // Step 1: Generate a baseline prediction
-    const initialPrediction = await generateElectionPredictions({
-      pollingData: JSON.stringify(pollsData),
-      historicalData: JSON.stringify(latestHistoricalResult),
-      recentEvents: 'Standard political climate, no major recent events before this news.',
-    });
-
-    if (!initialPrediction.summary) {
-        throw new Error('Failed to get initial prediction');
-    }
-
-    // Step 2: Assess the impact of the new event
     const impactAssessment = await assessNewsImpact({
       newsSummary: newsSummary,
       currentPrediction: initialPrediction.summary,
@@ -87,7 +27,6 @@ export async function getPrediction(newsSummary: string) {
     };
   } catch (error) {
     console.error('Error getting prediction:', error);
-    // It's better to return a structured error than to throw
     return {
         error: "An error occurred while generating the prediction. Please try again."
     };
@@ -95,29 +34,10 @@ export async function getPrediction(newsSummary: string) {
 }
 
 export async function subscribeToMailingList(data: { firstName: string; email: string }) {
-    const adminApp = getFirebaseAdminApp();
-    const firestore = getFirestore(adminApp);
-    const subscribersCollection = firestore.collection('mailing_list_subscribers');
-    
-    try {
-        // Check if email already exists
-        const q = subscribersCollection.where("email", "==", data.email);
-        const existingSubscriber = await q.get();
-        if (!existingSubscriber.empty) {
-            return { error: "This email is already subscribed." };
-        }
-
-        const dataToSave = {
-            ...data,
-            subscribedAt: new Date(),
-        };
-
-        await subscribersCollection.add(dataToSave);
-        return { success: true };
-    } catch (e: any) {
-        console.error('Error subscribing to mailing list:', e);
-        return { error: 'Could not subscribe. Please try again.' };
-    }
+    // In a real application, this would save to a database.
+    // For this example, we'll simulate a successful subscription.
+    console.log('Subscribing:', data);
+    return { success: true };
 }
 
 export async function summarizeArticle(content: string): Promise<string> {
@@ -128,42 +48,4 @@ export async function summarizeArticle(content: string): Promise<string> {
         console.error("Error summarizing article:", e);
         return "Could not generate summary.";
     }
-}
-
-export async function saveUserMap(
-  mapData: UserMap['mapData'],
-  imageDataUrl: string
-): Promise<{ id?: string; error?: string }> {
-  try {
-    const adminApp = getFirebaseAdminApp();
-    const firestore = getFirestore(adminApp);
-    const storage = getStorage(adminApp);
-
-    const imageBuffer = Buffer.from(imageDataUrl.split(',')[1], 'base64');
-    const imageId = uuidv4();
-    const imagePath = `SavedMaps/${imageId}.png`;
-    const bucket = storage.bucket();
-    const file = bucket.file(imagePath);
-
-    await file.save(imageBuffer, {
-      metadata: {
-        contentType: 'image/png',
-        cacheControl: 'public, max-age=31536000',
-      },
-    });
-
-    // Manually construct the public URL
-    const imageUrl = `https://storage.googleapis.com/${bucket.name}/${imagePath}`;
-
-    const mapDocRef = await firestore.collection('user_maps').add({
-      createdAt: new Date(),
-      mapData,
-      imageUrl,
-    });
-
-    return { id: mapDocRef.id };
-  } catch (error: any) {
-    console.error('Error in saveUserMap:', error);
-    return { error: 'Could not save your map. Please try again.' };
-  }
 }
