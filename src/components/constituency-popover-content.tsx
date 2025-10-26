@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -157,6 +156,7 @@ export function ConstituencyPopoverContent({
     partyLogos,
     isMakeYourOwn,
     showCandidateBoxes = true,
+    hideLogos = false,
 }: { 
     constituency: Constituency,
     election?: Election | null;
@@ -168,6 +168,7 @@ export function ConstituencyPopoverContent({
     partyLogos?: PartyLogo[];
     isMakeYourOwn?: boolean;
     showCandidateBoxes?: boolean;
+    hideLogos?: boolean;
 }) {
     const { firestore } = useFirebase();
 
@@ -202,12 +203,15 @@ export function ConstituencyPopoverContent({
         let uwpCand = uwp ? candidates.find(c => c.partyId === uwp.id) : null;
         let indCand: Candidate | ArchivedCandidate | null = null;
         
-        if (election?.isCurrent) {
-            indCand = candidates.find(c => (c as Candidate).isIndependentCastriesNorth || (c as Candidate).isIndependentCastriesCentral) || null;
-            if (constituency.name === 'Castries North' || constituency.name === 'Castries Central') {
-              slpCand = null;
-            }
+        const isCurrentOrFuture = !election || election.isCurrent;
+        if (isCurrentOrFuture && (constituency.name === 'Castries North' || constituency.name === 'Castries Central')) {
+            slpCand = null;
         }
+
+        indCand = candidates.find(c => 
+            (c as Candidate).isIndependentCastriesNorth || 
+            (c as Candidate).isIndependentCastriesCentral
+        ) || null;
         
         return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand, slpParty: slp, uwpParty: uwp };
     }, [parties, candidates, constituency.name, election]);
@@ -357,7 +361,7 @@ export function ConstituencyPopoverContent({
                         {slpCandidate && (
                             <div className="flex flex-col items-center p-2 rounded-md bg-muted">
                                 <div className="relative h-8 w-8 mb-2">
-                                    {slpParty?.logoUrl ? (
+                                    {slpParty?.logoUrl && !hideLogos ? (
                                         <Image src={slpParty.logoUrl} alt={slpParty.name} fill className="object-contain" />
                                     ): null}
                                 </div>
@@ -377,7 +381,7 @@ export function ConstituencyPopoverContent({
                          {independentCandidate && (
                             <div className="flex flex-col items-center p-2 rounded-md bg-muted">
                                 <div className="relative h-8 w-8 mb-2">
-                                    {indLogoUrl && <Image src={indLogoUrl} alt="Independent" fill className="object-contain" />}
+                                    {indLogoUrl && !hideLogos && <Image src={indLogoUrl} alt="Independent" fill className="object-contain" />}
                                 </div>
                                 <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
                                 {independentCandidate?.imageUrl ? (
@@ -396,7 +400,7 @@ export function ConstituencyPopoverContent({
                      <div className="space-y-2">
                         <div className="flex flex-col items-center p-2 rounded-md bg-muted">
                             <div className="relative h-8 w-8 mb-2">
-                                {uwpParty?.logoUrl ? (
+                                {uwpParty?.logoUrl && !hideLogos ? (
                                     <Image src={uwpParty.logoUrl} alt={uwpParty.name} fill className="object-contain" />
                                 ): null}
                             </div>
@@ -428,6 +432,7 @@ export function ConstituencyPopoverContent({
                         statusColor={statusColor}
                         votePercentageChange={slpVotePercentageChange}
                         logoUrl={slpLogoUrl}
+                        hideLogo={hideLogos}
                     />
                    )}
                   <CandidateBox 
@@ -441,6 +446,7 @@ export function ConstituencyPopoverContent({
                       statusColor={statusColor}
                       votePercentageChange={uwpVotePercentageChange}
                       logoUrl={uwpLogoUrl}
+                      hideLogo={hideLogos}
                   />
                   {(isSpecialConstituency || (currentResult?.otherVotes || 0) > 0) && (
                       <CandidateBox 
@@ -454,6 +460,7 @@ export function ConstituencyPopoverContent({
                           statusColor={statusColor}
                           votePercentageChange={otherVotePercentageChange}
                           logoUrl={indLogoUrl}
+                          hideLogo={hideLogos}
                       />
                   )}
               </div>

@@ -168,6 +168,7 @@ export default function Home() {
                     selectedConstituencyId={selectedConstituencyId}
                     onConstituencyClick={setSelectedConstituencyId}
                     election={currentElection}
+                    hideLogos={true}
                  />
             </CardContent>
         </Card>
@@ -319,8 +320,7 @@ export default function Home() {
               <p className="text-muted-foreground">To be eligible to vote, you must be a citizen of St. Lucia, 18 years of age or older, and registered to vote in your constituency.</p>
             </div>
         </CardContent>
-      </Card>
+       </Card>
     </div>
   );
-
 }
