@@ -98,7 +98,8 @@ export default function AdminConstituenciesPage() {
                     politicalLeaning: "tossup",
                     predictedSlpPercentage: 50,
                     predictedUwpPercentage: 50,
-                    dashboardPopoverText: '',
+                    slpDashboardPopoverText: '',
+                    uwpDashboardPopoverText: '',
                 };
                 batch.set(docRef, dataToSave);
             });
@@ -194,7 +195,8 @@ export default function AdminConstituenciesPage() {
           'Political Leaning': c.politicalLeaning || 'tossup',
           'Predicted SLP %': c.predictedSlpPercentage || 50,
           'Predicted UWP %': c.predictedUwpPercentage || 50,
-          'Dashboard Popover Text': c.dashboardPopoverText || '',
+          'SLP Popover Text': c.slpDashboardPopoverText || '',
+          'UWP Popover Text': c.uwpDashboardPopoverText || '',
         }));
         const worksheet = XLSX.utils.json_to_sheet(dataToExport);
         const workbook = XLSX.utils.book_new();
@@ -232,7 +234,8 @@ export default function AdminConstituenciesPage() {
                     politicalLeaning: row.politicalLeaning || 'tossup',
                     predictedSlpPercentage: Number(row.predictedSlpPercentage) || 50,
                     predictedUwpPercentage: Number(row.predictedUwpPercentage) || 50,
-                    dashboardPopoverText: row.dashboardPopoverText || '',
+                    slpDashboardPopoverText: row.slpDashboardPopoverText || '',
+                    uwpDashboardPopoverText: row.uwpDashboardPopoverText || '',
                 };
     
                 if (docId) {
@@ -329,7 +332,8 @@ export default function AdminConstituenciesPage() {
                                         <TableHead>Political Leaning</TableHead>
                                         <TableHead>Pred. SLP %</TableHead>
                                         <TableHead>Pred. UWP %</TableHead>
-                                        <TableHead>Popover Text</TableHead>
+                                        <TableHead>SLP Popover Text</TableHead>
+                                        <TableHead>UWP Popover Text</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -381,8 +385,16 @@ export default function AdminConstituenciesPage() {
                                             </TableCell>
                                             <TableCell>
                                                 <Textarea
-                                                    value={c.dashboardPopoverText || ''}
-                                                    onChange={(e) => handleFieldChange(c.id, 'dashboardPopoverText', e.target.value)}
+                                                    value={c.slpDashboardPopoverText || ''}
+                                                    onChange={(e) => handleFieldChange(c.id, 'slpDashboardPopoverText', e.target.value)}
+                                                    className="w-48"
+                                                    rows={1}
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Textarea
+                                                    value={c.uwpDashboardPopoverText || ''}
+                                                    onChange={(e) => handleFieldChange(c.id, 'uwpDashboardPopoverText', e.target.value)}
                                                     className="w-48"
                                                     rows={1}
                                                 />

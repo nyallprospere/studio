@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -362,6 +363,17 @@ export function ConstituencyPopoverContent({
         return <Skeleton className="h-40 w-full" />;
     }
 
+    const popoverText = useMemo(() => {
+        const lean = constituency.politicalLeaning;
+        if(lean?.includes('slp') && constituency.slpDashboardPopoverText) {
+            return constituency.slpDashboardPopoverText;
+        }
+        if(lean?.includes('uwp') && constituency.uwpDashboardPopoverText) {
+            return constituency.uwpDashboardPopoverText;
+        }
+        return null;
+    }, [constituency]);
+
     return (
         <div className="space-y-3 w-80">
             <div className="text-center">
@@ -377,7 +389,7 @@ export function ConstituencyPopoverContent({
                 )}
             </div>
 
-            {popoverVariant === 'dashboard' && (
+            {popoverVariant === 'dashboard' ? (
                 <>
                 <div className="space-y-2">
                     <ChartContainer config={chartConfig} className="mx-auto w-full h-24">
@@ -415,15 +427,13 @@ export function ConstituencyPopoverContent({
                         </div>
                     </div>
                 </div>
-                {constituency.dashboardPopoverText && (
+                {popoverText && (
                     <div className="text-sm text-center text-muted-foreground pt-2 border-t mt-2">
-                        {constituency.dashboardPopoverText}
+                        {popoverText}
                     </div>
                 )}
                 </>
-            )}
-            
-            {showCandidateBoxes && (election?.isCurrent || !election) && !isMakeYourOwn && popoverVariant === 'default' ? (
+            ) : showCandidateBoxes && (election?.isCurrent || !election) && !isMakeYourOwn ? (
                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         {slpCandidate && (
@@ -486,7 +496,7 @@ export function ConstituencyPopoverContent({
                         </div>
                     </div>
                 </div>
-            ) : !isMakeYourOwn && popoverVariant === 'default' ? (
+            ) : !isMakeYourOwn ? (
               <div className="space-y-2">
                    {!isSpecialConstituency && slpCandidate && (
                     <CandidateBox 
