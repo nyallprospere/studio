@@ -2,16 +2,16 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import type { Constituency, ElectionResult, Election, SiteSettings } from '@/lib/types';
+import type { Constituency, ElectionResult, Election, SiteSettings, UserMap } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirebase, useMemoFirebase, useUser, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, doc, serverTimestamp, query, orderBy, where, getDocs } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, orderBy, where, getDocs, addDoc } from 'firebase/firestore';
+import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Pie, PieChart, ResponsiveContainer, Cell, Label } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { debounce } from 'lodash';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
 import { Share2, Twitter, Facebook, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -24,10 +24,10 @@ import {
 } from "@/components/ui/dialog"
 import { Copy } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
-import { saveUserMap } from '@/lib/actions';
 import { toPng } from 'html-to-image';
 import Image from 'next/image';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { v4 as uuidv4 } from 'uuid';
 
 
 const politicalLeaningOptions = [
@@ -255,48 +255,63 @@ export default function MakeYourOwnPage() {
     };
     
    const handleSaveAndShare = async () => {
-        if (!mapRef.current) {
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Could not capture map image. Please try again.',
-            });
-            return;
-        }
+    if (!mapRef.current || !firestore) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'An unexpected error occurred. Please try again.',
+        });
+        return;
+    }
 
-        setIsSaving(true);
-        try {
-            const dataUrl = await toPng(mapRef.current);
-            const mapData = myMapConstituencies.map(c => ({
-                constituencyId: c.id,
-                politicalLeaning: c.politicalLeaning || 'unselected',
+    setIsSaving(true);
+    try {
+        const dataUrl = await toPng(mapRef.current);
+        const mapData = myMapConstituencies.map(c => ({
+            constituencyId: c.id,
+            politicalLeaning: c.politicalLeaning || 'unselected',
+        }));
+
+        // Client-side Storage Upload
+        const storage = getStorage();
+        const imageId = uuidv4();
+        const imagePath = `SavedMaps/${imageId}.png`;
+        const imageRef = storageRef(storage, imagePath);
+        
+        await uploadString(imageRef, dataUrl, 'data_url');
+        const imageUrl = await getDownloadURL(imageRef);
+
+        // Client-side Firestore Write
+        const mapsCollection = collection(firestore, 'user_maps');
+        const mapDocRef = await addDoc(mapsCollection, {
+            mapData: mapData,
+            createdAt: serverTimestamp(),
+            imageUrl: imageUrl,
+        });
+
+        const url = `${window.location.origin}/maps/${mapDocRef.id}`;
+        setShareUrl(url);
+        setSharedMapImageUrl(imageUrl);
+        setIsShareDialogOpen(true);
+
+    } catch (error: any) {
+        console.error('Save and share error:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: error.message || 'Could not save your map. Please try again.',
+        });
+        // Emit a contextual error if it's a permission issue
+        if (error.code?.includes('permission-denied')) {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: 'user_maps',
+                operation: 'create'
             }));
-
-            const result = await saveUserMap({ mapData, imageDataUrl: dataUrl });
-
-            if (result.error) {
-                throw new Error(result.error);
-            }
-    
-            if (result.id) {
-                const url = `${window.location.origin}/maps/${result.id}`;
-                setShareUrl(url);
-                setSharedMapImageUrl(result.imageUrl || null);
-                setIsShareDialogOpen(true);
-            } else {
-                 throw new Error("Failed to get back a map ID after saving.");
-            }
-        } catch (error: any) {
-            console.error('Save and share error:', error);
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: error.message || 'Could not save your map. Please try again.',
-            });
-        } finally {
-            setIsSaving(false);
         }
-    };
+    } finally {
+        setIsSaving(false);
+    }
+};
 
 
     const isLoading = loadingConstituencies || loadingLayout || loadingElections;
