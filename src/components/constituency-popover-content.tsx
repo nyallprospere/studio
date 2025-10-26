@@ -181,24 +181,21 @@ export function ConstituencyPopoverContent({
 }) {
     const { firestore } = useFirebase();
 
+    const isCurrentElection = !election || election.isCurrent;
+    const collectionName = isCurrentElection ? 'candidates' : 'archived_candidates';
+
     const candidatesQuery = useMemoFirebase(() => {
         if (!firestore) return null;
-        const isCurrentElection = !election || election.isCurrent;
-        const collectionName = isCurrentElection ? 'candidates' : 'archived_candidates';
-        
         let q = query(collection(firestore, collectionName), where('constituencyId', '==', constituency.id));
-        
         if (!isCurrentElection && election) {
             q = query(q, where('electionId', '==', election.id));
         }
-
         return q;
-    }, [firestore, constituency.id, election]);
-
-
-    const { data: candidates, isLoading: loadingCandidates } = useCollection<Candidate | ArchivedCandidate>(candidatesQuery);
+    }, [firestore, constituency.id, election, collectionName]);
 
     const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
+
+    const { data: candidates, isLoading: loadingCandidates } = useCollection<Candidate | ArchivedCandidate>(candidatesQuery);
     const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
 
     const { slpCandidate, uwpCandidate, independentCandidate, slpParty, uwpParty } = useMemo(() => {
@@ -224,7 +221,6 @@ export function ConstituencyPopoverContent({
         
         return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand, slpParty: slp, uwpParty: uwp };
     }, [parties, candidates, constituency.name, election]);
-
 
     const { electionStatus, statusColor, margin, totalConstituencyVotes, winnerAcronym, slpVotePercentageChange, uwpVotePercentageChange, otherVotePercentageChange, slpLogoUrl, uwpLogoUrl, indLogoUrl, indVotes } = useMemo(() => {
         if (!electionResults || !slpParty || !uwpParty) return { electionStatus: null, statusColor: undefined, margin: null, totalConstituencyVotes: 0, winnerAcronym: null, slpVotePercentageChange: null, uwpVotePercentageChange: null, otherVotePercentageChange: null, slpLogoUrl: null, uwpLogoUrl: null, indLogoUrl: null, indVotes: 0 };
@@ -334,30 +330,6 @@ export function ConstituencyPopoverContent({
         };
 
     }, [constituency.id, electionResults, previousElectionResults, previousElection, slpParty, uwpParty, partyLogos, election, parties, independentCandidate]);
-    
-    const { chartData, chartConfig } = useMemo(() => {
-      const config = {
-        slp: { label: 'SLP', color: 'hsl(var(--chart-5))' },
-        uwp: { label: 'UWP', color: 'hsl(var(--chart-1))' },
-      } satisfies ChartConfig;
-  
-      const data = [
-        { party: 'uwp', votes: constituency.predictedUwpPercentage || 50, fill: 'var(--color-uwp)' },
-        { party: 'slp', votes: constituency.predictedSlpPercentage || 50, fill: 'var(--color-slp)' },
-      ];
-      return { chartData: data, chartConfig: config };
-    }, [constituency.predictedSlpPercentage, constituency.predictedUwpPercentage]);
-
-    const popoverText = useMemo(() => {
-        const lean = constituency.politicalLeaning;
-        if (lean?.includes('slp') && constituency.slpDashboardPopoverText) {
-            return constituency.slpDashboardPopoverText;
-        }
-        if (lean?.includes('uwp') && constituency.uwpDashboardPopoverText) {
-            return constituency.uwpDashboardPopoverText;
-        }
-        return null;
-    }, [constituency]);
 
     const isLoading = loadingCandidates || loadingParties;
     const currentResult = electionResults?.find(r => r.constituencyId === constituency.id);
@@ -373,6 +345,31 @@ export function ConstituencyPopoverContent({
         }
         return makeYourOwnLeaningOptions.filter(o => o.value === 'slp' || o.value === 'uwp' || o.value === 'unselected');
     }, [constituency.name]);
+
+    const { chartData, chartConfig } = useMemo(() => {
+        const config = {
+          slp: { label: 'SLP', color: 'hsl(var(--chart-5))' },
+          uwp: { label: 'UWP', color: 'hsl(var(--chart-1))' },
+        } satisfies ChartConfig;
+    
+        const data = [
+          { party: 'uwp', votes: constituency.predictedUwpPercentage || 50, fill: 'var(--color-uwp)' },
+          { party: 'slp', votes: constituency.predictedSlpPercentage || 50, fill: 'var(--color-slp)' },
+        ];
+        return { chartData: data, chartConfig: config };
+    }, [constituency.predictedSlpPercentage, constituency.predictedUwpPercentage]);
+
+    const popoverText = useMemo(() => {
+        const lean = constituency.politicalLeaning;
+        if (lean?.includes('slp') && constituency.slpDashboardPopoverText) {
+            return constituency.slpDashboardPopoverText;
+        }
+        if (lean?.includes('uwp') && constituency.uwpDashboardPopoverText) {
+            return constituency.uwpDashboardPopoverText;
+        }
+        return null;
+    }, [constituency]);
+
 
     if (isLoading) {
         return <Skeleton className="h-40 w-full" />;
