@@ -556,14 +556,14 @@ export default function MakeYourOwnPage() {
                         <span style={{ color: 'hsl(var(--primary))' }} className="font-bold">IND {seatCounts.ind}</span> for the Election.
                   </DialogTitle>
                   <DialogDescription>
-                        {dynamicShareDescription}
+                        {dynamicShareDescription}{' '}
                         <a href={shareUrl} className="text-primary underline">{shareUrl}</a>
                   </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                   {sharedMapImageUrl && (
-                      <div className="relative w-full rounded-lg overflow-hidden border">
-                          <Image src={sharedMapImageUrl} alt="User prediction map" width={1200} height={675} className="object-contain" />
+                      <div className="relative w-full aspect-[16/9] rounded-lg overflow-hidden border">
+                          <Image src={sharedMapImageUrl} alt="User prediction map" fill className="object-contain" />
                       </div>
                   )}
                     <div className="flex items-center space-x-2">
@@ -590,6 +590,7 @@ export default function MakeYourOwnPage() {
     </div>
   );
 }
+
 
 
 
