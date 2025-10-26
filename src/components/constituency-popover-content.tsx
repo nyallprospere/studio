@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -304,8 +303,11 @@ export function ConstituencyPopoverContent({
         }
         
         const getLogo = (partyId: string) => {
-            const electionLogo = partyLogos?.find(logo => logo.partyId === partyId && logo.electionId === election?.id);
-            const party = parties?.find(p => p.id === partyId);
+            if (!partyLogos || !parties) return undefined;
+            const electionLogo = partyLogos.find(logo => logo.partyId === partyId && logo.electionId === election?.id);
+            const party = parties.find(p => p.id === partyId);
+
+            if (!party) return undefined;
 
             let logoUrl = electionLogo?.logoUrl || party?.logoUrl;
             if (election && election.year < 1997) {
@@ -325,8 +327,8 @@ export function ConstituencyPopoverContent({
             slpVotePercentageChange, 
             uwpVotePercentageChange,
             otherVotePercentageChange,
-            slpLogoUrl: getLogo(slpParty.id),
-            uwpLogoUrl: getLogo(uwpParty.id),
+            slpLogoUrl: slpParty ? getLogo(slpParty.id) : undefined,
+            uwpLogoUrl: uwpParty ? getLogo(uwpParty.id) : undefined,
             indLogoUrl: independentCandidate?.customLogoUrl || independentLogo?.logoUrl || election?.independentLogoUrl,
             indVotes,
         };
@@ -390,49 +392,49 @@ export function ConstituencyPopoverContent({
             </div>
 
             {popoverVariant === 'dashboard' ? (
-                <>
-                <div className="space-y-2">
-                    <ChartContainer config={chartConfig} className="mx-auto w-full h-24">
-                        <ResponsiveContainer>
-                            <PieChart>
-                                <ChartTooltip
-                                    cursor={false}
-                                    content={<ChartTooltipContent hideLabel />}
-                                />
-                                <Pie
-                                    data={chartData}
-                                    dataKey="votes"
-                                    nameKey="party"
-                                    startAngle={-90}
-                                    endAngle={90}
-                                    innerRadius="70%"
-                                    cy="100%"
-                                    paddingAngle={2}
-                                >
-                                    {chartData.map((entry) => (
-                                        <Cell key={entry.party} fill={entry.fill} />
-                                    ))}
-                                </Pie>
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </ChartContainer>
-                     <div className="flex justify-between text-sm font-medium -mt-10">
-                        <div style={{ color: slpParty?.color }}>
-                            <p>SLP</p>
-                            <p>{constituency.predictedSlpPercentage}%</p>
-                        </div>
-                        <div style={{ color: uwpParty?.color }} className="text-right">
-                             <p>UWP</p>
-                            <p>{constituency.predictedUwpPercentage}%</p>
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <ChartContainer config={chartConfig} className="mx-auto w-full h-24">
+                            <ResponsiveContainer>
+                                <PieChart>
+                                    <ChartTooltip
+                                        cursor={false}
+                                        content={<ChartTooltipContent hideLabel />}
+                                    />
+                                    <Pie
+                                        data={chartData}
+                                        dataKey="votes"
+                                        nameKey="party"
+                                        startAngle={-90}
+                                        endAngle={90}
+                                        innerRadius="70%"
+                                        cy="100%"
+                                        paddingAngle={2}
+                                    >
+                                        {chartData.map((entry) => (
+                                            <Cell key={entry.party} fill={entry.fill} />
+                                        ))}
+                                    </Pie>
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
+                        <div className="flex justify-between text-sm font-medium -mt-10">
+                            <div style={{ color: slpParty?.color }}>
+                                <p>SLP</p>
+                                <p>{constituency.predictedSlpPercentage}%</p>
+                            </div>
+                            <div style={{ color: uwpParty?.color }} className="text-right">
+                                <p>UWP</p>
+                                <p>{constituency.predictedUwpPercentage}%</p>
+                            </div>
                         </div>
                     </div>
+                    {popoverText && (
+                        <div className="text-sm text-center text-muted-foreground pt-2 border-t mt-2">
+                            {popoverText}
+                        </div>
+                    )}
                 </div>
-                {popoverText && (
-                    <div className="text-sm text-center text-muted-foreground pt-2 border-t mt-2">
-                        {popoverText}
-                    </div>
-                )}
-                </>
             ) : showCandidateBoxes && (election?.isCurrent || !election) && !isMakeYourOwn ? (
                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
