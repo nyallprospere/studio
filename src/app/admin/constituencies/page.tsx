@@ -138,20 +138,22 @@ export default function AdminConstituenciesPage() {
         setEditableConstituencies(prev => 
             prev.map(c => {
                 if (c.id === id) {
+                    const updatedConstituency = { ...c };
                     if (field === 'registeredVoters') {
-                        return { ...c, demographics: { ...c.demographics, registeredVoters: Number(value) } };
-                    }
-                    if (field === 'predictedSlpPercentage') {
+                        updatedConstituency.demographics = { ...updatedConstituency.demographics, registeredVoters: Number(value) };
+                    } else if (field === 'predictedSlpPercentage') {
                         const slp = Number(value);
-                        const uwp = 100 - slp;
-                        return { ...c, predictedSlpPercentage: slp, predictedUwpPercentage: uwp };
-                    }
-                     if (field === 'predictedUwpPercentage') {
+                        updatedConstituency.predictedSlpPercentage = slp;
+                        updatedConstituency.predictedUwpPercentage = 100 - slp;
+                    } else if (field === 'predictedUwpPercentage') {
                         const uwp = Number(value);
-                        const slp = 100 - uwp;
-                        return { ...c, predictedSlpPercentage: slp, predictedUwpPercentage: uwp };
+                        updatedConstituency.predictedUwpPercentage = uwp;
+                        updatedConstituency.predictedSlpPercentage = 100 - uwp;
+                    } else {
+                        // This handles slpDashboardPopoverText and uwpDashboardPopoverText directly
+                        (updatedConstituency as any)[field] = value;
                     }
-                    return { ...c, [field]: value };
+                    return updatedConstituency;
                 }
                 return c;
             })
