@@ -103,12 +103,12 @@ export function HeaderNav() {
 
   return (
     <div className="flex w-full items-center justify-between">
-      <div className="flex items-center gap-6">
-        <Link href="/" className="flex items-center gap-2">
+      <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2 mr-6">
             <Vote className="w-8 h-8 text-white" />
             <span className="font-bold font-headline text-lg text-white">LucianVotes</span>
         </Link>
-        <Menubar className="border-none shadow-none bg-transparent">
+        <Menubar className="border-none shadow-none bg-transparent p-0">
           <MenubarMenu>
             <NavLink href="/">Home</NavLink>
           </MenubarMenu>
