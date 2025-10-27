@@ -464,7 +464,7 @@ const SwingVsTurnoutQuadrant = ({ elections, results, constituencies, parties }:
           <div className="flex justify-between items-center">
               <div>
                 <CardTitle>Vote Swing vs. Turnout Delta</CardTitle>
-                <CardDescription>Analysis of SLP vote swing against changes in voter turnout.</CardDescription>
+                <CardDescription>Analysis of SLP and UWP vote swing against changes in voter turnout.</CardDescription>
               </div>
               <Select value={selectedElectionId} onValueChange={setSelectedElectionId}>
                   <SelectTrigger className="w-[200px]">
