@@ -21,9 +21,9 @@ import type { ChartConfig } from './ui/chart';
 
 const politicalLeaningOptions = [
     { value: 'solid-uwp', label: 'Solid UWP', color: '#facc15' },
-    { value: 'lean-uwp', label: 'Lean UWP', color: '#fde047' },
+    { value: 'lean-uwp', label: 'Likely UWP', color: '#fde047' },
     { value: 'tossup', label: 'Tossup', color: '#a855f7' },
-    { value: 'lean-slp', label: 'Lean SLP', color: '#f87171' },
+    { value: 'lean-slp', label: 'Likely SLP', color: '#f87171' },
     { value: 'solid-slp', label: 'Solid SLP', color: '#dc2626' },
 ];
 
@@ -36,13 +36,20 @@ const makeYourOwnLeaningOptions = [
 ];
 
 
-const getLeaningLabel = (leaningValue?: string) => {
+const getLeaningStyle = (leaningValue?: string, isMakeYourOwn?: boolean) => {
+    const options = isMakeYourOwn ? makeYourOwnLeaningOptions : politicalLeaningOptions;
+    const defaultLeaningValue = isMakeYourOwn ? 'unselected' : 'tossup';
+    const leaningInfo = options.find(o => o.value === leaningValue) || options.find(o => o.value === defaultLeaningValue);
+    
+    let label = leaningInfo?.label || 'Tossup';
     if (leaningValue?.includes('ind')) {
-        const leaningInfo = politicalLeaningOptions.find(opt => opt.value === leaningValue.replace('ind', 'slp'));
-        return leaningInfo?.label.replace('SLP', 'IND') || 'Tossup';
+        label = label.replace('SLP', 'IND');
     }
-    const leaningInfo = politicalLeaningOptions.find(opt => opt.value === leaningValue);
-    return leaningInfo?.label || 'Tossup';
+    
+    return { 
+        label,
+        color: leaningInfo?.color,
+    };
 };
 
 function CandidateBox({ 
@@ -61,8 +68,6 @@ function CandidateBox({
     hideLogo,
     popoverVariant = 'default',
     colorOverride,
-    voteTextColor,
-    votePercentageColor
 }: { 
     candidate: Candidate | ArchivedCandidate | null;
     party: Party | null;
@@ -79,8 +84,6 @@ function CandidateBox({
     hideLogo?: boolean;
     popoverVariant?: 'default' | 'dashboard';
     colorOverride?: string;
-    voteTextColor?: string;
-    votePercentageColor?: string;
 }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}` : 'Candidate(s) N/A';
@@ -138,12 +141,12 @@ function CandidateBox({
                                 {isStriped && barFill === 'blue-red-stripes' && <div className="absolute inset-0 red-stripes-overlay"></div>}
                             </div>
                             <div className="absolute inset-0 flex items-center justify-between px-2">
-                                <span className={cn("font-bold text-xs", voteTextColor)}>
+                                <span className={cn("font-bold text-xs", (election?.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central')) ? 'text-white' : (winnerAcronym === 'UWP' ? 'text-green-500' : (winnerAcronym === 'SLP' ? 'text-white' : 'text-blue-600')))}>
                                     {votes?.toLocaleString()}
                                     {isWinner && margin ? <sup className="font-semibold"> (+{margin.toLocaleString()})</sup> : null}
                                 </span>
                                 <div className="flex items-baseline gap-1">
-                                    <span className={cn("font-bold text-xs", votePercentageColor)}>
+                                    <span className="font-bold text-xs text-black">
                                         {votePercentage.toFixed(1)}%
                                     </span>
                                     {votePercentageChange !== null && typeof votePercentageChange !== 'undefined' && (
@@ -431,6 +434,8 @@ export function ConstituencyPopoverContent({
 
     const isSpecialConstituencyForIND = constituency.name === 'Castries North' || constituency.name === 'Castries Central';
 
+    const leaningStyle = getLeaningStyle(constituency.politicalLeaning?.includes('slp') && isSpecialConstituencyForIND ? constituency.politicalLeaning.replace('slp', 'ind') : constituency.politicalLeaning);
+
     if (isLoading) {
         return <Skeleton className="h-40 w-full" />;
     }
@@ -446,9 +451,8 @@ export function ConstituencyPopoverContent({
                     <h5 className="col-span-full text-xs font-medium text-muted-foreground text-center mt-1">Choose Your Pick</h5>
                 )}
                  {popoverVariant === 'dashboard' && (
-                    <p className="text-sm text-center mt-1">
-                        <span className="font-semibold">Status:</span>{' '}
-                        {getLeaningLabel(constituency.politicalLeaning?.includes('slp') && isSpecialConstituencyForIND ? constituency.politicalLeaning.replace('slp', 'ind') : constituency.politicalLeaning)}
+                    <p className="text-sm font-semibold text-center mt-1" style={{ color: leaningStyle.color }}>
+                        {leaningStyle.label}
                     </p>
                 )}
             </div>
@@ -600,8 +604,6 @@ export function ConstituencyPopoverContent({
                             logoUrl={uwpLogoUrl}
                             hideLogo={hideLogos}
                             popoverVariant={popoverVariant}
-                            voteTextColor={cn("text-green-500")}
-                            votePercentageColor="text-black"
                         />
                     )}
                     {(isSpecialConstituency || (currentResult?.otherVotes || 0) > 0 || independentCandidate) && (
@@ -619,8 +621,6 @@ export function ConstituencyPopoverContent({
                             hideLogo={hideLogos}
                             popoverVariant={popoverVariant}
                             colorOverride={chartConfig.ind?.color}
-                            voteTextColor={cn(election?.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central') ? 'text-white' : 'text-blue-600')}
-                            votePercentageColor="text-black"
                         />
                     )}
                      {!isSpecialConstituency && slpCandidate && (
@@ -637,8 +637,6 @@ export function ConstituencyPopoverContent({
                             logoUrl={slpLogoUrl}
                             hideLogo={hideLogos}
                             popoverVariant={popoverVariant}
-                            voteTextColor="text-white"
-                            votePercentageColor="text-black"
                         />
                     )}
                 </div>
