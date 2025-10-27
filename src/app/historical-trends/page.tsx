@@ -141,7 +141,7 @@ const NationalVoteTrend = ({ elections, results, parties, constituencies, select
                 <CardTitle>Popular Vote (%) Over Time</CardTitle>
                 <CardDescription>Percentage of the popular vote for {selectedConstituencyName}.</CardDescription>
             </div>
-            <Select value={selectedConstituencyId} onValueChange={(value) => setSelectedConstituencyId(value)}>
+            <Select value={selectedConstituencyId} onValueChange={setSelectedConstituencyId}>
                 <SelectTrigger className="w-[200px]">
                     <SelectValue placeholder="Select Constituency" />
                 </SelectTrigger>
@@ -385,6 +385,121 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
   );
 }
 
+const SwingVsTurnoutQuadrant = ({ elections, results, constituencies, parties }: { elections: Election[], results: ElectionResult[], constituencies: Constituency[], parties: Party[] }) => {
+    const [selectedElectionId, setSelectedElectionId] = useState<string>('all');
+    
+    const sortedElections = useMemo(() => elections.filter(e => e.year < 2026).sort((a, b) => b.year - a.year), [elections]);
+  
+    const chartData = useMemo(() => {
+        if (!elections.length || !results.length || !constituencies.length || !parties.length) return [];
+  
+        const dataByElection = (electionId: string) => {
+            const currentElection = sortedElections.find(e => e.id === electionId);
+            if (!currentElection) return [];
+  
+            const prevElectionIndex = sortedElections.findIndex(e => e.id === electionId) + 1;
+            const prevElection = sortedElections[prevElectionIndex];
+  
+            if (!prevElection) return [];
+  
+            const currentResults = results.filter(r => r.electionId === electionId);
+            const prevResults = results.filter(r => r.electionId === prevElection.id);
+  
+            const slp = parties.find(p => p.acronym === 'SLP');
+            if (!slp) return [];
+  
+            const calcPercentage = (votes: number, total: number) => total > 0 ? (votes / total) * 100 : 0;
+  
+            const data = constituencies.map(con => {
+                const currentConResult = currentResults.find(r => r.constituencyId === con.id);
+                const prevConResult = prevResults.find(r => r.constituencyId === con.id);
+                if (!currentConResult || !prevConResult) return null;
+                
+                const currentConSLPPercent = calcPercentage(currentConResult.slpVotes, currentConResult.totalVotes);
+                const prevConSLPPercent = calcPercentage(prevConResult.slpVotes, prevConResult.totalVotes);
+                const constituencySwing = currentConSLPPercent - prevConSLPPercent;
+  
+                const turnoutDelta = (currentConResult.turnout || 0) - (prevConResult.turnout || 0);
+  
+                return {
+                  name: con.name,
+                  x: turnoutDelta, // Turnout Delta
+                  y: constituencySwing, // Vote Swing
+                  year: currentElection.year,
+                };
+            }).filter((d): d is NonNullable<typeof d> => d !== null);
+  
+            return data;
+        };
+  
+        if (selectedElectionId === 'all') {
+            return sortedElections.flatMap(e => dataByElection(e.id));
+        }
+  
+        return dataByElection(selectedElectionId);
+  
+    }, [elections, results, constituencies, parties, selectedElectionId, sortedElections]);
+  
+    const chartConfig: ChartConfig = {
+      swing: { label: "Swing (%)", color: "hsl(var(--primary))" },
+    };
+  
+    const CustomTooltip = ({ active, payload }: any) => {
+      if (active && payload && payload.length) {
+        const data = payload[0].payload;
+        return (
+          <div className="bg-background border p-2 rounded-md shadow-lg text-sm">
+            <p className="font-bold">{data.name} ({data.year})</p>
+            <p>Vote Swing (Y): {data.y.toFixed(1)}%</p>
+            <p>Turnout Delta (X): {data.x.toFixed(1)}%</p>
+          </div>
+        );
+      }
+      return null;
+    };
+    
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>Vote Swing vs. Turnout Delta</CardTitle>
+                <CardDescription>Analysis of SLP vote swing against changes in voter turnout.</CardDescription>
+              </div>
+              <Select value={selectedElectionId} onValueChange={setSelectedElectionId}>
+                  <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Select Election" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="all">All Elections</SelectItem>
+                      {sortedElections.map(e => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
+                  </SelectContent>
+              </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+           <ChartContainer config={chartConfig} className="h-[450px] w-full">
+              <ResponsiveContainer>
+                  <ScatterChart margin={{ top: 20, right: 20, bottom: 40, left: 20 }}>
+                      <CartesianGrid />
+                      <XAxis type="number" dataKey="x" name="Turnout Delta" unit="%" domain={['dataMin - 2', 'dataMax + 2']} tickFormatter={(value) => `${Math.round(value)}%`}>
+                          <Label value="Change in Voter Turnout (%)" offset={-25} position="insideBottom" />
+                      </XAxis>
+                      <YAxis type="number" dataKey="y" name="Vote Swing" unit="%">
+                          <Label value="SLP Vote Swing (%)" angle={-90} position="insideLeft" style={{ textAnchor: 'middle' }} />
+                      </YAxis>
+                      <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<CustomTooltip />} />
+                      <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" />
+                      <ReferenceLine x={0} stroke="#888" strokeDasharray="3 3" />
+                      <Scatter name="Constituencies" data={chartData} fill="hsl(var(--primary))" />
+                  </ScatterChart>
+              </ResponsiveContainer>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+    );
+  }
+
 
 export default function HistoricalTrendsPage() {
   const { firestore } = useFirebase();
@@ -429,6 +544,12 @@ export default function HistoricalTrendsPage() {
             setSelectedConstituencyId={setSelectedConstituencyId}
           />
           <SwingAnalysisScatterPlot
+            elections={elections || []}
+            results={results || []}
+            constituencies={constituencies || []}
+            parties={parties || []}
+          />
+          <SwingVsTurnoutQuadrant
             elections={elections || []}
             results={results || []}
             constituencies={constituencies || []}
