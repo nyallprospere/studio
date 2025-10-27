@@ -261,10 +261,12 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
 
     const dataByElection = (electionId: string) => {
         const currentElection = sortedElections.find(e => e.id === electionId);
+        if (!currentElection) return { data: [], nationalSwing: 0 };
+
         const prevElectionIndex = sortedElections.findIndex(e => e.id === electionId) + 1;
         const prevElection = sortedElections[prevElectionIndex];
 
-        if (!currentElection || !prevElection) return { data: [], nationalSwing: 0 };
+        if (!prevElection) return { data: [], nationalSwing: 0 };
 
         const currentResults = results.filter(r => r.electionId === electionId);
         const prevResults = results.filter(r => r.electionId === prevElection.id);
@@ -366,7 +368,7 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
                     <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<CustomTooltip />} />
                     <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" />
                     <ReferenceLine x={0} stroke="#888" strokeDasharray="3 3" />
-                    {nationalSwing !== 0 && (
+                    {nationalSwing !== 0 && selectedElectionId !== 'all' && (
                       <ReferenceLine y={nationalSwing} label={{ value: 'National Trend', position: 'insideTopLeft' }} stroke="hsl(var(--primary))" strokeDasharray="3 3" />
                     )}
                     <Scatter name="Constituencies" data={chartData} fill="hsl(var(--primary))" />
