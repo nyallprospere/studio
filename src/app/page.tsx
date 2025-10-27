@@ -33,6 +33,7 @@ import { Pie, PieChart, ResponsiveContainer, Cell, Label } from 'recharts';
 import { MailingListPopup } from '@/components/mailing-list-popup';
 import { NewsCard } from '@/components/news-card';
 import { subDays } from 'date-fns';
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const adminSections = [
     { id: 'admin-elections', title: 'Manage Elections', href: '/admin/elections', icon: Vote },
@@ -240,6 +241,35 @@ export default function Home() {
                                      {chartData.map((entry) => (
                                         <Cell key={`cell-${entry.name}`} fill={entry.fill} />
                                     ))}
+                                    <Label
+                                        content={({ viewBox }) => {
+                                            if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                                                return (
+                                                    <text
+                                                        x={viewBox.cx}
+                                                        y={viewBox.cy}
+                                                        textAnchor="middle"
+                                                        dominantBaseline="middle"
+                                                    >
+                                                        <tspan
+                                                            x={viewBox.cx}
+                                                            dy="-0.5em"
+                                                            className="text-3xl font-bold"
+                                                        >
+                                                            {17}
+                                                        </tspan>
+                                                        <tspan
+                                                            x={viewBox.cx}
+                                                            dy="1.5em"
+                                                            className="text-sm text-muted-foreground"
+                                                        >
+                                                            Seats
+                                                        </tspan>
+                                                    </text>
+                                                );
+                                            }
+                                        }}
+                                    />
                                 </Pie>
                             </PieChart>
                         </ResponsiveContainer>
@@ -261,11 +291,34 @@ export default function Home() {
                           .map((option) => {
                             const count = chartData.find(d => d.name === option.label)?.value || 0;
                             return (
-                                <div key={option.value} className="flex items-center gap-1.5">
+                                <TooltipProvider key={option.value}>
+                                <Tooltip>
+                                <TooltipTrigger asChild>
+                                <div className="flex items-center gap-1.5 cursor-default">
                                     <span className="w-3 h-3 rounded-full" style={{ backgroundColor: option.color }}></span>
                                     <span>{option.label}</span>
                                     <span className="font-bold">({count})</span>
                                 </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p className="font-medium">Constituencies:</p>
+                                    <ul className="list-disc pl-5">
+                                        {constituencies
+                                            ?.filter(c => {
+                                                let leaning = c.politicalLeaning || 'tossup';
+                                                const isSpecial = c.name === 'Castries North' || c.name === 'Castries Central';
+                                                if (isSpecial) {
+                                                    if (leaning === 'solid-slp') leaning = 'solid-ind';
+                                                    if (leaning === 'lean-slp') leaning = 'lean-ind';
+                                                }
+                                                return leaning === option.value;
+                                            })
+                                            .map(c => <li key={c.id}>{c.name}</li>)
+                                        }
+                                    </ul>
+                                </TooltipContent>
+                                </Tooltip>
+                                </TooltipProvider>
                             )
                         })}
                     </div>
@@ -273,6 +326,11 @@ export default function Home() {
             </Card>
 
             <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline">
+                        Build Your Election Map
+                    </CardTitle>
+                </CardHeader>
                 <CardContent className="pt-6">
                     <Button asChild className="w-full bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
                         <Link href="/make-your-own">
@@ -286,7 +344,6 @@ export default function Home() {
                 <CardHeader>
                     <div>
                         <CardTitle>Events</CardTitle>
-                        <CardDescription>Upcoming and past political events.</CardDescription>
                     </div>
                     <div className="flex w-full items-center gap-1 p-1 bg-muted rounded-md mt-4">
                         <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')} className="flex-1">Upcoming</Button>
