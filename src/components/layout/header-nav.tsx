@@ -54,10 +54,26 @@ export function HeaderNav() {
     if (isUserLoading) return null;
     if (user) {
       return (
-        <Button onClick={handleLogout} variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
-          <LogOut className="mr-2 h-4 w-4" />
-          Logout
-        </Button>
+        <>
+          <Menubar className="border-none shadow-none bg-transparent p-0">
+              <MenubarMenu>
+                  <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80">
+                      Admin <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
+                  </MenubarTrigger>
+                  <MenubarContent>
+                      {adminLinks.map(link => (
+                          <MenubarItem key={link.href} asChild>
+                              <Link href={link.href}>{link.label}</Link>
+                          </MenubarItem>
+                      ))}
+                  </MenubarContent>
+              </MenubarMenu>
+          </Menubar>
+          <Button onClick={handleLogout} variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </Button>
+        </>
       );
     }
     return (
@@ -139,12 +155,12 @@ export function HeaderNav() {
              <NavLink href="/make-your-own">Build Your Election Map</NavLink>
           </MenubarMenu>
           
-           <MenubarMenu>
+          <MenubarMenu>
              <NavLink href="/historical-trends">Historical Trends</NavLink>
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80">
+            <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80 ml-[170px]">
               Past Results <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
             </MenubarTrigger>
             <MenubarContent>
@@ -161,22 +177,6 @@ export function HeaderNav() {
         </Menubar>
       </div>
       <div className="flex items-center gap-2">
-         {user && (
-            <Menubar className="border-none shadow-none bg-transparent p-0">
-                <MenubarMenu>
-                    <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80">
-                        Admin <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
-                    </MenubarTrigger>
-                    <MenubarContent>
-                        {adminLinks.map(link => (
-                            <MenubarItem key={link.href} asChild>
-                                <Link href={link.href}>{link.label}</Link>
-                            </MenubarItem>
-                        ))}
-                    </MenubarContent>
-                </MenubarMenu>
-            </Menubar>
-          )}
         <AuthNav />
       </div>
     </div>
