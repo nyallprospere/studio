@@ -201,7 +201,7 @@ export default function Home() {
                     </div>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center">
-                    <ChartContainer config={chartConfig} className="h-40 w-full">
+                    <ChartContainer config={chartConfig} className="h-40 w-full relative">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <ChartTooltip 
@@ -226,6 +226,13 @@ export default function Home() {
                                 </Pie>
                             </PieChart>
                         </ResponsiveContainer>
+                         <div
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full w-px h-[calc(50%+4px)] bg-black"
+                            style={{ top: '100%', transform: 'translateX(-50%) translateY(-100%)' }}
+                        ></div>
+                        <div className="absolute bottom-[-10px] left-1/2 -translate-x-1/2 text-xs font-semibold text-black bg-background px-1">
+                            9 to win
+                        </div>
                     </ChartContainer>
                     <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-xs">
                         {politicalLeaningOptions
