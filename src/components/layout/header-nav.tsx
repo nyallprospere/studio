@@ -240,6 +240,14 @@ export function HeaderNav() {
           <MenubarMenu>
              <NavLink href="/election-news">News</NavLink>
           </MenubarMenu>
+          
+          <NavSeparator />
+
+          <MenubarMenu>
+            <Button asChild size="sm" className="bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
+                <Link href="/make-your-own">Build Your Election Map</Link>
+            </Button>
+          </MenubarMenu>
 
           <NavSeparator />
 
@@ -273,14 +281,7 @@ export function HeaderNav() {
         </Menubar>
       </div>
 
-       <div className="flex items-center gap-x-6">
-         <Menubar className="border-none shadow-none bg-transparent p-0">
-             <MenubarMenu>
-              <Button asChild size="sm" className="bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
-                  <Link href="/make-your-own">Build Your Election Map</Link>
-              </Button>
-            </MenubarMenu>
-         </Menubar>
+       <div className="flex items-center gap-x-2">
         <div className="flex items-center gap-2">
           <AuthNav />
         </div>
