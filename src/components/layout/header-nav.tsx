@@ -156,7 +156,14 @@ export function HeaderNav() {
           <NavSeparator />
 
            <MenubarMenu>
-            <NavLink href="/historical-trends">Historical Trends</NavLink>
+            <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80">
+              Analysis <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
+            </MenubarTrigger>
+            <MenubarContent>
+              <MenubarItem asChild>
+                <Link href="/historical-trends">Historical Trends</Link>
+              </MenubarItem>
+            </MenubarContent>
           </MenubarMenu>
           
           <NavSeparator />
