@@ -541,6 +541,9 @@ export default function ResultsPage() {
                         {summaryData.map((summaryItem) => (
                         <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
                             <CardHeader className="flex flex-col items-center p-4">
+                                <p className="text-xs font-semibold text-muted-foreground">
+                                    {summaryItem.acronym === 'SLP' ? currentElection.slpLeader : currentElection.uwpLeader}
+                                </p>
                                 <CardTitle className="text-base mb-2">{summaryItem.name}</CardTitle>
                                 {summaryItem.logoUrl && (
                                     <div className="relative h-12 w-24">
@@ -830,4 +833,5 @@ export default function ResultsPage() {
     </div>
   );
 }
+
 
