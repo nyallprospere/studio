@@ -236,9 +236,12 @@ export function ConstituencyPopoverContent({
         const config: ChartConfig = {};
         if (slpParty) config.slp = { label: 'SLP', color: slpParty.color };
         if (uwpParty) config.uwp = { label: 'UWP', color: uwpParty.color };
-        config.ind = { label: 'IND', color: '#3b82f6' };
         
         const isSpecialConstituency = constituency.name === 'Castries North' || constituency.name === 'Castries Central';
+    
+        if(isSpecialConstituency){
+            config.ind = { label: 'IND', color: '#3b82f6' };
+        }
     
         const uwpPercentage = isSpecialConstituency ? 100 - (constituency.predictedSlpPercentage || 50) : constituency.predictedUwpPercentage || 50;
         
@@ -449,7 +452,7 @@ export function ConstituencyPopoverContent({
                     <div className="flex justify-between text-sm font-medium -mt-10">
                         {isSpecialConstituencyForIND ? (
                             <>
-                                 <div style={{ color: chartConfig.uwp?.color }} className="text-left">
+                                <div style={{ color: chartConfig.uwp?.color }} className="text-left">
                                     <p>UWP</p>
                                     <p>{100 - (constituency.predictedSlpPercentage || 50)}%</p>
                                 </div>
@@ -474,26 +477,22 @@ export function ConstituencyPopoverContent({
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                     {isSpecialConstituencyForIND ? (
-                        <>
-                            {independentCandidate && (
-                                <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
-                                    <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
-                                        {independentCandidate.imageUrl ? <Image src={independentCandidate.imageUrl} alt={independentCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
-                                    </div>
-                                    <p className="text-xs font-semibold mt-1">{independentCandidate.name}</p>
-                                    <p className="text-xs text-muted-foreground">IND</p>
+                         <>
+                            <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
+                                <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
+                                    {uwpCandidate?.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                 </div>
-                            )}
-                             {uwpCandidate && (
-                                <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
-                                    <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
-                                        {uwpCandidate.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
-                                    </div>
-                                    <p className="text-xs font-semibold mt-1">{uwpCandidate.name}</p>
-                                    <p className="text-xs text-muted-foreground">{uwpParty?.acronym}</p>
+                                <p className="text-xs font-semibold mt-1">{uwpCandidate ? uwpCandidate.name : "TBD"}</p>
+                                <p className="text-xs text-muted-foreground">{uwpParty?.acronym}</p>
+                            </div>
+                            <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
+                                <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
+                                    {independentCandidate?.imageUrl ? <Image src={independentCandidate.imageUrl} alt={independentCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                 </div>
-                            )}
-                        </>
+                                <p className="text-xs font-semibold mt-1">{independentCandidate ? independentCandidate.name : "TBD"}</p>
+                                <p className="text-xs text-muted-foreground">IND</p>
+                            </div>
+                         </>
                     ) : (
                         <>
                             {slpCandidate && (
@@ -620,7 +619,7 @@ export function ConstituencyPopoverContent({
                             logoUrl={indLogoUrl}
                             hideLogo={hideLogos}
                             popoverVariant={popoverVariant}
-                            colorOverride={chartConfig.ind.color}
+                            colorOverride={chartConfig.ind?.color}
                         />
                     )}
                      {!isSpecialConstituency && slpCandidate && (
@@ -751,7 +750,7 @@ export function ConstituencyPopoverContent({
                     <div className="space-y-2 pt-2">
                         <h5 className="text-xs font-medium text-muted-foreground">Edit Prediction</h5>
                         <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold" style={{color: slpParty?.color}}>SLP: {constituency.predictedSlpPercentage}%</span>
+                            <span className="text-xs font-semibold" style={{color: slpParty?.color}}>SLP: {constituency.predictedSlpPercentage || 50}%</span>
                             <Slider
                                 value={[constituency.predictedSlpPercentage || 50]}
                                 onValueChange={(value) => onPredictionChange(value[0], 100 - value[0])}
