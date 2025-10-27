@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -53,7 +54,7 @@ export function HeaderNav() {
     if (isUserLoading) return null;
     if (user) {
       return (
-        <Button onClick={handleLogout} variant="ghost">
+        <Button onClick={handleLogout} variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
           <LogOut className="mr-2 h-4 w-4" />
           Logout
         </Button>
@@ -61,13 +62,13 @@ export function HeaderNav() {
     }
     return (
       <>
-        <Button asChild variant="ghost">
+        <Button asChild variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
           <Link href="/login">
             <LogIn className="mr-2 h-4 w-4" />
             Login
           </Link>
         </Button>
-        <Button asChild>
+        <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
           <Link href="/signup">
             <UserPlus className="mr-2 h-4 w-4" />
             Sign Up
@@ -94,44 +95,52 @@ export function HeaderNav() {
     { href: '/admin/settings', label: 'Manage Settings' },
   ];
 
+  const NavLink = ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
+    <Link href={href} className={cn("text-sm font-medium transition-colors hover:text-white", pathname === href ? "text-white" : "text-primary-foreground/80", className)}>
+      {children}
+    </Link>
+  );
+
   return (
     <div className="flex w-full items-center justify-between">
       <div className="flex items-center gap-6">
         <Link href="/" className="flex items-center gap-2">
-            <Vote className="w-8 h-8 text-primary" />
-            <span className="font-bold font-headline text-lg">LucianVotes</span>
+            <Vote className="w-8 h-8 text-white" />
+            <span className="font-bold font-headline text-lg text-white">LucianVotes</span>
         </Link>
         <Menubar className="border-none shadow-none bg-transparent">
           <MenubarMenu>
-            <Link href="/" className={cn("text-sm font-medium transition-colors hover:text-primary", pathname === "/" ? "" : "text-muted-foreground")}>
-              Home
-            </Link>
+            <NavLink href="/">Home</NavLink>
+          </MenubarMenu>
+
+          {uwpParty && (
+            <MenubarMenu>
+               <NavLink href={`/parties/${uwpParty.id}`} className="flex items-center gap-2">
+                <UwpLogo className="h-4 w-4" />
+                UWP
+              </NavLink>
+            </MenubarMenu>
+          )}
+
+          {slpParty && (
+             <MenubarMenu>
+               <NavLink href={`/parties/${slpParty.id}`} className="flex items-center gap-2">
+                <SlpLogo className="h-4 w-4" />
+                SLP
+              </NavLink>
+            </MenubarMenu>
+          )}
+          
+          <MenubarMenu>
+             <NavLink href="/election-news">Election News</NavLink>
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="font-medium">
-              Parties <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
-            </MenubarTrigger>
-            <MenubarContent>
-              {uwpParty && <MenubarItem asChild><Link href={`/parties/${uwpParty.id}`}><UwpLogo className="mr-2 h-4 w-4" />UWP</Link></MenubarItem>}
-              {slpParty && <MenubarItem asChild><Link href={`/parties/${slpParty.id}`}><SlpLogo className="mr-2 h-4 w-4" />SLP</Link></MenubarItem>}
-            </MenubarContent>
+             <NavLink href="/make-your-own">Build Your Election Map</NavLink>
           </MenubarMenu>
           
           <MenubarMenu>
-             <Link href="/election-news" className={cn("text-sm font-medium transition-colors hover:text-primary", pathname === "/election-news" ? "" : "text-muted-foreground")}>
-              Election News
-            </Link>
-          </MenubarMenu>
-
-          <MenubarMenu>
-             <Link href="/make-your-own" className={cn("text-sm font-medium transition-colors hover:text-primary", pathname === "/make-your-own" ? "" : "text-muted-foreground")}>
-              Build Your Election Map
-            </Link>
-          </MenubarMenu>
-          
-          <MenubarMenu>
-            <MenubarTrigger className="font-medium">
+            <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80">
               Past Results <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
             </MenubarTrigger>
             <MenubarContent>
@@ -149,7 +158,7 @@ export function HeaderNav() {
           
           {user && (
             <MenubarMenu>
-                <MenubarTrigger className="font-medium">
+                <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80">
                     Admin <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
                 </MenubarTrigger>
                 <MenubarContent>
