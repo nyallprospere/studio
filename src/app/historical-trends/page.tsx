@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/page-header';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ScatterChart, Scatter, ZAxis, Label } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ScatterChart, Scatter, ZAxis, Label, ReferenceLine } from 'recharts';
 import { BarChart, Bar } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
@@ -260,47 +260,47 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
     if (!elections.length || !results.length || !constituencies.length || !parties.length) return [];
 
     const dataByElection = (electionId: string) => {
-      const currentElection = sortedElections.find(e => e.id === electionId);
-      const prevElectionIndex = sortedElections.findIndex(e => e.id === electionId) + 1;
-      const prevElection = sortedElections[prevElectionIndex];
+        const currentElection = sortedElections.find(e => e.id === electionId);
+        const prevElectionIndex = sortedElections.findIndex(e => e.id === electionId) + 1;
+        const prevElection = sortedElections[prevElectionIndex];
 
-      if (!currentElection || !prevElection) return [];
+        if (!currentElection || !prevElection) return [];
 
-      const currentResults = results.filter(r => r.electionId === electionId);
-      const prevResults = results.filter(r => r.electionId === prevElection.id);
+        const currentResults = results.filter(r => r.electionId === electionId);
+        const prevResults = results.filter(r => r.electionId === prevElection.id);
 
-      const slp = parties.find(p => p.acronym === 'SLP');
-      if (!slp) return [];
+        const slp = parties.find(p => p.acronym === 'SLP');
+        if (!slp) return [];
 
-      const calcPercentage = (votes: number, total: number) => total > 0 ? (votes / total) * 100 : 0;
-      
-      const nationalCurrentSLP = currentResults.reduce((sum, r) => sum + r.slpVotes, 0);
-      const nationalCurrentTotal = currentResults.reduce((sum, r) => sum + r.totalVotes, 0);
-      const nationalCurrentSLPPercent = calcPercentage(nationalCurrentSLP, nationalCurrentTotal);
-      
-      const nationalPrevSLP = prevResults.reduce((sum, r) => sum + r.slpVotes, 0);
-      const nationalPrevTotal = prevResults.reduce((sum, r) => sum + r.totalVotes, 0);
-      const nationalPrevSLPPercent = calcPercentage(nationalPrevSLP, nationalPrevTotal);
-
-      const nationalSwing = nationalCurrentSLPPercent - nationalPrevSLPPercent;
-
-      return constituencies.map(con => {
-        const currentConResult = currentResults.find(r => r.constituencyId === con.id);
-        const prevConResult = prevResults.find(r => r.constituencyId === con.id);
-        if (!currentConResult || !prevConResult) return null;
+        const calcPercentage = (votes: number, total: number) => total > 0 ? (votes / total) * 100 : 0;
         
-        const currentConSLPPercent = calcPercentage(currentConResult.slpVotes, currentConResult.totalVotes);
-        const prevConSLPPercent = calcPercentage(prevConResult.slpVotes, prevConResult.totalVotes);
+        const nationalCurrentSLP = currentResults.reduce((sum, r) => sum + r.slpVotes, 0);
+        const nationalCurrentTotal = currentResults.reduce((sum, r) => sum + r.totalVotes, 0);
+        const nationalCurrentSLPPercent = calcPercentage(nationalCurrentSLP, nationalCurrentTotal);
         
-        const constituencySwing = currentConSLPPercent - prevConSLPPercent;
+        const nationalPrevSLP = prevResults.reduce((sum, r) => sum + r.slpVotes, 0);
+        const nationalPrevTotal = prevResults.reduce((sum, r) => sum + r.totalVotes, 0);
+        const nationalPrevSLPPercent = calcPercentage(nationalPrevSLP, nationalPrevTotal);
 
-        return {
-          name: con.name,
-          swing: constituencySwing,
-          swingVsNational: constituencySwing - nationalSwing,
-          year: currentElection.year,
-        };
-      }).filter((d): d is NonNullable<typeof d> => d !== null);
+        const nationalSwing = nationalCurrentSLPPercent - nationalPrevSLPPercent;
+
+        return constituencies.map(con => {
+            const currentConResult = currentResults.find(r => r.constituencyId === con.id);
+            const prevConResult = prevResults.find(r => r.constituencyId === con.id);
+            if (!currentConResult || !prevConResult) return null;
+            
+            const currentConSLPPercent = calcPercentage(currentConResult.slpVotes, currentConResult.totalVotes);
+            const prevConSLPPercent = calcPercentage(prevConResult.slpVotes, prevConResult.totalVotes);
+            
+            const constituencySwing = currentConSLPPercent - prevConSLPPercent;
+
+            return {
+            name: con.name,
+            y: constituencySwing,
+            x: constituencySwing - nationalSwing,
+            year: currentElection.year,
+            };
+        }).filter((d): d is NonNullable<typeof d> => d !== null);
     };
 
     if (selectedElectionId === 'all') {
@@ -320,8 +320,8 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
       return (
         <div className="bg-background border p-2 rounded-md shadow-lg text-sm">
           <p className="font-bold">{data.name} ({data.year})</p>
-          <p>Swing: {data.swing.toFixed(1)}%</p>
-          <p>vs. National: {data.swingVsNational.toFixed(1)}%</p>
+          <p>Constituency Swing (Y): {data.y.toFixed(1)}%</p>
+          <p>Swing vs National (X): {data.x.toFixed(1)}%</p>
         </div>
       );
     }
@@ -333,8 +333,8 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
-              <CardTitle>Constituency Swing vs. National Average</CardTitle>
-              <CardDescription>How each constituency's swing compares to the national trend for SLP.</CardDescription>
+              <CardTitle>Constituency Swing Quadrant Analysis</CardTitle>
+              <CardDescription>How each constituency's SLP vote swing compares to the national trend.</CardDescription>
             </div>
             <Select value={selectedElectionId} onValueChange={setSelectedElectionId}>
                 <SelectTrigger className="w-[200px]">
@@ -348,19 +348,26 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
         </div>
       </CardHeader>
       <CardContent>
-         <ChartContainer config={chartConfig} className="h-[400px] w-full">
+         <ChartContainer config={chartConfig} className="h-[450px] w-full">
             <ResponsiveContainer>
-                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <ScatterChart margin={{ top: 40, right: 40, bottom: 40, left: 40 }}>
                     <CartesianGrid />
-                    <XAxis type="number" dataKey="swingVsNational" name="Swing vs. National" unit="%" domain={['dataMin - 2', 'dataMax + 2']}>
-                        <Label value="Swing vs. National Average" offset={-15} position="insideBottom" />
+                    <XAxis type="number" dataKey="x" name="Swing vs. National" unit="%" domain={['dataMin - 2', 'dataMax + 2']}>
+                        <Label value="Constituency swing relative to national swing" offset={-25} position="insideBottom" />
                     </XAxis>
-                    <YAxis type="number" dataKey="swing" name="Constituency Swing" unit="%">
+                    <YAxis type="number" dataKey="y" name="Constituency Swing" unit="%">
                         <Label value="Constituency Swing" angle={-90} position="insideLeft" style={{ textAnchor: 'middle' }} />
                     </YAxis>
-                    <ZAxis type="category" dataKey="name" name="Constituency" />
                     <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<CustomTooltip />} />
+                    <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" />
+                    <ReferenceLine x={0} stroke="#888" strokeDasharray="3 3" />
                     <Scatter name="Constituencies" data={chartData} fill="hsl(var(--primary))" />
+                    
+                    {/* Quadrant Labels */}
+                    <Label value="SLP Gain (Above National)" position="insideTopRight" offset={10} fill="gray" fontSize="12" />
+                    <Label value="SLP Loss (But Above National)" position="insideBottomRight" offset={10} fill="gray" fontSize="12" />
+                    <Label value="SLP Loss (Below National)" position="insideBottomLeft" offset={10} fill="gray" fontSize="12" />
+                    <Label value="SLP Gain (But Below National)" position="insideTopLeft" offset={10} fill="gray" fontSize="12" />
                 </ScatterChart>
             </ResponsiveContainer>
         </ChartContainer>
