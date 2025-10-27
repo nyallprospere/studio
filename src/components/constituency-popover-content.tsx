@@ -220,12 +220,9 @@ export function ConstituencyPopoverContent({
            indCand = candidates.find(c => c.partyId === 'independent' || c.partyId === 'IND');
         }
 
-        if(indCand) {
-            if (constituency.name === 'Castries North' || constituency.name === 'Castries Central') {
-                if (slpCand && slpCand.id === indCand.id) {
-                    slpCand = null;
-                }
-            }
+        // Special handling for Stephenson King (and others) who may run as IND but are still associated with SLP in some data structures
+        if(indCand && slpCand && indCand.id === slpCand.id) {
+            slpCand = null; // Don't show him as SLP if he's the independent candidate
         }
         
         return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand || null, slpParty: slp, uwpParty: uwp };
@@ -247,12 +244,12 @@ export function ConstituencyPopoverContent({
         
         const data = isSpecialConstituency
             ? [
-                { party: 'ind', votes: constituency.predictedSlpPercentage || 50, fill: 'var(--color-ind)'},
-                { party: 'uwp', votes: uwpPercentage, fill: `var(--color-uwp)` },
+                { party: 'ind', votes: constituency.predictedSlpPercentage || 50, fill: config.ind?.color},
+                { party: 'uwp', votes: uwpPercentage, fill: config.uwp?.color },
               ]
             : [
-                { party: 'slp', votes: constituency.predictedSlpPercentage || 50, fill: `var(--color-slp)` },
-                { party: 'uwp', votes: uwpPercentage, fill: `var(--color-uwp)` },
+                { party: 'slp', votes: constituency.predictedSlpPercentage || 50, fill: config.slp?.color },
+                { party: 'uwp', votes: uwpPercentage, fill: config.uwp?.color },
               ];
     
         return { chartData: data, chartConfig: config };
@@ -384,7 +381,12 @@ export function ConstituencyPopoverContent({
     
     const popoverText = useMemo(() => {
         const lean = constituency.politicalLeaning;
-        const isInd = lean?.includes('ind')
+        const isInd = lean?.includes('ind');
+        if (constituency.name === 'Castries North' || constituency.name === 'Castries Central') {
+            if (lean?.includes('slp') || isInd) {
+                 return constituency.slpDashboardPopoverText;
+            }
+        }
         if ((isInd || lean?.includes('slp')) && constituency.slpDashboardPopoverText) {
             return constituency.slpDashboardPopoverText;
         }
@@ -411,7 +413,7 @@ export function ConstituencyPopoverContent({
                     <h5 className="col-span-full text-xs font-medium text-muted-foreground text-center mt-1">Choose Your Pick</h5>
                 )}
                  {popoverVariant === 'dashboard' && (
-                    <p className="text-sm text-center mt-1">
+                     <p className="text-sm text-center mt-1">
                         <span className="font-semibold">Status:</span>{' '}
                         {getLeaningLabel(constituency.politicalLeaning)}
                     </p>
@@ -471,17 +473,8 @@ export function ConstituencyPopoverContent({
                     </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                     {isSpecialConstituencyForIND ? (
+                    {isSpecialConstituencyForIND ? (
                         <>
-                             {uwpCandidate && (
-                                <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
-                                    <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
-                                        {uwpCandidate.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
-                                    </div>
-                                    <p className="text-xs font-semibold mt-1">{uwpCandidate.name}</p>
-                                    <p className="text-xs text-muted-foreground">{uwpParty?.acronym}</p>
-                                </div>
-                            )}
                             {independentCandidate && (
                                 <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
                                     <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
@@ -489,6 +482,15 @@ export function ConstituencyPopoverContent({
                                     </div>
                                     <p className="text-xs font-semibold mt-1">{independentCandidate.name}</p>
                                     <p className="text-xs text-muted-foreground">IND</p>
+                                </div>
+                            )}
+                             {uwpCandidate && (
+                                <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
+                                    <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
+                                        {uwpCandidate.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
+                                    </div>
+                                    <p className="text-xs font-semibold mt-1">{uwpCandidate.name}</p>
+                                    <p className="text-xs text-muted-foreground">{uwpParty?.acronym}</p>
                                 </div>
                             )}
                         </>
@@ -618,7 +620,7 @@ export function ConstituencyPopoverContent({
                             logoUrl={indLogoUrl}
                             hideLogo={hideLogos}
                             popoverVariant={popoverVariant}
-                            colorOverride={constituency.name === 'Castries North' ? '#3b82f6' : undefined}
+                            colorOverride={chartConfig.ind.color}
                         />
                     )}
                      {!isSpecialConstituency && slpCandidate && (
