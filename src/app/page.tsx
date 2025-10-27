@@ -170,6 +170,7 @@ export default function Home() {
                     onConstituencyClick={setSelectedConstituencyId}
                     election={currentElection}
                     hideLogos={true}
+                    popoverVariant="dashboard"
                  />
             </CardContent>
         </Card>
