@@ -1,310 +1,257 @@
 /**
- * @description This ruleset enforces a public read policy for most collections, with owner-only or no write access.
- *   It prioritizes ease of access for public data while preventing unauthorized modifications.
- * @dataStructure The database is organized into top-level collections for entities like constituencies, parties,
- *   candidates, elections, and news articles. Some collections have subcollections (e.g., comments under news articles).
- *   The settings data is stored under `/settings/{document}`. User-specific data is stored in `/user_activity/{activityId}` and `/user_maps/{userMapId}`.
- * @keySecurityDecisions
- *   - Constituencies are publicly readable.
- *   - Most content collections (parties, candidates, elections, ads, news) are publicly readable.
- *   - Writes to content collections are generally disallowed in this prototype, but placeholder rules are included with TODO comments.
- *   - User activity and maps are publicly writable during prototyping.
- *   - No data shape validation is performed beyond authorization checks to allow for rapid iteration.
+ * @fileoverview Firestore Security Rules for the political website.
+ *
+ * Core Philosophy:
+ * This ruleset prioritizes security by restricting access to resources based on strict conditions.
+ * The default posture is to deny all access unless explicitly granted.
+ *
+ * Data Structure:
+ * - Top-level collections are used for main entities like `parties`, `candidates`, `elections`, etc.
+ * - Subcollections, such as `news/{newsId}/comments/{commentId}`, are used to nest data.
+ * - Special single-document paths `settings/pageLayouts` and `settings/site` are used for global settings.
+ *
+ * Key Security Decisions:
+ * - Listing of `reports` is denied to prevent unauthorized access to moderation data.
+ *
+ *
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
     /**
-     * @description Allows anyone to read constituency data.
-     * @path /constituencies/{constituencyId}
-     * @allow (get, list) Any user can read constituency data.
-     * @deny (create, update, delete) No one can create, update, or delete constituency data.
-     * @principle Allows public read access to constituency information.
+     * @description Restricts access to mailing list subscriber data.
+     * @path /mailing_list_subscribers/{subscriberId}
+     * @allow (create) Signed-in user can subscribe to the mailing list.
+     * @deny (get, list, update, delete) No one can read, update, or delete subscriber data after creation.
+     * @principle Enforces a create-only access model for mailing list subscribers.
      */
-    match /constituencies/{constituencyId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+    match /mailing_list_subscribers/{subscriberId} {
+      allow get, list, update, delete: if false;
+      allow create: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read party data, but restricts write access.
+     * @description Restricts access to political party data.
      * @path /parties/{partyId}
-     * @allow (get, list) Any user can read party data.
+     * @allow (get, list) Public read access to party data.
      * @deny (create, update, delete) No one can create, update, or delete party data.
-     * @principle Allows public read access to party information, but prevents unauthorized modifications.
+     * @principle Enforces read-only access to party data.
      */
     match /parties/{partyId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read party logo data, but restricts write access.
+     * @description Restricts access to party logo data.
      * @path /party_logos/{partyLogoId}
-     * @allow (get, list) Any user can read party logo data.
+     * @allow (get, list) Public read access to party logos.
      * @deny (create, update, delete) No one can create, update, or delete party logo data.
-     * @principle Allows public read access to party logo information, but prevents unauthorized modifications.
+     * @principle Enforces read-only access to party logos.
      */
     match /party_logos/{partyLogoId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read event data, but restricts write access.
+     * @description Restricts access to political event data.
      * @path /events/{eventId}
-     * @allow (get, list) Any user can read event data.
+     * @allow (get, list) Public read access to event data.
      * @deny (create, update, delete) No one can create, update, or delete event data.
-     * @principle Allows public read access to event information, but prevents unauthorized modifications.
+     * @principle Enforces read-only access to event data.
      */
     match /events/{eventId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read candidate data, but restricts write access.
+     * @description Restricts access to candidate data.
      * @path /candidates/{candidateId}
-     * @allow (get, list) Any user can read candidate data.
+     * @allow (get, list) Public read access to candidate data.
      * @deny (create, update, delete) No one can create, update, or delete candidate data.
-     * @principle Allows public read access to candidate information, but prevents unauthorized modifications.
+     * @principle Enforces read-only access to candidate data.
      */
     match /candidates/{candidateId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read archived candidate data, but restricts write access.
+     * @description Restricts access to archived candidate data.
      * @path /archived_candidates/{archivedCandidateId}
-     * @allow (get, list) Any user can read archived candidate data.
+     * @allow (get, list) Public read access to archived candidate data.
      * @deny (create, update, delete) No one can create, update, or delete archived candidate data.
-     * @principle Allows public read access to archived candidate information, but prevents unauthorized modifications.
+     * @principle Enforces read-only access to archived candidate data.
      */
     match /archived_candidates/{archivedCandidateId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read election data, but restricts write access.
+     * @description Restricts access to election data.
      * @path /elections/{electionId}
-     * @allow (get, list) Any user can read election data.
+     * @allow (get, list) Public read access to election data.
      * @deny (create, update, delete) No one can create, update, or delete election data.
-     * @principle Allows public read access to election information, but prevents unauthorized modifications.
+     * @principle Enforces read-only access to election data.
      */
     match /elections/{electionId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read polling data, but restricts write access.
+     * @description Restricts access to polling data.
      * @path /polling_data/{pollingDataId}
-     * @allow (get, list) Any user can read polling data.
+     * @allow (get, list) Public read access to polling data.
      * @deny (create, update, delete) No one can create, update, or delete polling data.
-     * @principle Allows public read access to polling data, but prevents unauthorized modifications.
+     * @principle Enforces read-only access to polling data.
      */
     match /polling_data/{pollingDataId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read election result data, but restricts write access.
+     * @description Restricts access to constituency data.
+     * @path /constituencies/{constituencyId}
+     * @allow (get, list) Public read access to constituency data.
+     * @deny (create, update, delete) No one can create, update, or delete constituency data.
+     * @principle Enforces read-only access to constituency data.
+     */
+    match /constituencies/{constituencyId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Restricts access to election result data.
      * @path /election_results/{electionResultId}
-     * @allow (get, list) Any user can read election result data.
+     * @allow (get, list) Public read access to election result data.
      * @deny (create, update, delete) No one can create, update, or delete election result data.
-     * @principle Allows public read access to election result data, but prevents unauthorized modifications.
+     * @principle Enforces read-only access to election result data.
      */
     match /election_results/{electionResultId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read page layouts data, but restricts write access.
+     * @description Restricts access to page layout settings.
      * @path /settings/pageLayouts
-     * @allow (get) Any user can read page layouts data.
-     * @allow (list) Listing documents in /settings/ is disallowed
-     * @deny (create, update, delete) No one can create, update, or delete page layouts data.
-     * @principle Allows public read access to page layouts, but prevents unauthorized modifications.
+     * @allow (get) Public read access to page layout settings.
+     * @deny (create, list, update, delete) No one can create, list, update, or delete page layout settings.
+     * @principle Enforces read-only access to page layout settings.
      */
     match /settings/pageLayouts {
       allow get: if true;
-      allow list: if false;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, list, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read site settings, but restricts write access.
+     * @description Restricts access to site settings.
      * @path /settings/site
-     * @allow (get) Any user can read site settings.
-     * @allow (list) Listing documents in /settings/ is disallowed
-     * @deny (create, update, delete) No one can create, update, or delete site settings.
-     * @principle Allows public read access to site settings, but prevents unauthorized modifications.
+     * @allow (get) Public read access to site settings.
+     * @deny (create, list, update, delete) No one can create, list, update, or delete site settings.
+     * @principle Enforces read-only access to site settings.
      */
     match /settings/site {
       allow get: if true;
-      allow list: if false;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, list, update, delete: if false;
     }
 
     /**
-     * @description Allows any signed-in user to create user activity logs.
+     * @description Restricts access to user activity data.
      * @path /user_activity/{activityId}
-     * @allow (create) Any signed-in user can create a user activity log.
-     * @allow (get, list, update, delete) No one can get, list, update, or delete user activity logs.
-     * @principle Allows anyone to create a log entry, but prevents unauthorized access or modification.
+     * @allow (create) Signed-in user can create activity logs.
+     * @deny (get, list, update, delete) No one can read, list, update, or delete user activity data.
+     * @principle Enforces a create-only access model for user activity.
      */
     match /user_activity/{activityId} {
-        allow create: if isSignedIn();
-        allow get: if false;
-        allow list: if false;
-        allow update: if false;
-        allow delete: if false;
+      allow get, list, update, delete: if false;
+      allow create: if isSignedIn();
     }
 
     /**
-     * @description Allows anyone to read region data, but restricts write access.
+     * @description Restricts access to region data.
      * @path /regions/{regionId}
-     * @allow (get, list) Any user can read region data.
+     * @allow (get, list) Public read access to region data.
      * @deny (create, update, delete) No one can create, update, or delete region data.
-     * @principle Allows public read access to region information, but prevents unauthorized modifications.
+     * @principle Enforces read-only access to region data.
      */
     match /regions/{regionId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Restricts access to user map data.
+     * @path /user_maps/{userMapId}
+     * @allow (create) Signed-in user can create map predictions.
+     * @deny (get, list, update, delete) No one can read, list, update, or delete user map data.
+     * @principle Enforces a create-only access model for user maps.
+     */
+    match /user_maps/{userMapId} {
+      allow get, list, update, delete: if false;
+      allow create: if isSignedIn();
     }
 
      /**
-      * @description Allows any signed-in user to create a user map.
-      * @path /user_maps/{userMapId}
-      * @allow (create) Any signed-in user can create a user map.
-      * @allow (get, list, update, delete) No one can get, list, update, or delete user maps.
-      * @principle Allows anyone to create a user map entry, but prevents unauthorized access or modification.
+      * @description Restricts access to ad data.
+      * @path /ads/{adId}
+      * @allow (get, list) Public read access to ad data.
+      * @deny (create, update, delete) No one can create, update, or delete ad data.
+      * @principle Enforces read-only access to ad data.
       */
-    match /user_maps/{userMapId} {
-        allow create: if isSignedIn();
-        allow get: if false;
-        allow list: if false;
-        allow update: if false;
-        allow delete: if false;
-    }
-
-    /**
-     * @description Allows anyone to read ad data, but restricts write access.
-     * @path /ads/{adId}
-     * @allow (get, list) Any user can read ad data.
-     * @deny (create, update, delete) No one can create, update, or delete ad data.
-     * @principle Allows public read access to ad information, but prevents unauthorized modifications.
-     */
     match /ads/{adId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+        allow get, list: if true;
+        allow create, update, delete: if false;
     }
 
-    /**
-     * @description Allows anyone to read news article data, but restricts write access.
-     * @path /news/{newsId}
-     * @allow (get, list) Any user can read news article data.
-     * @deny (create, update, delete) No one can create, update, or delete news article data.
-     * @principle Allows public read access to news article information, but prevents unauthorized modifications.
-     */
+     /**
+      * @description Restricts access to news article data.
+      * @path /news/{newsId}
+      * @allow (get, list) Public read access to news article data.
+      * @deny (create, update, delete) No one can create, update, or delete news article data.
+      * @principle Enforces read-only access to news article data.
+      */
     match /news/{newsId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+        allow get, list: if true;
+        allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows any signed-in user to create comments on news articles.
+     * @description Restricts access to news article comment data.
      * @path /news/{newsId}/comments/{commentId}
-     * @allow (create) Any signed-in user can create a comment.
-     * @allow (get, list, update, delete) No one can get, list, update, or delete comments.
+     * @allow (get, list, create) Public read access for getting comments and allowing create.
+     * @deny (update, delete) No one can update, or delete news article data.
+     * @principle Enforces public read and create, but restricted update and delete to news article comment data.
      */
     match /news/{newsId}/comments/{commentId} {
-        allow create: if isSignedIn();
-        allow get: if false;
-        allow list: if false;
-        allow update: if false;
-        allow delete: if false;
+        allow get, list, create: if true;
+        allow update, delete: if false;
     }
-
-     /**
-      * @description Allows any signed-in user to create reports on news article comments.
-      * @path /reports/{reportId}
-      * @allow (create) Any signed-in user can create a report.
-      * @allow (get, list, update, delete) No one can get, list, update, or delete reports.
-      */
+        
+    /**
+     * @description Restricts access to reported comments data.
+     * @path /reports/{reportId}
+     * @deny (get, list, create, update, delete) No one can get, list, create, update, or delete report data.
+     * @principle Enforces that no one can access or modify report data.
+     */
     match /reports/{reportId} {
-        allow create: if isSignedIn();
-        allow get: if false;
-        allow list: if false;
-        allow update: if false;
-        allow delete: if false;
+        allow get, list, create, update, delete: if false;
     }
 
-     /**
-      * @description Mailing list subscribers can be added.
-      * @path /mailing_list_subscribers/{subscriberId}
-      * @allow (create) Any user can create a subscriber.
-      * @allow (get, list, update, delete) No one can get, list, update, or delete subscribers.
-      */
-    match /mailing_list_subscribers/{subscriberId} {
-        allow create: if true;
-        allow get: if false;
-        allow list: if false;
-        allow update: if false;
-        allow delete: if false;
-    }
+  }
+
+  function isSignedIn() {
+    return request.auth != null;
+  }
+
+  function isOwner(userId) {
+    return request.auth.uid == userId;
   }
 }
