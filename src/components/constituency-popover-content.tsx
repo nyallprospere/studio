@@ -130,12 +130,12 @@ function CandidateBox({
                                 {isStriped && barFill === 'blue-red-stripes' && <div className="absolute inset-0 red-stripes-overlay"></div>}
                             </div>
                             <div className="absolute inset-0 flex items-center justify-between px-2">
-                                <span className="font-bold text-xs text-white">
+                                <span className="font-bold text-xs text-black">
                                     {votes?.toLocaleString()}
                                     {isWinner && margin ? <sup className="font-semibold"> (+{margin.toLocaleString()})</sup> : null}
                                 </span>
                                 <div className="flex items-baseline gap-1">
-                                    <span className="font-bold text-xs text-white">
+                                    <span className="font-bold text-xs text-black">
                                         {votePercentage.toFixed(1)}%
                                     </span>
                                     {votePercentageChange !== null && typeof votePercentageChange !== 'undefined' && (
