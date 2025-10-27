@@ -61,7 +61,8 @@ function CandidateBox({
     hideLogo,
     popoverVariant = 'default',
     colorOverride,
-    voteTextColor
+    voteTextColor,
+    votePercentageColor
 }: { 
     candidate: Candidate | ArchivedCandidate | null;
     party: Party | null;
@@ -79,6 +80,7 @@ function CandidateBox({
     popoverVariant?: 'default' | 'dashboard';
     colorOverride?: string;
     voteTextColor?: string;
+    votePercentageColor?: string;
 }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}` : 'Candidate(s) N/A';
@@ -137,7 +139,7 @@ function CandidateBox({
                                     {isWinner && margin ? <sup className="font-semibold"> (+{margin.toLocaleString()})</sup> : null}
                                 </span>
                                 <div className="flex items-baseline gap-1">
-                                    <span className={cn("font-bold text-xs", voteTextColor)}>
+                                    <span className={cn("font-bold text-xs", votePercentageColor)}>
                                         {votePercentage.toFixed(1)}%
                                     </span>
                                     {votePercentageChange !== null && typeof votePercentageChange !== 'undefined' && (
@@ -603,6 +605,7 @@ export function ConstituencyPopoverContent({
                             hideLogo={hideLogos}
                             popoverVariant={popoverVariant}
                             voteTextColor="text-green-500"
+                            votePercentageColor="text-black"
                         />
                     )}
                     {(isSpecialConstituency || (currentResult?.otherVotes || 0) > 0 || independentCandidate) && (
@@ -624,6 +627,7 @@ export function ConstituencyPopoverContent({
                                 "text-white",
                                 !(isSpecialConstituency) && election?.year !== 2021 && "text-blue-600"
                             )}
+                            votePercentageColor="text-black"
                         />
                     )}
                      {!isSpecialConstituency && slpCandidate && (
@@ -641,6 +645,7 @@ export function ConstituencyPopoverContent({
                             hideLogo={hideLogos}
                             popoverVariant={popoverVariant}
                             voteTextColor="text-white"
+                            votePercentageColor="text-black"
                         />
                     )}
                 </div>
