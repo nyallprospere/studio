@@ -55,11 +55,16 @@ const prompt = ai.definePrompt({
   - Historical Results: {{historicalData}}
   - Recent Polling: {{pollingData}}
   - Candidate Information: {{candidateInfo}}
+
+  In your analysis, consider these critical factors of St. Lucian politics:
+  1.  **Incumbency Trends**: Incumbents often face a decline in support in subsequent elections. Factor this in, especially for candidates who won previously.
+  2.  **Comeback Candidates**: Note when a former incumbent is running to reclaim their seat and assess their chances.
+  3.  **Party Leader Impact**: The public perception of party leaders is very influential. Specifically, consider that a significant portion of the St. Lucian electorate holds a negative opinion of Allen Chastanet, which generally has a detrimental effect on the UWP's performance.
   
   Based on your analysis, provide the following:
   1.  **predictedWinner**: The acronym of the party you predict will win (SLP, UWP, or IND).
   2.  **confidenceLevel**: Your confidence in this prediction (High, Medium, or Low).
-  3.  **analysis**: A concise explanation for your prediction, citing the data provided. Mention key factors like incumbency, historical swing, or candidate popularity.
+  3.  **analysis**: A concise explanation for your prediction, citing the data provided and the specific factors mentioned above.
   4.  **predictedMargin**: Your predicted margin of victory in percentage points.`,
 });
 
