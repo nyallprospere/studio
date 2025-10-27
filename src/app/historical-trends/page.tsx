@@ -254,7 +254,7 @@ const VoterTurnoutTrend = ({ elections, results, constituencies, selectedConstit
 const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties }: { elections: Election[], results: ElectionResult[], constituencies: Constituency[], parties: Party[] }) => {
   const [selectedElectionId, setSelectedElectionId] = useState<string>('all');
   
-  const sortedElections = useMemo(() => elections.filter(e => e.year < 2026).sort((a, b) => b.year - a.year), [elections]);
+  const sortedElections = useMemo(() => elections.filter(e => e.year < 2026 && e.year > 1979).sort((a, b) => b.year - a.year), [elections]);
 
   const { chartData, nationalSwing } = useMemo(() => {
     if (!elections.length || !results.length || !constituencies.length || !parties.length) return { chartData: [], nationalSwing: 0 };
@@ -388,7 +388,7 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
 const SwingVsTurnoutQuadrant = ({ elections, results, constituencies, parties }: { elections: Election[], results: ElectionResult[], constituencies: Constituency[], parties: Party[] }) => {
     const [selectedElectionId, setSelectedElectionId] = useState<string>('all');
     
-    const sortedElections = useMemo(() => elections.filter(e => e.year < 2026).sort((a, b) => b.year - a.year), [elections]);
+    const sortedElections = useMemo(() => elections.filter(e => e.year < 2026 && e.year > 1979).sort((a, b) => b.year - a.year), [elections]);
   
     const chartData = useMemo(() => {
         if (!elections.length || !results.length || !constituencies.length || !parties.length) return [];
@@ -560,3 +560,5 @@ export default function HistoricalTrendsPage() {
     </div>
   );
 }
+
+    
