@@ -141,12 +141,12 @@ function CandidateBox({
                                 {isStriped && barFill === 'blue-red-stripes' && <div className="absolute inset-0 red-stripes-overlay"></div>}
                             </div>
                             <div className="absolute inset-0 flex items-center justify-between px-2">
-                                <span className={cn("font-bold text-xs", (election?.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central')) ? 'text-white' : (winnerAcronym === 'UWP' ? 'text-green-500' : (winnerAcronym === 'SLP' ? 'text-white' : 'text-blue-600')))}>
+                                <span className={cn("font-bold text-xs", (election?.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central')) ? 'text-white' : 'text-black' )}>
                                     {votes?.toLocaleString()}
                                     {isWinner && margin ? <sup className="font-semibold"> (+{margin.toLocaleString()})</sup> : null}
                                 </span>
                                 <div className="flex items-baseline gap-1">
-                                    <span className="font-bold text-xs text-black">
+                                    <span className={cn("font-bold text-xs", 'text-black' )}>
                                         {votePercentage.toFixed(1)}%
                                     </span>
                                     {votePercentageChange !== null && typeof votePercentageChange !== 'undefined' && (
@@ -166,6 +166,25 @@ function CandidateBox({
     );
 }
 
+const GaugeChart = ({ slpPercentage = 50, uwpPercentage = 50, slpColor = '#ef4444', uwpColor = '#f59e0b' }) => {
+    const rotation = (slpPercentage - 50) * 1.8; // Map -50 to 50 range to -90 to 90 degrees
+  
+    return (
+      <div className="relative w-40 h-20 mx-auto">
+        <div className="absolute inset-0 overflow-hidden rounded-t-full">
+          <div className="absolute w-full h-full bg-gradient-to-r from-[--slp-color] to-[--uwp-color]" style={{ '--slp-color': slpColor, '--uwp-color': uwpColor } as React.CSSProperties}></div>
+        </div>
+        <div 
+          className="absolute bottom-0 left-1/2 w-px h-1/2 bg-transparent origin-bottom transition-transform duration-500"
+          style={{ transform: `translateX(-50%) rotate(${rotation}deg)` }}
+        >
+           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-b-8 border-b-black"></div>
+        </div>
+         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rounded-full border-2 border-black"></div>
+      </div>
+    );
+  };
+  
 
 export function ConstituencyPopoverContent({ 
     constituency, 
@@ -459,30 +478,12 @@ export function ConstituencyPopoverContent({
             {popoverVariant === 'dashboard' ? (
                  <div className="space-y-4">
                     <div className="space-y-2">
-                        <ChartContainer config={chartConfig} className="mx-auto w-full h-24">
-                            <ResponsiveContainer>
-                                <PieChart>
-                                    <ChartTooltip
-                                        cursor={false}
-                                        content={<ChartTooltipContent hideLabel />}
-                                    />
-                                    <Pie
-                                        data={chartData}
-                                        dataKey="votes"
-                                        nameKey="party"
-                                        startAngle={180}
-                                        endAngle={0}
-                                        innerRadius="70%"
-                                        cy="100%"
-                                        paddingAngle={2}
-                                    >
-                                        {chartData.map((entry) => (
-                                            <Cell key={entry.party} fill={entry.fill} />
-                                        ))}
-                                    </Pie>
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </ChartContainer>
+                         <GaugeChart 
+                            slpPercentage={constituency.predictedSlpPercentage} 
+                            uwpPercentage={constituency.predictedUwpPercentage} 
+                            slpColor={slpParty?.color}
+                            uwpColor={uwpParty?.color}
+                        />
                     </div>
                     {uwpParty && slpParty && <div className="grid grid-cols-2 gap-2">
                         {isSpecialConstituencyForIND ? (
