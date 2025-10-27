@@ -203,11 +203,36 @@ export function ConstituencyPopoverContent({
     const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
 
     const { slpCandidate, uwpCandidate, independentCandidate, slpParty, uwpParty } = useMemo(() => {
-        if (!parties || !candidates) {
+        if (!parties) {
             return { slpCandidate: null, uwpCandidate: null, independentCandidate: null, slpParty: null, uwpParty: null };
         }
         const slp = parties.find(p => p.acronym === 'SLP');
         const uwp = parties.find(p => p.acronym === 'UWP');
+
+        if(election?.year === 2021) {
+            if(constituency.name === 'Castries North') {
+                return {
+                    slpCandidate: null,
+                    uwpCandidate: candidates?.find(c => c.partyId === uwp?.id) || null,
+                    independentCandidate: { firstName: 'Stephenson', lastName: 'King' } as Candidate,
+                    slpParty: slp,
+                    uwpParty: uwp,
+                }
+            }
+             if(constituency.name === 'Castries Central') {
+                return {
+                    slpCandidate: null,
+                    uwpCandidate: candidates?.find(c => c.partyId === uwp?.id) || null,
+                    independentCandidate: { firstName: 'Richard', lastName: 'Frederick' } as Candidate,
+                    slpParty: slp,
+                    uwpParty: uwp,
+                }
+            }
+        }
+        
+        if (!candidates) {
+            return { slpCandidate: null, uwpCandidate: null, independentCandidate: null, slpParty: slp, uwpParty: uwp };
+        }
 
         let slpCand = slp ? candidates.find(c => c.partyId === slp.id) : null;
         let uwpCand = uwp ? candidates.find(c => c.partyId === uwp.id) : null;
@@ -226,7 +251,7 @@ export function ConstituencyPopoverContent({
         }
         
         return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand || null, slpParty: slp, uwpParty: uwp };
-    }, [parties, candidates, constituency.name]);
+    }, [parties, candidates, constituency.name, election]);
     
     const { chartData, chartConfig } = useMemo(() => {
         if (!constituency || !parties) return { chartData: [], chartConfig: {} };
@@ -456,7 +481,7 @@ export function ConstituencyPopoverContent({
                                     <p>UWP</p>
                                     <p>{100 - (constituency.predictedSlpPercentage || 50)}%</p>
                                 </div>
-                                <div style={{ color: chartConfig.ind?.color }} className="text-right">
+                                 <div style={{ color: chartConfig.ind?.color }} className="text-right">
                                     <p>IND</p>
                                     <p>{constituency.predictedSlpPercentage}%</p>
                                 </div>
@@ -475,22 +500,22 @@ export function ConstituencyPopoverContent({
                         )}
                     </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                 <div className="grid grid-cols-2 gap-2">
                     {isSpecialConstituencyForIND ? (
                          <>
-                            <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
-                                <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
-                                    {uwpCandidate?.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
-                                </div>
-                                <p className="text-xs font-semibold mt-1">{uwpCandidate ? uwpCandidate.name : "TBD"}</p>
-                                <p className="text-xs text-muted-foreground">{uwpParty?.acronym}</p>
-                            </div>
                             <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
                                 <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
                                     {independentCandidate?.imageUrl ? <Image src={independentCandidate.imageUrl} alt={independentCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                 </div>
                                 <p className="text-xs font-semibold mt-1">{independentCandidate ? independentCandidate.name : "TBD"}</p>
                                 <p className="text-xs text-muted-foreground">IND</p>
+                            </div>
+                             <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
+                                <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
+                                    {uwpCandidate?.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
+                                </div>
+                                <p className="text-xs font-semibold mt-1">{uwpCandidate ? uwpCandidate.name : "TBD"}</p>
+                                <p className="text-xs text-muted-foreground">{uwpParty?.acronym}</p>
                             </div>
                          </>
                     ) : (
@@ -527,6 +552,24 @@ export function ConstituencyPopoverContent({
                 {showCandidateBoxes && (election?.isCurrent || !election) && !isMakeYourOwn ? (
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
+                            {independentCandidate && (
+                                <div className="flex flex-col items-center p-2 rounded-md bg-muted">
+                                    <div className="relative h-8 w-8 mb-2">
+                                        {indLogoUrl && !hideLogos && <Image src={indLogoUrl} alt="Independent" fill className="object-contain" />}
+                                    </div>
+                                    <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
+                                    {independentCandidate?.imageUrl ? (
+                                        <Image src={independentCandidate.imageUrl} alt={independentCandidate?.name || 'Independent Candidate'} fill className="object-cover" />
+                                    ) : (
+                                        <UserSquare className="h-full w-full text-gray-400" />
+                                    )}
+                                    </div>
+                                    <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!independentCandidate}>
+                                        {independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName}` : 'Candidate(s) N/A'}
+                                        {independentCandidate?.isIncumbent && <span className="font-normal text-muted-foreground ml-1">(Inc.)</span>}
+                                    </Button>
+                                </div>
+                            )}
                             {slpCandidate && (
                                 <div className="flex flex-col items-center p-2 rounded-md bg-muted">
                                     <div className="relative h-8 w-8 mb-2">
@@ -544,24 +587,6 @@ export function ConstituencyPopoverContent({
                                     <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!slpCandidate}>
                                         {slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'Candidate(s) N/A'}
                                         {slpCandidate?.isIncumbent && <span className="font-normal text-muted-foreground ml-1">(Inc.)</span>}
-                                    </Button>
-                                </div>
-                            )}
-                            {independentCandidate && (
-                                <div className="flex flex-col items-center p-2 rounded-md bg-muted">
-                                    <div className="relative h-8 w-8 mb-2">
-                                        {indLogoUrl && !hideLogos && <Image src={indLogoUrl} alt="Independent" fill className="object-contain" />}
-                                    </div>
-                                    <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
-                                    {independentCandidate?.imageUrl ? (
-                                        <Image src={independentCandidate.imageUrl} alt={independentCandidate?.name || 'Independent Candidate'} fill className="object-cover" />
-                                    ) : (
-                                        <UserSquare className="h-full w-full text-gray-400" />
-                                    )}
-                                    </div>
-                                    <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!independentCandidate}>
-                                        {independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName}` : 'Candidate(s) N/A'}
-                                        {independentCandidate?.isIncumbent && <span className="font-normal text-muted-foreground ml-1">(Inc.)</span>}
                                     </Button>
                                 </div>
                             )}
@@ -605,7 +630,7 @@ export function ConstituencyPopoverContent({
                             popoverVariant={popoverVariant}
                         />
                     )}
-                    {(isSpecialConstituency || (currentResult?.otherVotes || 0) > 0) && (
+                    {(isSpecialConstituency || (currentResult?.otherVotes || 0) > 0 || independentCandidate) && (
                         <CandidateBox
                             candidate={independentCandidate}
                             party={null}
