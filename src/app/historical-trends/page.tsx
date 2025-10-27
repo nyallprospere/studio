@@ -76,7 +76,7 @@ const NationalSeatTrend = ({ elections, results, parties }: { elections: Electio
   );
 }
 
-const NationalVoteTrend = ({ elections, results, parties, constituencies, selectedConstituencyId }: { elections: Election[], results: ElectionResult[], parties: Party[], constituencies: Constituency[], selectedConstituencyId: string }) => {
+const NationalVoteTrend = ({ elections, results, parties, constituencies, selectedConstituencyId, setSelectedConstituencyId }: { elections: Election[], results: ElectionResult[], parties: Party[], constituencies: Constituency[], selectedConstituencyId: string, setSelectedConstituencyId: (id: string) => void }) => {
   const chartData = useMemo(() => {
      if (!elections.length || !results.length || !parties.length) return [];
     
