@@ -21,6 +21,7 @@ import type { Election, Party } from '@/lib/types';
 import { Vote, ChevronDown, LogIn, LogOut, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SlpLogo, UwpLogo } from '../icons';
+import { Separator } from '../ui/separator';
 
 export function HeaderNav() {
   const pathname = usePathname();
@@ -116,18 +117,17 @@ export function HeaderNav() {
       {children}
     </Link>
   );
+  
+  const NavSeparator = () => <Separator orientation="vertical" className="h-6 bg-primary-foreground/20" />;
 
   return (
     <div className="flex w-full items-center justify-between">
-      <div className="flex items-center gap-x-12">
+      <div className="flex items-center gap-x-6">
         <Link href="/" className="flex items-center gap-2 mr-6">
             <Vote className="w-8 h-8 text-white" />
             <span className="font-bold font-headline text-lg text-white">LucianVotes</span>
         </Link>
-        <Menubar className="border-none shadow-none bg-transparent p-0 gap-x-12">
-          <MenubarMenu>
-            <NavLink href="/">Home</NavLink>
-          </MenubarMenu>
+        <Menubar className="border-none shadow-none bg-transparent p-0 gap-x-6">
 
           {uwpParty && (
             <MenubarMenu>
@@ -147,23 +147,25 @@ export function HeaderNav() {
             </MenubarMenu>
           )}
           
-          <MenubarMenu>
-             <NavLink href="/election-news">Election News</NavLink>
-          </MenubarMenu>
+          <NavSeparator />
 
           <MenubarMenu>
-             <Button asChild className="bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
-                <Link href="/make-your-own">Build Your Election Map</Link>
-             </Button>
+             <NavLink href="/election-news">News</NavLink>
+          </MenubarMenu>
+
+          <NavSeparator />
+
+           <MenubarMenu>
+            <NavLink href="/historical-trends">Historical Trends</NavLink>
           </MenubarMenu>
           
+          <NavSeparator />
+
           <MenubarMenu>
             <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80">
-              Results <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
+              Past Results <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
             </MenubarTrigger>
             <MenubarContent>
-                <MenubarItem asChild><Link href="/historical-trends">Historical Trends</Link></MenubarItem>
-                <MenubarSeparator />
                 {sortedElections.map(election => (
                     <MenubarItem key={election.id} asChild>
                         <Link href={`/results?year=${election.id}`}>
@@ -173,11 +175,20 @@ export function HeaderNav() {
                 ))}
             </MenubarContent>
           </MenubarMenu>
-          
         </Menubar>
       </div>
-      <div className="flex items-center gap-2">
-        <AuthNav />
+
+       <div className="flex items-center gap-x-6">
+         <Menubar className="border-none shadow-none bg-transparent p-0">
+             <MenubarMenu>
+              <Button asChild size="sm" className="bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
+                  <Link href="/make-your-own">Build Your Election Map</Link>
+              </Button>
+            </MenubarMenu>
+         </Menubar>
+        <div className="flex items-center gap-2">
+          <AuthNav />
+        </div>
       </div>
     </div>
   );
