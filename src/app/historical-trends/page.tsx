@@ -116,7 +116,7 @@ const NationalVoteTrend = ({ elections, results, parties }: { elections: Electio
       const uwp = parties.find(p => p.acronym === 'UWP');
       if (slp) config[slp.acronym] = { label: 'SLP', color: slp.color };
       if (uwp) config[uwp.acronym] = { label: 'UWP', color: uwp.color };
-      config['IND'] = { label: 'IND', color: 'hsl(var(--chart-4))' };
+      config['IND'] = { label: 'IND', color: '#3b82f6' };
     }
     return config;
   }, [parties]);
