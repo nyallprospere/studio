@@ -17,7 +17,7 @@ import { useUser, useAuth, useCollection, useFirebase, useMemoFirebase } from '@
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { collection, query, orderBy, where } from 'firebase/firestore';
-import type { Election, Party, PartyLogo } from '@/lib/types';
+import type { Election, Party, PartyLogo, Candidate } from '@/lib/types';
 import { Vote, ChevronDown, LogIn, LogOut, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SlpLogo, UwpLogo } from '../icons';
@@ -39,11 +39,14 @@ export function HeaderNav() {
   
   const partyLogosQuery = useMemoFirebase(() => (firestore ? collection(firestore, 'party_logos') : null), [firestore]);
   const { data: partyLogos } = useCollection<PartyLogo>(partyLogosQuery);
+  
+  const candidatesQuery = useMemoFirebase(() => (firestore ? collection(firestore, 'candidates') : null), [firestore]);
+  const { data: candidates } = useCollection<Candidate>(candidatesQuery);
 
   const uwpParty = React.useMemo(() => parties?.find(p => p.acronym === 'UWP'), [parties]);
   const slpParty = React.useMemo(() => parties?.find(p => p.acronym === 'SLP'), [parties]);
   
-  const election2026 = React.useMemo(() => elections?.find(e => e.year === 2026), [elections]);
+  const election2026 = React.useMemo(() => elections?.find(e => e.isCurrent), [elections]);
 
   const uwpLogo = React.useMemo(() => {
     if (!uwpParty || !election2026 || !partyLogos) return null;
@@ -54,6 +57,9 @@ export function HeaderNav() {
     if (!slpParty || !election2026 || !partyLogos) return null;
     return partyLogos.find(logo => logo.partyId === slpParty.id && logo.electionId === election2026.id);
   }, [partyLogos, slpParty, election2026]);
+
+  const uwpCandidates = React.useMemo(() => candidates?.filter(c => c.partyId === uwpParty?.id) || [], [candidates, uwpParty]);
+  const slpCandidates = React.useMemo(() => candidates?.filter(c => c.partyId === slpParty?.id) || [], [candidates, slpParty]);
 
 
   const sortedElections = React.useMemo(() => {
@@ -145,32 +151,60 @@ export function HeaderNav() {
             <span className="font-bold font-headline text-lg text-white">LucianVotes</span>
         </Link>
         <Menubar className="border-none shadow-none bg-transparent p-0 gap-x-6">
-
-          {uwpParty && (
-            <MenubarMenu>
-               <NavLink href={`/parties/${uwpParty.id}`} className="flex items-center gap-2">
-                 {uwpLogo?.logoUrl ? (
-                    <Image src={uwpLogo.logoUrl} alt="UWP Logo" width={16} height={16} />
-                  ) : (
-                    <UwpLogo className="h-4 w-4" />
-                  )}
-                UWP
-              </NavLink>
-            </MenubarMenu>
-          )}
-
-          {slpParty && (
-             <MenubarMenu>
-               <NavLink href={`/parties/${slpParty.id}`} className="flex items-center gap-2">
-                  {slpLogo?.logoUrl ? (
-                    <Image src={slpLogo.logoUrl} alt="SLP Logo" width={16} height={16} />
-                  ) : (
-                    <SlpLogo className="h-4 w-4" />
-                  )}
-                SLP
-              </NavLink>
-            </MenubarMenu>
-          )}
+          
+          <MenubarMenu>
+            <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80 flex items-center gap-2">
+              {uwpLogo?.logoUrl ? (
+                <Image src={uwpLogo.logoUrl} alt="UWP Logo" width={16} height={16} />
+              ) : (
+                <UwpLogo className="h-4 w-4" />
+              )}
+              UWP
+              <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
+            </MenubarTrigger>
+            <MenubarContent>
+                <MenubarItem asChild>
+                    <Link href={`/parties/${uwpParty?.id}`}>UWP Main Page</Link>
+                </MenubarItem>
+                 <MenubarItem asChild>
+                    <Link href={`/events`}>UWP Events</Link>
+                </MenubarItem>
+                <MenubarSeparator />
+                <MenubarItem disabled>2026 Slate of Candidates</MenubarItem>
+                {uwpCandidates.map(candidate => (
+                    <MenubarItem key={candidate.id} asChild>
+                        <Link href={`/candidates/${candidate.id}`}>{candidate.firstName} {candidate.lastName}</Link>
+                    </MenubarItem>
+                ))}
+            </MenubarContent>
+          </MenubarMenu>
+          
+          <MenubarMenu>
+            <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80 flex items-center gap-2">
+              {slpLogo?.logoUrl ? (
+                <Image src={slpLogo.logoUrl} alt="SLP Logo" width={16} height={16} />
+              ) : (
+                <SlpLogo className="h-4 w-4" />
+              )}
+              SLP
+              <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
+            </MenubarTrigger>
+            <MenubarContent>
+                 <MenubarItem asChild>
+                    <Link href={`/parties/${slpParty?.id}`}>SLP Main Page</Link>
+                </MenubarItem>
+                 <MenubarItem asChild>
+                    <Link href={`/events-2`}>SLP Events</Link>
+                </MenubarItem>
+                <MenubarSeparator />
+                <MenubarItem disabled>2026 Slate of Candidates</MenubarItem>
+                {slpCandidates.map(candidate => (
+                    <MenubarItem key={candidate.id} asChild>
+                        <Link href={`/candidates/${candidate.id}`}>{candidate.firstName} {candidate.lastName}</Link>
+                    </MenubarItem>
+                ))}
+            </MenubarContent>
+          </MenubarMenu>
           
           <NavSeparator />
 
