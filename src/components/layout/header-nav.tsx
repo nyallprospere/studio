@@ -166,15 +166,13 @@ export function HeaderNav() {
         <Menubar className="border-none shadow-none bg-transparent p-0 gap-x-6">
           
           <MenubarMenu>
-            <MenubarTrigger asChild>
-                <NavLink href={`/parties/${uwpParty?.id}`} className="flex items-center gap-2">
-                    {uwpLogo?.logoUrl ? (
-                        <Image src={uwpLogo.logoUrl} alt="UWP Logo" width={20} height={20} />
-                    ) : (
-                        <UwpLogo className="h-5 w-5" />
-                    )}
-                    UWP
-                </NavLink>
+            <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80 flex items-center gap-2">
+                {uwpLogo?.logoUrl ? (
+                    <Image src={uwpLogo.logoUrl} alt="UWP Logo" width={20} height={20} />
+                ) : (
+                    <UwpLogo className="h-5 w-5" />
+                )}
+                UWP
             </MenubarTrigger>
             <MenubarContent>
                 <MenubarItem asChild>
@@ -204,15 +202,13 @@ export function HeaderNav() {
           <NavSeparator />
 
           <MenubarMenu>
-             <MenubarTrigger asChild>
-                <NavLink href={`/parties/${slpParty?.id}`} className="flex items-center gap-2">
-                    {slpLogo?.logoUrl ? (
-                        <Image src={slpLogo.logoUrl} alt="SLP Logo" width={20} height={20} />
-                    ) : (
-                        <SlpLogo className="h-5 w-5" />
-                    )}
-                    SLP
-                </NavLink>
+             <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80 flex items-center gap-2">
+                {slpLogo?.logoUrl ? (
+                    <Image src={slpLogo.logoUrl} alt="SLP Logo" width={20} height={20} />
+                ) : (
+                    <SlpLogo className="h-5 w-5" />
+                )}
+                SLP
               </MenubarTrigger>
             <MenubarContent>
                  <MenubarItem asChild>
