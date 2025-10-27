@@ -259,12 +259,10 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
   const chartData = useMemo(() => {
     if (!elections.length || !results.length || !constituencies.length || !parties.length) return [];
 
-    const getPartyAcronym = (partyId: string) => parties.find(p => p.id === partyId)?.acronym;
-
     const dataByElection = (electionId: string) => {
-      const currentElection = elections.find(e => e.id === electionId);
-      const prevElectionIndex = elections.findIndex(e => e.id === electionId) + 1;
-      const prevElection = elections[prevElectionIndex];
+      const currentElection = sortedElections.find(e => e.id === electionId);
+      const prevElectionIndex = sortedElections.findIndex(e => e.id === electionId) + 1;
+      const prevElection = sortedElections[prevElectionIndex];
 
       if (!currentElection || !prevElection) return [];
 
