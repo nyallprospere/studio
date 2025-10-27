@@ -104,7 +104,8 @@ function CandidateBox({
                 )}
                 
                 <div className="flex w-full items-center gap-2">
-                    <div className={cn("relative w-20 flex-shrink-0 flex flex-col items-center gap-1 p-1 rounded-md", isWinner && "ring-2 ring-green-500")}>
+                    <div className={cn("relative w-20 flex-shrink-0 flex flex-col items-center gap-1 p-1 rounded-md", isWinner && "ring-2 ring-green-500")}
+                    onClick={() => candidate && setProfileOpen(true)}>
                         {popoverVariant === 'dashboard' && party?.name && (
                             <p className="font-semibold text-xs mb-1">{party.name}</p>
                         )}
@@ -493,7 +494,7 @@ export function ConstituencyPopoverContent({
                                     <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
                                         {uwpCandidate?.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                     </div>
-                                    <p className="text-xs font-semibold mt-1">{uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'UWP Candidate'}</p>
+                                    <p className="text-xs font-semibold mt-1">{uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'UWP Candidate'}{uwpCandidate?.isIncumbent && ' (Inc.)'}</p>
                                     <p className="text-xs text-muted-foreground">{uwpParty?.acronym}</p>
                                 </div>}
                             </>
@@ -504,7 +505,7 @@ export function ConstituencyPopoverContent({
                                         <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
                                             {slpCandidate.imageUrl ? <Image src={slpCandidate.imageUrl} alt={slpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                         </div>
-                                        <p className="text-xs font-semibold mt-1">{slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'SLP Candidate'}</p>
+                                        <p className="text-xs font-semibold mt-1">{slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'SLP Candidate'}{slpCandidate?.isIncumbent && ' (Inc.)'}</p>
                                         <p className="text-xs text-muted-foreground">{slpParty?.acronym}</p>
                                     </div>
                                 )}
@@ -513,7 +514,7 @@ export function ConstituencyPopoverContent({
                                         <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
                                             {uwpCandidate.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                         </div>
-                                        <p className="text-xs font-semibold mt-1">{uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'UWP Candidate'}</p>
+                                        <p className="text-xs font-semibold mt-1">{uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'UWP Candidate'}{uwpCandidate?.isIncumbent && ' (Inc.)'}</p>
                                         <p className="text-xs text-muted-foreground">{uwpParty?.acronym}</p>
                                     </div>
                                 )}
