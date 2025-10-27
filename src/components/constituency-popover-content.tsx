@@ -604,7 +604,7 @@ export function ConstituencyPopoverContent({
                             logoUrl={uwpLogoUrl}
                             hideLogo={hideLogos}
                             popoverVariant={popoverVariant}
-                            voteTextColor="text-green-500"
+                            voteTextColor={cn("text-green-500")}
                             votePercentageColor="text-black"
                         />
                     )}
@@ -622,8 +622,8 @@ export function ConstituencyPopoverContent({
                             logoUrl={indLogoUrl}
                             hideLogo={hideLogos}
                             popoverVariant={popoverVariant}
-                            colorOverride={(isSpecialConstituency && chartConfig.ind?.color) || '#3b82f6'}
-                            voteTextColor={cn(isSpecialConstituency && election?.year === 2021 ? "text-white" : "text-blue-600")}
+                            colorOverride={chartConfig.ind?.color}
+                            voteTextColor={cn(election?.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central') ? 'text-white' : 'text-blue-600')}
                             votePercentageColor="text-black"
                         />
                     )}

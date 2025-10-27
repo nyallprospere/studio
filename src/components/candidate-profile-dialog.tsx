@@ -30,6 +30,7 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
 
   const candidateName = `${candidate.firstName} ${candidate.lastName}`;
   const displayName = `${candidateName}`;
+  const isIndependent = !candidate.partyId;
 
 
   return (
@@ -53,7 +54,12 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
                     {candidate.isIncumbent && <span className="font-normal text-primary text-sm ml-2">(Incumbent)</span>}
                     </DialogDescription>
                 )}
-                {party && (
+                {isIndependent ? (
+                    <div className="flex items-center gap-2 pt-2">
+                        <Shield className="w-8 h-8 text-muted-foreground" />
+                        <span className="font-semibold">Independent</span>
+                    </div>
+                ) : party && (
                   <div className="flex items-center gap-2 pt-2">
                      <div className="relative h-8 w-8 flex-shrink-0">
                         {party.logoUrl ? (
