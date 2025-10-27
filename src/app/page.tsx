@@ -279,8 +279,7 @@ export default function Home() {
                 <CardContent>
                     <Button asChild className="w-full bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
                         <Link href="/make-your-own">
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Start Building
+                            Create and share your own election prediction.
                         </Link>
                     </Button>
                 </CardContent>
