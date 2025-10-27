@@ -230,8 +230,8 @@ export function ConstituencyPopoverContent({
         };
 
         const data = [
-            { party: 'uwp', votes: constituency.predictedUwpPercentage || 50, fill: `var(--color-uwp)` },
             { party: 'slp', votes: constituency.predictedSlpPercentage || 50, fill: `var(--color-slp)` },
+            { party: 'uwp', votes: constituency.predictedUwpPercentage || 50, fill: `var(--color-uwp)` },
         ];
         return { chartData: data, chartConfig: config };
     }, [constituency, slpParty, uwpParty]);
@@ -426,6 +426,35 @@ export function ConstituencyPopoverContent({
                                 <p>{constituency.predictedUwpPercentage}%</p>
                             </div>
                         </div>
+                    </div>
+                     <div className="grid grid-cols-2 gap-2">
+                        {slpCandidate && (
+                             <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
+                                <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
+                                    {slpCandidate.imageUrl ? <Image src={slpCandidate.imageUrl} alt={slpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
+                                </div>
+                                <p className="text-xs font-semibold mt-1">{slpCandidate.name}</p>
+                                <p className="text-xs text-muted-foreground">{slpParty?.acronym}</p>
+                            </div>
+                        )}
+                        {uwpCandidate && (
+                             <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
+                                <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
+                                    {uwpCandidate.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
+                                </div>
+                                <p className="text-xs font-semibold mt-1">{uwpCandidate.name}</p>
+                                <p className="text-xs text-muted-foreground">{uwpParty?.acronym}</p>
+                            </div>
+                        )}
+                         {independentCandidate && (
+                             <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
+                                <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
+                                    {independentCandidate.imageUrl ? <Image src={independentCandidate.imageUrl} alt={independentCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
+                                </div>
+                                <p className="text-xs font-semibold mt-1">{independentCandidate.name}</p>
+                                <p className="text-xs text-muted-foreground">IND</p>
+                            </div>
+                        )}
                     </div>
                     {popoverText && (
                         <div className="text-sm text-center text-muted-foreground pt-2 border-t mt-2">
