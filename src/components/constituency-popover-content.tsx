@@ -37,10 +37,11 @@ const makeYourOwnLeaningOptions = [
 
 
 const getLeaningLabel = (leaningValue?: string) => {
-    const leaningInfo = politicalLeaningOptions.find(opt => opt.value === leaningValue);
     if (leaningValue?.includes('ind')) {
+        const leaningInfo = politicalLeaningOptions.find(opt => opt.value === leaningValue.replace('ind', 'slp'));
         return leaningInfo?.label.replace('SLP', 'IND') || 'Tossup';
     }
+    const leaningInfo = politicalLeaningOptions.find(opt => opt.value === leaningValue);
     return leaningInfo?.label || 'Tossup';
 };
 
@@ -444,13 +445,13 @@ export function ConstituencyPopoverContent({
                     <div className="flex justify-between text-sm font-medium -mt-10">
                         {isSpecialConstituencyForIND ? (
                             <>
-                                <div style={{ color: chartConfig.uwp?.color }} className="text-left">
-                                    <p>UWP</p>
-                                    <p>{100 - (constituency.predictedSlpPercentage || 50)}%</p>
-                                </div>
-                                <div style={{ color: chartConfig.ind?.color }} className="text-right">
+                                 <div style={{ color: chartConfig.ind?.color }} className="text-left">
                                     <p>IND</p>
                                     <p>{constituency.predictedSlpPercentage}%</p>
+                                </div>
+                                <div style={{ color: chartConfig.uwp?.color }} className="text-right">
+                                    <p>UWP</p>
+                                    <p>{100 - (constituency.predictedSlpPercentage || 50)}%</p>
                                 </div>
                             </>
                         ) : (
@@ -470,15 +471,6 @@ export function ConstituencyPopoverContent({
                 <div className="grid grid-cols-2 gap-2">
                      {isSpecialConstituencyForIND ? (
                         <>
-                            {uwpCandidate && (
-                                <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
-                                    <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
-                                        {uwpCandidate.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
-                                    </div>
-                                    <p className="text-xs font-semibold mt-1">{uwpCandidate.name}</p>
-                                    <p className="text-xs text-muted-foreground">{uwpParty?.acronym}</p>
-                                </div>
-                            )}
                              {independentCandidate && (
                                 <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
                                     <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
@@ -486,6 +478,15 @@ export function ConstituencyPopoverContent({
                                     </div>
                                     <p className="text-xs font-semibold mt-1">{independentCandidate.name}</p>
                                     <p className="text-xs text-muted-foreground">IND</p>
+                                </div>
+                            )}
+                            {uwpCandidate && (
+                                <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
+                                    <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
+                                        {uwpCandidate.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
+                                    </div>
+                                    <p className="text-xs font-semibold mt-1">{uwpCandidate.name}</p>
+                                    <p className="text-xs text-muted-foreground">{uwpParty?.acronym}</p>
                                 </div>
                             )}
                         </>
@@ -645,22 +646,6 @@ export function ConstituencyPopoverContent({
                                 <>
                                     <div className="flex flex-col items-center gap-1">
                                         <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
-                                            {uwpCandidate?.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
-                                        </div>
-                                        <p className="font-semibold">{uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'UWP Candidate'}</p>
-                                        <RadioGroup 
-                                            value={constituency.politicalLeaning} 
-                                            onValueChange={onLeaningChange}
-                                            className="grid grid-cols-1 gap-1 pt-1"
-                                        >
-                                            <Label htmlFor={`${constituency.id}-uwp`} className={cn("flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors", constituency.politicalLeaning === 'uwp' ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
-                                                <RadioGroupItem value="uwp" id={`${constituency.id}-uwp`} className="sr-only" />
-                                                UWP
-                                            </Label>
-                                        </RadioGroup>
-                                    </div>
-                                    <div className="flex flex-col items-center gap-1">
-                                        <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
                                             {independentCandidate?.imageUrl ? <Image src={independentCandidate.imageUrl} alt={independentCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                         </div>
                                         <p className="font-semibold">{independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName}` : 'IND Candidate'}</p>
@@ -672,6 +657,22 @@ export function ConstituencyPopoverContent({
                                             <Label htmlFor={`${constituency.id}-ind`} className={cn("flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors", constituency.politicalLeaning === 'ind' ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
                                                 <RadioGroupItem value="ind" id={`${constituency.id}-ind`} className="sr-only" />
                                                 IND
+                                            </Label>
+                                        </RadioGroup>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
+                                            {uwpCandidate?.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
+                                        </div>
+                                        <p className="font-semibold">{uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'UWP Candidate'}</p>
+                                        <RadioGroup 
+                                            value={constituency.politicalLeaning} 
+                                            onValueChange={onLeaningChange}
+                                            className="grid grid-cols-1 gap-1 pt-1"
+                                        >
+                                            <Label htmlFor={`${constituency.id}-uwp`} className={cn("flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors", constituency.politicalLeaning === 'uwp' ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
+                                                <RadioGroupItem value="uwp" id={`${constituency.id}-uwp`} className="sr-only" />
+                                                UWP
                                             </Label>
                                         </RadioGroup>
                                     </div>
