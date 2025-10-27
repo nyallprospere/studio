@@ -50,6 +50,8 @@ const politicalLeaningOptions = [
   { value: 'tossup', label: 'Tossup', color: 'hsl(var(--chart-4))' },
   { value: 'lean-uwp', label: 'Lean UWP', color: 'hsl(var(--chart-2))' },
   { value: 'solid-uwp', label: 'Solid UWP', color: 'hsl(var(--chart-1))' },
+  { value: 'solid-ind', label: 'Solid IND', color: 'hsl(221, 83%, 53%)'},
+  { value: 'lean-ind', label: 'Lean IND', color: 'hsl(221, 83%, 73%)'},
 ];
 
 export default function Home() {
@@ -101,7 +103,14 @@ export default function Home() {
         if (!constituencies) return { chartData: [], seatCounts: {} };
 
         const counts = constituencies.reduce((acc, constituency) => {
-            const leaning = constituency.politicalLeaning || 'tossup';
+            let leaning = constituency.politicalLeaning || 'tossup';
+            const isSpecialConstituency = constituency.name === 'Castries North' || constituency.name === 'Castries Central';
+
+            if (isSpecialConstituency) {
+                if (leaning === 'solid-slp') leaning = 'solid-ind';
+                if (leaning === 'lean-slp') leaning = 'lean-ind';
+            }
+            
             acc[leaning] = (acc[leaning] || 0) + 1;
             return acc;
         }, {} as Record<string, number>);
@@ -118,9 +127,13 @@ export default function Home() {
             tossup: counts['tossup'] || 0,
             leanUwp: counts['lean-uwp'] || 0,
             solidUwp: counts['solid-uwp'] || 0,
+            solidInd: counts['solid-ind'] || 0,
+            leanInd: counts['lean-ind'] || 0,
         };
+        
         (seatCounts as any).slpTotal = seatCounts.solidSlp + seatCounts.leanSlp;
         (seatCounts as any).uwpTotal = seatCounts.solidUwp + seatCounts.leanUwp;
+        (seatCounts as any).indTotal = seatCounts.solidInd + seatCounts.leanInd;
 
         return { chartData, seatCounts: seatCounts as any };
     }, [constituencies]);
