@@ -6,7 +6,7 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Users, BarChart3, TrendingUp, Landmark, Shield, Vote, Map, GripVertical, FilePlus, Settings, Calendar, Pencil } from 'lucide-react';
+import { Users, BarChart3, TrendingUp, Landmark, Shield, Vote, Map, GripVertical, FilePlus, Settings, Calendar, Pencil, Rss } from 'lucide-react';
 import Countdown from '@/components/countdown';
 import { PageHeader } from '@/components/page-header';
 import {
@@ -24,13 +24,15 @@ import {
 } from '@dnd-kit/sortable';
 import { useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, Timestamp, where } from 'firebase/firestore';
-import type { Event, Party, Constituency, Election } from '@/lib/types';
+import type { Event, Party, Constituency, Election, NewsArticle } from '@/lib/types';
 import { EventCard } from '@/components/event-card';
 import { SortableFeatureCard } from '@/components/sortable-feature-card';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Pie, PieChart, ResponsiveContainer, Cell, Label } from 'recharts';
 import { MailingListPopup } from '@/components/mailing-list-popup';
+import { NewsCard } from '@/components/news-card';
+import { subDays } from 'date-fns';
 
 const adminSections = [
     { id: 'admin-elections', title: 'Manage Elections', href: '/admin/elections', icon: Vote },
@@ -66,11 +68,13 @@ export default function Home() {
   const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), where('isCurrent', '==', true)) : null, [firestore]);
+  const newsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'news'), orderBy('articleDate', 'desc')) : null, [firestore]);
   
   const { data: events, isLoading: loadingEvents } = useCollection<Event>(eventsQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
   const { data: currentElections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
+  const { data: news, isLoading: loadingNews } = useCollection<NewsArticle>(newsQuery);
   
   const currentElection = useMemo(() => currentElections?.[0], [currentElections]);
   
@@ -148,6 +152,19 @@ export default function Home() {
         };
         return acc;
     }, {});
+    
+  const trendingNews = useMemo(() => {
+    if (!news) return [];
+    const oneWeekAgo = subDays(new Date(), 7);
+    return [...news]
+      .sort((a, b) => {
+        const scoreA = (a.articleDate?.toDate() > oneWeekAgo ? a.likeCount || 0 : 0);
+        const scoreB = (b.articleDate?.toDate() > oneWeekAgo ? b.likeCount || 0 : 0);
+        if (scoreB !== scoreA) return scoreB - scoreA;
+        return b.articleDate.toDate().getTime() - a.articleDate.toDate().getTime();
+      })
+      .slice(0, 3);
+  }, [news]);
 
 
   return (
@@ -293,9 +310,36 @@ export default function Home() {
                     </div>
                 </CardContent>
             </Card>
-
         </div>
       </div>
+      
+      <div className="mt-12">
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline flex items-center gap-2">
+              <Rss /> Recent News
+            </CardTitle>
+            <CardDescription>The latest headlines shaping the election.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {loadingNews ? (
+              Array.from({ length: 3 }).map((_, i) => <Card key={i}><CardContent className="p-4"><p>Loading...</p></CardContent></Card>)
+            ) : trendingNews.length > 0 ? (
+              trendingNews.map((article) => (
+                <NewsCard key={article.id} article={article} />
+              ))
+            ) : (
+              <p className="text-muted-foreground col-span-full text-center">No recent news.</p>
+            )}
+          </CardContent>
+           <CardFooter>
+                <Button asChild variant="secondary" className="w-full">
+                    <Link href="/election-news">View All News</Link>
+                </Button>
+           </CardFooter>
+        </Card>
+      </div>
+
 
       {user && (
           <div className="mt-12">
