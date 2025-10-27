@@ -4,7 +4,8 @@
 import { generateElectionPredictions } from '@/ai/flows/generate-election-predictions';
 import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
 import { summarizeArticle as summarizeArticleFlow } from '@/ai/flows/summarize-article';
-import { analyzeConstituencyOutcome as analyzeConstituencyOutcomeFlow, type AnalyzeConstituencyOutcomeInput, type AnalyzeConstituencyOutcomeOutput } from '@/ai/flows/analyze-constituency-outcome';
+import { analyzeConstituencyOutcome as analyzeConstituencyOutcomeFlow, type AnalyzeConstituencyOutcomeInput } from '@/ai/flows/analyze-constituency-outcome';
+import { analyzePastElection as analyzePastElectionFlow, type PastElectionAnalysisInput } from '@/ai/flows/analyze-past-election';
 
 
 export async function getPrediction(newsSummary: string) {
@@ -41,6 +42,16 @@ export async function analyzeConstituencyOutcome(input: AnalyzeConstituencyOutco
         return {
             error: "An error occurred while analyzing the constituency. Please try again."
         };
+    }
+}
+
+export async function analyzePastElection(input: PastElectionAnalysisInput) {
+    try {
+        const result = await analyzePastElectionFlow(input);
+        return result;
+    } catch (error) {
+        console.error('Error analyzing past election:', error);
+        return "Failed to generate analysis.";
     }
 }
 

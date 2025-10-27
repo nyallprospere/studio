@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -16,8 +15,10 @@ import type { ChartConfig } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Image from 'next/image';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
-import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import { ArrowUp, ArrowDown, Minus, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { analyzePastElection, type PastElectionAnalysisInput } from '@/lib/actions';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const constituencyMapOrder = [
     "Gros Islet",
@@ -62,6 +63,8 @@ export default function ResultsPage() {
   const [resultsByYear, setResultsByYear] = useState<Record<string, ElectionResult[]>>({});
   const [loadingResults, setLoadingResults] = useState(true);
   const [selectedConstituencyId, setSelectedConstituencyId] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState('');
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
 
   const sortedElections = useMemo(() => {
     if (!elections) return [];
@@ -313,6 +316,32 @@ export default function ResultsPage() {
             return indexA - indexB;
         });
     }, [currentElectionResults, constituencies]);
+
+  useEffect(() => {
+    if (selectedElectionId && summaryData.length > 0) {
+        const generateAnalysis = async () => {
+            setLoadingAnalysis(true);
+            setAnalysis('');
+
+            const input: PastElectionAnalysisInput = {
+                electionYear: currentElection?.year.toString() || '',
+                electionName: currentElection?.name || '',
+                results: JSON.stringify(summaryData),
+                constituencyResults: JSON.stringify(currentElectionResults.map(r => {
+                    const constituency = getConstituencyById(r.constituencyId);
+                    return {...r, constituencyName: constituency?.name}
+                }))
+            };
+
+            const result = await analyzePastElection(input);
+            if (typeof result === 'string') {
+                setAnalysis(result);
+            }
+            setLoadingAnalysis(false);
+        };
+        generateAnalysis();
+    }
+  }, [selectedElectionId, summaryData, currentElection, currentElectionResults]);
 
   const chartConfig = useMemo(() => {
     const config: ChartConfig = {};
@@ -575,13 +604,25 @@ export default function ResultsPage() {
                         ))}
                     </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div className="md:col-span-1">
+                     <div className="md:col-span-1">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Election Analysis</CardTitle>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Sparkles className="text-accent" />
+                                    Election Analysis
+                                </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p>Analysis content goes here...</p>
+                                {loadingAnalysis ? (
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-full" />
+                                        <Skeleton className="h-4 w-full" />
+                                        <Skeleton className="h-4 w-2/3" />
+                                        <Skeleton className="h-4 w-full" />
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground whitespace-pre-line">{analysis}</p>
+                                )}
                             </CardContent>
                         </Card>
                     </div>
@@ -847,6 +888,4 @@ export default function ResultsPage() {
     </div>
   );
 }
-
-
 
