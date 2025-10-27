@@ -47,11 +47,11 @@ const adminSections = [
 const politicalLeaningOptions = [
   { value: 'solid-slp', label: 'Solid SLP', color: 'hsl(var(--chart-5))' },
   { value: 'lean-slp', label: 'Lean SLP', color: 'hsl(var(--chart-3))' },
+  { value: 'lean-ind', label: 'Lean IND', color: 'hsl(221, 83%, 73%)'},
+  { value: 'solid-ind', label: 'Solid IND', color: 'hsl(221, 83%, 53%)'},
   { value: 'tossup', label: 'Tossup', color: 'hsl(var(--chart-4))' },
   { value: 'lean-uwp', label: 'Lean UWP', color: 'hsl(var(--chart-2))' },
   { value: 'solid-uwp', label: 'Solid UWP', color: 'hsl(var(--chart-1))' },
-  { value: 'solid-ind', label: 'Solid IND', color: 'hsl(221, 83%, 53%)'},
-  { value: 'lean-ind', label: 'Lean IND', color: 'hsl(221, 83%, 73%)'},
 ];
 
 export default function Home() {
