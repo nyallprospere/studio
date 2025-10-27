@@ -91,7 +91,7 @@ function CandidateBox({
 }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}` : 'Candidate(s) N/A';
-    const displayName = candidate ? `${candidate.firstName} ${candidate.lastName}${candidate.isIncumbent ? ' (Inc.)' : ''}` : 'Candidate(s) N/A';
+    const displayName = candidate ? `${candidate.firstName} ${candidate.lastName}` : 'Candidate(s) N/A';
 
 
     const votePercentage = totalVotes && votes ? (votes / totalVotes) * 100 : 0;
@@ -118,6 +118,11 @@ function CandidateBox({
             )}
             onClick={() => candidate && setProfileOpen(true)}
             >
+                {candidate?.isIncumbent && (
+                    <div className="absolute top-1 right-1 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                        Incumbent
+                    </div>
+                )}
                 <div className="flex w-full items-center gap-2">
                     <div className={cn("relative w-20 flex-shrink-0 flex flex-col items-center gap-1 p-1 rounded-md", isWinner && "ring-2 ring-green-500")}
                     onClick={() => candidate && setProfileOpen(true)}>
@@ -179,8 +184,9 @@ function CandidateBox({
 }
 
 const GaugeChart = ({ slpPercentage = 50, uwpPercentage = 50, slpColor = '#ef4444', uwpColor = '#f59e0b' }) => {
-    // Map 0-100 range to -90 to 90 degrees.
-    const rotation = (slpPercentage - 50) * 1.8;
+    // Map 0-100 range to -90 to 90 degrees for the rotation.
+    // SLP 100% -> -90deg, 50% -> 0deg, 0% -> 90deg
+    const rotation = (50 - slpPercentage) * 1.8;
   
     return (
       <div className="relative w-40 h-20 mx-auto">
@@ -189,12 +195,12 @@ const GaugeChart = ({ slpPercentage = 50, uwpPercentage = 50, slpColor = '#ef444
           <div className="w-1/2 h-full" style={{ backgroundColor: uwpColor }}></div>
         </div>
         <div 
-          className="absolute bottom-0 left-1/2 h-full origin-bottom transition-transform duration-500"
+          className="absolute bottom-0 left-1/2 w-0.5 h-full origin-bottom transition-transform duration-500"
           style={{ transform: `translateX(-50%) rotate(${rotation}deg)` }}
         >
-          <div className="w-0.5 h-full bg-black mx-auto"></div>
+          <div className="absolute top-0 left-1/2 w-0.5 h-1/2 bg-black"></div>
            {/* Arrowhead */}
-           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-black"></div>
+           <div className="absolute top-[-2px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-black"></div>
         </div>
          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rounded-full border-2 border-black"></div>
       </div>
