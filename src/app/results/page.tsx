@@ -17,7 +17,7 @@ import Image from 'next/image';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
 import { ArrowUp, ArrowDown, Minus, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { analyzePastElection, type PastElectionAnalysisInput } from '@/lib/actions';
+import { analyzePastElection, type PastElectionAnalysisInput } from '@/ai/flows/analyze-past-election';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const constituencyMapOrder = [
@@ -326,7 +326,7 @@ export default function ResultsPage() {
             const input: PastElectionAnalysisInput = {
                 electionYear: currentElection?.year.toString() || '',
                 electionName: currentElection?.name || '',
-                results: JSON.stringify(summaryData),
+                results: JSON.stringify(summaryData.map(({ logoUrl, ...rest }) => rest)),
                 constituencyResults: JSON.stringify(currentElectionResults.map(r => {
                     const constituency = getConstituencyById(r.constituencyId);
                     return {...r, constituencyName: constituency?.name}
@@ -630,7 +630,6 @@ export default function ResultsPage() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Results Map</CardTitle>
-                                <CardDescription>Constituency winners for {currentElection.name}.</CardDescription>
                             </CardHeader>
                             <CardContent className="p-2">
                                 <InteractiveSvgMap 
@@ -888,4 +887,3 @@ export default function ResultsPage() {
     </div>
   );
 }
-
