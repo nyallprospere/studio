@@ -130,10 +130,7 @@ function CandidateBox({
                                 {isStriped && barFill === 'blue-red-stripes' && <div className="absolute inset-0 red-stripes-overlay"></div>}
                             </div>
                             <div className="absolute inset-0 flex items-center justify-between px-2">
-                                <span className={cn(
-                                    "font-bold text-xs",
-                                    party?.acronym === 'SLP' ? 'text-white' : 'text-green-600'
-                                )}>
+                                <span className="font-bold text-xs text-white">
                                     {votes?.toLocaleString()}
                                     {isWinner && margin ? <sup className="font-semibold"> (+{margin.toLocaleString()})</sup> : null}
                                 </span>
@@ -215,35 +212,37 @@ export function ConstituencyPopoverContent({
         let slpCand = slp ? candidates.find(c => c.partyId === slp.id) : null;
         let uwpCand = uwp ? candidates.find(c => c.partyId === uwp.id) : null;
         
-        const indCand = candidates.find(c => 
+        let indCand = candidates.find(c => 
             (c as Candidate).isIndependentCastriesNorth || (c as Candidate).isIndependentCastriesCentral
-        ) || null;
+        );
 
-        const isSpecialConstituency = (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
-        
-        if (isCurrentElection && isSpecialConstituency) {
-            // For these constituencies, the SLP candidate is actually the independent one
-            // And there is no official SLP candidate running.
-            if (slpCand && (slpCand as Candidate).isIndependentCastriesCentral) {
-                // This is Richard Frederick
+        if (!indCand) {
+           indCand = candidates.find(c => c.partyId === 'independent' || c.partyId === 'IND');
+        }
+
+        if(indCand) {
+            if (constituency.name === 'Castries North' || constituency.name === 'Castries Central') {
+                if (slpCand && slpCand.id === indCand.id) {
+                    slpCand = null;
+                }
             }
         }
         
-        return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand, slpParty: slp, uwpParty: uwp };
-    }, [parties, candidates, constituency.name, isCurrentElection]);
+        return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand || null, slpParty: slp, uwpParty: uwp };
+    }, [parties, candidates, constituency.name]);
     
     const { chartData, chartConfig } = useMemo(() => {
         if (!constituency || !parties) return { chartData: [], chartConfig: {} };
         const slpParty = parties.find(p => p.acronym === 'SLP');
         const uwpParty = parties.find(p => p.acronym === 'UWP');
-
+    
         const config: ChartConfig = {};
         if (slpParty) config.slp = { label: 'SLP', color: slpParty.color };
         if (uwpParty) config.uwp = { label: 'UWP', color: uwpParty.color };
         config.ind = { label: 'IND', color: '#3b82f6' };
         
         const isSpecialConstituency = constituency.name === 'Castries North' || constituency.name === 'Castries Central';
-
+    
         const uwpPercentage = isSpecialConstituency ? 100 - (constituency.predictedSlpPercentage || 50) : constituency.predictedUwpPercentage || 50;
         
         const data = isSpecialConstituency
@@ -255,7 +254,7 @@ export function ConstituencyPopoverContent({
                 { party: 'slp', votes: constituency.predictedSlpPercentage || 50, fill: `var(--color-slp)` },
                 { party: 'uwp', votes: uwpPercentage, fill: `var(--color-uwp)` },
               ];
-
+    
         return { chartData: data, chartConfig: config };
     }, [constituency, parties]);
 
@@ -448,13 +447,13 @@ export function ConstituencyPopoverContent({
                     <div className="flex justify-between text-sm font-medium -mt-10">
                         {isSpecialConstituencyForIND ? (
                             <>
-                                 <div style={{ color: chartConfig.ind?.color }} className="text-left">
-                                    <p>IND</p>
-                                    <p>{constituency.predictedSlpPercentage}%</p>
-                                </div>
-                                <div style={{ color: chartConfig.uwp?.color }} className="text-right">
+                                 <div style={{ color: chartConfig.uwp?.color }} className="text-left">
                                     <p>UWP</p>
                                     <p>{100 - (constituency.predictedSlpPercentage || 50)}%</p>
+                                </div>
+                                <div style={{ color: chartConfig.ind?.color }} className="text-right">
+                                    <p>IND</p>
+                                    <p>{constituency.predictedSlpPercentage}%</p>
                                 </div>
                             </>
                         ) : (
