@@ -18,7 +18,7 @@ import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { collection, query, orderBy, where } from 'firebase/firestore';
 import type { Election, Party, PartyLogo, Candidate } from '@/lib/types';
-import { Vote, ChevronDown, LogIn, LogOut, UserPlus } from 'lucide-react';
+import { Vote, ChevronDown, LogIn, LogOut, UserPlus, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SlpLogo, UwpLogo } from '../icons';
 import { Separator } from '../ui/separator';
@@ -58,8 +58,21 @@ export function HeaderNav() {
     return partyLogos.find(logo => logo.partyId === slpParty.id && logo.electionId === election2026.id);
   }, [partyLogos, slpParty, election2026]);
 
-  const uwpCandidates = React.useMemo(() => candidates?.filter(c => c.partyId === uwpParty?.id) || [], [candidates, uwpParty]);
-  const slpCandidates = React.useMemo(() => candidates?.filter(c => c.partyId === slpParty?.id) || [], [candidates, slpParty]);
+  const { uwpLeader, uwpOtherCandidates } = React.useMemo(() => {
+    if (!candidates || !uwpParty) return { uwpLeader: null, uwpOtherCandidates: [] };
+    const allUwp = candidates.filter(c => c.partyId === uwpParty.id);
+    const leader = allUwp.find(c => c.isPartyLeader) || null;
+    const others = allUwp.filter(c => !c.isPartyLeader);
+    return { uwpLeader: leader, uwpOtherCandidates: others };
+  }, [candidates, uwpParty]);
+
+  const { slpLeader, slpOtherCandidates } = React.useMemo(() => {
+    if (!candidates || !slpParty) return { slpLeader: null, slpOtherCandidates: [] };
+    const allSlp = candidates.filter(c => c.partyId === slpParty.id);
+    const leader = allSlp.find(c => c.isPartyLeader) || null;
+    const others = allSlp.filter(c => !c.isPartyLeader);
+    return { slpLeader: leader, slpOtherCandidates: others };
+  }, [candidates, slpParty]);
 
 
   const sortedElections = React.useMemo(() => {
@@ -153,14 +166,15 @@ export function HeaderNav() {
         <Menubar className="border-none shadow-none bg-transparent p-0 gap-x-6">
           
           <MenubarMenu>
-            <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80 flex items-center gap-2">
-              {uwpLogo?.logoUrl ? (
-                <Image src={uwpLogo.logoUrl} alt="UWP Logo" width={16} height={16} />
-              ) : (
-                <UwpLogo className="h-4 w-4" />
-              )}
-              UWP
-              <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
+            <MenubarTrigger asChild>
+                <NavLink href={`/parties/${uwpParty?.id}`} className="flex items-center gap-2">
+                    {uwpLogo?.logoUrl ? (
+                        <Image src={uwpLogo.logoUrl} alt="UWP Logo" width={20} height={20} />
+                    ) : (
+                        <UwpLogo className="h-5 w-5" />
+                    )}
+                    UWP
+                </NavLink>
             </MenubarTrigger>
             <MenubarContent>
                 <MenubarItem asChild>
@@ -171,7 +185,15 @@ export function HeaderNav() {
                 </MenubarItem>
                 <MenubarSeparator />
                 <MenubarItem disabled>2026 Slate of Candidates</MenubarItem>
-                {uwpCandidates.map(candidate => (
+                {uwpLeader && (
+                    <MenubarItem key={uwpLeader.id} asChild>
+                        <Link href={`/candidates/${uwpLeader.id}`} className="flex items-center justify-between">
+                            {uwpLeader.firstName} {uwpLeader.lastName}
+                            <Star className="h-4 w-4 text-accent" />
+                        </Link>
+                    </MenubarItem>
+                )}
+                {uwpOtherCandidates.map(candidate => (
                     <MenubarItem key={candidate.id} asChild>
                         <Link href={`/candidates/${candidate.id}`}>{candidate.firstName} {candidate.lastName}</Link>
                     </MenubarItem>
@@ -179,16 +201,19 @@ export function HeaderNav() {
             </MenubarContent>
           </MenubarMenu>
           
+          <NavSeparator />
+
           <MenubarMenu>
-            <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80 flex items-center gap-2">
-              {slpLogo?.logoUrl ? (
-                <Image src={slpLogo.logoUrl} alt="SLP Logo" width={16} height={16} />
-              ) : (
-                <SlpLogo className="h-4 w-4" />
-              )}
-              SLP
-              <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
-            </MenubarTrigger>
+             <MenubarTrigger asChild>
+                <NavLink href={`/parties/${slpParty?.id}`} className="flex items-center gap-2">
+                    {slpLogo?.logoUrl ? (
+                        <Image src={slpLogo.logoUrl} alt="SLP Logo" width={20} height={20} />
+                    ) : (
+                        <SlpLogo className="h-5 w-5" />
+                    )}
+                    SLP
+                </NavLink>
+              </MenubarTrigger>
             <MenubarContent>
                  <MenubarItem asChild>
                     <Link href={`/parties/${slpParty?.id}`}>SLP Main Page</Link>
@@ -198,7 +223,15 @@ export function HeaderNav() {
                 </MenubarItem>
                 <MenubarSeparator />
                 <MenubarItem disabled>2026 Slate of Candidates</MenubarItem>
-                {slpCandidates.map(candidate => (
+                {slpLeader && (
+                    <MenubarItem key={slpLeader.id} asChild>
+                        <Link href={`/candidates/${slpLeader.id}`} className="flex items-center justify-between">
+                            {slpLeader.firstName} {slpLeader.lastName}
+                             <Star className="h-4 w-4 text-accent" />
+                        </Link>
+                    </MenubarItem>
+                )}
+                {slpOtherCandidates.map(candidate => (
                     <MenubarItem key={candidate.id} asChild>
                         <Link href={`/candidates/${candidate.id}`}>{candidate.firstName} {candidate.lastName}</Link>
                     </MenubarItem>
