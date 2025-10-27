@@ -16,12 +16,13 @@ import { Button } from '@/components/ui/button';
 import { useUser, useAuth, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { collection, query, orderBy } from 'firebase/firestore';
-import type { Election, Party } from '@/lib/types';
+import { collection, query, orderBy, where } from 'firebase/firestore';
+import type { Election, Party, PartyLogo } from '@/lib/types';
 import { Vote, ChevronDown, LogIn, LogOut, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SlpLogo, UwpLogo } from '../icons';
 import { Separator } from '../ui/separator';
+import Image from 'next/image';
 
 export function HeaderNav() {
   const pathname = usePathname();
@@ -35,9 +36,25 @@ export function HeaderNav() {
 
   const partiesQuery = useMemoFirebase(() => (firestore ? collection(firestore, 'parties') : null), [firestore]);
   const { data: parties } = useCollection<Party>(partiesQuery);
+  
+  const partyLogosQuery = useMemoFirebase(() => (firestore ? collection(firestore, 'party_logos') : null), [firestore]);
+  const { data: partyLogos } = useCollection<PartyLogo>(partyLogosQuery);
 
   const uwpParty = React.useMemo(() => parties?.find(p => p.acronym === 'UWP'), [parties]);
   const slpParty = React.useMemo(() => parties?.find(p => p.acronym === 'SLP'), [parties]);
+  
+  const election2026 = React.useMemo(() => elections?.find(e => e.year === 2026), [elections]);
+
+  const uwpLogo = React.useMemo(() => {
+    if (!uwpParty || !election2026 || !partyLogos) return null;
+    return partyLogos.find(logo => logo.partyId === uwpParty.id && logo.electionId === election2026.id);
+  }, [partyLogos, uwpParty, election2026]);
+
+  const slpLogo = React.useMemo(() => {
+    if (!slpParty || !election2026 || !partyLogos) return null;
+    return partyLogos.find(logo => logo.partyId === slpParty.id && logo.electionId === election2026.id);
+  }, [partyLogos, slpParty, election2026]);
+
 
   const sortedElections = React.useMemo(() => {
     if (!elections) return [];
@@ -132,7 +149,11 @@ export function HeaderNav() {
           {uwpParty && (
             <MenubarMenu>
                <NavLink href={`/parties/${uwpParty.id}`} className="flex items-center gap-2">
-                <UwpLogo className="h-4 w-4" />
+                 {uwpLogo?.logoUrl ? (
+                    <Image src={uwpLogo.logoUrl} alt="UWP Logo" width={16} height={16} />
+                  ) : (
+                    <UwpLogo className="h-4 w-4" />
+                  )}
                 UWP
               </NavLink>
             </MenubarMenu>
@@ -141,7 +162,11 @@ export function HeaderNav() {
           {slpParty && (
              <MenubarMenu>
                <NavLink href={`/parties/${slpParty.id}`} className="flex items-center gap-2">
-                <SlpLogo className="h-4 w-4" />
+                  {slpLogo?.logoUrl ? (
+                    <Image src={slpLogo.logoUrl} alt="SLP Logo" width={16} height={16} />
+                  ) : (
+                    <SlpLogo className="h-4 w-4" />
+                  )}
                 SLP
               </NavLink>
             </MenubarMenu>
