@@ -156,24 +156,25 @@ export function HeaderNav() {
             </MenubarContent>
           </MenubarMenu>
           
-          {user && (
-            <MenubarMenu>
-                <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80">
-                    Admin <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
-                </MenubarTrigger>
-                <MenubarContent>
-                    {adminLinks.map(link => (
-                        <MenubarItem key={link.href} asChild>
-                            <Link href={link.href}>{link.label}</Link>
-                        </MenubarItem>
-                    ))}
-                </MenubarContent>
-            </MenubarMenu>
-          )}
-
         </Menubar>
       </div>
       <div className="flex items-center gap-2">
+         {user && (
+            <Menubar className="border-none shadow-none bg-transparent p-0">
+                <MenubarMenu>
+                    <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80">
+                        Admin <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
+                    </MenubarTrigger>
+                    <MenubarContent>
+                        {adminLinks.map(link => (
+                            <MenubarItem key={link.href} asChild>
+                                <Link href={link.href}>{link.label}</Link>
+                            </MenubarItem>
+                        ))}
+                    </MenubarContent>
+                </MenubarMenu>
+            </Menubar>
+          )}
         <AuthNav />
       </div>
     </div>
