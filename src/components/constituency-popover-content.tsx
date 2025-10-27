@@ -20,11 +20,11 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from './ui/chart';
 import type { ChartConfig } from './ui/chart';
 
 const politicalLeaningOptions = [
-    { value: 'solid-uwp', label: 'Solid UWP', color: 'fill-yellow-500' },
-    { value: 'lean-uwp', label: 'Lean UWP', color: 'fill-yellow-300' },
-    { value: 'tossup', label: 'Tossup', color: 'fill-purple-500' },
-    { value: 'lean-slp', label: 'Lean SLP', color: 'fill-red-400' },
-    { value: 'solid-slp', label: 'Solid SLP', color: 'fill-red-700' },
+    { value: 'solid-uwp', label: 'Solid UWP', color: '#facc15' },
+    { value: 'lean-uwp', label: 'Lean UWP', color: '#fde047' },
+    { value: 'tossup', label: 'Tossup', color: '#a855f7' },
+    { value: 'lean-slp', label: 'Lean SLP', color: '#f87171' },
+    { value: 'solid-slp', label: 'Solid SLP', color: '#dc2626' },
 ];
 
 const makeYourOwnLeaningOptions = [
@@ -124,7 +124,7 @@ function CandidateBox({
                         )}
                         <div className="relative w-full h-8 bg-gray-200 rounded overflow-hidden self-center">
                             <div 
-                                className={cn("absolute top-0 left-0 h-full rounded", isStriped && barFill === 'blue-red-stripes' && 'bg-blue-600')}
+                                className={cn("absolute top-0 left-0 h-full rounded text-white", isStriped && barFill === 'blue-red-stripes' && 'bg-blue-600')}
                                 style={{ width: `${votePercentage}%`, backgroundColor: colorOverride || ((isStriped && barFill === 'blue-red-stripes') ? '' : party?.color) }}
                             >
                                 {isStriped && barFill === 'blue-red-stripes' && <div className="absolute inset-0 red-stripes-overlay"></div>}
@@ -214,7 +214,7 @@ export function ConstituencyPopoverContent({
                 return {
                     slpCandidate: null,
                     uwpCandidate: candidates?.find(c => c.partyId === uwp?.id) || null,
-                    independentCandidate: { id: 'stephenson-king', firstName: 'Stephenson', lastName: 'King' } as Candidate,
+                    independentCandidate: { id: 'stephenson-king', firstName: 'Stephenson', lastName: 'King', imageUrl: "https://firebasestorage.googleapis.com/v0/b/studio-6540754669-81720.appspot.com/o/2021-candidate-photos%2Fstephenson-king.jpg?alt=media&token=e937b29a-2415-46f3-a4c3-6331a61765c3" } as Candidate,
                     slpParty: slp,
                     uwpParty: uwp,
                 }
@@ -223,7 +223,7 @@ export function ConstituencyPopoverContent({
                 return {
                     slpCandidate: null,
                     uwpCandidate: candidates?.find(c => c.partyId === uwp?.id) || null,
-                    independentCandidate: { id: 'richard-frederick', firstName: 'Richard', lastName: 'Frederick' } as Candidate,
+                    independentCandidate: { id: 'richard-frederick', firstName: 'Richard', lastName: 'Frederick', imageUrl: "https://firebasestorage.googleapis.com/v0/b/studio-6540754669-81720.appspot.com/o/2021-candidate-photos%2Frichard-frederick.jpg?alt=media&token=c3286a11-8930-47e0-9430-801b693e506e" } as Candidate,
                     slpParty: slp,
                     uwpParty: uwp,
                 }
@@ -497,7 +497,7 @@ export function ConstituencyPopoverContent({
                                     <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
                                         {uwpCandidate.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                     </div>
-                                    <p className="text-xs font-semibold mt-1">{uwpCandidate.name}</p>
+                                    <p className="text-xs font-semibold mt-1">{uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'UWP Candidate'}</p>
                                     <p className="text-xs text-muted-foreground">{uwpParty?.acronym}</p>
                                 </div>
                             )}
@@ -506,7 +506,7 @@ export function ConstituencyPopoverContent({
                                     <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
                                         {slpCandidate.imageUrl ? <Image src={slpCandidate.imageUrl} alt={slpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                     </div>
-                                    <p className="text-xs font-semibold mt-1">{slpCandidate.name}</p>
+                                    <p className="text-xs font-semibold mt-1">{slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'SLP Candidate'}</p>
                                     <p className="text-xs text-muted-foreground">{slpParty?.acronym}</p>
                                 </div>
                             )}
