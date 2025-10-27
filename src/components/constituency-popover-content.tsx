@@ -99,7 +99,10 @@ function CandidateBox({
     const textColorClass = () => {
         if (!election || election.isCurrent) {
             const isSpecialCase = election?.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
-            return isSpecialCase ? 'text-white' : 'text-black';
+            if(isSpecialCase && party?.acronym !== 'UWP'){
+              return 'text-white';
+            }
+            return 'text-black';
         }
         if (party?.acronym === 'UWP') return 'text-green-600';
         if (party?.acronym === 'SLP') return 'text-white';
@@ -188,7 +191,7 @@ const GaugeChart = ({ slpPercentage = 50, uwpPercentage = 50, slpColor = '#ef444
           className="absolute bottom-0 left-1/2 h-1/2 origin-bottom transition-transform duration-500"
           style={{ transform: `translateX(-50%) rotate(${rotation}deg)` }}
         >
-           <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-b-[12px] border-b-black"></div>
+          <div className="w-0.5 h-full bg-black mx-auto"></div>
         </div>
          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rounded-full border-2 border-black"></div>
       </div>
@@ -254,7 +257,7 @@ export function ConstituencyPopoverContent({
                 return {
                     slpCandidate: null,
                     uwpCandidate: candidates?.find(c => c.partyId === uwp?.id) || null,
-                    independentCandidate: { id: 'stephenson-king', firstName: 'Stephenson', lastName: 'King', imageUrl: "https://i.ibb.co/zV17Phtw/king.png", isIncumbent: true } as Candidate,
+                    independentCandidate: { id: 'stephenson-king', firstName: 'Stephenson', lastName: 'King', imageUrl: "https://i.ibb.co/zV17Pht/king.png", isIncumbent: true } as Candidate,
                     slpParty: slp,
                     uwpParty: uwp,
                 }
