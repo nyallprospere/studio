@@ -54,7 +54,7 @@ export function HeaderNav() {
     if (isUserLoading) return null;
     if (user) {
       return (
-        <>
+        <div className="flex items-center gap-2">
           <Menubar className="border-none shadow-none bg-transparent p-0">
               <MenubarMenu>
                   <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80">
@@ -73,7 +73,7 @@ export function HeaderNav() {
             <LogOut className="mr-2 h-4 w-4" />
             Logout
           </Button>
-        </>
+        </div>
       );
     }
     return (
@@ -119,7 +119,7 @@ export function HeaderNav() {
 
   return (
     <div className="flex w-full items-center justify-between">
-      <div className="flex items-center gap-x-12">
+      <div className="flex items-center gap-x-6">
         <Link href="/" className="flex items-center gap-2 mr-6">
             <Vote className="w-8 h-8 text-white" />
             <span className="font-bold font-headline text-lg text-white">LucianVotes</span>
@@ -128,6 +128,8 @@ export function HeaderNav() {
           <MenubarMenu>
             <NavLink href="/">Home</NavLink>
           </MenubarMenu>
+
+          <MenubarSeparator orientation="vertical" className="h-6 bg-primary-foreground/20" />
 
           {uwpParty && (
             <MenubarMenu>
@@ -138,6 +140,8 @@ export function HeaderNav() {
             </MenubarMenu>
           )}
 
+          <MenubarSeparator orientation="vertical" className="h-6 bg-primary-foreground/20" />
+
           {slpParty && (
              <MenubarMenu>
                <NavLink href={`/parties/${slpParty.id}`} className="flex items-center gap-2">
@@ -146,21 +150,29 @@ export function HeaderNav() {
               </NavLink>
             </MenubarMenu>
           )}
+
+          <MenubarSeparator orientation="vertical" className="h-6 bg-primary-foreground/20" />
           
           <MenubarMenu>
              <NavLink href="/election-news">Election News</NavLink>
           </MenubarMenu>
 
+          <MenubarSeparator orientation="vertical" className="h-6 bg-primary-foreground/20" />
+
           <MenubarMenu>
              <NavLink href="/make-your-own">Build Your Election Map</NavLink>
           </MenubarMenu>
+
+          <MenubarSeparator orientation="vertical" className="h-6 bg-primary-foreground/20" />
           
           <MenubarMenu>
              <NavLink href="/historical-trends">Historical Trends</NavLink>
           </MenubarMenu>
 
+          <MenubarSeparator orientation="vertical" className="h-6 bg-primary-foreground/20" />
+
           <MenubarMenu>
-            <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80 ml-[170px]">
+            <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80">
               Past Results <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
             </MenubarTrigger>
             <MenubarContent>
