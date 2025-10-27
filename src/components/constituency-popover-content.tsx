@@ -266,7 +266,7 @@ export function ConstituencyPopoverContent({
                 return {
                     slpCandidate: null,
                     uwpCandidate: candidates?.find(c => c.partyId === uwp?.id) || null,
-                    independentCandidate: { id: 'stephenson-king', firstName: 'Stephenson', lastName: 'King', imageUrl: "https://i.ibb.co/zV17Pht/king.png", isIncumbent: true } as Candidate,
+                    independentCandidate: { id: 'stephenson-king', firstName: 'Stephenson', lastName: 'King', imageUrl: "https://i.ibb.co/zV17Phtw/king.png", isIncumbent: true } as Candidate,
                     slpParty: slp,
                     uwpParty: uwp,
                 }
