@@ -68,6 +68,8 @@ function CandidateBox({
     hideLogo,
     popoverVariant = 'default',
     colorOverride,
+    election,
+    constituency
 }: { 
     candidate: Candidate | ArchivedCandidate | null;
     party: Party | null;
@@ -84,6 +86,8 @@ function CandidateBox({
     hideLogo?: boolean;
     popoverVariant?: 'default' | 'dashboard';
     colorOverride?: string;
+    election?: Election | null;
+    constituency: Constituency;
 }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}` : 'Candidate(s) N/A';
@@ -606,6 +610,8 @@ export function ConstituencyPopoverContent({
                             logoUrl={uwpLogoUrl}
                             hideLogo={hideLogos}
                             popoverVariant={popoverVariant}
+                            election={election}
+                            constituency={constituency}
                         />
                     )}
                     {(isSpecialConstituency || (currentResult?.otherVotes || 0) > 0 || independentCandidate) && (
@@ -623,6 +629,8 @@ export function ConstituencyPopoverContent({
                             hideLogo={hideLogos}
                             popoverVariant={popoverVariant}
                             colorOverride={chartConfig.ind?.color}
+                            election={election}
+                            constituency={constituency}
                         />
                     )}
                      {!isSpecialConstituency && slpCandidate && (
@@ -639,6 +647,8 @@ export function ConstituencyPopoverContent({
                             logoUrl={slpLogoUrl}
                             hideLogo={hideLogos}
                             popoverVariant={popoverVariant}
+                            election={election}
+                            constituency={constituency}
                         />
                     )}
                 </div>
