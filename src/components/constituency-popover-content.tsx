@@ -92,8 +92,11 @@ function CandidateBox({
     return (
         <>
              <div className={cn(
-                "p-2 rounded-md bg-muted relative h-full flex flex-col items-center gap-2 text-center"
-            )}>
+                "p-2 rounded-md bg-muted relative h-full flex flex-col items-center gap-2 text-center",
+                candidate && 'cursor-pointer'
+            )}
+            onClick={() => candidate && setProfileOpen(true)}
+            >
                 {candidate?.isIncumbent && (
                     <div className="absolute -top-2 right-1 text-center">
                         <p className="font-bold text-xs text-muted-foreground">Incumbent</p>
@@ -112,9 +115,9 @@ function CandidateBox({
                                 <UserSquare className="h-full w-full text-muted-foreground" />
                             )}
                         </div>
-                         <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold whitespace-normal leading-tight" onClick={() => setProfileOpen(true)} disabled={!candidate}>
+                         <p className="text-xs font-semibold whitespace-normal leading-tight">
                            {displayName}
-                        </Button>
+                        </p>
                         {isWinner && <CheckCircle2 className="h-4 w-4 text-green-600 absolute top-[-4px] right-[-4px] bg-white rounded-full" />}
                     </div>
 
@@ -218,7 +221,7 @@ export function ConstituencyPopoverContent({
                 return {
                     slpCandidate: null,
                     uwpCandidate: candidates?.find(c => c.partyId === uwp?.id) || null,
-                    independentCandidate: { id: 'stephenson-king', firstName: 'Stephenson', lastName: 'King', imageUrl: "https://i.ibb.co/zV17Phtw/king.png" } as Candidate,
+                    independentCandidate: { id: 'stephenson-king', firstName: 'Stephenson', lastName: 'King', imageUrl: "https://i.ibb.co/zV17Phtw/king.png", isIncumbent: true } as Candidate,
                     slpParty: slp,
                     uwpParty: uwp,
                 }
@@ -227,7 +230,7 @@ export function ConstituencyPopoverContent({
                 return {
                     slpCandidate: null,
                     uwpCandidate: candidates?.find(c => c.partyId === uwp?.id) || null,
-                    independentCandidate: { id: 'richard-frederick', firstName: 'Richard', lastName: 'Frederick', imageUrl: "https://i.ibb.co/Y7wMKbNK/RF.png" } as Candidate,
+                    independentCandidate: { id: 'richard-frederick', firstName: 'Richard', lastName: 'Frederick', imageUrl: "https://i.ibb.co/Y7wMKbNK/RF.png", isIncumbent: true } as Candidate,
                     slpParty: slp,
                     uwpParty: uwp,
                 }
@@ -526,67 +529,59 @@ export function ConstituencyPopoverContent({
             ) : (
               <>
                 {showCandidateBoxes && (election?.isCurrent || !election) && !isMakeYourOwn ? (
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                             {uwpCandidate && (
-                                <div className="flex flex-col items-center p-2 rounded-md bg-muted">
-                                    <div className="relative h-8 w-8 mb-2">
-                                        {uwpParty?.logoUrl && !hideLogos ? (
-                                            <Image src={uwpParty.logoUrl} alt={uwpParty.name} fill className="object-contain" />
-                                        ): null}
-                                    </div>
-                                    <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
-                                    {uwpCandidate?.imageUrl ? (
-                                        <Image src={uwpCandidate.imageUrl} alt={uwpCandidate?.name || 'UWP Candidate'} fill className="object-cover" />
-                                    ) : (
-                                        <UserSquare className="h-full w-full text-gray-400" />
-                                    )}
-                                    </div>
-                                    <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!uwpCandidate}>
-                                        {uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'Candidate(s) N/A'}
-                                        {uwpCandidate?.isIncumbent && <span className="font-normal text-muted-foreground ml-1">(Inc.)</span>}
-                                    </Button>
+                    <div className="space-y-2">
+                        {uwpCandidate && (
+                            <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
+                                <div className="relative h-8 w-8 mb-2">
+                                    {uwpParty?.logoUrl && !hideLogos ? (
+                                        <Image src={uwpParty.logoUrl} alt={uwpParty.name} fill className="object-contain" />
+                                    ): null}
                                 </div>
-                            )}
-                            {independentCandidate && (
-                                <div className="flex flex-col items-center p-2 rounded-md bg-muted">
-                                    <div className="relative h-8 w-8 mb-2">
-                                        {indLogoUrl && !hideLogos && <Image src={indLogoUrl} alt="Independent" fill className="object-contain" />}
-                                    </div>
-                                    <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
-                                    {independentCandidate?.imageUrl ? (
-                                        <Image src={independentCandidate.imageUrl} alt={independentCandidate?.name || 'Independent Candidate'} fill className="object-cover" />
-                                    ) : (
-                                        <UserSquare className="h-full w-full text-gray-400" />
-                                    )}
-                                    </div>
-                                    <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!independentCandidate}>
-                                        {independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName}` : 'Candidate(s) N/A'}
-                                        {independentCandidate?.isIncumbent && <span className="font-normal text-muted-foreground ml-1">(Inc.)</span>}
-                                    </Button>
+                                <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
+                                {uwpCandidate?.imageUrl ? (
+                                    <Image src={uwpCandidate.imageUrl} alt={uwpCandidate?.name || 'UWP Candidate'} fill className="object-cover" />
+                                ) : (
+                                    <UserSquare className="h-full w-full text-gray-400" />
+                                )}
                                 </div>
-                            )}
-                            {slpCandidate && (
-                                <div className="flex flex-col items-center p-2 rounded-md bg-muted">
-                                    <div className="relative h-8 w-8 mb-2">
-                                        {slpParty?.logoUrl && !hideLogos ? (
-                                            <Image src={slpParty.logoUrl} alt={slpParty.name} fill className="object-contain" />
-                                        ): null}
-                                    </div>
-                                    <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
-                                    {slpCandidate?.imageUrl ? (
-                                        <Image src={slpCandidate.imageUrl} alt={slpCandidate?.name || 'SLP Candidate'} fill className="object-cover" />
-                                    ) : (
-                                        <UserSquare className="h-full w-full text-gray-400" />
-                                    )}
-                                    </div>
-                                    <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-xs font-semibold" disabled={!slpCandidate}>
-                                        {slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'Candidate(s) N/A'}
-                                        {slpCandidate?.isIncumbent && <span className="font-normal text-muted-foreground ml-1">(Inc.)</span>}
-                                    </Button>
+                                <p className="text-xs font-semibold mt-1">{uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'Candidate(s) N/A'}</p>
+                                {uwpCandidate?.isIncumbent && <span className="font-normal text-muted-foreground text-xs">(Inc.)</span>}
+                            </div>
+                        )}
+                        {independentCandidate && (
+                            <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
+                                <div className="relative h-8 w-8 mb-2">
+                                    {indLogoUrl && !hideLogos && <Image src={indLogoUrl} alt="Independent" fill className="object-contain" />}
                                 </div>
-                            )}
-                        </div>
+                                <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
+                                {independentCandidate?.imageUrl ? (
+                                    <Image src={independentCandidate.imageUrl} alt={independentCandidate?.name || 'Independent Candidate'} fill className="object-cover" />
+                                ) : (
+                                    <UserSquare className="h-full w-full text-gray-400" />
+                                )}
+                                </div>
+                                <p className="text-xs font-semibold mt-1">{independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName}` : 'Candidate(s) N/A'}</p>
+                                {independentCandidate?.isIncumbent && <span className="font-normal text-muted-foreground text-xs">(Inc.)</span>}
+                            </div>
+                        )}
+                        {slpCandidate && (
+                            <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
+                                <div className="relative h-8 w-8 mb-2">
+                                    {slpParty?.logoUrl && !hideLogos ? (
+                                        <Image src={slpParty.logoUrl} alt={slpParty.name} fill className="object-contain" />
+                                    ): null}
+                                </div>
+                                <div className="relative h-10 w-10 rounded-full overflow-hidden bg-transparent">
+                                {slpCandidate?.imageUrl ? (
+                                    <Image src={slpCandidate.imageUrl} alt={slpCandidate?.name || 'SLP Candidate'} fill className="object-cover" />
+                                ) : (
+                                    <UserSquare className="h-full w-full text-gray-400" />
+                                )}
+                                </div>
+                                <p className="text-xs font-semibold mt-1">{slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'Candidate(s) N/A'}</p>
+                                {slpCandidate?.isIncumbent && <span className="font-normal text-muted-foreground text-xs">(Inc.)</span>}
+                            </div>
+                        )}
                     </div>
                 ) : !isMakeYourOwn ? (
                 <div className="space-y-2">

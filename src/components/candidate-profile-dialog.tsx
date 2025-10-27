@@ -30,7 +30,7 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
 
   const candidateName = `${candidate.firstName} ${candidate.lastName}`;
   const displayName = `${candidateName}`;
-  const isIndependent = !candidate.partyId;
+  const isIndependent = candidate.isIndependentCastriesCentral || candidate.isIndependentCastriesNorth || !candidate.partyId;
 
 
   return (
