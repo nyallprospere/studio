@@ -141,7 +141,7 @@ const NationalVoteTrend = ({ elections, results, parties, constituencies, select
                 <CardTitle>Popular Vote (%) Over Time</CardTitle>
                 <CardDescription>Percentage of the popular vote for {selectedConstituencyName}.</CardDescription>
             </div>
-            <Select value={selectedConstituencyId} onValueChange={(value) => setSelectedConstituencyId(value)}>
+            <Select value={selectedConstituencyId} onValueChange={setSelectedConstituencyId}>
                 <SelectTrigger className="w-[200px]">
                     <SelectValue placeholder="Select Constituency" />
                 </SelectTrigger>
@@ -174,7 +174,7 @@ const NationalVoteTrend = ({ elections, results, parties, constituencies, select
   );
 };
 
-const VoterTurnoutTrend = ({ elections, results }: { elections: Election[], results: ElectionResult[] }) => {
+const VoterTurnoutTrend = ({ elections, results, constituencies, selectedConstituencyId, setSelectedConstituencyId }: { elections: Election[], results: ElectionResult[], constituencies: Constituency[], selectedConstituencyId: string, setSelectedConstituencyId: (id: string) => void }) => {
   const chartData = useMemo(() => {
     if (!elections.length || !results.length) return [];
     
@@ -182,8 +182,12 @@ const VoterTurnoutTrend = ({ elections, results }: { elections: Election[], resu
       .filter(e => e.year < 2026 && e.year !== 1987)
       .sort((a,b) => a.year - b.year)
       .map(election => {
-        const electionResults = results.filter(r => r.electionId === election.id);
+        let electionResults = results.filter(r => r.electionId === election.id);
         
+        if (selectedConstituencyId !== 'national') {
+            electionResults = electionResults.filter(r => r.constituencyId === selectedConstituencyId);
+        }
+
         let totalVotes = 0;
         let registeredVoters = 0;
 
@@ -198,17 +202,36 @@ const VoterTurnoutTrend = ({ elections, results }: { elections: Election[], resu
 
         return { year: election.year, Turnout: turnout };
     }).filter(d => d.Turnout !== null);
-  }, [elections, results]);
+  }, [elections, results, selectedConstituencyId]);
 
   const chartConfig = {
     Turnout: { label: 'Turnout', color: 'hsl(var(--primary))' },
   };
 
+  const selectedConstituencyName = selectedConstituencyId === 'national' 
+    ? 'National' 
+    : constituencies.find(c => c.id === selectedConstituencyId)?.name || 'National';
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>National Voter Turnout (%) Over Time</CardTitle>
-        <CardDescription>Percentage of registered voters who cast a ballot in past elections.</CardDescription>
+        <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>Voter Turnout (%) Over Time</CardTitle>
+              <CardDescription>Percentage of registered voters who cast a ballot for {selectedConstituencyName}.</CardDescription>
+            </div>
+            <Select value={selectedConstituencyId} onValueChange={setSelectedConstituencyId}>
+                <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Select Constituency" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="national">National</SelectItem>
+                    {constituencies.sort((a,b) => a.name.localeCompare(b.name)).map(c => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[400px] w-full">
@@ -264,7 +287,13 @@ export default function HistoricalTrendsPage() {
             selectedConstituencyId={selectedConstituencyId}
             setSelectedConstituencyId={setSelectedConstituencyId}
           />
-          <VoterTurnoutTrend elections={elections || []} results={results || []} />
+          <VoterTurnoutTrend 
+            elections={elections || []} 
+            results={results || []}
+            constituencies={constituencies || []}
+            selectedConstituencyId={selectedConstituencyId}
+            setSelectedConstituencyId={setSelectedConstituencyId}
+          />
         </div>
       )}
     </div>
