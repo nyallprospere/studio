@@ -179,7 +179,9 @@ function CandidateBox({
 }
 
 const GaugeChart = ({ slpPercentage = 50, uwpPercentage = 50, slpColor = '#ef4444', uwpColor = '#f59e0b' }) => {
-    const rotation = (slpPercentage - 50) * 1.8; // Map 0-100 range to -90 to 90 degrees
+    // Map 0-100 range to -90 to 90 degrees.
+    // We reverse it by subtracting from 100 first, so higher SLP% moves left.
+    const rotation = ((100 - slpPercentage) - 50) * 1.8;
   
     return (
       <div className="relative w-40 h-20 mx-auto">
@@ -188,10 +190,10 @@ const GaugeChart = ({ slpPercentage = 50, uwpPercentage = 50, slpColor = '#ef444
           <div className="w-1/2 h-full" style={{ backgroundColor: uwpColor }}></div>
         </div>
         <div 
-          className="absolute bottom-0 left-1/2 h-1/2 origin-bottom transition-transform duration-500"
+          className="absolute bottom-0 left-1/2 h-full origin-bottom transition-transform duration-500"
           style={{ transform: `translateX(-50%) rotate(${rotation}deg)` }}
         >
-          <div className="w-0.5 h-full bg-black mx-auto"></div>
+          <div className="w-1 h-1/2 bg-black mx-auto"></div>
         </div>
          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rounded-full border-2 border-black"></div>
       </div>
