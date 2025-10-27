@@ -45,13 +45,13 @@ const adminSections = [
 ];
 
 const politicalLeaningOptions = [
-  { value: 'solid-slp', label: 'Solid SLP', color: 'hsl(var(--chart-5))' },
-  { value: 'lean-slp', label: 'Lean SLP', color: 'hsl(var(--chart-3))' },
-  { value: 'lean-ind', label: 'Lean IND', color: 'hsl(221, 83%, 73%)'},
-  { value: 'solid-ind', label: 'Solid IND', color: 'hsl(221, 83%, 53%)'},
-  { value: 'tossup', label: 'Tossup', color: 'hsl(var(--chart-4))' },
-  { value: 'lean-uwp', label: 'Lean UWP', color: 'hsl(var(--chart-2))' },
-  { value: 'solid-uwp', label: 'Solid UWP', color: 'hsl(var(--chart-1))' },
+    { value: 'solid-slp', label: 'Solid SLP', color: 'hsl(var(--chart-5))' },
+    { value: 'lean-slp', label: 'Lean SLP', color: 'hsl(var(--chart-3))' },
+    { value: 'lean-ind', label: 'Lean IND', color: 'hsl(221, 83%, 73%)' },
+    { value: 'solid-ind', label: 'Solid IND', color: 'hsl(221, 83%, 53%)' },
+    { value: 'tossup', label: 'Tossup', color: 'hsl(var(--chart-4))' },
+    { value: 'lean-uwp', label: 'Lean UWP', color: 'hsl(var(--chart-2))' },
+    { value: 'solid-uwp', label: 'Solid UWP', color: 'hsl(var(--chart-1))' },
 ];
 
 export default function Home() {
@@ -115,11 +115,13 @@ export default function Home() {
             return acc;
         }, {} as Record<string, number>);
 
-        const chartData = politicalLeaningOptions.map(opt => ({
-            name: opt.label,
-            value: counts[opt.value] || 0,
-            fill: opt.color,
-        })).filter(item => item.value > 0);
+        const chartData = politicalLeaningOptions
+            .map(opt => ({
+                name: opt.label,
+                value: counts[opt.value] || 0,
+                fill: opt.color,
+            }))
+            .filter(item => item.value > 0);
 
         const seatCounts = {
             solidSlp: counts['solid-slp'] || 0,
@@ -221,26 +223,19 @@ export default function Home() {
                                      {chartData.map((entry) => (
                                         <Cell key={`cell-${entry.name}`} fill={entry.fill} />
                                     ))}
-                                    <Label
-                                        content={({ viewBox }) => {
-                                            if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
-                                                return (
-                                                    <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
-                                                        <tspan x={viewBox.cx} dy="-0.5em" className="text-3xl font-bold">{constituencies?.length || 0}</tspan>
-                                                        <tspan x={viewBox.cx} dy="1.2em" className="text-sm text-muted-foreground">Seats</tspan>
-                                                    </text>
-                                                )
-                                            }
-                                        }}
-                                    />
                                 </Pie>
                             </PieChart>
                         </ResponsiveContainer>
                     </ChartContainer>
                     <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-xs">
-                        {politicalLeaningOptions.map((option) => {
+                        {politicalLeaningOptions
+                          .filter(opt => chartData.some(d => d.name === opt.label))
+                          .sort((a, b) => {
+                            const order = ['Solid SLP', 'Lean SLP', 'Solid IND', 'Lean IND', 'Tossup', 'Lean UWP', 'Solid UWP'];
+                            return order.indexOf(a.label) - order.indexOf(b.label);
+                          })
+                          .map((option) => {
                             const count = chartData.find(d => d.name === option.label)?.value || 0;
-                            if (count === 0) return null;
                             return (
                                 <div key={option.value} className="flex items-center gap-1.5">
                                     <span className="w-3 h-3 rounded-full" style={{ backgroundColor: option.color }}></span>
