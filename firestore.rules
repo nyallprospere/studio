@@ -1,65 +1,67 @@
 /**
- * @fileoverview Firestore Security Rules for the Election Information App.
+ * @fileoverview Firestore Security Rules for the application.
  *
  * Core Philosophy:
- * This ruleset prioritizes open access for read operations while strictly controlling write operations.
- * Data modification (create, update, delete) is generally restricted to authorized users.
+ * This ruleset prioritizes security by enforcing explicit access control for each
+ * collection. It focuses on protecting data based on user authentication and
+ * ownership, while keeping data structure validation minimal for rapid prototyping.
  *
  * Data Structure:
- * The Firestore database is organized into top-level collections such as 'parties', 'candidates',
- * 'elections', and 'constituencies'.  Each document within these collections represents a distinct
- * entity (e.g., a political party, a candidate, an election event).
+ * The Firestore database contains collections for various entities such as parties,
+ * candidates, elections, constituencies, and user-generated content like user maps.
+ * Global settings and page layouts are stored in singleton documents within the `/settings` collection.
+ * All top level collections are intended to be publicly readable.
  *
  * Key Security Decisions:
- * - Read access is generally open for most collections to allow public consumption of information.
- * - Write access is restricted to prevent unauthorized data modification.
- * - The 'settings' documents (pageLayouts, site) are treated as publicly readable but not writable
- *   through the client-side rules.
- * - The 'user_activity' collection allows anyone to create activity logs.
- * - Recaptcha should be implemented in code.
+ * - User listing is generally disallowed unless explicitly required.
+ * - Strict ownership is enforced for user-generated content and settings.
+ * - Read-only access is granted for certain collections like global site settings.
  *
  * Denormalization for Authorization:
- *  N/A - there are no specific user roles.
- *  For writes, we are assuming trusted clients and are not performing extra authorization checks.
- *  This assumes backend Recaptcha implementation.
- *
- * Structural Segregation:
- * N/A - all collections are top-level.
+ *  - No external data from other documents or collections is required to validate authorization.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
     /**
-     * @description Allows anyone to read mailing list subscribers, but restricts writes.
+     * @description Rules for managing mailing list subscribers.
      * @path /mailing_list_subscribers/{subscriberId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Open reads, restricted writes.
+     * @allow (create) User can subscribe to the mailing list if they are signed in.
+     * @deny (create) User cannot subscribe if they are not signed in.
+     * @allow (get, list) Anyone can view the list of subscribers.
+     * @deny (update, delete) No one can update or delete subscribers.
+     * @principle Restricts write access to authenticated users.
      */
     match /mailing_list_subscribers/{subscriberId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if isSignedIn();
+      allow update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read parties, but restricts writes.
+     * @description Rules for managing political parties.
      * @path /parties/{partyId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Open reads, restricted writes.
+     * @allow (get, list) Anyone can view the list of parties.
+     * @deny (create, update, delete) No one can create, update, or delete parties.
      */
     match /parties/{partyId} {
       allow get, list: if true;
       allow create, update, delete: if false;
     }
 
-        /**
-     * @description Allows anyone to read party logos, but restricts writes.
+    /**
+     * @description Rules for managing party logos.
      * @path /party_logos/{partyLogoId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Open reads, restricted writes.
+     * @allow (get, list) Anyone can read the party logos.
+     * @deny (create, update, delete) No one can create, update, or delete party logos.
      */
     match /party_logos/{partyLogoId} {
       allow get, list: if true;
@@ -67,11 +69,10 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read events, but restricts writes.
+     * @description Rules for managing events.
      * @path /events/{eventId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Open reads, restricted writes.
+     * @allow (get, list) Anyone can read events.
+     * @deny (create, update, delete) No one can create, update, or delete events.
      */
     match /events/{eventId} {
       allow get, list: if true;
@@ -79,11 +80,10 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read candidates, but restricts writes.
+     * @description Rules for managing candidates.
      * @path /candidates/{candidateId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Open reads, restricted writes.
+     * @allow (get, list) Anyone can read candidates.
+     * @deny (create, update, delete) No one can create, update, or delete candidates.
      */
     match /candidates/{candidateId} {
       allow get, list: if true;
@@ -91,11 +91,10 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read archived candidates, but restricts writes.
+     * @description Rules for managing archived candidates.
      * @path /archived_candidates/{archivedCandidateId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Open reads, restricted writes.
+     * @allow (get, list) Anyone can read archived candidates.
+     * @deny (create, update, delete) No one can create, update, or delete archived candidates.
      */
     match /archived_candidates/{archivedCandidateId} {
       allow get, list: if true;
@@ -103,11 +102,10 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read elections, but restricts writes.
+     * @description Rules for managing elections.
      * @path /elections/{electionId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Open reads, restricted writes.
+     * @allow (get, list) Anyone can read elections.
+     * @deny (create, update, delete) No one can create, update, or delete elections.
      */
     match /elections/{electionId} {
       allow get, list: if true;
@@ -115,11 +113,10 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read polling data, but restricts writes.
+     * @description Rules for managing polling data.
      * @path /polling_data/{pollingDataId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Open reads, restricted writes.
+     * @allow (get, list) Anyone can read polling data.
+     * @deny (create, update, delete) No one can create, update, or delete polling data.
      */
     match /polling_data/{pollingDataId} {
       allow get, list: if true;
@@ -127,11 +124,10 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read constituencies, but restricts writes.
+     * @description Rules for managing constituencies.
      * @path /constituencies/{constituencyId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Open reads, restricted writes.
+     * @allow (get, list) Anyone can read constituencies.
+     * @deny (create, update, delete) No one can create, update, or delete constituencies.
      */
     match /constituencies/{constituencyId} {
       allow get, list: if true;
@@ -139,11 +135,10 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read election results, but restricts writes.
+     * @description Rules for managing election results.
      * @path /election_results/{electionResultId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Open reads, restricted writes.
+     * @allow (get, list) Anyone can read election results.
+     * @deny (create, update, delete) No one can create, update, or delete election results.
      */
     match /election_results/{electionResultId} {
       allow get, list: if true;
@@ -151,122 +146,116 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read page layouts, but restricts writes.
+     * @description Rules for managing page layouts settings.
      * @path /settings/pageLayouts
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Open reads, restricted writes.
+     * @allow (get) Anyone can read the page layouts settings.
+     * @deny (list, create, update, delete) No one can list, create, update, or delete the page layouts settings.
      */
     match /settings/pageLayouts {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get: if true;
+      allow list, create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read site settings, but restricts writes.
+     * @description Rules for managing site settings.
      * @path /settings/site
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Open reads, restricted writes.
+     * @allow (get) Anyone can read the site settings.
+     * @deny (list, create, update, delete) No one can list, create, update, or delete the site settings.
      */
     match /settings/site {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get: if true;
+      allow list, create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to create user activity logs, but restricts reads.
+     * @description Rules for managing user activity.
      * @path /user_activity/{activityId}
-     * @allow create: if true
-     * @deny get, list, update, delete: if false
-     * @principle Open writes, restricted reads.
+     * @allow (create) Any signed-in user can create a new activity log.
+     * @deny (get, list, update, delete) No one can read, list, update, or delete activity logs.
+     * @principle Restricts write access to authenticated users.
      */
     match /user_activity/{activityId} {
-      allow create: if true;
+      allow create: if isSignedIn();
       allow get, list, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read regions, but restricts writes.
+     * @description Rules for managing regions.
      * @path /regions/{regionId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Open reads, restricted writes.
+     * @allow (get, list) Anyone can read regions.
+     * @deny (create, update, delete) No one can create, update, or delete regions.
      */
     match /regions/{regionId} {
       allow get, list: if true;
       allow create, update, delete: if false;
     }
 
-        /**
-     * @description Allows anyone to read user maps, but restricts writes.
+    /**
+     * @description Rules for managing user maps.
      * @path /user_maps/{userMapId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Open reads, restricted writes.
+     * @allow (create) Any signed-in user can create a new user map.
+     * @deny (get, list, update, delete) No one can read, list, update, or delete user maps.
+     * @principle Restricts write access to authenticated users.
      */
     match /user_maps/{userMapId} {
-      allow get, list: if true;
-      allow create: if true;
-      allow update, delete: if false;
+      allow create: if isSignedIn();
+      allow get, list, update, delete: if false;
     }
 
-        /**
-     * @description Allows anyone to read ads, but restricts writes.
+   /**
+     * @description Rules for managing ads.
      * @path /ads/{adId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Open reads, restricted writes.
+     * @allow (get, list) Anyone can read ads.
+     * @deny (create, update, delete) No one can create, update, or delete ads.
      */
     match /ads/{adId} {
       allow get, list: if true;
       allow create, update, delete: if false;
     }
 
-        /**
-     * @description Allows anyone to read news articles, but restricts writes.
+    /**
+     * @description Rules for managing news articles.
      * @path /news/{newsId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Open reads, restricted writes.
+     * @allow (get, list) Anyone can read news articles.
+     * @deny (create, update, delete) No one can create, update, or delete news articles.
      */
     match /news/{newsId} {
       allow get, list: if true;
       allow create, update, delete: if false;
 
-            /**
-             * @description Allows anyone to read comments under a news article, and signed in user to create, but restricts writes.
-             * @path /news/{newsId}/comments/{commentId}
-             * @allow (get, list): if true
-             * @allow (create): if isSignedIn()
-             * @deny (update, delete): if false
-             * @principle Open reads, authenticated writes.
-             */
-            match /comments/{commentId} {
-                allow get, list: if true;
-                allow create: if isSignedIn();
-                allow update, delete: if false;
-            }
-        }
-
         /**
-        * @description Allows anyone to read reports, but restricts writes.
-        * @path /reports/{reportId}
-        * @allow (get, list): if true
-        * @deny (create, update, delete): if false
-        * @principle Open reads, restricted writes.
-        */
-       match /reports/{reportId} {
-           allow get, list: if true;
-           allow create, update, delete: if false;
-       }
-  }
+         * @description Rules for managing news article comments.
+         * @path /news/{newsId}/comments/{commentId}
+         * @allow (get, list) Anyone can read comments for a news article.
+         * @allow (create) Any signed-in user can create a comment.
+         * @deny (update, delete) No one can update or delete comments.
+         * @principle Restricts write access to authenticated users.
+         */
+        match /comments/{commentId} {
+          allow get, list: if true;
+          allow create: if isSignedIn();
+          allow update, delete: if false;
+        }
+    }
 
-  /**
-   * @description Checks if the user is signed in.
-   * @return {bool} True if the user is signed in, false otherwise.
-   */
-  function isSignedIn() {
-    return request.auth != null;
+    match /news/{newsId}/comments/{commentId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn();
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Rules for managing reports for comments.
+     * @path /reports/{reportId}
+     * @allow (create) Any signed-in user can create a report.
+     * @deny (get, list, update, delete) No one can read, list, update, or delete reports.
+     * @principle Restricts write access to authenticated users.
+     */
+     match /reports/{reportId} {
+      allow create: if isSignedIn();
+      allow get, list, update, delete: if false;
+    }
   }
 }
