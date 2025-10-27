@@ -57,7 +57,7 @@ const prompt = ai.definePrompt({
   - Candidate Information: {{candidateInfo}}
 
   In your analysis, consider these critical factors of St. Lucian politics:
-  1.  **Incumbency Trends**: Incumbents often face a decline in support in subsequent elections. Factor this in, especially for candidates who won previously.
+  1.  **Incumbency Trends**: There is a general trend of declining support for incumbents. However, the negative effect of being the incumbent *party* in government is significantly stronger than that of an individual incumbent candidate. Factor this in accordingly.
   2.  **Comeback Candidates**: Note when a former incumbent is running to reclaim their seat and assess their chances.
   3.  **Party Leader Impact**: The public perception of party leaders is very influential. Specifically, consider that a significant portion of the St. Lucian electorate holds a negative opinion of Allen Chastanet, which generally has a detrimental effect on the UWP's performance.
   
@@ -79,3 +79,4 @@ const analyzeConstituencyOutcomeFlow = ai.defineFlow(
     return output!;
   }
 );
+
