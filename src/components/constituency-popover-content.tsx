@@ -55,6 +55,7 @@ function CandidateBox({
     logoUrl,
     hideLogo,
     popoverVariant = 'default',
+    colorOverride,
 }: { 
     candidate: Candidate | ArchivedCandidate | null;
     party: Party | null;
@@ -70,6 +71,7 @@ function CandidateBox({
     logoUrl?: string;
     hideLogo?: boolean;
     popoverVariant?: 'default' | 'dashboard';
+    colorOverride?: string;
 }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}` : 'Candidate(s) N/A';
@@ -118,7 +120,7 @@ function CandidateBox({
                         <div className="relative w-full h-8 bg-gray-200 rounded overflow-hidden self-center">
                             <div 
                                 className={cn("absolute top-0 left-0 h-full rounded", isStriped && barFill === 'blue-red-stripes' && 'bg-blue-600')}
-                                style={{ width: `${votePercentage}%`, backgroundColor: (isStriped && barFill === 'blue-red-stripes') ? '' : party?.color }}
+                                style={{ width: `${votePercentage}%`, backgroundColor: colorOverride || ((isStriped && barFill === 'blue-red-stripes') ? '' : party?.color) }}
                             >
                                 {isStriped && barFill === 'blue-red-stripes' && <div className="absolute inset-0 red-stripes-overlay"></div>}
                             </div>
@@ -390,78 +392,78 @@ export function ConstituencyPopoverContent({
                 )}
             </div>
             {popoverVariant === 'dashboard' ? (
-                 <div className="space-y-4">
-                    <div className="space-y-2">
-                        <ChartContainer config={chartConfig} className="mx-auto w-full h-24">
-                            <ResponsiveContainer>
-                                <PieChart>
-                                    <ChartTooltip
-                                        cursor={false}
-                                        content={<ChartTooltipContent hideLabel />}
-                                    />
-                                    <Pie
-                                        data={chartData}
-                                        dataKey="votes"
-                                        nameKey="party"
-                                        startAngle={180}
-                                        endAngle={0}
-                                        innerRadius="70%"
-                                        cy="100%"
-                                        paddingAngle={2}
-                                    >
-                                        {chartData.map((entry) => (
-                                            <Cell key={entry.party} fill={entry.fill} />
-                                        ))}
-                                    </Pie>
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </ChartContainer>
-                        <div className="flex justify-between text-sm font-medium -mt-10">
-                            <div style={{ color: slpParty?.color }}>
-                                <p>SLP</p>
-                                <p>{constituency.predictedSlpPercentage}%</p>
-                            </div>
-                            <div style={{ color: uwpParty?.color }} className="text-right">
-                                <p>UWP</p>
-                                <p>{constituency.predictedUwpPercentage}%</p>
-                            </div>
+                <div className="space-y-4">
+                <div className="space-y-2">
+                    <ChartContainer config={chartConfig} className="mx-auto w-full h-24">
+                        <ResponsiveContainer>
+                            <PieChart>
+                                <ChartTooltip
+                                    cursor={false}
+                                    content={<ChartTooltipContent hideLabel />}
+                                />
+                                <Pie
+                                    data={chartData}
+                                    dataKey="votes"
+                                    nameKey="party"
+                                    startAngle={180}
+                                    endAngle={0}
+                                    innerRadius="70%"
+                                    cy="100%"
+                                    paddingAngle={2}
+                                >
+                                    {chartData.map((entry) => (
+                                        <Cell key={entry.party} fill={entry.fill} />
+                                    ))}
+                                </Pie>
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </ChartContainer>
+                    <div className="flex justify-between text-sm font-medium -mt-10">
+                        <div style={{ color: slpParty?.color }}>
+                            <p>SLP</p>
+                            <p>{constituency.predictedSlpPercentage}%</p>
+                        </div>
+                        <div style={{ color: uwpParty?.color }} className="text-right">
+                            <p>UWP</p>
+                            <p>{constituency.predictedUwpPercentage}%</p>
                         </div>
                     </div>
-                     <div className="grid grid-cols-2 gap-2">
-                        {slpCandidate && (
-                             <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
-                                <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
-                                    {slpCandidate.imageUrl ? <Image src={slpCandidate.imageUrl} alt={slpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
-                                </div>
-                                <p className="text-xs font-semibold mt-1">{slpCandidate.name}</p>
-                                <p className="text-xs text-muted-foreground">{slpParty?.acronym}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                    {slpCandidate && (
+                        <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
+                            <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
+                                {slpCandidate.imageUrl ? <Image src={slpCandidate.imageUrl} alt={slpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                             </div>
-                        )}
-                        {uwpCandidate && (
-                             <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
-                                <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
-                                    {uwpCandidate.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
-                                </div>
-                                <p className="text-xs font-semibold mt-1">{uwpCandidate.name}</p>
-                                <p className="text-xs text-muted-foreground">{uwpParty?.acronym}</p>
+                            <p className="text-xs font-semibold mt-1">{slpCandidate.name}</p>
+                            <p className="text-xs text-muted-foreground">{slpParty?.acronym}</p>
+                        </div>
+                    )}
+                    {uwpCandidate && (
+                        <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
+                            <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
+                                {uwpCandidate.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                             </div>
-                        )}
-                         {independentCandidate && (
-                             <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
-                                <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
-                                    {independentCandidate.imageUrl ? <Image src={independentCandidate.imageUrl} alt={independentCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
-                                </div>
-                                <p className="text-xs font-semibold mt-1">{independentCandidate.name}</p>
-                                <p className="text-xs text-muted-foreground">IND</p>
+                            <p className="text-xs font-semibold mt-1">{uwpCandidate.name}</p>
+                            <p className="text-xs text-muted-foreground">{uwpParty?.acronym}</p>
+                        </div>
+                    )}
+                    {independentCandidate && (
+                        <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
+                            <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
+                                {independentCandidate.imageUrl ? <Image src={independentCandidate.imageUrl} alt={independentCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                             </div>
-                        )}
-                    </div>
-                    {popoverText && (
-                        <div className="text-sm text-center text-muted-foreground pt-2 border-t mt-2">
-                            {popoverText}
+                            <p className="text-xs font-semibold mt-1">{independentCandidate.name}</p>
+                            <p className="text-xs text-muted-foreground">IND</p>
                         </div>
                     )}
                 </div>
+                {popoverText && (
+                    <div className="text-sm text-center text-muted-foreground pt-2 border-t mt-2">
+                        {popoverText}
+                    </div>
+                )}
+            </div>
             ) : (
               <>
                 {showCandidateBoxes && (election?.isCurrent || !election) && !isMakeYourOwn ? (
@@ -529,7 +531,40 @@ export function ConstituencyPopoverContent({
                     </div>
                 ) : !isMakeYourOwn ? (
                 <div className="space-y-2">
-                    {!isSpecialConstituency && slpCandidate && (
+                    {uwpCandidate && (
+                        <CandidateBox
+                            candidate={uwpCandidate}
+                            party={uwpParty}
+                            isWinner={uwpIsWinner}
+                            votes={currentResult?.uwpVotes}
+                            totalVotes={totalConstituencyVotes}
+                            margin={margin}
+                            electionStatus={electionStatus}
+                            statusColor={statusColor}
+                            votePercentageChange={uwpVotePercentageChange}
+                            logoUrl={uwpLogoUrl}
+                            hideLogo={hideLogos}
+                            popoverVariant={popoverVariant}
+                        />
+                    )}
+                    {(isSpecialConstituency || (currentResult?.otherVotes || 0) > 0) && (
+                        <CandidateBox
+                            candidate={independentCandidate}
+                            party={null}
+                            isWinner={otherIsWinner}
+                            votes={indVotes}
+                            totalVotes={totalConstituencyVotes}
+                            margin={margin}
+                            electionStatus={electionStatus}
+                            statusColor={statusColor}
+                            votePercentageChange={otherVotePercentageChange}
+                            logoUrl={indLogoUrl}
+                            hideLogo={hideLogos}
+                            popoverVariant={popoverVariant}
+                            colorOverride={constituency.name === 'Castries North' ? '#3b82f6' : undefined}
+                        />
+                    )}
+                     {!isSpecialConstituency && slpCandidate && (
                         <CandidateBox 
                             candidate={slpCandidate} 
                             party={slpParty} 
@@ -541,36 +576,6 @@ export function ConstituencyPopoverContent({
                             statusColor={statusColor}
                             votePercentageChange={slpVotePercentageChange}
                             logoUrl={slpLogoUrl}
-                            hideLogo={hideLogos}
-                            popoverVariant={popoverVariant}
-                        />
-                    )}
-                    <CandidateBox 
-                        candidate={uwpCandidate} 
-                        party={uwpParty} 
-                        isWinner={uwpIsWinner} 
-                        votes={currentResult?.uwpVotes}
-                        totalVotes={totalConstituencyVotes}
-                        margin={margin}
-                        electionStatus={electionStatus}
-                        statusColor={statusColor}
-                        votePercentageChange={uwpVotePercentageChange}
-                        logoUrl={uwpLogoUrl}
-                        hideLogo={hideLogos}
-                        popoverVariant={popoverVariant}
-                    />
-                    {(isSpecialConstituency || (currentResult?.otherVotes || 0) > 0) && (
-                        <CandidateBox 
-                            candidate={independentCandidate}
-                            party={null}
-                            isWinner={otherIsWinner}
-                            votes={indVotes}
-                            totalVotes={totalConstituencyVotes}
-                            margin={margin}
-                            electionStatus={electionStatus}
-                            statusColor={statusColor}
-                            votePercentageChange={otherVotePercentageChange}
-                            logoUrl={indLogoUrl}
                             hideLogo={hideLogos}
                             popoverVariant={popoverVariant}
                         />
