@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/page-header';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ScatterChart, Scatter, ZAxis, Label } from 'recharts';
 import { BarChart, Bar } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
@@ -251,6 +251,126 @@ const VoterTurnoutTrend = ({ elections, results, constituencies, selectedConstit
   );
 };
 
+const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties }: { elections: Election[], results: ElectionResult[], constituencies: Constituency[], parties: Party[] }) => {
+  const [selectedElectionId, setSelectedElectionId] = useState<string>('all');
+  
+  const sortedElections = useMemo(() => elections.filter(e => e.year < 2026).sort((a, b) => b.year - a.year), [elections]);
+
+  const chartData = useMemo(() => {
+    if (!elections.length || !results.length || !constituencies.length || !parties.length) return [];
+
+    const getPartyAcronym = (partyId: string) => parties.find(p => p.id === partyId)?.acronym;
+
+    const dataByElection = (electionId: string) => {
+      const currentElection = elections.find(e => e.id === electionId);
+      const prevElectionIndex = elections.findIndex(e => e.id === electionId) + 1;
+      const prevElection = elections[prevElectionIndex];
+
+      if (!currentElection || !prevElection) return [];
+
+      const currentResults = results.filter(r => r.electionId === electionId);
+      const prevResults = results.filter(r => r.electionId === prevElection.id);
+
+      const slp = parties.find(p => p.acronym === 'SLP');
+      if (!slp) return [];
+
+      const calcPercentage = (votes: number, total: number) => total > 0 ? (votes / total) * 100 : 0;
+      
+      const nationalCurrentSLP = currentResults.reduce((sum, r) => sum + r.slpVotes, 0);
+      const nationalCurrentTotal = currentResults.reduce((sum, r) => sum + r.totalVotes, 0);
+      const nationalCurrentSLPPercent = calcPercentage(nationalCurrentSLP, nationalCurrentTotal);
+      
+      const nationalPrevSLP = prevResults.reduce((sum, r) => sum + r.slpVotes, 0);
+      const nationalPrevTotal = prevResults.reduce((sum, r) => sum + r.totalVotes, 0);
+      const nationalPrevSLPPercent = calcPercentage(nationalPrevSLP, nationalPrevTotal);
+
+      const nationalSwing = nationalCurrentSLPPercent - nationalPrevSLPPercent;
+
+      return constituencies.map(con => {
+        const currentConResult = currentResults.find(r => r.constituencyId === con.id);
+        const prevConResult = prevResults.find(r => r.constituencyId === con.id);
+        if (!currentConResult || !prevConResult) return null;
+        
+        const currentConSLPPercent = calcPercentage(currentConResult.slpVotes, currentConResult.totalVotes);
+        const prevConSLPPercent = calcPercentage(prevConResult.slpVotes, prevConResult.totalVotes);
+        
+        const constituencySwing = currentConSLPPercent - prevConSLPPercent;
+
+        return {
+          name: con.name,
+          swing: constituencySwing,
+          swingVsNational: constituencySwing - nationalSwing,
+          year: currentElection.year,
+        };
+      }).filter((d): d is NonNullable<typeof d> => d !== null);
+    };
+
+    if (selectedElectionId === 'all') {
+        return sortedElections.flatMap(e => dataByElection(e.id));
+    }
+    return dataByElection(selectedElectionId);
+
+  }, [elections, results, constituencies, parties, selectedElectionId, sortedElections]);
+
+  const chartConfig: ChartConfig = {
+    swing: { label: "Swing (%)", color: "hsl(var(--primary))" },
+  };
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-background border p-2 rounded-md shadow-lg text-sm">
+          <p className="font-bold">{data.name} ({data.year})</p>
+          <p>Swing: {data.swing.toFixed(1)}%</p>
+          <p>vs. National: {data.swingVsNational.toFixed(1)}%</p>
+        </div>
+      );
+    }
+    return null;
+  };
+  
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>Constituency Swing vs. National Average</CardTitle>
+              <CardDescription>How each constituency's swing compares to the national trend for SLP.</CardDescription>
+            </div>
+            <Select value={selectedElectionId} onValueChange={setSelectedElectionId}>
+                <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Select Election" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">All Elections</SelectItem>
+                    {sortedElections.map(e => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
+                </SelectContent>
+            </Select>
+        </div>
+      </CardHeader>
+      <CardContent>
+         <ChartContainer config={chartConfig} className="h-[400px] w-full">
+            <ResponsiveContainer>
+                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <CartesianGrid />
+                    <XAxis type="number" dataKey="swingVsNational" name="Swing vs. National" unit="%" domain={['dataMin - 2', 'dataMax + 2']}>
+                        <Label value="Swing vs. National Average" offset={-15} position="insideBottom" />
+                    </XAxis>
+                    <YAxis type="number" dataKey="swing" name="Constituency Swing" unit="%">
+                        <Label value="Constituency Swing" angle={-90} position="insideLeft" style={{ textAnchor: 'middle' }} />
+                    </YAxis>
+                    <ZAxis type="category" dataKey="name" name="Constituency" />
+                    <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<CustomTooltip />} />
+                    <Scatter name="Constituencies" data={chartData} fill="hsl(var(--primary))" />
+                </ScatterChart>
+            </ResponsiveContainer>
+        </ChartContainer>
+      </CardContent>
+    </Card>
+  );
+}
+
 
 export default function HistoricalTrendsPage() {
   const { firestore } = useFirebase();
@@ -293,6 +413,12 @@ export default function HistoricalTrendsPage() {
             constituencies={constituencies || []}
             selectedConstituencyId={selectedConstituencyId}
             setSelectedConstituencyId={setSelectedConstituencyId}
+          />
+          <SwingAnalysisScatterPlot
+            elections={elections || []}
+            results={results || []}
+            constituencies={constituencies || []}
+            parties={parties || []}
           />
         </div>
       )}
