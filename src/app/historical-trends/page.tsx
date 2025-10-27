@@ -339,7 +339,7 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
         <div className="flex justify-between items-center">
             <div>
               <CardTitle>Constituency Swing Quadrant Analysis</CardTitle>
-              <CardDescription>How each constituency's SLP vote swing compares to the national trend.</CardDescription>
+              <CardDescription>How each constituency's SLP and UWP vote swing compares to the national trend.</CardDescription>
             </div>
             <Select value={selectedElectionId} onValueChange={setSelectedElectionId}>
                 <SelectTrigger className="w-[200px]">
@@ -371,11 +371,10 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
                     )}
                     <Scatter name="Constituencies" data={chartData} fill="hsl(var(--primary))" />
                     
-                    {/* Quadrant Labels */}
-                    <Label value="SLP Gain (Above National)" position="insideTopRight" offset={10} fill="gray" fontSize="12" />
-                    <Label value="SLP Loss (But Above National)" position="insideBottomRight" offset={10} fill="gray" fontSize="12" />
-                    <Label value="SLP Loss (Below National)" position="insideBottomLeft" offset={10} fill="gray" fontSize="12" />
-                    <Label value="SLP Gain (But Below National)" position="insideTopLeft" offset={10} fill="gray" fontSize="12" />
+                    <Label value="SLP Gain, UWP Loss (Above National Trend)" position="insideTopRight" offset={10} fill="gray" fontSize="12" />
+                    <Label value="SLP Loss, UWP Gain (Above National Trend)" position="insideBottomRight" offset={10} fill="gray" fontSize="12" />
+                    <Label value="SLP Loss, UWP Gain (Below National Trend)" position="insideBottomLeft" offset={10} fill="gray" fontSize="12" />
+                    <Label value="SLP Gain, UWP Loss (Below National Trend)" position="insideTopLeft" offset={10} fill="gray" fontSize="12" />
                 </ScatterChart>
             </ResponsiveContainer>
         </ChartContainer>
