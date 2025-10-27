@@ -276,12 +276,12 @@ export function ConstituencyPopoverContent({
         
         const data = isSpecialConstituency
             ? [
-                { party: 'uwp', votes: uwpPercentage, fill: config.uwp?.color },
-                { party: 'ind', votes: constituency.predictedSlpPercentage || 50, fill: config.ind?.color},
+                { party: 'uwp', votes: uwpPercentage, fill: uwpParty?.color || '#f59e0b' },
+                { party: 'ind', votes: constituency.predictedSlpPercentage || 50, fill: '#3b82f6' },
               ]
             : [
-                { party: 'slp', votes: constituency.predictedSlpPercentage || 50, fill: config.slp?.color },
-                { party: 'uwp', votes: uwpPercentage, fill: config.uwp?.color },
+                { party: 'slp', votes: constituency.predictedSlpPercentage || 50, fill: slpParty?.color || '#ef4444' },
+                { party: 'uwp', votes: uwpPercentage, fill: uwpParty?.color || '#f59e0b' },
               ];
     
         return { chartData: data.sort((a, b) => (a.party > b.party ? 1 : -1)), chartConfig: config };
@@ -622,8 +622,8 @@ export function ConstituencyPopoverContent({
                             logoUrl={indLogoUrl}
                             hideLogo={hideLogos}
                             popoverVariant={popoverVariant}
-                            colorOverride={(chartConfig.ind && chartConfig.ind.color) || '#3b82f6'}
-                            voteTextColor={cn("text-blue-600")}
+                            colorOverride={(isSpecialConstituency && chartConfig.ind?.color) || '#3b82f6'}
+                            voteTextColor={cn(isSpecialConstituency && election?.year === 2021 ? "text-white" : "text-blue-600")}
                             votePercentageColor="text-black"
                         />
                     )}
