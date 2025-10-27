@@ -261,6 +261,21 @@ export default function Home() {
                     </div>
                 </CardContent>
             </Card>
+
+             <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline">Build Your Election Map</CardTitle>
+                    <CardDescription>Create and share your own 2026 election prediction.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button asChild className="w-full">
+                        <Link href="/make-your-own">
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Start Building
+                        </Link>
+                    </Button>
+                </CardContent>
+            </Card>
         </div>
       </div>
 
