@@ -18,10 +18,10 @@ interface CandidateProfileDialogProps {
 export function CandidateProfileDialog({ candidate, isOpen, onClose }: CandidateProfileDialogProps) {
   const { firestore } = useFirebase();
 
-  const partyRef = useMemoFirebase(() => (firestore && candidate ? doc(firestore, 'parties', candidate.partyId) : null), [firestore, candidate]);
+  const partyRef = useMemoFirebase(() => (firestore && candidate && candidate.partyId ? doc(firestore, 'parties', candidate.partyId) : null), [firestore, candidate]);
   const { data: party } = useDoc<Party>(partyRef);
 
-  const constituencyRef = useMemoFirebase(() => (firestore && candidate ? doc(firestore, 'constituencies', candidate.constituencyId) : null), [firestore, candidate]);
+  const constituencyRef = useMemoFirebase(() => (firestore && candidate && candidate.constituencyId ? doc(firestore, 'constituencies', candidate.constituencyId) : null), [firestore, candidate]);
   const { data: constituency } = useDoc<Constituency>(constituencyRef);
 
   if (!candidate) {
@@ -42,15 +42,17 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
                 {candidate.imageUrl ? (
                   <Image src={candidate.imageUrl} alt={candidateName} fill className="object-cover" />
                 ) : (
-                  <span className="text-4xl font-bold text-gray-500">X</span>
+                  <UserSquare className="h-full w-full text-muted-foreground" />
                 )}
               </div>
               <div className="space-y-1">
                 <DialogTitle className="font-headline text-3xl">{displayName}</DialogTitle>
-                <DialogDescription className="text-lg">
-                  Candidate for <span className="font-semibold text-foreground">{constituency?.name}</span>
-                  {candidate.isIncumbent && <span className="font-normal text-primary text-sm ml-2">(Incumbent)</span>}
-                </DialogDescription>
+                {constituency && (
+                    <DialogDescription className="text-lg">
+                    Candidate for <span className="font-semibold text-foreground">{constituency.name}</span>
+                    {candidate.isIncumbent && <span className="font-normal text-primary text-sm ml-2">(Incumbent)</span>}
+                    </DialogDescription>
+                )}
                 {party && (
                   <div className="flex items-center gap-2 pt-2">
                      <div className="relative h-8 w-8 flex-shrink-0">
