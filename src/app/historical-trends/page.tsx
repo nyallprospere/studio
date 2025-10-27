@@ -141,7 +141,7 @@ const NationalVoteTrend = ({ elections, results, parties, constituencies, select
                 <CardTitle>Popular Vote (%) Over Time</CardTitle>
                 <CardDescription>Percentage of the popular vote for {selectedConstituencyName}.</CardDescription>
             </div>
-            <Select value={selectedConstituencyId} onValueChange={setSelectedConstituencyId}>
+            <Select value={selectedConstituencyId} onValueChange={(value) => setSelectedConstituencyId(value)}>
                 <SelectTrigger className="w-[200px]">
                     <SelectValue placeholder="Select Constituency" />
                 </SelectTrigger>
@@ -220,7 +220,7 @@ const VoterTurnoutTrend = ({ elections, results, constituencies, selectedConstit
               <CardTitle>Voter Turnout (%) Over Time</CardTitle>
               <CardDescription>Percentage of registered voters who cast a ballot for {selectedConstituencyName}.</CardDescription>
             </div>
-            <Select value={selectedConstituencyId} onValueChange={setSelectedConstituencyId}>
+            <Select value={selectedConstituencyId} onValueChange={(value) => setSelectedConstituencyId(value)}>
                 <SelectTrigger className="w-[200px]">
                     <SelectValue placeholder="Select Constituency" />
                 </SelectTrigger>
@@ -359,7 +359,7 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
             <ResponsiveContainer>
                 <ScatterChart margin={{ top: 40, right: 40, bottom: 40, left: 40 }}>
                     <CartesianGrid />
-                    <XAxis type="number" dataKey="x" name="Swing vs. National" unit="%" domain={['dataMin - 2', 'dataMax + 2']}>
+                    <XAxis type="number" dataKey="x" name="Swing vs. National" unit="%" domain={['dataMin - 2', 'dataMax + 2']} tickFormatter={(value) => `${Math.round(value)}%`}>
                         <Label value="Constituency swing relative to national swing" offset={-25} position="insideBottom" />
                     </XAxis>
                     <YAxis type="number" dataKey="y" name="Constituency Swing" unit="%">
