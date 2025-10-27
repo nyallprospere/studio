@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -34,9 +33,12 @@ import Image from 'next/image';
 
 export const mainNavItems = [
   { href: '/', icon: Home, label: 'Home' },
-  { href: '/election-news', icon: Rss, label: 'Election News' },
-  { href: '/make-your-own', icon: Pencil, label: 'Build Your Election Map' },
 ];
+
+export const secondaryNavItems = [
+    { href: '/election-news', icon: Rss, label: 'Election News' },
+    { href: '/make-your-own', icon: Pencil, label: 'Build Your Election Map' },
+]
 
 export const adminNavItems = [
     { href: '/admin/elections', icon: Vote, label: 'Manage Elections' },
@@ -361,6 +363,21 @@ export function SidebarNav() {
                   </Collapsible>
               </SidebarMenuItem>
           )}
+
+           {secondaryNavItems.map((item) => (
+            <SidebarMenuItem key={item.href}>
+              <Button
+                asChild
+                variant={pathname === item.href ? 'secondary' : 'ghost'}
+                className="w-full justify-start"
+              >
+                <Link href={item.href}>
+                  <item.icon className="mr-2 h-4 w-4" />
+                  {item.label}
+                </Link>
+              </Button>
+            </SidebarMenuItem>
+          ))}
 
           <SidebarMenuItem>
               <Collapsible open={isResultsOpen} onOpenChange={setIsResultsOpen}>
