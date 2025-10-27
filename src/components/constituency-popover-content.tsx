@@ -227,7 +227,7 @@ export function ConstituencyPopoverContent({
                 return {
                     slpCandidate: null,
                     uwpCandidate: candidates?.find(c => c.partyId === uwp?.id) || null,
-                    independentCandidate: { id: 'richard-frederick', firstName: 'Richard', lastName: 'Frederick', imageUrl: "https://firebasestorage.googleapis.com/v0/b/studio-6540754669-81720.appspot.com/o/2021-candidate-photos%2Frichard-frederick.jpg?alt=media&token=c3286a11-8930-47e0-9430-801b693e506e" } as Candidate,
+                    independentCandidate: { id: 'richard-frederick', firstName: 'Richard', lastName: 'Frederick', imageUrl: "https://i.ibb.co/Y7wMKbNK/RF.png" } as Candidate,
                     slpParty: slp,
                     uwpParty: uwp,
                 }
@@ -623,10 +623,7 @@ export function ConstituencyPopoverContent({
                             hideLogo={hideLogos}
                             popoverVariant={popoverVariant}
                             colorOverride={(chartConfig.ind && chartConfig.ind.color) || '#3b82f6'}
-                            voteTextColor={cn(
-                                "text-white",
-                                !(isSpecialConstituency) && election?.year !== 2021 && "text-blue-600"
-                            )}
+                            voteTextColor={cn("text-blue-600")}
                             votePercentageColor="text-black"
                         />
                     )}
