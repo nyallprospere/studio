@@ -4,6 +4,8 @@
 import { generateElectionPredictions } from '@/ai/flows/generate-election-predictions';
 import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
 import { summarizeArticle as summarizeArticleFlow } from '@/ai/flows/summarize-article';
+import { analyzeConstituencyOutcome as analyzeConstituencyOutcomeFlow, type AnalyzeConstituencyOutcomeInput, type AnalyzeConstituencyOutcomeOutput } from '@/ai/flows/analyze-constituency-outcome';
+
 
 export async function getPrediction(newsSummary: string) {
   try {
@@ -28,6 +30,18 @@ export async function getPrediction(newsSummary: string) {
         error: "An error occurred while generating the prediction. Please try again."
     };
   }
+}
+
+export async function analyzeConstituencyOutcome(input: AnalyzeConstituencyOutcomeInput) {
+    try {
+        const result = await analyzeConstituencyOutcomeFlow(input);
+        return result;
+    } catch (error) {
+        console.error('Error analyzing constituency outcome:', error);
+        return {
+            error: "An error occurred while analyzing the constituency. Please try again."
+        };
+    }
 }
 
 export async function subscribeToMailingList(data: { firstName: string; email: string }) {
