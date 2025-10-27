@@ -91,10 +91,21 @@ function CandidateBox({
 }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}` : 'Candidate(s) N/A';
-    const displayName = candidate ? `${candidate.firstName} ${candidate.lastName}` : 'Candidate(s) N/A';
+    const displayName = candidate ? `${candidate.firstName} ${candidate.lastName}${candidate.isIncumbent ? ' (Inc.)' : ''}` : 'Candidate(s) N/A';
 
 
     const votePercentage = totalVotes && votes ? (votes / totalVotes) * 100 : 0;
+    
+    const textColorClass = () => {
+        if (!election || election.isCurrent) {
+            const isSpecialCase = election?.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
+            return isSpecialCase ? 'text-white' : 'text-black';
+        }
+        if (party?.acronym === 'UWP') return 'text-green-600';
+        if (party?.acronym === 'SLP') return 'text-white';
+        return 'text-black';
+    };
+
 
     return (
         <>
@@ -104,12 +115,6 @@ function CandidateBox({
             )}
             onClick={() => candidate && setProfileOpen(true)}
             >
-                {candidate?.isIncumbent && (
-                    <div className="absolute -top-2 right-1 text-center">
-                        <p className="font-bold text-xs text-muted-foreground">Incumbent</p>
-                    </div>
-                )}
-                
                 <div className="flex w-full items-center gap-2">
                     <div className={cn("relative w-20 flex-shrink-0 flex flex-col items-center gap-1 p-1 rounded-md", isWinner && "ring-2 ring-green-500")}
                     onClick={() => candidate && setProfileOpen(true)}>
@@ -145,7 +150,7 @@ function CandidateBox({
                                 {isStriped && barFill === 'blue-red-stripes' && <div className="absolute inset-0 red-stripes-overlay"></div>}
                             </div>
                             <div className="absolute inset-0 flex items-center justify-between px-2">
-                                <span className={cn("font-bold text-xs", (election?.year === 2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central')) ? 'text-white' : 'text-black' )}>
+                                <span className={cn("font-bold text-xs", textColorClass())}>
                                     {votes?.toLocaleString()}
                                     {isWinner && margin ? <sup className="font-semibold"> (+{margin.toLocaleString()})</sup> : null}
                                 </span>
@@ -183,7 +188,7 @@ const GaugeChart = ({ slpPercentage = 50, uwpPercentage = 50, slpColor = '#ef444
           className="absolute bottom-0 left-1/2 h-1/2 origin-bottom transition-transform duration-500"
           style={{ transform: `translateX(-50%) rotate(${rotation}deg)` }}
         >
-           <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-b-12 border-b-black" style={{borderBottomWidth: '12px'}}></div>
+           <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-b-[12px] border-b-black"></div>
         </div>
          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rounded-full border-2 border-black"></div>
       </div>
