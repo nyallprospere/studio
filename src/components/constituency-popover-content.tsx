@@ -167,23 +167,24 @@ function CandidateBox({
 }
 
 const GaugeChart = ({ slpPercentage = 50, uwpPercentage = 50, slpColor = '#ef4444', uwpColor = '#f59e0b' }) => {
-    const rotation = (slpPercentage - 50) * 1.8; // Map -50 to 50 range to -90 to 90 degrees
+    const rotation = (slpPercentage - 50) * 1.8; // Map 0-100 range to -90 to 90 degrees
   
     return (
       <div className="relative w-40 h-20 mx-auto">
-        <div className="absolute inset-0 overflow-hidden rounded-t-full">
-          <div className="absolute w-full h-full bg-gradient-to-r from-[--slp-color] to-[--uwp-color]" style={{ '--slp-color': slpColor, '--uwp-color': uwpColor } as React.CSSProperties}></div>
+        <div className="absolute inset-0 overflow-hidden rounded-t-full flex">
+          <div className="w-1/2 h-full" style={{ backgroundColor: slpColor }}></div>
+          <div className="w-1/2 h-full" style={{ backgroundColor: uwpColor }}></div>
         </div>
         <div 
-          className="absolute bottom-0 left-1/2 w-px h-1/2 bg-transparent origin-bottom transition-transform duration-500"
+          className="absolute bottom-0 left-1/2 h-1/2 origin-bottom transition-transform duration-500"
           style={{ transform: `translateX(-50%) rotate(${rotation}deg)` }}
         >
-           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-b-8 border-b-black"></div>
+           <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-b-12 border-b-black" style={{borderBottomWidth: '12px'}}></div>
         </div>
          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rounded-full border-2 border-black"></div>
       </div>
     );
-  };
+};
   
 
 export function ConstituencyPopoverContent({ 
@@ -551,7 +552,7 @@ export function ConstituencyPopoverContent({
                                 )}
                                 </div>
                                 <p className="text-xs font-semibold mt-1">{uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'Candidate(s) N/A'}</p>
-                                {uwpCandidate?.isIncumbent && <span className="font-normal text-muted-foreground text-xs">(Inc.)</span>}
+                                {uwpCandidate?.isIncumbent && <span className="font-normal text-muted-foreground text-xs">(Incumbent)</span>}
                             </div>
                         )}
                         {independentCandidate && (
@@ -567,7 +568,7 @@ export function ConstituencyPopoverContent({
                                 )}
                                 </div>
                                 <p className="text-xs font-semibold mt-1">{independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName}` : 'Candidate(s) N/A'}</p>
-                                {independentCandidate?.isIncumbent && <span className="font-normal text-muted-foreground text-xs">(Inc.)</span>}
+                                {independentCandidate?.isIncumbent && <span className="font-normal text-muted-foreground text-xs">(Incumbent)</span>}
                             </div>
                         )}
                         {slpCandidate && (
@@ -585,7 +586,7 @@ export function ConstituencyPopoverContent({
                                 )}
                                 </div>
                                 <p className="text-xs font-semibold mt-1">{slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'Candidate(s) N/A'}</p>
-                                {slpCandidate?.isIncumbent && <span className="font-normal text-muted-foreground text-xs">(Inc.)</span>}
+                                {slpCandidate?.isIncumbent && <span className="font-normal text-muted-foreground text-xs">(Incumbent)</span>}
                             </div>
                         )}
                     </div>
