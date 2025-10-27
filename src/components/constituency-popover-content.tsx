@@ -118,7 +118,7 @@ function CandidateBox({
             )}
             onClick={() => candidate && setProfileOpen(true)}
             >
-                {candidate?.isIncumbent && (
+                {(candidate as Candidate)?.isIncumbent && (
                     <div className="absolute top-1 right-1 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                         Incumbent
                     </div>
@@ -185,8 +185,8 @@ function CandidateBox({
 
 const GaugeChart = ({ slpPercentage = 50, uwpPercentage = 50, slpColor = '#ef4444', uwpColor = '#f59e0b' }) => {
     // Map 0-100 range to -90 to 90 degrees for the rotation.
-    // SLP 100% -> 90deg, 50% -> 0deg, 0% -> -90deg
-    const rotation = (slpPercentage - 50) * 1.8;
+    // SLP 100% -> -90deg, 50% -> 0deg, 0% -> 90deg
+    const rotation = (50 - slpPercentage) * 1.8;
   
     return (
       <div className="relative w-40 h-20 mx-auto">
@@ -195,12 +195,12 @@ const GaugeChart = ({ slpPercentage = 50, uwpPercentage = 50, slpColor = '#ef444
           <div className="w-1/2 h-full" style={{ backgroundColor: uwpColor }}></div>
         </div>
         <div 
-          className="absolute bottom-0 left-1/2 h-1/2 origin-bottom transition-transform duration-500"
+          className="absolute bottom-0 left-1/2 h-full origin-bottom transition-transform duration-500"
           style={{ transform: `translateX(-50%) rotate(${rotation}deg)` }}
         >
           <div className="absolute top-0 left-1/2 w-1 h-full bg-black -translate-x-1/2"></div>
            {/* Arrowhead */}
-           <div className="absolute top-[-4px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-black"></div>
+           <div className="absolute top-[-2px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[12px] border-b-black"></div>
         </div>
          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rounded-full border-2 border-black"></div>
       </div>
@@ -512,7 +512,7 @@ export function ConstituencyPopoverContent({
                             <>
                                 {independentCandidate && <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center cursor-pointer" onClick={() => independentCandidate && setProfileOpen(true)}>
                                     <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
-                                        {independentCandidate?.imageUrl ? <Image src={independentCandidate.imageUrl} alt={independentCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
+                                        {independentCandidate?.imageUrl ? <Image src={independentCandidate.imageUrl} alt={independentCandidate.firstName || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                     </div>
                                     <p className="text-xs font-semibold mt-1">{independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName}` : 'IND Candidate'}{(independentCandidate as Candidate)?.isIncumbent && ' (Inc.)'}</p>
                                     <p className="text-xs text-muted-foreground">IND</p>
@@ -589,7 +589,7 @@ export function ConstituencyPopoverContent({
                                 )}
                                 </div>
                                 <p className="text-xs font-semibold mt-1">{independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName}` : 'Candidate(s) N/A'}</p>
-                                {independentCandidate?.isIncumbent && <span className="font-normal text-muted-foreground text-xs">(Incumbent)</span>}
+                                {(independentCandidate as Candidate)?.isIncumbent && ' (Inc.)'}
                             </div>
                         )}
                         {slpCandidate && (
@@ -695,9 +695,9 @@ export function ConstituencyPopoverContent({
                                     </div>
                                     <div className="flex flex-col items-center gap-1 cursor-pointer" onClick={() => independentCandidate && setProfileOpen(true)}>
                                         <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
-                                            {independentCandidate?.imageUrl ? <Image src={independentCandidate.imageUrl} alt={independentCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
+                                            {independentCandidate?.imageUrl ? <Image src={independentCandidate.imageUrl} alt={independentCandidate.firstName || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                         </div>
-                                        <p className="font-semibold">{independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName}` : 'IND Candidate'}</p>
+                                        <p className="font-semibold">{independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName}` : 'IND Candidate'}{(independentCandidate as Candidate)?.isIncumbent && ' (Inc.)'}</p>
                                         <RadioGroup 
                                             value={constituency.politicalLeaning} 
                                             onValueChange={onLeaningChange}
