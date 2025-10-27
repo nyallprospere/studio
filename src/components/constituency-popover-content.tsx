@@ -213,28 +213,41 @@ export function ConstituencyPopoverContent({
         
         const isCurrentOrFuture = !election || election.isCurrent;
         if (isCurrentOrFuture && (constituency.name === 'Castries North' || constituency.name === 'Castries Central')) {
+            indCand = slpCand;
             slpCand = null;
+        } else {
+            indCand = candidates.find(c => 
+                (c as Candidate).isIndependentCastriesNorth || 
+                (c as Candidate).isIndependentCastriesCentral
+            ) || null;
         }
-
-        indCand = candidates.find(c => 
-            (c as Candidate).isIndependentCastriesNorth || 
-            (c as Candidate).isIndependentCastriesCentral
-        ) || null;
         
         return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand, slpParty: slp, uwpParty: uwp };
     }, [parties, candidates, constituency.name, election]);
     
     const { chartData, chartConfig } = useMemo(() => {
         if (!constituency || !slpParty || !uwpParty) return { chartData: [], chartConfig: {} };
+        
+        const isSpecialConstituency = constituency.name === 'Castries North' || constituency.name === 'Castries Central';
+
         const config: ChartConfig = {
             slp: { label: 'SLP', color: slpParty.color },
             uwp: { label: 'UWP', color: uwpParty.color },
+            ind: { label: 'IND', color: '#3b82f6' }
         };
 
-        const data = [
-            { party: 'slp', votes: constituency.predictedSlpPercentage || 50, fill: `var(--color-slp)` },
-            { party: 'uwp', votes: constituency.predictedUwpPercentage || 50, fill: `var(--color-uwp)` },
-        ];
+        const uwpPercentage = isSpecialConstituency ? 100 - (constituency.predictedSlpPercentage || 50) : constituency.predictedUwpPercentage || 50;
+        
+        const data = isSpecialConstituency
+            ? [
+                { party: 'ind', votes: constituency.predictedSlpPercentage || 50, fill: 'var(--color-ind)'},
+                { party: 'uwp', votes: uwpPercentage, fill: `var(--color-uwp)` },
+              ]
+            : [
+                { party: 'slp', votes: constituency.predictedSlpPercentage || 50, fill: `var(--color-slp)` },
+                { party: 'uwp', votes: uwpPercentage, fill: `var(--color-uwp)` },
+              ];
+
         return { chartData: data, chartConfig: config };
     }, [constituency, slpParty, uwpParty]);
 
@@ -373,6 +386,8 @@ export function ConstituencyPopoverContent({
         return null;
     }, [constituency]);
 
+    const isSpecialConstituencyForIND = constituency.name === 'Castries North' || constituency.name === 'Castries Central';
+
     if (isLoading) {
         return <Skeleton className="h-40 w-full" />;
     }
@@ -388,7 +403,10 @@ export function ConstituencyPopoverContent({
                     <h5 className="col-span-full text-xs font-medium text-muted-foreground text-center mt-1">Choose Your Pick</h5>
                 )}
                  {popoverVariant === 'dashboard' && (
-                    <p className="text-sm text-center mt-1"><span className="font-semibold">Status:</span> {getLeaningLabel(constituency.politicalLeaning)}</p>
+                    <p className="text-sm text-center mt-1">
+                        <span className="font-semibold">Status:</span>{' '}
+                        {isSpecialConstituencyForIND ? getLeaningLabel(constituency.politicalLeaning)?.replace('SLP', 'IND') : getLeaningLabel(constituency.politicalLeaning)}
+                    </p>
                 )}
             </div>
             {popoverVariant === 'dashboard' ? (
@@ -419,14 +437,29 @@ export function ConstituencyPopoverContent({
                         </ResponsiveContainer>
                     </ChartContainer>
                     <div className="flex justify-between text-sm font-medium -mt-10">
-                        <div style={{ color: slpParty?.color }}>
-                            <p>SLP</p>
-                            <p>{constituency.predictedSlpPercentage}%</p>
-                        </div>
-                        <div style={{ color: uwpParty?.color }} className="text-right">
-                            <p>UWP</p>
-                            <p>{constituency.predictedUwpPercentage}%</p>
-                        </div>
+                        {isSpecialConstituencyForIND ? (
+                            <>
+                                <div style={{ color: chartConfig.ind.color }}>
+                                    <p>IND</p>
+                                    <p>{constituency.predictedSlpPercentage}%</p>
+                                </div>
+                                <div style={{ color: chartConfig.uwp.color }} className="text-right">
+                                    <p>UWP</p>
+                                    <p>{100 - (constituency.predictedSlpPercentage || 50)}%</p>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div style={{ color: chartConfig.slp.color }}>
+                                    <p>SLP</p>
+                                    <p>{constituency.predictedSlpPercentage}%</p>
+                                </div>
+                                <div style={{ color: chartConfig.uwp.color }} className="text-right">
+                                    <p>UWP</p>
+                                    <p>{constituency.predictedUwpPercentage}%</p>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
