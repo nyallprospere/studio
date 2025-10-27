@@ -574,25 +574,39 @@ export default function ResultsPage() {
                         </Card>
                         ))}
                     </div>
-                  <div className="grid grid-cols-1 gap-8">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Results Map</CardTitle>
-                            <CardDescription>Constituency winners for {currentElection.name}.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="p-2">
-                            <InteractiveSvgMap 
-                                constituencies={resultsMapConstituencies}
-                                selectedConstituencyId={selectedConstituencyId}
-                                onConstituencyClick={setSelectedConstituencyId}
-                                election={currentElection}
-                                electionResults={currentElectionResults}
-                                previousElectionResults={previousElectionResults}
-                                previousElection={previousElection}
-                                partyLogos={partyLogos}
-                            />
-                        </CardContent>
-                    </Card>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="md:col-span-1">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Election Analysis</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p>Analysis content goes here...</p>
+                            </CardContent>
+                        </Card>
+                    </div>
+                    <div className="md:col-span-2">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Results Map</CardTitle>
+                                <CardDescription>Constituency winners for {currentElection.name}.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="p-2">
+                                <InteractiveSvgMap 
+                                    constituencies={resultsMapConstituencies}
+                                    selectedConstituencyId={selectedConstituencyId}
+                                    onConstituencyClick={setSelectedConstituencyId}
+                                    election={currentElection}
+                                    electionResults={currentElectionResults}
+                                    previousElectionResults={previousElectionResults}
+                                    previousElection={previousElection}
+                                    partyLogos={partyLogos}
+                                />
+                            </CardContent>
+                        </Card>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 gap-8 mt-8">
                     <div className="grid grid-cols-1 gap-8">
                          <Card>
                             <CardHeader>
@@ -833,5 +847,6 @@ export default function ResultsPage() {
     </div>
   );
 }
+
 
 
