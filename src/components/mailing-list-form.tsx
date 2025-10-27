@@ -16,7 +16,11 @@ const mailingListSchema = z.object({
   email: z.string().email('A valid email is required'),
 });
 
-export function MailingListForm() {
+interface MailingListFormProps {
+  onSuccess?: () => void;
+}
+
+export function MailingListForm({ onSuccess }: MailingListFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -45,6 +49,9 @@ export function MailingListForm() {
         description: "You've been added to the mailing list.",
       });
       form.reset();
+      if (onSuccess) {
+        onSuccess();
+      }
     }
   }
 

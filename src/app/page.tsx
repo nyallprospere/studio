@@ -30,7 +30,7 @@ import { SortableFeatureCard } from '@/components/sortable-feature-card';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Pie, PieChart, ResponsiveContainer, Cell, Label } from 'recharts';
-import { ClientMailingListForm } from '@/components/client-mailing-list-form';
+import { MailingListPopup } from '@/components/mailing-list-popup';
 
 const adminSections = [
     { id: 'admin-elections', title: 'Manage Elections', href: '/admin/elections', icon: Vote },
@@ -137,6 +137,7 @@ export default function Home() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <MailingListPopup />
       <PageHeader
         title="LucianVotes"
         description="Your comprehensive guide to the 2026 General Elections."
@@ -278,17 +279,6 @@ export default function Home() {
             </Card>
         </div>
       </div>
-
-       <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Join Our Mailing List</CardTitle>
-          <CardDescription>Get the latest election news and analysis delivered to your inbox.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ClientMailingListForm />
-        </CardContent>
-      </Card>
-
 
       {user && (
           <div className="mt-12">
