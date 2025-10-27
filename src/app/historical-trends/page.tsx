@@ -256,21 +256,21 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
   
   const sortedElections = useMemo(() => elections.filter(e => e.year < 2026).sort((a, b) => b.year - a.year), [elections]);
 
-  const chartData = useMemo(() => {
-    if (!elections.length || !results.length || !constituencies.length || !parties.length) return [];
+  const { chartData, nationalSwing } = useMemo(() => {
+    if (!elections.length || !results.length || !constituencies.length || !parties.length) return { chartData: [], nationalSwing: 0 };
 
     const dataByElection = (electionId: string) => {
         const currentElection = sortedElections.find(e => e.id === electionId);
         const prevElectionIndex = sortedElections.findIndex(e => e.id === electionId) + 1;
         const prevElection = sortedElections[prevElectionIndex];
 
-        if (!currentElection || !prevElection) return [];
+        if (!currentElection || !prevElection) return { data: [], nationalSwing: 0 };
 
         const currentResults = results.filter(r => r.electionId === electionId);
         const prevResults = results.filter(r => r.electionId === prevElection.id);
 
         const slp = parties.find(p => p.acronym === 'SLP');
-        if (!slp) return [];
+        if (!slp) return { data: [], nationalSwing: 0 };
 
         const calcPercentage = (votes: number, total: number) => total > 0 ? (votes / total) * 100 : 0;
         
@@ -284,7 +284,7 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
 
         const nationalSwing = nationalCurrentSLPPercent - nationalPrevSLPPercent;
 
-        return constituencies.map(con => {
+        const data = constituencies.map(con => {
             const currentConResult = currentResults.find(r => r.constituencyId === con.id);
             const prevConResult = prevResults.find(r => r.constituencyId === con.id);
             if (!currentConResult || !prevConResult) return null;
@@ -295,18 +295,23 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
             const constituencySwing = currentConSLPPercent - prevConSLPPercent;
 
             return {
-            name: con.name,
-            y: constituencySwing,
-            x: constituencySwing - nationalSwing,
-            year: currentElection.year,
+              name: con.name,
+              y: constituencySwing,
+              x: constituencySwing - nationalSwing,
+              year: currentElection.year,
             };
         }).filter((d): d is NonNullable<typeof d> => d !== null);
+
+        return { data, nationalSwing };
     };
 
     if (selectedElectionId === 'all') {
-        return sortedElections.flatMap(e => dataByElection(e.id));
+        const allData = sortedElections.flatMap(e => dataByElection(e.id).data);
+        return { chartData: allData, nationalSwing: 0 }; // National swing line doesn't make sense for 'all'
     }
-    return dataByElection(selectedElectionId);
+
+    const { data, nationalSwing } = dataByElection(selectedElectionId);
+    return { chartData: data, nationalSwing };
 
   }, [elections, results, constituencies, parties, selectedElectionId, sortedElections]);
 
@@ -361,6 +366,9 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
                     <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<CustomTooltip />} />
                     <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" />
                     <ReferenceLine x={0} stroke="#888" strokeDasharray="3 3" />
+                    {nationalSwing !== 0 && (
+                      <ReferenceLine y={nationalSwing} label={{ value: 'National Trend', position: 'insideTopLeft' }} stroke="hsl(var(--primary))" strokeDasharray="3 3" />
+                    )}
                     <Scatter name="Constituencies" data={chartData} fill="hsl(var(--primary))" />
                     
                     {/* Quadrant Labels */}
