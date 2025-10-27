@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -15,7 +16,7 @@ import {
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, LogIn, LogOut, UserPlus, FilePlus, Calendar, Pencil, Archive, Cat, ImageIcon, Globe, Share2, Mail, Megaphone, LineChart, Rss, Flag } from 'lucide-react';
+import { Vote, Home, Users, BarChart3, TrendingUp, Landmark, Map, Settings, Shield, LogIn, LogOut, UserPlus, FilePlus, Calendar, Pencil, Archive, Cat, ImageIcon, Globe, Share2, Mail, Megaphone, LineChart, Rss, Flag, Zap } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useUser, useAuth, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -32,11 +33,9 @@ import Image from 'next/image';
 
 
 export const mainNavItems = [
-  { href: '/', icon: Home, label: 'Dashboard' },
-  { href: '/polls', icon: BarChart3, label: 'Polls' },
-  { href: '/predictions', icon: TrendingUp, label: 'Predictions' },
+  { href: '/', icon: Home, label: 'Home' },
   { href: '/election-news', icon: Rss, label: 'Election News' },
-  { href: '/make-your-own', icon: Pencil, label: 'Make Your Own' },
+  { href: '/make-your-own', icon: Pencil, label: 'Build Your Election Map' },
 ];
 
 export const adminNavItems = [
@@ -50,6 +49,7 @@ export const adminNavItems = [
     { href: '/admin/mailing-list', icon: Mail, label: 'Manage Mailing List' },
     { href: '/admin/ads', icon: Megaphone, label: 'Manage Ads' },
     { href: '/admin/map', icon: Map, label: 'Manage Map' },
+    { href: '/admin/ai-analyzer', icon: Zap, label: 'AI Analyzer' },
     { href: '/admin/settings', icon: Settings, label: 'Manage Settings' },
 ];
 
@@ -246,42 +246,6 @@ export function SidebarNav() {
             </SidebarMenuItem>
           ))}
 
-          <SidebarMenuItem>
-              <Collapsible open={isResultsOpen} onOpenChange={setIsResultsOpen}>
-                  <CollapsibleTrigger asChild>
-                      <Button variant={(pathname.startsWith('/results') || pathname.startsWith('/historical-trends')) ? 'secondary' : 'ghost'} className="w-full justify-between">
-                          <div className="flex items-center gap-2">
-                              <Landmark className="mr-2 h-4 w-4" />
-                              Past Results
-                          </div>
-                          <ChevronRight className={`h-4 w-4 transition-transform ${isResultsOpen ? 'rotate-90' : ''}`} />
-                      </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <ScrollArea className="h-64">
-                      <SidebarMenuSub>
-                           <SidebarMenuItem>
-                              <SidebarMenuSubButton asChild isActive={pathname.startsWith('/historical-trends')}>
-                                  <Link href={`/historical-trends`}>
-                                      Historical Trends
-                                  </Link>
-                              </SidebarMenuSubButton>
-                          </SidebarMenuItem>
-                          {loadingElections ? <p className="p-2 text-xs text-muted-foreground">Loading years...</p> : sortedElections.map(election => (
-                              <SidebarMenuItem key={election.id}>
-                                  <SidebarMenuSubButton asChild isActive={pathname.includes(`year=${election.id}`)}>
-                                      <Link href={`/results?year=${election.id}`}>
-                                          {election.name.replace('General ', '')}
-                                      </Link>
-                                  </SidebarMenuSubButton>
-                              </SidebarMenuItem>
-                          ))}
-                      </SidebarMenuSub>
-                    </ScrollArea>
-                  </CollapsibleContent>
-              </Collapsible>
-          </SidebarMenuItem>
-          
           {uwpParty && (
               <SidebarMenuItem>
                   <Collapsible open={isUwpOpen} onOpenChange={setIsUwpOpen}>
@@ -398,6 +362,41 @@ export function SidebarNav() {
               </SidebarMenuItem>
           )}
 
+          <SidebarMenuItem>
+              <Collapsible open={isResultsOpen} onOpenChange={setIsResultsOpen}>
+                  <CollapsibleTrigger asChild>
+                      <Button variant={(pathname.startsWith('/results') || pathname.startsWith('/historical-trends')) ? 'secondary' : 'ghost'} className="w-full justify-between">
+                          <div className="flex items-center gap-2">
+                              <Landmark className="mr-2 h-4 w-4" />
+                              Past Results
+                          </div>
+                          <ChevronRight className={`h-4 w-4 transition-transform ${isResultsOpen ? 'rotate-90' : ''}`} />
+                      </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <ScrollArea className="h-64">
+                      <SidebarMenuSub>
+                           <SidebarMenuItem>
+                              <SidebarMenuSubButton asChild isActive={pathname.startsWith('/historical-trends')}>
+                                  <Link href={`/historical-trends`}>
+                                      Historical Trends
+                                  </Link>
+                              </SidebarMenuSubButton>
+                          </SidebarMenuItem>
+                          {loadingElections ? <p className="p-2 text-xs text-muted-foreground">Loading years...</p> : sortedElections.map(election => (
+                              <SidebarMenuItem key={election.id}>
+                                  <SidebarMenuSubButton asChild isActive={pathname.includes(`year=${election.id}`)}>
+                                      <Link href={`/results?year=${election.id}`}>
+                                          {election.name.replace('General ', '')}
+                                      </Link>
+                                  </SidebarMenuSubButton>
+                              </SidebarMenuItem>
+                          ))}
+                      </SidebarMenuSub>
+                    </ScrollArea>
+                  </CollapsibleContent>
+              </Collapsible>
+          </SidebarMenuItem>
 
           {user && (
               <>
