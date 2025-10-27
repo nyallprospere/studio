@@ -76,7 +76,7 @@ const NationalSeatTrend = ({ elections, results, parties }: { elections: Electio
   );
 }
 
-const NationalVoteTrend = ({ elections, results, parties }: { elections: Election[], results: ElectionResult[], parties: Party[] }) => {
+const NationalVoteTrend = ({ elections, results, parties, constituencies, selectedConstituencyId }: { elections: Election[], results: ElectionResult[], parties: Party[], constituencies: Constituency[], selectedConstituencyId: string }) => {
   const chartData = useMemo(() => {
      if (!elections.length || !results.length || !parties.length) return [];
     
@@ -84,7 +84,12 @@ const NationalVoteTrend = ({ elections, results, parties }: { elections: Electio
       .filter(e => e.year < 2026)
       .sort((a,b) => a.year - b.year)
       .map(election => {
-        const electionResults = results.filter(r => r.electionId === election.id);
+        let electionResults = results.filter(r => r.electionId === election.id);
+
+        if (selectedConstituencyId !== 'national') {
+            electionResults = electionResults.filter(r => r.constituencyId === selectedConstituencyId);
+        }
+
         const slp = parties.find(p => p.acronym === 'SLP');
         const uwp = parties.find(p => p.acronym === 'UWP');
 
@@ -101,13 +106,15 @@ const NationalVoteTrend = ({ elections, results, parties }: { elections: Electio
           otherVotes += r.otherVotes;
         });
 
-        if(slp) yearData[slp.acronym] = totalVotes > 0 ? parseFloat(((slpVotes / totalVotes) * 100).toFixed(1)) : 0;
-        if(uwp) yearData[uwp.acronym] = totalVotes > 0 ? parseFloat(((uwpVotes / totalVotes) * 100).toFixed(1)) : 0;
-        yearData['IND'] = totalVotes > 0 ? parseFloat(((otherVotes / totalVotes) * 100).toFixed(1)) : 0;
+        if (totalVotes === 0) return { year: election.year };
+
+        if(slp) yearData[slp.acronym] = parseFloat(((slpVotes / totalVotes) * 100).toFixed(1));
+        if(uwp) yearData[uwp.acronym] = parseFloat(((uwpVotes / totalVotes) * 100).toFixed(1));
+        yearData['IND'] = parseFloat(((otherVotes / totalVotes) * 100).toFixed(1));
         
         return yearData;
     });
-  }, [elections, results, parties]);
+  }, [elections, results, parties, selectedConstituencyId]);
 
   const chartConfig = useMemo(() => {
     const config: ChartConfig = {};
@@ -120,13 +127,32 @@ const NationalVoteTrend = ({ elections, results, parties }: { elections: Electio
     }
     return config;
   }, [parties]);
+  
+  const selectedConstituencyName = selectedConstituencyId === 'national' 
+    ? 'National' 
+    : constituencies.find(c => c.id === selectedConstituencyId)?.name || 'National';
 
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>National Popular Vote (%) Over Time</CardTitle>
-        <CardDescription>Percentage of the popular vote for each major party.</CardDescription>
+        <div className="flex justify-between items-center">
+            <div>
+                <CardTitle>Popular Vote (%) Over Time</CardTitle>
+                <CardDescription>Percentage of the popular vote for {selectedConstituencyName}.</CardDescription>
+            </div>
+            <Select value={selectedConstituencyId} onValueChange={(value) => setSelectedConstituencyId(value)}>
+                <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Select Constituency" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="national">National</SelectItem>
+                    {constituencies.sort((a,b) => a.name.localeCompare(b.name)).map(c => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[400px] w-full">
@@ -205,16 +231,19 @@ const VoterTurnoutTrend = ({ elections, results }: { elections: Election[], resu
 
 export default function HistoricalTrendsPage() {
   const { firestore } = useFirebase();
+  const [selectedConstituencyId, setSelectedConstituencyId] = useState('national');
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
   const resultsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'election_results') : null, [firestore]);
   const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
+  const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
   
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
   const { data: results, isLoading: loadingResults } = useCollection<ElectionResult>(resultsQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
+  const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
 
-  const isLoading = loadingElections || loadingResults || loadingParties;
+  const isLoading = loadingElections || loadingResults || loadingParties || loadingConstituencies;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -227,7 +256,14 @@ export default function HistoricalTrendsPage() {
       ) : (
         <div className="space-y-8">
           <NationalSeatTrend elections={elections || []} results={results || []} parties={parties || []} />
-          <NationalVoteTrend elections={elections || []} results={results || []} parties={parties || []} />
+          <NationalVoteTrend 
+            elections={elections || []} 
+            results={results || []} 
+            parties={parties || []} 
+            constituencies={constituencies || []} 
+            selectedConstituencyId={selectedConstituencyId}
+            setSelectedConstituencyId={setSelectedConstituencyId}
+          />
           <VoterTurnoutTrend elections={elections || []} results={results || []} />
         </div>
       )}
