@@ -214,21 +214,23 @@ export function ConstituencyPopoverContent({
 
         let slpCand = slp ? candidates.find(c => c.partyId === slp.id) : null;
         let uwpCand = uwp ? candidates.find(c => c.partyId === uwp.id) : null;
-        let indCand: Candidate | ArchivedCandidate | null = null;
         
-        const isCurrentOrFuture = !election || election.isCurrent;
-        if (isCurrentOrFuture && (constituency.name === 'Castries North' || constituency.name === 'Castries Central')) {
-            indCand = slpCand;
-            slpCand = null;
-        } else {
-            indCand = candidates.find(c => 
-                (c as Candidate).isIndependentCastriesNorth || 
-                (c as Candidate).isIndependentCastriesCentral
-            ) || null;
+        const indCand = candidates.find(c => 
+            (c as Candidate).isIndependentCastriesNorth || (c as Candidate).isIndependentCastriesCentral
+        ) || null;
+
+        const isSpecialConstituency = (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
+        
+        if (isCurrentElection && isSpecialConstituency) {
+            // For these constituencies, the SLP candidate is actually the independent one
+            // And there is no official SLP candidate running.
+            if (slpCand && (slpCand as Candidate).isIndependentCastriesCentral) {
+                // This is Richard Frederick
+            }
         }
         
         return { slpCandidate: slpCand, uwpCandidate: uwpCand, independentCandidate: indCand, slpParty: slp, uwpParty: uwp };
-    }, [parties, candidates, constituency.name, election]);
+    }, [parties, candidates, constituency.name, isCurrentElection]);
     
     const { chartData, chartConfig } = useMemo(() => {
         if (!constituency || !parties) return { chartData: [], chartConfig: {} };
@@ -383,7 +385,8 @@ export function ConstituencyPopoverContent({
     
     const popoverText = useMemo(() => {
         const lean = constituency.politicalLeaning;
-        if (lean?.includes('slp') && constituency.slpDashboardPopoverText) {
+        const isInd = lean?.includes('ind')
+        if ((isInd || lean?.includes('slp')) && constituency.slpDashboardPopoverText) {
             return constituency.slpDashboardPopoverText;
         }
         if (lean?.includes('uwp') && constituency.uwpDashboardPopoverText) {
@@ -471,22 +474,22 @@ export function ConstituencyPopoverContent({
                 <div className="grid grid-cols-2 gap-2">
                      {isSpecialConstituencyForIND ? (
                         <>
-                             {independentCandidate && (
-                                <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
-                                    <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
-                                        {independentCandidate.imageUrl ? <Image src={independentCandidate.imageUrl} alt={independentCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
-                                    </div>
-                                    <p className="text-xs font-semibold mt-1">{independentCandidate.name}</p>
-                                    <p className="text-xs text-muted-foreground">IND</p>
-                                </div>
-                            )}
-                            {uwpCandidate && (
+                             {uwpCandidate && (
                                 <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
                                     <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
                                         {uwpCandidate.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                     </div>
                                     <p className="text-xs font-semibold mt-1">{uwpCandidate.name}</p>
                                     <p className="text-xs text-muted-foreground">{uwpParty?.acronym}</p>
+                                </div>
+                            )}
+                            {independentCandidate && (
+                                <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center">
+                                    <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
+                                        {independentCandidate.imageUrl ? <Image src={independentCandidate.imageUrl} alt={independentCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
+                                    </div>
+                                    <p className="text-xs font-semibold mt-1">{independentCandidate.name}</p>
+                                    <p className="text-xs text-muted-foreground">IND</p>
                                 </div>
                             )}
                         </>
