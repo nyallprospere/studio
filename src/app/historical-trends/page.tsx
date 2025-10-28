@@ -174,7 +174,7 @@ const NationalVoteTrend = ({ elections, results, parties, constituencies, select
   );
 };
 
-const NationalSwingTrend = ({ elections, results, parties }: { elections: Election[], results: ElectionResult[], parties: Party[] }) => {
+const NationalSwingTrend = ({ elections, results, parties, constituencies, selectedConstituencyId, setSelectedConstituencyId }: { elections: Election[], results: ElectionResult[], parties: Party[], constituencies: Constituency[], selectedConstituencyId: string, setSelectedConstituencyId: (id: string) => void }) => {
     const chartData = useMemo(() => {
         if (!elections.length || !results.length || !parties.length) return [];
 
@@ -187,15 +187,19 @@ const NationalSwingTrend = ({ elections, results, parties }: { elections: Electi
 
         if (!slp || !uwp) return [];
 
-        const nationalPercentages: { [year: number]: { slp: number, uwp: number } } = {};
+        const percentages: { [year: number]: { slp: number, uwp: number } } = {};
 
         sortedElections.forEach(election => {
-            const electionResults = results.filter(r => r.electionId === election.id);
+            let electionResults = results.filter(r => r.electionId === election.id);
+            if (selectedConstituencyId !== 'national') {
+                electionResults = electionResults.filter(r => r.constituencyId === selectedConstituencyId);
+            }
+
             const totalVotes = electionResults.reduce((sum, r) => sum + r.totalVotes, 0);
             if (totalVotes === 0) return;
             const slpVotes = electionResults.reduce((sum, r) => sum + r.slpVotes, 0);
             const uwpVotes = electionResults.reduce((sum, r) => sum + r.uwpVotes, 0);
-            nationalPercentages[election.year] = {
+            percentages[election.year] = {
                 slp: (slpVotes / totalVotes) * 100,
                 uwp: (uwpVotes / totalVotes) * 100
             };
@@ -206,9 +210,9 @@ const NationalSwingTrend = ({ elections, results, parties }: { elections: Electi
             const currentYear = sortedElections[i].year;
             const prevYear = sortedElections[i - 1].year;
 
-            if (nationalPercentages[currentYear] && nationalPercentages[prevYear]) {
-                const slpSwing = nationalPercentages[currentYear].slp - nationalPercentages[prevYear].slp;
-                const uwpSwing = nationalPercentages[currentYear].uwp - nationalPercentages[prevYear].uwp;
+            if (percentages[currentYear] && percentages[prevYear]) {
+                const slpSwing = percentages[currentYear].slp - percentages[prevYear].slp;
+                const uwpSwing = percentages[currentYear].uwp - percentages[prevYear].uwp;
                 swingData.push({
                     year: currentYear,
                     [slp.acronym]: parseFloat(slpSwing.toFixed(1)),
@@ -217,7 +221,7 @@ const NationalSwingTrend = ({ elections, results, parties }: { elections: Electi
             }
         }
         return swingData;
-    }, [elections, results, parties]);
+    }, [elections, results, parties, selectedConstituencyId]);
 
     const chartConfig = useMemo(() => {
         const config: ChartConfig = {};
@@ -230,11 +234,30 @@ const NationalSwingTrend = ({ elections, results, parties }: { elections: Electi
         return config;
     }, [parties]);
     
+    const selectedConstituencyName = selectedConstituencyId === 'national' 
+        ? 'National' 
+        : constituencies.find(c => c.id === selectedConstituencyId)?.name || 'National';
+
     return (
         <Card>
             <CardHeader>
-                <CardTitle>National Popular Vote Swing</CardTitle>
-                <CardDescription>Percentage point change in national popular vote from the previous election.</CardDescription>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle>Popular Vote Swing</CardTitle>
+                        <CardDescription>Percentage point change in popular vote from the previous election for {selectedConstituencyName}.</CardDescription>
+                    </div>
+                    <Select value={selectedConstituencyId} onValueChange={setSelectedConstituencyId}>
+                        <SelectTrigger className="w-[200px]">
+                            <SelectValue placeholder="Select Constituency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="national">National</SelectItem>
+                            {constituencies.sort((a,b) => a.name.localeCompare(b.name)).map(c => (
+                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </CardHeader>
             <CardContent>
                 <ChartContainer config={chartConfig} className="h-[400px] w-full">
@@ -655,7 +678,14 @@ export default function HistoricalTrendsPage() {
             selectedConstituencyId={selectedConstituencyId}
             setSelectedConstituencyId={setSelectedConstituencyId}
           />
-           <NationalSwingTrend elections={elections || []} results={results || []} parties={parties || []} />
+           <NationalSwingTrend 
+            elections={elections || []} 
+            results={results || []} 
+            parties={parties || []} 
+            constituencies={constituencies || []} 
+            selectedConstituencyId={selectedConstituencyId}
+            setSelectedConstituencyId={setSelectedConstituencyId}
+          />
           <VoterTurnoutTrend 
             elections={elections || []} 
             results={results || []}
