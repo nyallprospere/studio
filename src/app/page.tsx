@@ -104,8 +104,8 @@ export default function Home() {
 
   const visibleAllEvents = useMemo(() => filterAndSortEvents(events || [], allEventsViewMode), [events, allEventsViewMode]);
 
-   const { chartData, seatCounts } = useMemo(() => {
-    if (!constituencies) return { chartData: [], seatCounts: {} };
+   const { chartData, seatCounts, tossupConstituencies } = useMemo(() => {
+    if (!constituencies) return { chartData: [], seatCounts: {}, tossupConstituencies: [] };
 
     const counts = constituencies.reduce((acc, constituency) => {
         let leaning = constituency.politicalLeaning || 'tossup';
@@ -120,10 +120,10 @@ export default function Home() {
             acc[leaning] = { count: 0, constituencies: [] };
         }
         acc[leaning].count++;
-        acc[leaning].constituencies.push(constituency.name);
+        (acc[leaning].constituencies as Constituency[]).push(constituency);
 
         return acc;
-    }, {} as Record<string, { count: number, constituencies: string[] }>);
+    }, {} as Record<string, { count: number, constituencies: Constituency[] }>);
 
     const chartData = politicalLeaningOptions
         .map(opt => ({
@@ -148,7 +148,9 @@ export default function Home() {
     (seatCounts as any).uwpTotal = seatCounts.solidUwp + seatCounts.leanUwp;
     (seatCounts as any).indTotal = seatCounts.solidInd + seatCounts.leanInd;
 
-    return { chartData, seatCounts: seatCounts as any };
+    const tossupConstituencies = counts['tossup']?.constituencies || [];
+
+    return { chartData, seatCounts: seatCounts as any, tossupConstituencies };
 }, [constituencies]);
 
     const chartConfig = politicalLeaningOptions.reduce((acc, option) => {
@@ -248,7 +250,7 @@ export default function Home() {
                                                 <div className="bg-background border p-2 rounded-md shadow-lg text-sm max-w-xs">
                                                     <p className="font-bold text-base mb-1">{item.name} ({item.value})</p>
                                                     <ul className="list-disc pl-5">
-                                                        {item.constituencies.map((c: string) => <li key={c}>{c}</li>)}
+                                                        {item.constituencies.map((c: Constituency) => <li key={c.id}>{c.name}</li>)}
                                                     </ul>
                                                 </div>
                                             )
@@ -301,47 +303,25 @@ export default function Home() {
                                 9 to win
                             </div>
                         </ChartContainer>
-                        <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-xs">
-                            {politicalLeaningOptions
-                            .filter(opt => chartData.some(d => d.name === opt.label))
-                            .sort((a, b) => {
-                                const order = ['Solid SLP', 'Lean SLP', 'Solid IND', 'Lean IND', 'Tossup', 'Lean UWP', 'Solid UWP'];
-                                return order.indexOf(a.label) - order.indexOf(b.label);
-                            })
-                            .map((option) => {
-                                const count = chartData.find(d => d.name === option.label)?.value || 0;
-                                return (
-                                    <TooltipProvider key={option.value}>
-                                    <Tooltip>
-                                    <TooltipTrigger asChild>
-                                    <div className="flex items-center gap-1.5 cursor-default">
-                                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: option.color }}></span>
-                                        <span>{option.label}</span>
-                                        <span className="font-bold">({count})</span>
-                                    </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p className="font-medium">Constituencies:</p>
-                                        <ul className="list-disc pl-5">
-                                            {constituencies
-                                                ?.filter(c => {
-                                                    let leaning = c.politicalLeaning || 'tossup';
-                                                    const isSpecial = c.name === 'Castries North' || c.name === 'Castries Central';
-                                                    if (isSpecial) {
-                                                        if (leaning === 'solid-slp') leaning = 'solid-ind';
-                                                        if (leaning === 'lean-slp') leaning = 'lean-ind';
-                                                    }
-                                                    return leaning === option.value;
-                                                })
-                                                .map(c => <li key={c.id}>{c.name}</li>)
-                                            }
-                                        </ul>
-                                    </TooltipContent>
-                                    </Tooltip>
-                                    </TooltipProvider>
-                                )
-                            })}
-                        </div>
+                        {tossupConstituencies.length > 0 && (
+                            <div className="w-full mt-4 text-center">
+                                <h4 className="font-semibold text-sm mb-2 text-muted-foreground">Tossup Constituencies</h4>
+                                <ul className="text-sm space-y-1">
+                                    {tossupConstituencies.map(c => (
+                                        <li key={c.id} className="flex justify-between items-center text-left">
+                                            <span>{c.name}</span>
+                                            {c.aiForecast && (
+                                                <span className="text-xs font-mono p-1 rounded-md bg-muted">
+                                                    AI Forecast: <span className={cn('font-bold', (c.aiForecast || 50) > 50 ? 'text-red-500' : 'text-yellow-500')}>
+                                                        {(c.aiForecast || 50) > 50 ? `SLP ${(c.aiForecast)}%` : `UWP ${100 - (c.aiForecast || 50)}%`}
+                                                    </span>
+                                                </span>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -461,4 +441,5 @@ export default function Home() {
     </div>
   );
 }
+
 
