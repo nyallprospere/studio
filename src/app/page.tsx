@@ -223,7 +223,7 @@ export default function Home() {
                         </div>
                     </CardHeader>
                     <CardContent className="flex flex-col items-center">
-                        <div className="text-center mb-4 text-sm font-medium">
+                        <div className="text-center mb-4 text-lg font-medium">
                             Expected Results: {' '}
                             <span className="font-bold" style={{color: 'hsl(var(--chart-5))'}}>SLP - {seatCounts.slpTotal}</span> | {' '}
                             <span className="font-bold" style={{color: 'hsl(var(--chart-1))'}}>UWP - {seatCounts.uwpTotal}</span> | {' '}
