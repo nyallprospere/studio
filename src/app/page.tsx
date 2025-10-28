@@ -105,45 +105,51 @@ export default function Home() {
   const visibleAllEvents = useMemo(() => filterAndSortEvents(events || [], allEventsViewMode), [events, allEventsViewMode]);
 
    const { chartData, seatCounts } = useMemo(() => {
-        if (!constituencies) return { chartData: [], seatCounts: {} };
+    if (!constituencies) return { chartData: [], seatCounts: {} };
 
-        const counts = constituencies.reduce((acc, constituency) => {
-            let leaning = constituency.politicalLeaning || 'tossup';
-            const isSpecialConstituency = constituency.name === 'Castries North' || constituency.name === 'Castries Central';
+    const counts = constituencies.reduce((acc, constituency) => {
+        let leaning = constituency.politicalLeaning || 'tossup';
+        const isSpecialConstituency = constituency.name === 'Castries North' || constituency.name === 'Castries Central';
 
-            if (isSpecialConstituency) {
-                if (leaning === 'solid-slp') leaning = 'solid-ind';
-                if (leaning === 'lean-slp') leaning = 'lean-ind';
-            }
-            
-            acc[leaning] = (acc[leaning] || 0) + 1;
-            return acc;
-        }, {} as Record<string, number>);
-
-        const chartData = politicalLeaningOptions
-            .map(opt => ({
-                name: opt.label,
-                value: counts[opt.value] || 0,
-                fill: opt.color,
-            }))
-            .filter(item => item.value > 0);
-
-        const seatCounts = {
-            solidSlp: counts['solid-slp'] || 0,
-            leanSlp: counts['lean-slp'] || 0,
-            tossup: counts['tossup'] || 0,
-            leanUwp: counts['lean-uwp'] || 0,
-            solidUwp: counts['solid-uwp'] || 0,
-            solidInd: counts['solid-ind'] || 0,
-            leanInd: counts['lean-ind'] || 0,
-        };
+        if (isSpecialConstituency) {
+            if (leaning === 'solid-slp') leaning = 'solid-ind';
+            if (leaning === 'lean-slp') leaning = 'lean-ind';
+        }
         
-        (seatCounts as any).slpTotal = seatCounts.solidSlp + seatCounts.leanSlp;
-        (seatCounts as any).uwpTotal = seatCounts.solidUwp + seatCounts.leanUwp;
-        (seatCounts as any).indTotal = seatCounts.solidInd + seatCounts.leanInd;
+        if (!acc[leaning]) {
+            acc[leaning] = { count: 0, constituencies: [] };
+        }
+        acc[leaning].count++;
+        acc[leaning].constituencies.push(constituency.name);
 
-        return { chartData, seatCounts: seatCounts as any };
-    }, [constituencies]);
+        return acc;
+    }, {} as Record<string, { count: number, constituencies: string[] }>);
+
+    const chartData = politicalLeaningOptions
+        .map(opt => ({
+            name: opt.label,
+            value: counts[opt.value]?.count || 0,
+            constituencies: counts[opt.value]?.constituencies || [],
+            fill: opt.color,
+        }))
+        .filter(item => item.value > 0);
+
+    const seatCounts = {
+        solidSlp: counts['solid-slp']?.count || 0,
+        leanSlp: counts['lean-slp']?.count || 0,
+        tossup: counts['tossup']?.count || 0,
+        leanUwp: counts['lean-uwp']?.count || 0,
+        solidUwp: counts['solid-uwp']?.count || 0,
+        solidInd: counts['solid-ind']?.count || 0,
+        leanInd: counts['lean-ind']?.count || 0,
+    };
+    
+    (seatCounts as any).slpTotal = seatCounts.solidSlp + seatCounts.leanSlp;
+    (seatCounts as any).uwpTotal = seatCounts.solidUwp + seatCounts.leanUwp;
+    (seatCounts as any).indTotal = seatCounts.solidInd + seatCounts.leanInd;
+
+    return { chartData, seatCounts: seatCounts as any };
+}, [constituencies]);
 
     const chartConfig = politicalLeaningOptions.reduce((acc, option) => {
         // @ts-ignore
@@ -234,7 +240,19 @@ export default function Home() {
                                 <PieChart>
                                     <ChartTooltip 
                                         cursor={false}
-                                        content={<ChartTooltipContent hideLabel />}
+                                        content={(props) => {
+                                            const { payload } = props;
+                                            if (!payload || payload.length === 0) return null;
+                                            const item = payload[0].payload;
+                                            return (
+                                                <div className="bg-background border p-2 rounded-md shadow-lg text-sm max-w-xs">
+                                                    <p className="font-bold text-base mb-1">{item.name} ({item.value})</p>
+                                                    <ul className="list-disc pl-5">
+                                                        {item.constituencies.map((c: string) => <li key={c}>{c}</li>)}
+                                                    </ul>
+                                                </div>
+                                            )
+                                        }}
                                     />
                                     <Pie 
                                         data={chartData} 
@@ -443,3 +461,4 @@ export default function Home() {
     </div>
   );
 }
+
