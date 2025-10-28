@@ -24,40 +24,76 @@ export function ConstituencyAnalyzer() {
   const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
   const electionsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'elections') : null, [firestore]);
   const candidatesQuery = useMemoFirebase(() => firestore && selectedConstituencyId ? query(collection(firestore, 'candidates'), where('constituencyId', '==', selectedConstituencyId)) : null, [firestore, selectedConstituencyId]);
-  const resultsQuery = useMemoFirebase(() => firestore && selectedConstituencyId ? query(collection(firestore, 'election_results'), where('constituencyId', '==', selectedConstituencyId)) : null, [firestore, selectedConstituencyId]);
+  const allResultsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'election_results') : null, [firestore]);
   const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
+  const regionsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'regions') : null, [firestore]);
 
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
   const { data: candidates, isLoading: loadingCandidates } = useCollection<Candidate>(candidatesQuery);
-  const { data: results, isLoading: loadingResults } = useCollection<ElectionResult>(resultsQuery);
+  const { data: allResults, isLoading: loadingResults } = useCollection<ElectionResult>(allResultsQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
+  const { data: regions, isLoading: loadingRegions } = useCollection<Region>(regionsQuery);
   
   const selectedElection = useMemo(() => elections?.find(e => e.id === selectedElectionId), [elections, selectedElectionId]);
+  const selectedConstituency = useMemo(() => constituencies?.find(c => c.id === selectedConstituencyId), [constituencies, selectedConstituencyId]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedConstituencyId || !selectedElectionId) return;
+    if (!selectedConstituencyId || !selectedElectionId || !selectedConstituency || !allResults || !elections) return;
 
     setIsLoading(true);
     setResult(null);
     setError(null);
     
-    const constituencyName = constituencies?.find(c => c.id === selectedConstituencyId)?.name || 'Unknown';
-    
-    const historicalData = results
-        ?.map(r => {
+    const historicalData = allResults
+        ?.filter(r => r.constituencyId === selectedConstituencyId)
+        .map(r => {
             const election = elections?.find(e => e.id === r.electionId);
-            return election ? { year: election.year, slpVotes: r.slpVotes, uwpVotes: r.uwpVotes, otherVotes: r.otherVotes } : null;
+            return election ? { year: election.year, slpVotes: r.slpVotes, uwpVotes: r.uwpVotes, otherVotes: r.otherVotes, totalVotes: r.totalVotes } : null;
         })
         .filter(Boolean);
+        
+    const nationalSwingData = elections.map(election => {
+        const electionResults = allResults.filter(r => r.electionId === election.id);
+        const totalVotes = electionResults.reduce((sum, r) => sum + r.totalVotes, 0);
+        const slpVotes = electionResults.reduce((sum, r) => sum + r.slpVotes, 0);
+        const uwpVotes = electionResults.reduce((sum, r) => sum + r.uwpVotes, 0);
+        return {
+            year: election.year,
+            slpPercentage: totalVotes > 0 ? (slpVotes / totalVotes) * 100 : 0,
+            uwpPercentage: totalVotes > 0 ? (uwpVotes / totalVotes) * 100 : 0,
+        };
+    }).sort((a,b) => a.year - b.year);
+
+
+    const region = regions?.find(r => r.constituencyIds?.includes(selectedConstituencyId));
+    let regionalConstituencyData: any[] = [];
+    if (region) {
+        const regionalConstituencyIds = region.constituencyIds?.filter(id => id !== selectedConstituencyId);
+        regionalConstituencyData = regionalConstituencyIds?.map(constituencyId => {
+            const constituencyName = constituencies?.find(c => c.id === constituencyId)?.name;
+            const constituencyResults = allResults
+                .filter(r => r.constituencyId === constituencyId)
+                .map(r => {
+                    const election = elections?.find(e => e.id === r.electionId);
+                    return election ? { year: election.year, slpVotes: r.slpVotes, uwpVotes: r.uwpVotes, otherVotes: r.otherVotes, totalVotes: r.totalVotes } : null;
+                })
+                .filter(Boolean);
+            return { constituencyName, results: constituencyResults };
+        }) || [];
+    }
+
 
     const response = await analyzeConstituencyOutcome({
-        constituencyName,
+        constituencyName: selectedConstituency.name,
         electionYear: selectedElection?.year.toString() || 'Current',
         historicalData: JSON.stringify(historicalData),
         pollingData: JSON.stringify({ note: "No recent polling data available for this specific constituency." }),
         candidateInfo: JSON.stringify(candidates),
+        nationalSwingData: JSON.stringify(nationalSwingData),
+        regionalConstituencyData: JSON.stringify(regionalConstituencyData),
     });
 
     if (response.error) {
