@@ -241,35 +241,6 @@ export default function Home() {
                                      {chartData.map((entry) => (
                                         <Cell key={`cell-${entry.name}`} fill={entry.fill} />
                                     ))}
-                                    <Label
-                                        content={({ viewBox }) => {
-                                            if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                                                return (
-                                                    <text
-                                                        x={viewBox.cx}
-                                                        y={viewBox.cy}
-                                                        textAnchor="middle"
-                                                        dominantBaseline="middle"
-                                                    >
-                                                        <tspan
-                                                            x={viewBox.cx}
-                                                            dy="-0.5em"
-                                                            className="text-3xl font-bold"
-                                                        >
-                                                            {17}
-                                                        </tspan>
-                                                        <tspan
-                                                            x={viewBox.cx}
-                                                            dy="1.5em"
-                                                            className="text-sm text-muted-foreground"
-                                                        >
-                                                            Seats
-                                                        </tspan>
-                                                    </text>
-                                                );
-                                            }
-                                        }}
-                                    />
                                 </Pie>
                             </PieChart>
                         </ResponsiveContainer>
