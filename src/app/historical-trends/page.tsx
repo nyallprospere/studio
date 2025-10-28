@@ -385,7 +385,7 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
   );
 }
 
-const SwingVsTurnoutQuadrant = ({ elections, results, constituencies, parties }: { elections: Election[], results: ElectionResult[], constituencies: Constituency[], parties: Party[] }) => {
+const SwingVsTurnoutQuadrant = ({ elections, results, constituencies, parties, selectedConstituencyId, setSelectedConstituencyId }: { elections: Election[], results: ElectionResult[], constituencies: Constituency[], parties: Party[], selectedConstituencyId: string, setSelectedConstituencyId: (id: string) => void }) => {
     const [selectedElectionId, setSelectedElectionId] = useState<string>('all');
     
     const sortedElections = useMemo(() => elections.filter(e => e.year < 2026 && e.year > 1979).sort((a, b) => b.year - a.year), [elections]);
@@ -409,8 +409,8 @@ const SwingVsTurnoutQuadrant = ({ elections, results, constituencies, parties }:
             if (!slp) return [];
   
             const calcPercentage = (votes: number, total: number) => total > 0 ? (votes / total) * 100 : 0;
-  
-            const data = constituencies.map(con => {
+
+            let data = constituencies.map(con => {
                 const currentConResult = currentResults.find(r => r.constituencyId === con.id);
                 const prevConResult = prevResults.find(r => r.constituencyId === con.id);
                 if (!currentConResult || !prevConResult) return null;
@@ -423,12 +423,17 @@ const SwingVsTurnoutQuadrant = ({ elections, results, constituencies, parties }:
   
                 return {
                   name: con.name,
+                  constituencyId: con.id,
                   x: turnoutDelta, // Turnout Delta
                   y: constituencySwing, // Vote Swing
                   year: currentElection.year,
                 };
             }).filter((d): d is NonNullable<typeof d> => d !== null);
-  
+
+            if (selectedConstituencyId !== 'national') {
+                data = data.filter(d => d.constituencyId === selectedConstituencyId);
+            }
+
             return data;
         };
   
@@ -438,7 +443,7 @@ const SwingVsTurnoutQuadrant = ({ elections, results, constituencies, parties }:
   
         return dataByElection(selectedElectionId);
   
-    }, [elections, results, constituencies, parties, selectedElectionId, sortedElections]);
+    }, [elections, results, constituencies, parties, selectedElectionId, sortedElections, selectedConstituencyId]);
   
     const chartConfig: ChartConfig = {
       swing: { label: "Swing (%)", color: "hsl(var(--primary))" },
@@ -466,15 +471,28 @@ const SwingVsTurnoutQuadrant = ({ elections, results, constituencies, parties }:
                 <CardTitle>Vote Swing vs. Turnout Delta</CardTitle>
                 <CardDescription>Analysis of SLP and UWP vote swing against changes in voter turnout.</CardDescription>
               </div>
-              <Select value={selectedElectionId} onValueChange={setSelectedElectionId}>
-                  <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Select Election" />
-                  </SelectTrigger>
-                  <SelectContent>
-                      <SelectItem value="all">All Elections</SelectItem>
-                      {sortedElections.map(e => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
-                  </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2">
+                <Select value={selectedElectionId} onValueChange={setSelectedElectionId}>
+                    <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Select Election" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Elections</SelectItem>
+                        {sortedElections.map(e => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                 <Select value={selectedConstituencyId} onValueChange={setSelectedConstituencyId}>
+                    <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Select Constituency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="national">National</SelectItem>
+                        {constituencies.sort((a,b) => a.name.localeCompare(b.name)).map(c => (
+                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+              </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -554,6 +572,8 @@ export default function HistoricalTrendsPage() {
             results={results || []}
             constituencies={constituencies || []}
             parties={parties || []}
+            selectedConstituencyId={selectedConstituencyId}
+            setSelectedConstituencyId={setSelectedConstituencyId}
           />
         </div>
       )}
