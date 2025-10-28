@@ -367,9 +367,14 @@
           "type": "number",
           "description": "A measure of how much the vote has swung in past elections."
         },
+        "aiForecastParty": {
+          "type": "string",
+          "description": "The party predicted to win by the AI.",
+          "enum": ["slp", "uwp", "ind"]
+        },
         "aiForecast": {
           "type": "number",
-          "description": "The AI-powered forecast for the constituency as a percentage."
+          "description": "The AI-powered forecast for the constituency as a percentage for the predicted party."
         },
         "aiConfidence": {
           "type": "string",

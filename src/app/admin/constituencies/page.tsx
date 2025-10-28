@@ -50,6 +50,11 @@ const politicalLeaningOptions = [
 ];
 
 const aiConfidenceOptions = ['High', 'Medium', 'Low'];
+const aiPartyOptions = [
+    { value: 'slp', label: 'SLP' },
+    { value: 'uwp', label: 'UWP' },
+    { value: 'ind', label: 'IND' },
+];
 
 
 export default function AdminConstituenciesPage() {
@@ -402,14 +407,29 @@ export default function AdminConstituenciesPage() {
                                                 />
                                             </TableCell>
                                             <TableCell>
-                                                <Input
-                                                    type="number"
-                                                    value={c.aiForecast || 0}
-                                                    onChange={(e) => handleFieldChange(c.id, 'aiForecast', e.target.value)}
-                                                    className="w-24"
-                                                    min="0"
-                                                    max="100"
-                                                />
+                                                <div className="flex items-center gap-2">
+                                                    <Select
+                                                        value={c.aiForecastParty}
+                                                        onValueChange={(value) => handleFieldChange(c.id, 'aiForecastParty', value)}
+                                                    >
+                                                        <SelectTrigger className="w-24">
+                                                            <SelectValue placeholder="Party" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {aiPartyOptions.map(opt => (
+                                                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <Input
+                                                        type="number"
+                                                        value={c.aiForecast || 0}
+                                                        onChange={(e) => handleFieldChange(c.id, 'aiForecast', e.target.value)}
+                                                        className="w-24"
+                                                        min="0"
+                                                        max="100"
+                                                    />
+                                                </div>
                                             </TableCell>
                                             <TableCell>
                                                 <Select
