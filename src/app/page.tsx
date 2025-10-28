@@ -333,6 +333,27 @@ export default function Home() {
                     </div>
                 </CardContent>
             </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2">
+                        <Vote /> Voter Information
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div>
+                        <h3 className="font-semibold">Key Dates & Deadlines</h3>
+                        <ul className="list-disc list-inside text-muted-foreground">
+                            <li>Voter Registration Deadline: TBD</li>
+                            <li>Advance Polling Day: TBD</li>
+                            <li>General Election Day: July 26, 2026 (Tentative)</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 className="font-semibold">Voter Requirements</h3>
+                        <p className="text-muted-foreground">To be eligible to vote, you must be a citizen of St. Lucia, 18 years of age or older, and registered to vote in your constituency.</p>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
       </div>
       
@@ -387,29 +408,6 @@ export default function Home() {
             </div>
           </div>
       )}
-
-
-       <Card className="mt-8">
-        <CardHeader>
-          <CardTitle className="font-headline flex items-center gap-2">
-            <Vote /> Voter Information
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-            <div>
-              <h3 className="font-semibold">Key Dates & Deadlines</h3>
-              <ul className="list-disc list-inside text-muted-foreground">
-                <li>Voter Registration Deadline: TBD</li>
-                <li>Advance Polling Day: TBD</li>
-                <li>General Election Day: July 26, 2026 (Tentative)</li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold">Voter Requirements</h3>
-              <p className="text-muted-foreground">To be eligible to vote, you must be a citizen of St. Lucia, 18 years of age or older, and registered to vote in your constituency.</p>
-            </div>
-        </CardContent>
-       </Card>
     </div>
   );
 }
