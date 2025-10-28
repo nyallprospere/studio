@@ -69,6 +69,9 @@ export interface Constituency {
   logoUrl?: string;
   slpDashboardPopoverText?: string;
   uwpDashboardPopoverText?: string;
+  volatilityIndex?: number;
+  aiForecast?: 'slp' | 'uwp' | 'tossup';
+  aiConfidence?: 'High' | 'Medium' | 'Low';
 }
 
 export interface Poll {

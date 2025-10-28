@@ -49,6 +49,9 @@ const politicalLeaningOptions = [
   { value: 'solid-uwp', label: 'Solid UWP' },
 ];
 
+const aiConfidenceOptions = ['High', 'Medium', 'Low'];
+const aiForecastOptions = ['slp', 'uwp', 'tossup'];
+
 
 export default function AdminConstituenciesPage() {
     const { firestore } = useFirebase();
@@ -149,7 +152,10 @@ export default function AdminConstituenciesPage() {
                         const uwp = Number(value);
                         updatedConstituency.predictedUwpPercentage = uwp;
                         updatedConstituency.predictedSlpPercentage = 100 - uwp;
-                    } else {
+                    } else if (field === 'volatilityIndex') {
+                        updatedConstituency.volatilityIndex = Number(value);
+                    }
+                    else {
                         // This handles slpDashboardPopoverText and uwpDashboardPopoverText directly
                         (updatedConstituency as any)[field] = value;
                     }
@@ -334,6 +340,9 @@ export default function AdminConstituenciesPage() {
                                         <TableHead>Political Leaning</TableHead>
                                         <TableHead>Pred. SLP %</TableHead>
                                         <TableHead>Pred. UWP %</TableHead>
+                                        <TableHead>Volatility Index</TableHead>
+                                        <TableHead>AI Forecast</TableHead>
+                                        <TableHead>AI Confidence</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -382,6 +391,46 @@ export default function AdminConstituenciesPage() {
                                                     min="0"
                                                     max="100"
                                                 />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Input
+                                                    type="number"
+                                                    value={c.volatilityIndex || 0}
+                                                    onChange={(e) => handleFieldChange(c.id, 'volatilityIndex', e.target.value)}
+                                                    className="w-24"
+                                                    min="0"
+                                                    max="100"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Select
+                                                    value={c.aiForecast}
+                                                    onValueChange={(value) => handleFieldChange(c.id, 'aiForecast', value)}
+                                                >
+                                                    <SelectTrigger className="w-28">
+                                                        <SelectValue placeholder="Forecast" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {aiForecastOptions.map(opt => (
+                                                            <SelectItem key={opt} value={opt}>{opt.toUpperCase()}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Select
+                                                    value={c.aiConfidence}
+                                                    onValueChange={(value) => handleFieldChange(c.id, 'aiConfidence', value)}
+                                                >
+                                                    <SelectTrigger className="w-28">
+                                                        <SelectValue placeholder="Confidence" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {aiConfidenceOptions.map(opt => (
+                                                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
                                             </TableCell>
                                         </TableRow>
                                     ))}
