@@ -189,171 +189,176 @@ export default function Home() {
         </Card>
       </div>
       
-       <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="lg:col-span-1">
-           <Card>
-            <CardHeader>
-                <CardTitle>Interactive Map</CardTitle>
-                <CardDescription>Click on a constituency to learn more.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0.5">
-                 <InteractiveSvgMap 
-                    constituencies={constituencies ?? []} 
-                    selectedConstituencyId={selectedConstituencyId}
-                    onConstituencyClick={setSelectedConstituencyId}
-                    election={currentElection}
-                    hideLogos={true}
-                    popoverVariant="dashboard"
-                 />
-            </CardContent>
-        </Card>
-        </div>
-        <div className="space-y-8">
-             <Card>
-                <CardHeader>
-                     <div className="flex items-center justify-between">
-                         <div>
-                            <CardTitle className="font-headline">Seat Count</CardTitle>
-                            <CardDescription>Current political leaning of the 17 constituencies.</CardDescription>
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent className="flex flex-col items-center">
-                    <ChartContainer config={chartConfig} className="h-40 w-full relative">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <ChartTooltip 
-                                    cursor={false}
-                                    content={<ChartTooltipContent hideLabel />}
-                                />
-                                <Pie 
-                                    data={chartData} 
-                                    dataKey="value"
-                                    nameKey="name"
-                                    cx="50%" 
-                                    cy="100%" 
-                                    startAngle={180} 
-                                    endAngle={0} 
-                                    innerRadius="60%"
-                                    outerRadius="100%"
-                                    paddingAngle={2}
-                                >
-                                     {chartData.map((entry) => (
-                                        <Cell key={`cell-${entry.name}`} fill={entry.fill} />
-                                    ))}
-                                </Pie>
-                            </PieChart>
-                        </ResponsiveContainer>
-                         <div
-                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full w-px h-[calc(50%+4px)] bg-black"
-                            style={{ top: '100%', transform: 'translateX(-50%) translateY(-100%)' }}
-                        ></div>
-                        <div className="absolute bottom-[-10px] left-1/2 -translate-x-1/2 text-xs font-semibold text-black bg-background px-1">
-                            9 to win
-                        </div>
-                    </ChartContainer>
-                    <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-xs">
-                        {politicalLeaningOptions
-                          .filter(opt => chartData.some(d => d.name === opt.label))
-                          .sort((a, b) => {
-                            const order = ['Solid SLP', 'Lean SLP', 'Solid IND', 'Lean IND', 'Tossup', 'Lean UWP', 'Solid UWP'];
-                            return order.indexOf(a.label) - order.indexOf(b.label);
-                          })
-                          .map((option) => {
-                            const count = chartData.find(d => d.name === option.label)?.value || 0;
-                            return (
-                                <TooltipProvider key={option.value}>
-                                <Tooltip>
-                                <TooltipTrigger asChild>
-                                <div className="flex items-center gap-1.5 cursor-default">
-                                    <span className="w-3 h-3 rounded-full" style={{ backgroundColor: option.color }}></span>
-                                    <span>{option.label}</span>
-                                    <span className="font-bold">({count})</span>
-                                </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p className="font-medium">Constituencies:</p>
-                                    <ul className="list-disc pl-5">
-                                        {constituencies
-                                            ?.filter(c => {
-                                                let leaning = c.politicalLeaning || 'tossup';
-                                                const isSpecial = c.name === 'Castries North' || c.name === 'Castries Central';
-                                                if (isSpecial) {
-                                                    if (leaning === 'solid-slp') leaning = 'solid-ind';
-                                                    if (leaning === 'lean-slp') leaning = 'lean-ind';
-                                                }
-                                                return leaning === option.value;
-                                            })
-                                            .map(c => <li key={c.id}>{c.name}</li>)
-                                        }
-                                    </ul>
-                                </TooltipContent>
-                                </Tooltip>
-                                </TooltipProvider>
-                            )
-                        })}
-                    </div>
-                </CardContent>
-            </Card>
-
+       <div className="mt-12">
+        <h2 className="text-2xl font-bold tracking-tight font-headline text-center mb-6">
+            LucianVotes Election Forecast
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="lg:col-span-1">
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline">
-                        Build Your Election Map
-                    </CardTitle>
+                    <CardTitle>Interactive Map</CardTitle>
+                    <CardDescription>Click on a constituency to learn more.</CardDescription>
                 </CardHeader>
-                <CardContent className="pt-6">
-                    <Button asChild className="w-full bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
-                        <Link href="/make-your-own">
-                            Create and share your own election prediction.
-                        </Link>
-                    </Button>
+                <CardContent className="p-0.5">
+                    <InteractiveSvgMap 
+                        constituencies={constituencies ?? []} 
+                        selectedConstituencyId={selectedConstituencyId}
+                        onConstituencyClick={setSelectedConstituencyId}
+                        election={currentElection}
+                        hideLogos={true}
+                        popoverVariant="dashboard"
+                    />
                 </CardContent>
             </Card>
+            </div>
+            <div className="space-y-8">
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle className="font-headline">Seat Count</CardTitle>
+                                <CardDescription>Current political leaning of the 17 constituencies.</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="flex flex-col items-center">
+                        <ChartContainer config={chartConfig} className="h-40 w-full relative">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <ChartTooltip 
+                                        cursor={false}
+                                        content={<ChartTooltipContent hideLabel />}
+                                    />
+                                    <Pie 
+                                        data={chartData} 
+                                        dataKey="value"
+                                        nameKey="name"
+                                        cx="50%" 
+                                        cy="100%" 
+                                        startAngle={180} 
+                                        endAngle={0} 
+                                        innerRadius="60%"
+                                        outerRadius="100%"
+                                        paddingAngle={2}
+                                    >
+                                        {chartData.map((entry) => (
+                                            <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                                        ))}
+                                    </Pie>
+                                </PieChart>
+                            </ResponsiveContainer>
+                            <div
+                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full w-px h-[calc(50%+4px)] bg-black"
+                                style={{ top: '100%', transform: 'translateX(-50%) translateY(-100%)' }}
+                            ></div>
+                            <div className="absolute bottom-[-10px] left-1/2 -translate-x-1/2 text-xs font-semibold text-black bg-background px-1">
+                                9 to win
+                            </div>
+                        </ChartContainer>
+                        <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-xs">
+                            {politicalLeaningOptions
+                            .filter(opt => chartData.some(d => d.name === opt.label))
+                            .sort((a, b) => {
+                                const order = ['Solid SLP', 'Lean SLP', 'Solid IND', 'Lean IND', 'Tossup', 'Lean UWP', 'Solid UWP'];
+                                return order.indexOf(a.label) - order.indexOf(b.label);
+                            })
+                            .map((option) => {
+                                const count = chartData.find(d => d.name === option.label)?.value || 0;
+                                return (
+                                    <TooltipProvider key={option.value}>
+                                    <Tooltip>
+                                    <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-1.5 cursor-default">
+                                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: option.color }}></span>
+                                        <span>{option.label}</span>
+                                        <span className="font-bold">({count})</span>
+                                    </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p className="font-medium">Constituencies:</p>
+                                        <ul className="list-disc pl-5">
+                                            {constituencies
+                                                ?.filter(c => {
+                                                    let leaning = c.politicalLeaning || 'tossup';
+                                                    const isSpecial = c.name === 'Castries North' || c.name === 'Castries Central';
+                                                    if (isSpecial) {
+                                                        if (leaning === 'solid-slp') leaning = 'solid-ind';
+                                                        if (leaning === 'lean-slp') leaning = 'lean-ind';
+                                                    }
+                                                    return leaning === option.value;
+                                                })
+                                                .map(c => <li key={c.id}>{c.name}</li>)
+                                            }
+                                        </ul>
+                                    </TooltipContent>
+                                    </Tooltip>
+                                    </TooltipProvider>
+                                )
+                            })}
+                        </div>
+                    </CardContent>
+                </Card>
 
-             <Card>
-                <CardHeader>
-                    <div>
-                        <CardTitle>Events</CardTitle>
-                    </div>
-                    <div className="flex w-full items-center gap-1 p-1 bg-muted rounded-md mt-4">
-                        <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')} className="flex-1">Upcoming</Button>
-                        <Button size="sm" variant={allEventsViewMode === 'past' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('past')} className="flex-1">Past</Button>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                    {loadingEvents || loadingParties ? <p>Loading events...</p> : visibleAllEvents.length > 0 ? (
-                        visibleAllEvents.map((event) => (
-                        <EventCard key={event.id} event={event} party={getParty(event.partyId)} />
-                        ))
-                    ) : (
-                        <p className="text-center text-muted-foreground py-8">No {allEventsViewMode} events found.</p>
-                    )}
-                    </div>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2">
-                        <Vote /> Voter Information
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div>
-                        <h3 className="font-semibold">Key Dates & Deadlines</h3>
-                        <ul className="list-disc list-inside text-muted-foreground">
-                            <li>Voter Registration Deadline: TBD</li>
-                            <li>Advance Polling Day: TBD</li>
-                            <li>General Election Day: July 26, 2026 (Tentative)</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h3 className="font-semibold">Voter Requirements</h3>
-                        <p className="text-muted-foreground">To be eligible to vote, you must be a citizen of St. Lucia, 18 years of age or older, and registered to vote in your constituency.</p>
-                    </div>
-                </CardContent>
-            </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline">
+                            Build Your Election Map
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                        <Button asChild className="w-full bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
+                            <Link href="/make-your-own">
+                                Create and share your own election prediction.
+                            </Link>
+                        </Button>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <div>
+                            <CardTitle>Events</CardTitle>
+                        </div>
+                        <div className="flex w-full items-center gap-1 p-1 bg-muted rounded-md mt-4">
+                            <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')} className="flex-1">Upcoming</Button>
+                            <Button size="sm" variant={allEventsViewMode === 'past' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('past')} className="flex-1">Past</Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                        {loadingEvents || loadingParties ? <p>Loading events...</p> : visibleAllEvents.length > 0 ? (
+                            visibleAllEvents.map((event) => (
+                            <EventCard key={event.id} event={event} party={getParty(event.partyId)} />
+                            ))
+                        ) : (
+                            <p className="text-center text-muted-foreground py-8">No {allEventsViewMode} events found.</p>
+                        )}
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2">
+                            <Vote /> Voter Information
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div>
+                            <h3 className="font-semibold">Key Dates & Deadlines</h3>
+                            <ul className="list-disc list-inside text-muted-foreground">
+                                <li>Voter Registration Deadline: TBD</li>
+                                <li>Advance Polling Day: TBD</li>
+                                <li>General Election Day: July 26, 2026 (Tentative)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 className="font-semibold">Voter Requirements</h3>
+                            <p className="text-muted-foreground">To be eligible to vote, you must be a citizen of St. Lucia, 18 years of age or older, and registered to vote in your constituency.</p>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
       </div>
       
