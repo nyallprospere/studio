@@ -319,7 +319,7 @@ export default function Home() {
                                             <span>{c.name}</span>
                                             {c.aiForecast && c.aiForecastParty && (
                                                 <span className="text-xs font-mono p-1 rounded-md bg-muted">
-                                                    AI Forecast: <span className={cn('font-bold', getAiForecastPartyColor(c.aiForecastParty))}>
+                                                    <span className={cn('font-bold', getAiForecastPartyColor(c.aiForecastParty))}>
                                                         {c.aiForecastParty.toUpperCase()} {c.aiForecast}%
                                                     </span>
                                                 </span>
