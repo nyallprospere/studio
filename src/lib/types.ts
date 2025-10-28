@@ -70,7 +70,7 @@ export interface Constituency {
   slpDashboardPopoverText?: string;
   uwpDashboardPopoverText?: string;
   volatilityIndex?: number;
-  aiForecast?: 'slp' | 'uwp' | 'tossup';
+  aiForecast?: number;
   aiConfidence?: 'High' | 'Medium' | 'Low';
 }
 

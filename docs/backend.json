@@ -368,9 +368,8 @@
           "description": "A measure of how much the vote has swung in past elections."
         },
         "aiForecast": {
-          "type": "string",
-          "description": "The AI-powered forecast for the constituency.",
-          "enum": ["slp", "uwp", "tossup"]
+          "type": "number",
+          "description": "The AI-powered forecast for the constituency as a percentage."
         },
         "aiConfidence": {
           "type": "string",

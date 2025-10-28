@@ -50,7 +50,6 @@ const politicalLeaningOptions = [
 ];
 
 const aiConfidenceOptions = ['High', 'Medium', 'Low'];
-const aiForecastOptions = ['slp', 'uwp', 'tossup'];
 
 
 export default function AdminConstituenciesPage() {
@@ -152,8 +151,8 @@ export default function AdminConstituenciesPage() {
                         const uwp = Number(value);
                         updatedConstituency.predictedUwpPercentage = uwp;
                         updatedConstituency.predictedSlpPercentage = 100 - uwp;
-                    } else if (field === 'volatilityIndex') {
-                        updatedConstituency.volatilityIndex = Number(value);
+                    } else if (field === 'volatilityIndex' || field === 'aiForecast') {
+                        (updatedConstituency as any)[field] = Number(value);
                     }
                     else {
                         // This handles slpDashboardPopoverText and uwpDashboardPopoverText directly
@@ -403,19 +402,14 @@ export default function AdminConstituenciesPage() {
                                                 />
                                             </TableCell>
                                             <TableCell>
-                                                <Select
-                                                    value={c.aiForecast}
-                                                    onValueChange={(value) => handleFieldChange(c.id, 'aiForecast', value)}
-                                                >
-                                                    <SelectTrigger className="w-28">
-                                                        <SelectValue placeholder="Forecast" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {aiForecastOptions.map(opt => (
-                                                            <SelectItem key={opt} value={opt}>{opt.toUpperCase()}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                                                <Input
+                                                    type="number"
+                                                    value={c.aiForecast || 0}
+                                                    onChange={(e) => handleFieldChange(c.id, 'aiForecast', e.target.value)}
+                                                    className="w-24"
+                                                    min="0"
+                                                    max="100"
+                                                />
                                             </TableCell>
                                             <TableCell>
                                                 <Select
