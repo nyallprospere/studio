@@ -174,6 +174,89 @@ const NationalVoteTrend = ({ elections, results, parties, constituencies, select
   );
 };
 
+const NationalSwingTrend = ({ elections, results, parties }: { elections: Election[], results: ElectionResult[], parties: Party[] }) => {
+    const chartData = useMemo(() => {
+        if (!elections.length || !results.length || !parties.length) return [];
+
+        const sortedElections = elections
+            .filter(e => e.year < 2026)
+            .sort((a, b) => a.year - b.year);
+
+        const slp = parties.find(p => p.acronym === 'SLP');
+        const uwp = parties.find(p => p.acronym === 'UWP');
+
+        if (!slp || !uwp) return [];
+
+        const nationalPercentages: { [year: number]: { slp: number, uwp: number } } = {};
+
+        sortedElections.forEach(election => {
+            const electionResults = results.filter(r => r.electionId === election.id);
+            const totalVotes = electionResults.reduce((sum, r) => sum + r.totalVotes, 0);
+            if (totalVotes === 0) return;
+            const slpVotes = electionResults.reduce((sum, r) => sum + r.slpVotes, 0);
+            const uwpVotes = electionResults.reduce((sum, r) => sum + r.uwpVotes, 0);
+            nationalPercentages[election.year] = {
+                slp: (slpVotes / totalVotes) * 100,
+                uwp: (uwpVotes / totalVotes) * 100
+            };
+        });
+
+        const swingData = [];
+        for (let i = 1; i < sortedElections.length; i++) {
+            const currentYear = sortedElections[i].year;
+            const prevYear = sortedElections[i - 1].year;
+
+            if (nationalPercentages[currentYear] && nationalPercentages[prevYear]) {
+                const slpSwing = nationalPercentages[currentYear].slp - nationalPercentages[prevYear].slp;
+                const uwpSwing = nationalPercentages[currentYear].uwp - nationalPercentages[prevYear].uwp;
+                swingData.push({
+                    year: currentYear,
+                    [slp.acronym]: parseFloat(slpSwing.toFixed(1)),
+                    [uwp.acronym]: parseFloat(uwpSwing.toFixed(1)),
+                });
+            }
+        }
+        return swingData;
+    }, [elections, results, parties]);
+
+    const chartConfig = useMemo(() => {
+        const config: ChartConfig = {};
+        if (parties) {
+            const slp = parties.find(p => p.acronym === 'SLP');
+            const uwp = parties.find(p => p.acronym === 'UWP');
+            if (slp) config[slp.acronym] = { label: 'SLP Swing', color: slp.color };
+            if (uwp) config[uwp.acronym] = { label: 'UWP Swing', color: uwp.color };
+        }
+        return config;
+    }, [parties]);
+    
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>National Popular Vote Swing</CardTitle>
+                <CardDescription>Percentage point change in national popular vote from the previous election.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ChartContainer config={chartConfig} className="h-[400px] w-full">
+                    <ResponsiveContainer>
+                        <LineChart data={chartData}>
+                            <CartesianGrid vertical={false} />
+                            <XAxis dataKey="year" tickLine={false} axisLine={false} tickMargin={8} />
+                            <YAxis tickFormatter={(value) => `${value}%`} />
+                            <Tooltip content={<ChartTooltipContent indicator="dot" />} />
+                            <Legend />
+                            <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" />
+                            {Object.keys(chartConfig).map(key => (
+                                <Line key={key} dataKey={key} type="monotone" stroke={`var(--color-${key})`} strokeWidth={2} dot={false} />
+                            ))}
+                        </LineChart>
+                    </ResponsiveContainer>
+                </ChartContainer>
+            </CardContent>
+        </Card>
+    );
+};
+
 const VoterTurnoutTrend = ({ elections, results, constituencies, selectedConstituencyId, setSelectedConstituencyId }: { elections: Election[], results: ElectionResult[], constituencies: Constituency[], selectedConstituencyId: string, setSelectedConstituencyId: (id: string) => void }) => {
   const chartData = useMemo(() => {
     if (!elections.length || !results.length) return [];
@@ -572,6 +655,7 @@ export default function HistoricalTrendsPage() {
             selectedConstituencyId={selectedConstituencyId}
             setSelectedConstituencyId={setSelectedConstituencyId}
           />
+           <NationalSwingTrend elections={elections || []} results={results || []} parties={parties || []} />
           <VoterTurnoutTrend 
             elections={elections || []} 
             results={results || []}
@@ -600,5 +684,7 @@ export default function HistoricalTrendsPage() {
     </div>
   );
 }
+
+    
 
     
