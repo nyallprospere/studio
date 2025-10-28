@@ -334,8 +334,6 @@ export default function AdminConstituenciesPage() {
                                         <TableHead>Political Leaning</TableHead>
                                         <TableHead>Pred. SLP %</TableHead>
                                         <TableHead>Pred. UWP %</TableHead>
-                                        <TableHead>SLP Popover Text</TableHead>
-                                        <TableHead>UWP Popover Text</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -383,22 +381,6 @@ export default function AdminConstituenciesPage() {
                                                     className="w-24"
                                                     min="0"
                                                     max="100"
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Textarea
-                                                    value={c.slpDashboardPopoverText || ''}
-                                                    onChange={(e) => handleFieldChange(c.id, 'slpDashboardPopoverText', e.target.value)}
-                                                    className="w-48"
-                                                    rows={1}
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Textarea
-                                                    value={c.uwpDashboardPopoverText || ''}
-                                                    onChange={(e) => handleFieldChange(c.id, 'uwpDashboardPopoverText', e.target.value)}
-                                                    className="w-48"
-                                                    rows={1}
                                                 />
                                             </TableCell>
                                         </TableRow>
