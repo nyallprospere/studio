@@ -34,6 +34,7 @@ import { MailingListPopup } from '@/components/mailing-list-popup';
 import { NewsCard } from '@/components/news-card';
 import { subDays } from 'date-fns';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 const adminSections = [
     { id: 'admin-elections', title: 'Manage Elections', href: '/admin/elections', icon: Vote },
@@ -339,55 +340,11 @@ export default function Home() {
                         </Button>
                     </CardContent>
                 </Card>
-
-                <Card>
-                    <CardHeader>
-                        <div>
-                            <CardTitle>Events</CardTitle>
-                        </div>
-                        <div className="flex w-full items-center gap-1 p-1 bg-muted rounded-md mt-4">
-                            <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')} className="flex-1">Upcoming</Button>
-                            <Button size="sm" variant={allEventsViewMode === 'past' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('past')} className="flex-1">Past</Button>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                        {loadingEvents || loadingParties ? <p>Loading events...</p> : visibleAllEvents.length > 0 ? (
-                            visibleAllEvents.map((event) => (
-                            <EventCard key={event.id} event={event} party={getParty(event.partyId)} />
-                            ))
-                        ) : (
-                            <p className="text-center text-muted-foreground py-8">No {allEventsViewMode} events found.</p>
-                        )}
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline flex items-center gap-2">
-                            <Vote /> Voter Information
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div>
-                            <h3 className="font-semibold">Key Dates & Deadlines</h3>
-                            <ul className="list-disc list-inside text-muted-foreground">
-                                <li>Voter Registration Deadline: TBD</li>
-                                <li>Advance Polling Day: TBD</li>
-                                <li>General Election Day: July 26, 2026 (Tentative)</li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h3 className="font-semibold">Voter Requirements</h3>
-                            <p className="text-muted-foreground">To be eligible to vote, you must be a citizen of St. Lucia, 18 years of age or older, and registered to vote in your constituency.</p>
-                        </div>
-                    </CardContent>
-                </Card>
             </div>
         </div>
       </div>
       
-      <div className="mt-12">
+       <div className="mt-12">
         <Card>
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2">
@@ -411,6 +368,52 @@ export default function Home() {
                     <Link href="/election-news">View All News</Link>
                 </Button>
            </CardFooter>
+        </Card>
+      </div>
+
+       <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
+         <Card>
+            <CardHeader>
+                <div>
+                    <CardTitle>Events</CardTitle>
+                </div>
+                <div className="flex w-full items-center gap-1 p-1 bg-muted rounded-md mt-4">
+                    <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')} className="flex-1">Upcoming</Button>
+                    <Button size="sm" variant={allEventsViewMode === 'past' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('past')} className="flex-1">Past</Button>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-4">
+                {loadingEvents || loadingParties ? <p>Loading events...</p> : visibleAllEvents.length > 0 ? (
+                    visibleAllEvents.map((event) => (
+                    <EventCard key={event.id} event={event} party={getParty(event.partyId)} />
+                    ))
+                ) : (
+                    <p className="text-center text-muted-foreground py-8">No {allEventsViewMode} events found.</p>
+                )}
+                </div>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2">
+                    <Vote /> Voter Information
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div>
+                    <h3 className="font-semibold">Key Dates & Deadlines</h3>
+                    <ul className="list-disc list-inside text-muted-foreground">
+                        <li>Voter Registration Deadline: TBD</li>
+                        <li>Advance Polling Day: TBD</li>
+                        <li>General Election Day: July 26, 2026 (Tentative)</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 className="font-semibold">Voter Requirements</h3>
+                    <p className="text-muted-foreground">To be eligible to vote, you must be a citizen of St. Lucia, 18 years of age or older, and registered to vote in your constituency.</p>
+                </div>
+            </CardContent>
         </Card>
       </div>
 
@@ -441,5 +444,6 @@ export default function Home() {
     </div>
   );
 }
+
 
 
