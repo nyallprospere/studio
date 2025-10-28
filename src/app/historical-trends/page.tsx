@@ -251,10 +251,10 @@ const VoterTurnoutTrend = ({ elections, results, constituencies, selectedConstit
   );
 };
 
-const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties }: { elections: Election[], results: ElectionResult[], constituencies: Constituency[], parties: Party[] }) => {
+const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties, selectedConstituencyId, setSelectedConstituencyId }: { elections: Election[], results: ElectionResult[], constituencies: Constituency[], parties: Party[], selectedConstituencyId: string, setSelectedConstituencyId: (id: string) => void }) => {
   const [selectedElectionId, setSelectedElectionId] = useState<string>('all');
   
-  const sortedElections = useMemo(() => elections.filter(e => e.year < 2026 && e.year > 1979).sort((a, b) => b.year - a.year), [elections]);
+  const sortedElections = useMemo(() => elections.filter(e => e.year < 2026 && e.year > 1979 && e.name !== '1987 General Election (April 6)').sort((a, b) => b.year - a.year), [elections]);
 
   const { chartData, nationalSwing } = useMemo(() => {
     if (!elections.length || !results.length || !constituencies.length || !parties.length) return { chartData: [], nationalSwing: 0 };
@@ -286,7 +286,7 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
 
         const nationalSwing = nationalCurrentSLPPercent - nationalPrevSLPPercent;
 
-        const data = constituencies.map(con => {
+        let data = constituencies.map(con => {
             const currentConResult = currentResults.find(r => r.constituencyId === con.id);
             const prevConResult = prevResults.find(r => r.constituencyId === con.id);
             if (!currentConResult || !prevConResult) return null;
@@ -298,11 +298,16 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
 
             return {
               name: con.name,
+              constituencyId: con.id,
               y: constituencySwing,
               x: constituencySwing - nationalSwing,
               year: currentElection.year,
             };
         }).filter((d): d is NonNullable<typeof d> => d !== null);
+
+        if (selectedConstituencyId !== 'national') {
+            data = data.filter(d => d.constituencyId === selectedConstituencyId);
+        }
 
         return { data, nationalSwing };
     };
@@ -315,7 +320,7 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
     const { data, nationalSwing } = dataByElection(selectedElectionId);
     return { chartData: data, nationalSwing };
 
-  }, [elections, results, constituencies, parties, selectedElectionId, sortedElections]);
+  }, [elections, results, constituencies, parties, selectedElectionId, sortedElections, selectedConstituencyId]);
 
   const chartConfig: ChartConfig = {
     swing: { label: "Swing (%)", color: "hsl(var(--primary))" },
@@ -343,15 +348,28 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
               <CardTitle>Constituency Swing Quadrant Analysis</CardTitle>
               <CardDescription>How each constituency's SLP and UWP vote swing compares to the national trend.</CardDescription>
             </div>
-            <Select value={selectedElectionId} onValueChange={setSelectedElectionId}>
-                <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Select Election" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">All Elections</SelectItem>
-                    {sortedElections.map(e => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
-                </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+                <Select value={selectedElectionId} onValueChange={setSelectedElectionId}>
+                    <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Select Election" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Elections</SelectItem>
+                        {sortedElections.map(e => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                 <Select value={selectedConstituencyId} onValueChange={setSelectedConstituencyId}>
+                    <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Select Constituency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="national">National</SelectItem>
+                        {constituencies.sort((a,b) => a.name.localeCompare(b.name)).map(c => (
+                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -388,7 +406,7 @@ const SwingAnalysisScatterPlot = ({ elections, results, constituencies, parties 
 const SwingVsTurnoutQuadrant = ({ elections, results, constituencies, parties, selectedConstituencyId, setSelectedConstituencyId }: { elections: Election[], results: ElectionResult[], constituencies: Constituency[], parties: Party[], selectedConstituencyId: string, setSelectedConstituencyId: (id: string) => void }) => {
     const [selectedElectionId, setSelectedElectionId] = useState<string>('all');
     
-    const sortedElections = useMemo(() => elections.filter(e => e.year < 2026 && e.year > 1979).sort((a, b) => b.year - a.year), [elections]);
+    const sortedElections = useMemo(() => elections.filter(e => e.year < 2026 && e.year > 1979 && e.name !== '1987 General Election (April 6)').sort((a, b) => b.year - a.year), [elections]);
   
     const chartData = useMemo(() => {
         if (!elections.length || !results.length || !constituencies.length || !parties.length) return [];
@@ -566,6 +584,8 @@ export default function HistoricalTrendsPage() {
             results={results || []}
             constituencies={constituencies || []}
             parties={parties || []}
+            selectedConstituencyId={selectedConstituencyId}
+            setSelectedConstituencyId={setSelectedConstituencyId}
           />
           <SwingVsTurnoutQuadrant
             elections={elections || []}
