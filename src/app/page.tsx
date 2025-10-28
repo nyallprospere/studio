@@ -223,6 +223,12 @@ export default function Home() {
                         </div>
                     </CardHeader>
                     <CardContent className="flex flex-col items-center">
+                        <div className="text-center mb-4 text-sm font-medium">
+                            Expected Results: {' '}
+                            <span className="font-bold" style={{color: 'hsl(var(--chart-5))'}}>SLP - {seatCounts.slpTotal}</span> | {' '}
+                            <span className="font-bold" style={{color: 'hsl(var(--chart-1))'}}>UWP - {seatCounts.uwpTotal}</span> | {' '}
+                            <span className="font-bold" style={{color: 'hsl(221, 83%, 53%)'}}>IND - {seatCounts.indTotal}</span>
+                        </div>
                         <ChartContainer config={chartConfig} className="h-40 w-full relative">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
