@@ -402,6 +402,7 @@ export default function AdminConstituenciesPage() {
                                                     value={c.volatilityIndex || 0}
                                                     onChange={(e) => handleFieldChange(c.id, 'volatilityIndex', e.target.value)}
                                                     className="w-24"
+                                                    step="1"
                                                     min="0"
                                                     max="100"
                                                 />
