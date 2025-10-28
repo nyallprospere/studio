@@ -78,6 +78,7 @@ const prompt = ai.definePrompt({
       - **Incumbency Advantage/Disadvantage**: There is a general trend of declining support for incumbents. The negative effect of being the incumbent *party* in government is significantly stronger than that of an individual incumbent candidate. Factor this in accordingly.
       - **Comeback Candidates**: Note when a former incumbent is running to reclaim their seat and assess their chances based on past performance and current context.
       - **Party Leader Impact**: The public perception of party leaders is very influential. Specifically, consider that a significant portion of the St. Lucian electorate holds a negative opinion of Allen Chastanet, which generally has a detrimental effect on the UWP's performance.
+      - **Candidate Specific Factors (Micoud North Case Study)**: For Micoud North, it's known that the UWP candidate in 2021 was highly unpopular. The current UWP candidate, Jeremiah, has much higher approval ratings. When analyzing the 2021 swing for this constituency, you must account for this anomaly. A significant portion of the negative swing against the UWP was due to the specific candidate, not just a party-level trend. Therefore, you should moderate the expected swing *against* the UWP for the upcoming election, as the new candidate is not burdened by the same negative perception.
 
   5.  **Synthesize and Predict**:
       - Based on all the factors above (Volatility, Regional Trends, Swing Analysis, Political Dynamics, and Candidate Info), formulate your prediction.
@@ -101,3 +102,4 @@ const analyzeConstituencyOutcomeFlow = ai.defineFlow(
     return output!;
   }
 );
+
