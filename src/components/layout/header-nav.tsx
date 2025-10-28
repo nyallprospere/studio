@@ -12,13 +12,22 @@ import {
   MenubarSeparator,
   MenubarTrigger,
 } from '@/components/ui/menubar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useUser, useAuth, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { collection, query, orderBy, where } from 'firebase/firestore';
 import type { Election, Party, PartyLogo, Candidate } from '@/lib/types';
-import { Vote, ChevronDown, LogIn, LogOut, UserPlus, Star } from 'lucide-react';
+import { Vote, ChevronDown, LogIn, LogOut, UserPlus, Star, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SlpLogo, UwpLogo } from '../icons';
 import { Separator } from '../ui/separator';
@@ -91,26 +100,39 @@ export function HeaderNav() {
     if (isUserLoading) return null;
     if (user) {
       return (
-        <div className="flex items-center gap-4">
-          <Menubar className="border-none shadow-none bg-transparent p-0">
-              <MenubarMenu>
-                  <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80">
-                      Admin <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
-                  </MenubarTrigger>
-                  <MenubarContent>
-                      {adminLinks.map(link => (
-                          <MenubarItem key={link.href} asChild>
-                              <Link href={link.href}>{link.label}</Link>
-                          </MenubarItem>
-                      ))}
-                  </MenubarContent>
-              </MenubarMenu>
-          </Menubar>
-          <Button onClick={handleLogout} variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </Button>
-        </div>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                         <AvatarFallback>
+                            <User className="h-5 w-5" />
+                        </AvatarFallback>
+                    </Avatar>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">Admin</p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                            {user.email}
+                        </p>
+                    </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Admin Pages</DropdownMenuLabel>
+                {adminLinks.map(link => (
+                    <DropdownMenuItem key={link.href} asChild>
+                        <Link href={link.href}>{link.label}</Link>
+                    </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
       );
     }
     return (
