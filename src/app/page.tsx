@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -176,6 +175,13 @@ export default function Home() {
       .slice(0, 3);
   }, [news]);
 
+  const getAiForecastPartyColor = (party?: 'slp' | 'uwp' | 'ind') => {
+    if (party === 'slp') return 'text-red-500';
+    if (party === 'uwp') return 'text-yellow-500';
+    if (party === 'ind') return 'text-blue-500';
+    return 'text-muted-foreground';
+  };
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -311,10 +317,10 @@ export default function Home() {
                                     {tossupConstituencies.map(c => (
                                         <li key={c.id} className="flex justify-between items-center text-left">
                                             <span>{c.name}</span>
-                                            {c.aiForecast && (
+                                            {c.aiForecast && c.aiForecastParty && (
                                                 <span className="text-xs font-mono p-1 rounded-md bg-muted">
-                                                    AI Forecast: <span className={cn('font-bold', (c.aiForecast || 50) > 50 ? 'text-red-500' : 'text-yellow-500')}>
-                                                        {(c.aiForecast || 50) > 50 ? `SLP ${(c.aiForecast)}%` : `UWP ${100 - (c.aiForecast || 50)}%`}
+                                                    AI Forecast: <span className={cn('font-bold', getAiForecastPartyColor(c.aiForecastParty))}>
+                                                        {c.aiForecastParty.toUpperCase()} {c.aiForecast}%
                                                     </span>
                                                 </span>
                                             )}
@@ -444,6 +450,3 @@ export default function Home() {
     </div>
   );
 }
-
-
-
