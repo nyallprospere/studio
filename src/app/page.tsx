@@ -190,7 +190,7 @@ export default function Home() {
       </div>
       
        <div className="mt-12">
-        <h2 className="text-2xl font-bold tracking-tight font-headline text-center mb-6">
+        <h2 className="text-3xl md:text-4xl font-bold tracking-tight font-headline text-center mb-6 text-primary">
             LucianVotes Election Forecast
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -242,6 +242,27 @@ export default function Home() {
                                         outerRadius="100%"
                                         paddingAngle={2}
                                     >
+                                        <Label
+                                            content={({ viewBox }) => {
+                                                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                                                    return (
+                                                        <text
+                                                            x={viewBox.cx}
+                                                            y={viewBox.cy}
+                                                            textAnchor="middle"
+                                                            dominantBaseline="middle"
+                                                        >
+                                                            <tspan
+                                                                x={viewBox.cx}
+                                                                y={viewBox.cy}
+                                                                className="text-3xl font-bold"
+                                                            >
+                                                            </tspan>
+                                                        </text>
+                                                    )
+                                                }
+                                            }}
+                                            />
                                         {chartData.map((entry) => (
                                             <Cell key={`cell-${entry.name}`} fill={entry.fill} />
                                         ))}
