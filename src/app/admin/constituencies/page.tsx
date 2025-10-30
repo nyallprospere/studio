@@ -344,7 +344,6 @@ export default function AdminConstituenciesPage() {
                                         <TableHead>Political Leaning</TableHead>
                                         <TableHead>Pred. SLP %</TableHead>
                                         <TableHead>Pred. UWP %</TableHead>
-                                        <TableHead>Volatility Index</TableHead>
                                         <TableHead>AI Forecast</TableHead>
                                         <TableHead>AI Confidence</TableHead>
                                     </TableRow>
@@ -392,17 +391,6 @@ export default function AdminConstituenciesPage() {
                                                     value={c.predictedUwpPercentage || 0}
                                                     onChange={(e) => handleFieldChange(c.id, 'predictedUwpPercentage', e.target.value)}
                                                     className="w-24"
-                                                    min="0"
-                                                    max="100"
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Input
-                                                    type="number"
-                                                    value={c.volatilityIndex || 0}
-                                                    onChange={(e) => handleFieldChange(c.id, 'volatilityIndex', e.target.value)}
-                                                    className="w-24"
-                                                    step="1"
                                                     min="0"
                                                     max="100"
                                                 />
