@@ -279,6 +279,9 @@ export function HeaderNav() {
             </MenubarTrigger>
             <MenubarContent>
               <MenubarItem asChild>
+                <Link href="/our-projections">Our Projections</Link>
+              </MenubarItem>
+              <MenubarItem asChild>
                 <Link href="/historical-trends">Historical Trends</Link>
               </MenubarItem>
             </MenubarContent>
