@@ -155,7 +155,7 @@ export default function AdminConstituenciesPage() {
                         const uwp = Number(value);
                         updatedConstituency.predictedUwpPercentage = uwp;
                         updatedConstituency.predictedSlpPercentage = 100 - uwp;
-                    } else if (field === 'volatilityIndex' || field === 'aiForecast') {
+                    } else if (field === 'aiForecast' || field === 'volatilityIndex') {
                         (updatedConstituency as any)[field] = Number(value);
                     }
                     else {
@@ -272,6 +272,26 @@ export default function AdminConstituenciesPage() {
         }
       };
 
+      const calculatePercentages = (forecast: number, party: 'slp' | 'uwp' | 'ind' | undefined) => {
+        if (party === 'ind') {
+            return { slp: 0, uwp: 0 };
+        }
+
+        const baseline = 50;
+        let slpPercent = baseline;
+        let uwpPercent = baseline;
+
+        if (party === 'slp') {
+            slpPercent = baseline + forecast / 2;
+            uwpPercent = 100 - slpPercent;
+        } else if (party === 'uwp') {
+            uwpPercent = baseline + forecast / 2;
+            slpPercent = 100 - uwpPercent;
+        }
+
+        return { slp: slpPercent, uwp: uwpPercent };
+    };
+
     return (
         <div className="container mx-auto px-4 py-8">
             <div className="flex justify-between items-start mb-8">
@@ -349,7 +369,9 @@ export default function AdminConstituenciesPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {editableConstituencies.sort((a,b) => a.name.localeCompare(b.name)).map(c => (
+                                    {editableConstituencies.sort((a,b) => a.name.localeCompare(b.name)).map(c => {
+                                        const { slp: slpPercent, uwp: uwpPercent } = calculatePercentages(c.aiForecast, c.aiForecastParty);
+                                        return (
                                         <TableRow key={c.id} className={c.id === selectedConstituencyId ? 'bg-muted' : ''}>
                                             <TableCell className="font-medium whitespace-nowrap">{c.name}</TableCell>
                                             <TableCell>
@@ -395,8 +417,8 @@ export default function AdminConstituenciesPage() {
                                                     max="100"
                                                 />
                                             </TableCell>
-                                            <TableCell>{c.predictedSlpPercentage || 0}%</TableCell>
-                                            <TableCell>{c.predictedUwpPercentage || 0}%</TableCell>
+                                            <TableCell>{slpPercent.toFixed(1)}%</TableCell>
+                                            <TableCell>{uwpPercent.toFixed(1)}%</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <Select
@@ -431,7 +453,7 @@ export default function AdminConstituenciesPage() {
                                                 </div>
                                             </TableCell>
                                         </TableRow>
-                                    ))}
+                                    )})}
                                 </TableBody>
                             </Table>
                             </ScrollArea>
