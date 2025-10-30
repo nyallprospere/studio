@@ -329,7 +329,7 @@ export default function Home() {
                                         </li>
                                     ))}
                                 </ul>
-                                 <div className="text-center mt-4 text-lg font-medium">
+                                <div className="text-center mt-4 text-lg font-medium">
                                     Forecasted Results (No Tossups):{' '}
                                     <span className="font-bold" style={{color: 'hsl(var(--chart-5))'}}>SLP - {aiForecastSeatCounts['slp'] || 0}</span> |{' '}
                                     <span className="font-bold" style={{color: 'hsl(var(--chart-1))'}}>UWP - {aiForecastSeatCounts['uwp'] || 0}</span> |{' '}
@@ -419,6 +419,7 @@ export default function Home() {
                 <div>
                     <h3 className="font-semibold">Key Dates & Deadlines</h3>
                     <ul className="list-disc list-inside text-muted-foreground">
+                        <li>Nomination Day: TBD</li>
                         <li>Voter Registration Deadline: TBD</li>
                         <li>General Election Day: July 26, 2026 (Tentative)</li>
                     </ul>
