@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import type { Constituency, ConstituencyProjection, Party } from '@/lib/types';
+import type { Constituency, ConstituencyProjection, Party, Region } from '@/lib/types';
 import { collection, query, orderBy, where, Timestamp } from 'firebase/firestore';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -24,6 +24,7 @@ import type { ChartConfig } from '@/components/ui/chart';
 
 const ProjectionTrendChart = () => {
     const { firestore } = useFirebase();
+    const [selectedRegionId, setSelectedRegionId] = useState('all');
     const [selectedConstituencyId, setSelectedConstituencyId] = useState('national');
     const [date, setDate] = useState<DateRange | undefined>();
     const [datePreset, setDatePreset] = useState('all');
@@ -45,6 +46,8 @@ const ProjectionTrendChart = () => {
     const { data: projections, isLoading: loadingProjections } = useCollection<ConstituencyProjection>(projectionsQuery);
     const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]));
     const { data: parties, isLoading: loadingParties } = useCollection<Party>(useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]));
+    const { data: regions, isLoading: loadingRegions } = useCollection<Region>(useMemoFirebase(() => firestore ? collection(firestore, 'regions') : null, [firestore]));
+
 
     const handleDatePresetChange = (preset: string) => {
         setDatePreset(preset);
@@ -60,32 +63,44 @@ const ProjectionTrendChart = () => {
     };
     
     const chartData = useMemo(() => {
-        if (!projections) return [];
-        return projections.map(proj => {
-            let slpTotal = 0, uwpTotal = 0, count = 0;
+        if (!projections || !regions) return [];
 
-            const targetConstituencies = selectedConstituencyId === 'national' 
-                ? proj.constituencies 
-                : proj.constituencies.filter(c => c.id === selectedConstituencyId);
+        return projections.map(proj => {
+            let targetConstituencies = proj.constituencies;
+
+            if (selectedRegionId !== 'all') {
+                const region = regions.find(r => r.id === selectedRegionId);
+                const regionConstituencyIds = new Set(region?.constituencyIds);
+                targetConstituencies = targetConstituencies.filter(c => regionConstituencyIds.has(c.id));
+            }
+
+            if (selectedConstituencyId !== 'national') {
+                targetConstituencies = targetConstituencies.filter(c => c.id === selectedConstituencyId);
+            }
+
+            let weightedSlpTotal = 0;
+            let weightedUwpTotal = 0;
+            let totalVoters = 0;
 
             targetConstituencies.forEach(c => {
-                const isSpecial = c.name === 'Castries North' || c.name === 'Castries Central';
-                if (!isSpecial) {
+                const voters = c.demographics?.registeredVoters || 0;
+                if (voters > 0) {
                     const { slp, uwp } = calculatePercentages(c.aiForecast, c.aiForecastParty);
                     if (slp !== null && uwp !== null) {
-                        slpTotal += slp;
-                        uwpTotal += uwp;
-                        count++;
+                        weightedSlpTotal += slp * voters;
+                        weightedUwpTotal += uwp * voters;
+                        totalVoters += voters;
                     }
                 }
             });
+
             return {
                 date: format(proj.date.toDate(), 'MMM d'),
-                SLP: count > 0 ? parseFloat((slpTotal / count).toFixed(1)) : 0,
-                UWP: count > 0 ? parseFloat((uwpTotal / count).toFixed(1)) : 0,
-            }
+                SLP: totalVoters > 0 ? parseFloat((weightedSlpTotal / totalVoters).toFixed(1)) : 0,
+                UWP: totalVoters > 0 ? parseFloat((weightedUwpTotal / totalVoters).toFixed(1)) : 0,
+            };
         });
-    }, [projections, selectedConstituencyId]);
+    }, [projections, selectedConstituencyId, selectedRegionId, regions]);
 
     const chartConfig = useMemo(() => {
         const slp = parties?.find(p => p.acronym === 'SLP');
@@ -96,12 +111,18 @@ const ProjectionTrendChart = () => {
         } as ChartConfig;
     }, [parties]);
     
-    const selectedConstituencyName = selectedConstituencyId === 'national' 
-    ? 'Average' 
-    : constituencies?.find(c => c.id === selectedConstituencyId)?.name || 'Average';
+    const displayTitle = useMemo(() => {
+        if (selectedConstituencyId !== 'national') {
+            return constituencies?.find(c => c.id === selectedConstituencyId)?.name || 'Constituency';
+        }
+        if (selectedRegionId !== 'all') {
+            return regions?.find(r => r.id === selectedRegionId)?.name || 'Region';
+        }
+        return 'Average';
+    }, [selectedConstituencyId, selectedRegionId, constituencies, regions]);
 
 
-    if (loadingProjections || loadingConstituencies || loadingParties) return <Skeleton className="h-[500px] w-full" />;
+    if (loadingProjections || loadingConstituencies || loadingParties || loadingRegions) return <Skeleton className="h-[500px] w-full" />;
 
     return (
         <Card>
@@ -109,9 +130,20 @@ const ProjectionTrendChart = () => {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <CardTitle>Projected Vote Share</CardTitle>
-                        <CardDescription>Vote percentage trends for {selectedConstituencyName}.</CardDescription>
+                        <CardDescription>Vote percentage trends for {displayTitle}.</CardDescription>
                     </div>
                      <div className="flex items-center gap-2 flex-wrap">
+                        <Select value={selectedRegionId} onValueChange={setSelectedRegionId} disabled={selectedConstituencyId !== 'national'}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Select Region" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Regions</SelectItem>
+                                {regions?.sort((a,b) => a.name.localeCompare(b.name)).map(r => (
+                                    <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                         <Select value={selectedConstituencyId} onValueChange={setSelectedConstituencyId}>
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="Select Constituency" />
@@ -400,3 +432,4 @@ export default function OurProjectionsPage() {
     </div>
   );
 }
+
