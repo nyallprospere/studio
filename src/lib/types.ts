@@ -221,3 +221,8 @@ export interface ConstituencyProjection {
     constituencies: Constituency[];
 }
     
+export interface VoterInformation {
+  id: string;
+  title: string;
+  items: string[];
+}

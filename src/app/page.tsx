@@ -23,7 +23,7 @@ import {
 } from '@dnd-kit/sortable';
 import { useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, Timestamp, where } from 'firebase/firestore';
-import type { Event, Party, Constituency, Election, NewsArticle } from '@/lib/types';
+import type { Event, Party, Constituency, Election, NewsArticle, VoterInformation } from '@/lib/types';
 import { EventCard } from '@/components/event-card';
 import { SortableFeatureCard } from '@/components/sortable-feature-card';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
@@ -70,12 +70,14 @@ export default function Home() {
   const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), where('isCurrent', '==', true)) : null, [firestore]);
   const newsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'news'), orderBy('articleDate', 'desc')) : null, [firestore]);
+  const voterInfoQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'voter_information'), orderBy('title')) : null, [firestore]);
   
   const { data: events, isLoading: loadingEvents } = useCollection<Event>(eventsQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
   const { data: currentElections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
   const { data: news, isLoading: loadingNews } = useCollection<NewsArticle>(newsQuery);
+  const { data: voterInfoItems, isLoading: loadingVoterInfo } = useCollection<VoterInformation>(voterInfoQuery);
   
   const currentElection = useMemo(() => currentElections?.[0], [currentElections]);
   
@@ -416,18 +418,14 @@ export default function Home() {
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div>
-                    <h3 className="font-semibold">Key Dates & Deadlines</h3>
-                    <ul className="list-disc list-inside text-muted-foreground">
-                        <li>Nomination Day: TBD</li>
-                        <li>Voter Registration Deadline: TBD</li>
-                        <li>General Election Day: July 26, 2026 (Tentative)</li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 className="font-semibold">Voter Requirements</h3>
-                    <p className="text-muted-foreground">To be eligible to vote, you must be a citizen of St. Lucia, 18 years of age or older, and registered to vote in your constituency.</p>
-                </div>
+                 {loadingVoterInfo ? <p>Loading information...</p> : voterInfoItems?.map(item => (
+                    <div key={item.id}>
+                        <h3 className="font-semibold">{item.title}</h3>
+                        <ul className="list-disc list-inside text-muted-foreground">
+                           {item.items.map((text, index) => <li key={index}>{text}</li>)}
+                        </ul>
+                    </div>
+                ))}
             </CardContent>
         </Card>
       </div>

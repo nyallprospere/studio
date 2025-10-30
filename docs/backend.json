@@ -824,6 +824,21 @@
         "date",
         "constituencies"
       ]
+    },
+    "VoterInformation": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Voter Information",
+      "description": "A section of voter information, like 'Key Dates' or 'Requirements'.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "items": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["title", "items"]
     }
   },
   "auth": {
@@ -951,7 +966,12 @@
             "$ref": "#/entities/ConstituencyProjection"
         },
         "description": "Stores daily snapshots of constituency projection data."
+    },
+    "/voter_information/{infoId}": {
+      "schema": {
+        "$ref": "#/entities/VoterInformation"
+      },
+      "description": "Stores sections of voter information for the homepage."
     }
   }
 }
-

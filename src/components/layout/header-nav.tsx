@@ -167,6 +167,7 @@ export function HeaderNav() {
     { href: '/admin/ads', label: 'Manage Ads' },
     { href: '/admin/map-submissions', label: 'Map Submissions' },
     { href: '/admin/ai-analyzer', label: 'AI Analyzer' },
+    { href: '/admin/voter-information', label: 'Manage Voter Info' },
     { href: '/admin/settings', label: 'Manage Settings' },
   ];
 
