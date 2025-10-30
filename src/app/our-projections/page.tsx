@@ -97,8 +97,8 @@ const ProjectionTrendChart = () => {
     }, [parties]);
     
     const selectedConstituencyName = selectedConstituencyId === 'national' 
-    ? 'National Average' 
-    : constituencies?.find(c => c.id === selectedConstituencyId)?.name || 'National Average';
+    ? 'Average' 
+    : constituencies?.find(c => c.id === selectedConstituencyId)?.name || 'Average';
 
 
     if (loadingProjections || loadingConstituencies || loadingParties) return <Skeleton className="h-[500px] w-full" />;
@@ -117,7 +117,7 @@ const ProjectionTrendChart = () => {
                                 <SelectValue placeholder="Select Constituency" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="national">National</SelectItem>
+                                <SelectItem value="national">All Constituencies</SelectItem>
                                 {constituencies?.sort((a,b) => a.name.localeCompare(b.name)).map(c => (
                                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                                 ))}
@@ -371,7 +371,7 @@ export default function OurProjectionsPage() {
                         <TableHead>SLP %</TableHead>
                         <TableHead>UWP %</TableHead>
                         <TableHead>Predicted Winner</TableHead>
-                        <TableHead>Forecasted Vote Advantage</TableHead>
+                        <TableHead className="text-right">Forecasted Vote Advantage</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -385,7 +385,7 @@ export default function OurProjectionsPage() {
                                     <TableCell className={cn(getPartyColorClass(c.aiForecastParty))}>
                                         {c.aiForecastParty?.toUpperCase() || 'N/A'}
                                     </TableCell>
-                                    <TableCell className={cn(getPartyColorClass(c.aiForecastParty))}>
+                                    <TableCell className={cn("text-right", getPartyColorClass(c.aiForecastParty))}>
                                       {c.aiForecast ? `${c.aiForecast > 0 ? '+' : ''}${c.aiForecast.toFixed(1)}%` : 'N/A'}
                                     </TableCell>
                                 </TableRow>
