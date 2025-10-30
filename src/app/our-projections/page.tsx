@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo } from 'react';
@@ -52,7 +53,7 @@ export default function OurProjectionsPage() {
       <div className="mt-8">
         <Card>
           <CardHeader>
-            <CardTitle>AI Constituency Forecast</CardTitle>
+            <CardTitle>Constituency Forecast</CardTitle>
             <CardDescription>
               Our AI's prediction for the winner of each constituency based on historical data, trends, and volatility.
             </CardDescription>
