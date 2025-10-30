@@ -31,6 +31,30 @@ export default function OurProjectionsPage() {
     }
   }
 
+  const calculatePercentages = (forecast: number | undefined, party: 'slp' | 'uwp' | 'ind' | undefined) => {
+    if (typeof forecast === 'undefined' || !party) {
+        return { slp: null, uwp: null };
+    }
+
+    if (party === 'ind') {
+        return { slp: null, uwp: null }; // Or handle IND percentages if logic exists
+    }
+
+    const baseline = 50;
+    let slpPercent = baseline;
+    let uwpPercent = baseline;
+
+    if (party === 'slp') {
+        slpPercent = baseline + forecast / 2;
+        uwpPercent = 100 - slpPercent;
+    } else if (party === 'uwp') {
+        uwpPercent = baseline + forecast / 2;
+        slpPercent = 100 - uwpPercent;
+    }
+
+    return { slp: slpPercent, uwp: uwpPercent };
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <PageHeader
@@ -56,19 +80,26 @@ export default function OurProjectionsPage() {
                         <TableRow>
                         <TableHead>Constituency</TableHead>
                         <TableHead>Predicted Winner</TableHead>
-                        <TableHead>Forecasted Vote %</TableHead>
+                        <TableHead>Forecasted Vote Advantage</TableHead>
+                        <TableHead>SLP %</TableHead>
+                        <TableHead>UWP %</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {sortedConstituencies.map((c) => (
-                            <TableRow key={c.id}>
-                                <TableCell className="font-medium">{c.name}</TableCell>
-                                <TableCell className={cn(getPartyColorClass(c.aiForecastParty))}>
-                                  {c.aiForecastParty?.toUpperCase() || 'N/A'}
-                                </TableCell>
-                                <TableCell>{c.aiForecast ? `${c.aiForecast > 0 ? '+' : ''}${c.aiForecast.toFixed(1)}%` : 'N/A'}</TableCell>
-                            </TableRow>
-                        ))}
+                        {sortedConstituencies.map((c) => {
+                             const { slp, uwp } = calculatePercentages(c.aiForecast, c.aiForecastParty);
+                            return (
+                                <TableRow key={c.id}>
+                                    <TableCell className="font-medium">{c.name}</TableCell>
+                                    <TableCell className={cn(getPartyColorClass(c.aiForecastParty))}>
+                                    {c.aiForecastParty?.toUpperCase() || 'N/A'}
+                                    </TableCell>
+                                    <TableCell>{c.aiForecast ? `${c.aiForecast > 0 ? '+' : ''}${c.aiForecast.toFixed(1)}%` : 'N/A'}</TableCell>
+                                    <TableCell>{slp !== null ? `${slp.toFixed(1)}%` : 'N/A'}</TableCell>
+                                    <TableCell>{uwp !== null ? `${uwp.toFixed(1)}%` : 'N/A'}</TableCell>
+                                </TableRow>
+                            );
+                        })}
                     </TableBody>
                 </Table>
             )}
