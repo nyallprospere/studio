@@ -22,19 +22,6 @@ export default function OurProjectionsPage() {
     return [...constituencies].sort((a, b) => a.name.localeCompare(b.name));
   }, [constituencies]);
 
-  const getConfidenceBadgeVariant = (confidence?: 'High' | 'Medium' | 'Low'): 'default' | 'secondary' | 'destructive' | 'outline' => {
-    switch (confidence) {
-      case 'High':
-        return 'default';
-      case 'Medium':
-        return 'secondary';
-      case 'Low':
-        return 'outline';
-      default:
-        return 'secondary';
-    }
-  }
-
   const getPartyColorClass = (party?: 'slp' | 'uwp' | 'ind') => {
     switch (party) {
         case 'slp': return 'text-red-600 font-bold';
@@ -70,7 +57,6 @@ export default function OurProjectionsPage() {
                         <TableHead>Constituency</TableHead>
                         <TableHead>Predicted Winner</TableHead>
                         <TableHead>Forecasted Vote %</TableHead>
-                        <TableHead>Confidence</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -81,13 +67,6 @@ export default function OurProjectionsPage() {
                                   {c.aiForecastParty?.toUpperCase() || 'N/A'}
                                 </TableCell>
                                 <TableCell>{c.aiForecast ? `${c.aiForecast.toFixed(1)}%` : 'N/A'}</TableCell>
-                                <TableCell>
-                                  {c.aiConfidence ? (
-                                    <Badge variant={getConfidenceBadgeVariant(c.aiConfidence)}>
-                                      {c.aiConfidence}
-                                    </Badge>
-                                  ) : 'N/A'}
-                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
