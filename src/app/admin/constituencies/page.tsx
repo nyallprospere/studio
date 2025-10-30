@@ -345,7 +345,6 @@ export default function AdminConstituenciesPage() {
                                         <TableHead>Pred. SLP %</TableHead>
                                         <TableHead>Pred. UWP %</TableHead>
                                         <TableHead>AI Forecast</TableHead>
-                                        <TableHead>AI Confidence</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -419,21 +418,6 @@ export default function AdminConstituenciesPage() {
                                                         max="100"
                                                     />
                                                 </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Select
-                                                    value={c.aiConfidence}
-                                                    onValueChange={(value) => handleFieldChange(c.id, 'aiConfidence', value)}
-                                                >
-                                                    <SelectTrigger className="w-28">
-                                                        <SelectValue placeholder="Confidence" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {aiConfidenceOptions.map(opt => (
-                                                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
                                             </TableCell>
                                         </TableRow>
                                     ))}
