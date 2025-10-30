@@ -239,7 +239,7 @@ export default function Home() {
                     </CardHeader>
                     <CardContent className="flex flex-col items-center">
                         <div className="text-center mb-4 text-lg font-medium">
-                            Expected Results: {' '}
+                            Forecasted Results: {' '}
                             <span className="font-bold" style={{color: 'hsl(var(--chart-5))'}}>SLP - {seatCounts.slpTotal}</span> | {' '}
                             <span className="font-bold" style={{color: 'hsl(var(--chart-1))'}}>UWP - {seatCounts.uwpTotal}</span> | {' '}
                             <span className="font-bold" style={{color: 'hsl(221, 83%, 53%)'}}>IND - {seatCounts.indTotal}</span>
