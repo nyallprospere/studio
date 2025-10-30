@@ -80,18 +80,18 @@
     background-image: repeating-linear-gradient(
       45deg,
       #ef4444,
-      #ef4444 10px,
-      #a855f7 10px,
-      #a855f7 20px
+      #ef4444 15px,
+      #a855f7 15px,
+      #a855f7 30px
     );
   }
   .purple-yellow-stripes-overlay {
       background-image: repeating-linear-gradient(
       45deg,
       #f59e0b,
-      #f59e0b 10px,
-      #a855f7 10px,
-      #a855f7 20px
+      #f59e0b 15px,
+      #a855f7 15px,
+      #a855f7 30px
     );
   }
 }
