@@ -13,13 +13,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Save, Lock, Unlock, Upload, Download } from 'lucide-react';
+import { Loader2, Save, Lock, Unlock, Upload, Download, BrainCircuit } from 'lucide-react';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { isEqual } from 'lodash';
 import { ImportDialog } from './import-dialog';
 import * as XLSX from 'xlsx';
 import { Textarea } from '@/components/ui/textarea';
+import { calculateVolatilityIndex } from '@/ai/flows/calculate-volatility-index';
 
 const initialConstituencies = [
     { name: "Castries Central", registeredVoters: 0 },
@@ -49,7 +50,6 @@ const politicalLeaningOptions = [
   { value: 'solid-uwp', label: 'Solid UWP' },
 ];
 
-const aiConfidenceOptions = ['High', 'Medium', 'Low'];
 const aiPartyOptions = [
     { value: 'slp', label: 'SLP' },
     { value: 'uwp', label: 'UWP' },
@@ -69,6 +69,7 @@ export default function AdminConstituenciesPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [isImportOpen, setIsImportOpen] = useState(false);
     const [selectedConstituencyId, setSelectedConstituencyId] = useState<string | null>(null);
+    const [isCalculatingVolatility, setIsCalculatingVolatility] = useState(false);
 
 
     const hasUnsavedChanges = useMemo(() => {
@@ -273,6 +274,28 @@ export default function AdminConstituenciesPage() {
         }
       };
 
+    const handleCalculateVolatility = async () => {
+        if (!firestore || !constituencies) return;
+        setIsCalculatingVolatility(true);
+        try {
+            const batch = writeBatch(firestore);
+            for (const constituency of constituencies) {
+                const volatility = await calculateVolatilityIndex(constituency.name);
+                if (typeof volatility === 'number') {
+                    const docRef = doc(firestore, 'constituencies', constituency.id);
+                    batch.update(docRef, { volatilityIndex: volatility });
+                }
+            }
+            await batch.commit();
+            toast({ title: 'Success', description: 'Volatility indexes for all constituencies have been updated.' });
+        } catch (e) {
+            console.error(e);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not calculate volatility indexes.' });
+        } finally {
+            setIsCalculatingVolatility(false);
+        }
+    };
+
     return (
         <div className="container mx-auto px-4 py-8">
             <div className="flex justify-between items-start mb-8">
@@ -287,6 +310,10 @@ export default function AdminConstituenciesPage() {
                             Seed Constituencies
                         </Button>
                     )}
+                     <Button onClick={handleCalculateVolatility} disabled={isCalculatingVolatility}>
+                        {isCalculatingVolatility ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
+                        Calculate Volatility
+                    </Button>
                     <Button variant="outline" onClick={() => setIsImportOpen(true)}>
                         <Upload className="mr-2 h-4 w-4" />
                         Import
@@ -409,14 +436,22 @@ export default function AdminConstituenciesPage() {
                                                             ))}
                                                         </SelectContent>
                                                     </Select>
-                                                    <Input
-                                                        type="number"
-                                                        value={c.aiForecast || 0}
-                                                        onChange={(e) => handleFieldChange(c.id, 'aiForecast', e.target.value)}
-                                                        className="w-24"
-                                                        min="0"
-                                                        max="100"
-                                                    />
+                                                    <div className="relative">
+                                                        <Input
+                                                            type="text"
+                                                            value={`${(c.aiForecast || 0) > 0 ? '+' : ''}${(c.aiForecast || 0).toFixed(1)}%`}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                const numValue = parseFloat(value.replace('%', '').replace('+', ''));
+                                                                if (!isNaN(numValue)) {
+                                                                    handleFieldChange(c.id, 'aiForecast', numValue);
+                                                                } else if (value === '') {
+                                                                    handleFieldChange(c.id, 'aiForecast', 0);
+                                                                }
+                                                            }}
+                                                            className="w-24 pl-5"
+                                                        />
+                                                     </div>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
