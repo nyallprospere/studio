@@ -214,4 +214,10 @@ export interface Report {
     reportedAt: any;
     status: 'pending' | 'resolved';
 }
+
+export interface ConstituencyProjection {
+    id: string;
+    date: any;
+    constituencies: Constituency[];
+}
     

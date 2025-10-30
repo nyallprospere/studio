@@ -4,8 +4,8 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
-import { collection, doc, updateDoc, writeBatch, getDocs, setDoc, addDoc, serverTimestamp } from 'firebase/firestore';
-import type { Constituency } from '@/lib/types';
+import { collection, doc, updateDoc, writeBatch, getDocs, setDoc, addDoc, serverTimestamp, query, orderBy, deleteDoc } from 'firebase/firestore';
+import type { Constituency, ConstituencyProjection } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Save, Upload, Download, BrainCircuit, Calendar as CalendarIcon } from 'lucide-react';
+import { Loader2, Save, Upload, Download, BrainCircuit, Calendar as CalendarIcon, Edit, Trash2 } from 'lucide-react';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { isEqual } from 'lodash';
@@ -24,6 +24,7 @@ import { DateRange } from "react-day-picker"
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
 const initialConstituencies = [
@@ -66,7 +67,10 @@ export default function AdminConstituenciesPage() {
     const { toast } = useToast();
 
     const constituenciesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
+    const projectionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'constituency_projections'), orderBy('date', 'desc')) : null, [firestore]);
+
     const { data: constituencies, isLoading: loadingConstituencies, error } = useCollection<Constituency>(constituenciesCollection);
+    const { data: dailyProjections, isLoading: loadingProjections } = useCollection<ConstituencyProjection>(projectionsQuery);
     
     const [editableConstituencies, setEditableConstituencies] = useState<Constituency[]>([]);
     const [isSeeding, setIsSeeding] = useState(false);
@@ -367,6 +371,22 @@ export default function AdminConstituenciesPage() {
         return 'Constituency Data';
     }
 
+    const handleEditSnapshot = (snapshot: ConstituencyProjection) => {
+        setEditableConstituencies(JSON.parse(JSON.stringify(snapshot.constituencies)));
+        toast({ title: 'Snapshot Loaded', description: `Loaded projections from ${format(snapshot.date.toDate(), 'PPP')}.` });
+    };
+
+    const handleDeleteSnapshot = async (snapshotId: string) => {
+        if (!firestore) return;
+        const docRef = doc(firestore, 'constituency_projections', snapshotId);
+        try {
+            await deleteDoc(docRef);
+            toast({ title: 'Snapshot Deleted', description: 'The daily snapshot has been deleted.' });
+        } catch (e) {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({ path: docRef.path, operation: 'delete' }));
+        }
+    };
+
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -597,6 +617,66 @@ export default function AdminConstituenciesPage() {
                                 <p className="text-muted-foreground">No constituencies found.</p>
                                 <p className="text-sm text-muted-foreground">You can seed the initial 17 constituencies.</p>
                             </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Daily Snapshots</CardTitle>
+                        <CardDescription>Review and manage saved daily projections.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {loadingProjections ? <p>Loading snapshots...</p> : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {dailyProjections && dailyProjections.length > 0 ? (
+                                        dailyProjections.map(snapshot => (
+                                            <TableRow key={snapshot.id}>
+                                                <TableCell className="font-medium">{format(snapshot.date.toDate(), 'PPP, p')}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="outline" size="sm" onClick={() => handleEditSnapshot(snapshot)} className="mr-2">
+                                                        <Edit className="mr-2 h-4 w-4" />
+                                                        Edit
+                                                    </Button>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="destructive" size="sm">
+                                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                                Delete
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                This action will permanently delete the snapshot from {format(snapshot.date.toDate(), 'PPP')}. This cannot be undone.
+                                                            </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleDeleteSnapshot(snapshot.id)}>Delete</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={2} className="h-24 text-center">
+                                                No daily snapshots have been saved yet.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
                         )}
                     </CardContent>
                 </Card>
