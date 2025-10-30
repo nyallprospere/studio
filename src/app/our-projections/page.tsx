@@ -80,9 +80,9 @@ export default function OurProjectionsPage() {
                         <TableRow>
                         <TableHead>Constituency</TableHead>
                         <TableHead>Predicted Winner</TableHead>
-                        <TableHead>Forecasted Vote Advantage</TableHead>
                         <TableHead>SLP %</TableHead>
                         <TableHead>UWP %</TableHead>
+                        <TableHead>Forecasted Vote Advantage</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -94,9 +94,9 @@ export default function OurProjectionsPage() {
                                     <TableCell className={cn(getPartyColorClass(c.aiForecastParty))}>
                                     {c.aiForecastParty?.toUpperCase() || 'N/A'}
                                     </TableCell>
-                                    <TableCell>{c.aiForecast ? `${c.aiForecast > 0 ? '+' : ''}${c.aiForecast.toFixed(1)}%` : 'N/A'}</TableCell>
                                     <TableCell>{slp !== null ? `${slp.toFixed(1)}%` : 'N/A'}</TableCell>
                                     <TableCell>{uwp !== null ? `${uwp.toFixed(1)}%` : 'N/A'}</TableCell>
+                                    <TableCell>{c.aiForecast ? `${c.aiForecast > 0 ? '+' : ''}${c.aiForecast.toFixed(1)}%` : 'N/A'}</TableCell>
                                 </TableRow>
                             );
                         })}
