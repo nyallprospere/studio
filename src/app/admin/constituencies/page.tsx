@@ -20,7 +20,6 @@ import { isEqual } from 'lodash';
 import { ImportDialog } from './import-dialog';
 import * as XLSX from 'xlsx';
 import { Textarea } from '@/components/ui/textarea';
-import { calculateVolatilityIndex } from '@/ai/flows/calculate-volatility-index';
 
 const initialConstituencies = [
     { name: "Castries Central", registeredVoters: 0 },
@@ -342,8 +341,8 @@ export default function AdminConstituenciesPage() {
                                         <TableHead>Name</TableHead>
                                         <TableHead>Registered Voters</TableHead>
                                         <TableHead>Political Leaning</TableHead>
-                                        <TableHead>Pred. SLP %</TableHead>
-                                        <TableHead>Pred. UWP %</TableHead>
+                                        <TableHead>SLP ODDS</TableHead>
+                                        <TableHead>UWP ODDS</TableHead>
                                         <TableHead>AI Forecast</TableHead>
                                     </TableRow>
                                 </TableHeader>
