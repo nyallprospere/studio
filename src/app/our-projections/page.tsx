@@ -108,7 +108,7 @@ const ProjectionTrendChart = () => {
             <CardHeader>
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <CardTitle>Projection Trends</CardTitle>
+                        <CardTitle>Projected Vote Share</CardTitle>
                         <CardDescription>Vote percentage trends for {selectedConstituencyName}.</CardDescription>
                     </div>
                      <div className="flex items-center gap-2 flex-wrap">
