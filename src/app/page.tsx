@@ -346,6 +346,29 @@ export default function Home() {
                         </Button>
                     </CardContent>
                 </Card>
+
+                 <Card>
+                    <CardHeader>
+                        <div>
+                            <CardTitle>Events</CardTitle>
+                        </div>
+                        <div className="flex w-full items-center gap-1 p-1 bg-muted rounded-md mt-4">
+                            <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')} className="flex-1">Upcoming</Button>
+                            <Button size="sm" variant={allEventsViewMode === 'past' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('past')} className="flex-1">Past</Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                        {loadingEvents || loadingParties ? <p>Loading events...</p> : visibleAllEvents.length > 0 ? (
+                            visibleAllEvents.map((event) => (
+                            <EventCard key={event.id} event={event} party={getParty(event.partyId)} />
+                            ))
+                        ) : (
+                            <p className="text-center text-muted-foreground py-8">No {allEventsViewMode} events found.</p>
+                        )}
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         </div>
       </div>
@@ -377,29 +400,7 @@ export default function Home() {
         </Card>
       </div>
 
-       <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
-         <Card>
-            <CardHeader>
-                <div>
-                    <CardTitle>Events</CardTitle>
-                </div>
-                <div className="flex w-full items-center gap-1 p-1 bg-muted rounded-md mt-4">
-                    <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')} className="flex-1">Upcoming</Button>
-                    <Button size="sm" variant={allEventsViewMode === 'past' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('past')} className="flex-1">Past</Button>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-4">
-                {loadingEvents || loadingParties ? <p>Loading events...</p> : visibleAllEvents.length > 0 ? (
-                    visibleAllEvents.map((event) => (
-                    <EventCard key={event.id} event={event} party={getParty(event.partyId)} />
-                    ))
-                ) : (
-                    <p className="text-center text-muted-foreground py-8">No {allEventsViewMode} events found.</p>
-                )}
-                </div>
-            </CardContent>
-        </Card>
+       <div className="mt-12 grid grid-cols-1 lg:grid-cols-1 gap-8">
         <Card>
             <CardHeader>
                 <CardTitle className="font-headline flex items-center gap-2">
