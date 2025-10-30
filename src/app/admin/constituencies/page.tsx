@@ -343,6 +343,8 @@ export default function AdminConstituenciesPage() {
                                         <TableHead>Political Leaning</TableHead>
                                         <TableHead>SLP ODDS</TableHead>
                                         <TableHead>UWP ODDS</TableHead>
+                                        <TableHead>SLP %</TableHead>
+                                        <TableHead>UWP %</TableHead>
                                         <TableHead>AI Forecast</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -393,6 +395,8 @@ export default function AdminConstituenciesPage() {
                                                     max="100"
                                                 />
                                             </TableCell>
+                                            <TableCell>{c.predictedSlpPercentage || 0}%</TableCell>
+                                            <TableCell>{c.predictedUwpPercentage || 0}%</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <Select
@@ -443,3 +447,5 @@ export default function AdminConstituenciesPage() {
         </div>
     );
 }
+
+    
