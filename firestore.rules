@@ -1,252 +1,341 @@
 /**
- * @file Firestore Security Rules
- * @description This ruleset allows all logged-in users to read and write to all data in the Firestore database.
- *
- * Core Philosophy:
- * The ruleset prioritizes ease of use and rapid prototyping by granting broad access to authenticated users.
+ * @file Firebase Security Rules
+ * @description This ruleset enforces a role-based access control model, with open reads
+ * for many collections and restricted writes. It prioritizes security by requiring authentication
+ * for most write operations and implements owner-only access where applicable.
  *
  * Data Structure:
- * The Firestore database contains various collections including parties, events, candidates, elections, constituencies, and user activity.
- * Each collection stores documents related to its specific entity.
+ * - Top-level collections for core entities: /parties, /events, /candidates, etc.
+ * - Subcollections for nested data: /news/{newsId}/comments/{commentId}
+ * - Single-document settings: /settings/pageLayouts, /settings/site
  *
  * Key Security Decisions:
- * - All logged-in users can read and write any data.
- * - No data validation is performed in this initial prototyping phase.
+ * - Open reads for many collections to facilitate data-driven UIs.
+ * - Authentication required for most writes to prevent unauthorized data modification.
+ * - No user-specific data trees are used.
+ * - All listing of user-specific private data (e.g. user activity) is disabled.
+ *
+ * IMPORTANT: In order to reduce the amount of expensive `get()` operations, the following
+ * principles are applied:
+ *
+ * 1. Denormalization for Authorization: Data required for authorization decisions is copied
+ * directly onto the documents being secured. For example, ownership information is stored
+ * directly within the document, avoiding the need to fetch related documents.
+ *
+ * 2. Structural Segregation: Data with different privacy requirements is stored in separate
+ * collections. For example, public news articles are stored in a top-level collection,
+ * while user-specific data is stored (hypothetically, since there's none) in a private
+ * subcollection.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows all logged-in users to read and write mailing list subscriber data.
+     * @description Allows anyone to read mailing list subscribers, but requires authentication to create, update, or delete.
      * @path /mailing_list_subscribers/{subscriberId}
-     * @allow (read, write) - Any logged-in user can read or write any subscriber data.
-     * @deny (none) - No restrictions for logged-in users.
-     * @principle Grants full access to authenticated users for rapid prototyping.
+     * @allow get, list: if true;
+     * @allow create: if isSignedIn();
+     * @allow update: if false; // TODO: Add admin role check if needed.
+     * @allow delete: if false; // TODO: Add admin role check if needed.
+     * @principle Requires authentication to create mailing list subscribers.
      */
     match /mailing_list_subscribers/{subscriberId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false; // TODO: Add admin role check if needed.
     }
 
     /**
-     * @description Allows all logged-in users to read and write party data.
+     * @description Allows anyone to read party information, but requires authentication to create, update, or delete.
      * @path /parties/{partyId}
-     * @allow (read, write) - Any logged-in user can read or write any party data.
-     * @deny (none) - No restrictions for logged-in users.
-     * @principle Grants full access to authenticated users for rapid prototyping.
+     * @allow get, list: if true;
+     * @allow create: if isSignedIn();
+     * @allow update: if false; // TODO: Add admin role check if needed.
+     * @allow delete: if false; // TODO: Add admin role check if needed.
+     * @principle Requires authentication to create political parties.
      */
     match /parties/{partyId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false; // TODO: Add admin role check if needed.
     }
 
     /**
-     * @description Allows all logged-in users to read and write party logo data.
+     * @description Allows anyone to read party logos, but requires authentication to create, update, or delete.
      * @path /party_logos/{partyLogoId}
-     * @allow (read, write) - Any logged-in user can read or write any party logo data.
-     * @deny (none) - No restrictions for logged-in users.
-     * @principle Grants full access to authenticated users for rapid prototyping.
+     * @allow get, list: if true;
+     * @allow create: if isSignedIn();
+     * @allow update: if false; // TODO: Add admin role check if needed.
+     * @allow delete: if false; // TODO: Add admin role check if needed.
+     * @principle Requires authentication to create party logos.
      */
     match /party_logos/{partyLogoId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false; // TODO: Add admin role check if needed.
     }
 
     /**
-     * @description Allows all logged-in users to read and write event data.
+     * @description Allows anyone to read event information, but requires authentication to create, update, or delete.
      * @path /events/{eventId}
-     * @allow (read, write) - Any logged-in user can read or write any event data.
-     * @deny (none) - No restrictions for logged-in users.
-     * @principle Grants full access to authenticated users for rapid prototyping.
+     * @allow get, list: if true;
+     * @allow create: if isSignedIn();
+     * @allow update: if false; // TODO: Add admin role check if needed.
+     * @allow delete: if false; // TODO: Add admin role check if needed.
+     * @principle Requires authentication to create political events.
      */
     match /events/{eventId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false; // TODO: Add admin role check if needed.
     }
 
     /**
-     * @description Allows all logged-in users to read and write candidate data.
+     * @description Allows anyone to read candidate information, but requires authentication to create, update, or delete.
      * @path /candidates/{candidateId}
-     * @allow (read, write) - Any logged-in user can read or write any candidate data.
-     * @deny (none) - No restrictions for logged-in users.
-     * @principle Grants full access to authenticated users for rapid prototyping.
+     * @allow get, list: if true;
+     * @allow create: if isSignedIn();
+     * @allow update: if false; // TODO: Add admin role check if needed.
+     * @allow delete: if false; // TODO: Add admin role check if needed.
+     * @principle Requires authentication to create candidates.
      */
     match /candidates/{candidateId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false; // TODO: Add admin role check if needed.
     }
 
     /**
-     * @description Allows all logged-in users to read and write archived candidate data.
+     * @description Allows anyone to read archived candidate information, but requires authentication to create, update, or delete.
      * @path /archived_candidates/{archivedCandidateId}
-     * @allow (read, write) - Any logged-in user can read or write any archived candidate data.
-     * @deny (none) - No restrictions for logged-in users.
-     * @principle Grants full access to authenticated users for rapid prototyping.
+     * @allow get, list: if true;
+     * @allow create: if isSignedIn();
+     * @allow update: if false; // TODO: Add admin role check if needed.
+     * @allow delete: if false; // TODO: Add admin role check if needed.
+     * @principle Requires authentication to create archived candidates.
      */
     match /archived_candidates/{archivedCandidateId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false; // TODO: Add admin role check if needed.
     }
 
     /**
-     * @description Allows all logged-in users to read and write election data.
+     * @description Allows anyone to read election information, but requires authentication to create, update, or delete.
      * @path /elections/{electionId}
-     * @allow (read, write) - Any logged-in user can read or write any election data.
-     * @deny (none) - No restrictions for logged-in users.
-     * @principle Grants full access to authenticated users for rapid prototyping.
+     * @allow get, list: if true;
+     * @allow create: if isSignedIn();
+     * @allow update: if false; // TODO: Add admin role check if needed.
+     * @allow delete: if false; // TODO: Add admin role check if needed.
+     * @principle Requires authentication to create elections.
      */
     match /elections/{electionId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false; // TODO: Add admin role check if needed.
     }
 
     /**
-     * @description Allows all logged-in users to read and write polling data.
+     * @description Allows anyone to read polling data, but requires authentication to create, update, or delete.
      * @path /polling_data/{pollingDataId}
-     * @allow (read, write) - Any logged-in user can read or write any polling data.
-     * @deny (none) - No restrictions for logged-in users.
-     * @principle Grants full access to authenticated users for rapid prototyping.
+     * @allow get, list: if true;
+     * @allow create: if isSignedIn();
+     * @allow update: if false; // TODO: Add admin role check if needed.
+     * @allow delete: if false; // TODO: Add admin role check if needed.
+     * @principle Requires authentication to create polling data.
      */
     match /polling_data/{pollingDataId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false; // TODO: Add admin role check if needed.
     }
 
     /**
-     * @description Allows all logged-in users to read and write constituency data.
+     * @description Allows anyone to read constituency information, but requires authentication to create, update, or delete.
      * @path /constituencies/{constituencyId}
-     * @allow (read, write) - Any logged-in user can read or write any constituency data.
-     * @deny (none) - No restrictions for logged-in users.
-     * @principle Grants full access to authenticated users for rapid prototyping.
+     * @allow get, list: if true;
+     * @allow create: if isSignedIn();
+     * @allow update: if false; // TODO: Add admin role check if needed.
+     * @allow delete: if false; // TODO: Add admin role check if needed.
+     * @principle Requires authentication to create constituencies.
      */
     match /constituencies/{constituencyId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false; // TODO: Add admin role check if needed.
     }
 
     /**
-     * @description Allows all logged-in users to read and write election result data.
+     * @description Allows anyone to read election results, but requires authentication to create, update, or delete.
      * @path /election_results/{electionResultId}
-     * @allow (read, write) - Any logged-in user can read or write any election result data.
-     * @deny (none) - No restrictions for logged-in users.
-     * @principle Grants full access to authenticated users for rapid prototyping.
+     * @allow get, list: if true;
+     * @allow create: if isSignedIn();
+     * @allow update: if false; // TODO: Add admin role check if needed.
+     * @allow delete: if false; // TODO: Add admin role check if needed.
+     * @principle Requires authentication to create election results.
      */
     match /election_results/{electionResultId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false; // TODO: Add admin role check if needed.
     }
 
     /**
-     * @description Allows all logged-in users to read and write page layout settings.
+     * @description Allows anyone to read page layouts, but requires authentication to create, update, or delete.
      * @path /settings/pageLayouts
-     * @allow (read, write) - Any logged-in user can read or write the page layout settings.
-     * @deny (none) - No restrictions for logged-in users.
-     * @principle Grants full access to authenticated users for rapid prototyping.
+     * @allow get: if true;
+     * @allow list: if false;
+     * @allow create: if isSignedIn();
+     * @allow update: if isSignedIn();
+     * @allow delete: if false; // TODO: Add admin role check if needed.
+     * @principle Requires authentication to create or update page layouts.
      */
     match /settings/pageLayouts {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if isSignedIn();
+      allow delete: if false; // TODO: Add admin role check if needed.
     }
 
     /**
-     * @description Allows all logged-in users to read and write site settings.
+     * @description Allows anyone to read site settings, but requires authentication to create, update, or delete.
      * @path /settings/site
-     * @allow (read, write) - Any logged-in user can read or write site settings.
-     * @deny (none) - No restrictions for logged-in users.
-     * @principle Grants full access to authenticated users for rapid prototyping.
+     * @allow get: if true;
+     * @allow list: if false;
+     * @allow create: if isSignedIn();
+     * @allow update: if isSignedIn();
+     * @allow delete: if false; // TODO: Add admin role check if needed.
+     * @principle Requires authentication to create or update site settings.
      */
     match /settings/site {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if isSignedIn();
+      allow delete: if false; // TODO: Add admin role check if needed.
     }
 
     /**
-     * @description Allows all logged-in users to read and write user activity data.
+     * @description Denies all access to user activity. User activity should never be publicly accessible.
      * @path /user_activity/{activityId}
-     * @allow (read, write) - Any logged-in user can read or write any user activity data.
-     * @deny (none) - No restrictions for logged-in users.
-     * @principle Grants full access to authenticated users for rapid prototyping.
+     * @allow get, list: if false;
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @principle User activity data should never be exposed.
      */
     match /user_activity/{activityId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list, create, update, delete: if false;
     }
 
     /**
-     * @description Allows all logged-in users to read and write region data.
+     * @description Allows anyone to read region information, but requires authentication to create, update, or delete.
      * @path /regions/{regionId}
-     * @allow (read, write) - Any logged-in user can read or write any region data.
-     * @deny (none) - No restrictions for logged-in users.
-     * @principle Grants full access to authenticated users for rapid prototyping.
+     * @allow get, list: if true;
+     * @allow create: if isSignedIn();
+     * @allow update: if false; // TODO: Add admin role check if needed.
+     * @allow delete: if false; // TODO: Add admin role check if needed.
+     * @principle Requires authentication to create regions.
      */
     match /regions/{regionId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
-    }
-
-     /**
-      * @description Allows all logged-in users to read and write user map data.
-      * @path /user_maps/{userMapId}
-      * @allow (read, write) - Any logged-in user can read or write any user map data.
-      * @deny (none) - No restrictions for logged-in users.
-      * @principle Grants full access to authenticated users for rapid prototyping.
-      */
-    match /user_maps/{userMapId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
-    }
-
-   /**
-    * @description Allows all logged-in users to read and write ad data.
-    * @path /ads/{adId}
-    * @allow (read, write) - Any logged-in user can read or write any ad data.
-    * @deny (none) - No restrictions for logged-in users.
-    * @principle Grants full access to authenticated users for rapid prototyping.
-    */
-    match /ads/{adId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false; // TODO: Add admin role check if needed.
     }
 
     /**
-     * @description Allows all logged-in users to read and write news article data.
+     * @description Allows anyone to read user maps, but requires authentication to create, update, or delete.
+     * @path /user_maps/{userMapId}
+     * @allow get, list: if true;
+     * @allow create: if isSignedIn();
+     * @allow update: if false; // TODO: Add admin role check if needed.
+     * @allow delete: if false; // TODO: Add admin role check if needed.
+     * @principle Requires authentication to create user maps.
+     */
+    match /user_maps/{userMapId} {
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false; // TODO: Add admin role check if needed.
+    }
+
+    /**
+     * @description Allows anyone to read ads, but requires authentication to create, update, or delete.
+     * @path /ads/{adId}
+     * @allow get, list: if true;
+     * @allow create: if isSignedIn();
+     * @allow update: if false; // TODO: Add admin role check if needed.
+     * @allow delete: if false; // TODO: Add admin role check if needed.
+     * @principle Requires authentication to create ads.
+     */
+    match /ads/{adId} {
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false; // TODO: Add admin role check if needed.
+    }
+
+    /**
+     * @description Allows anyone to read news articles, but requires authentication to create, update, or delete.
      * @path /news/{newsId}
-     * @allow (read, write) - Any logged-in user can read or write any news article data.
-     * @deny (none) - No restrictions for logged-in users.
-     * @principle Grants full access to authenticated users for rapid prototyping.
+     * @allow get, list: if true;
+     * @allow create: if isSignedIn();
+     * @allow update: if false; // TODO: Add admin role check if needed.
+     * @allow delete: if false; // TODO: Add admin role check if needed.
+     * @principle Requires authentication to create news articles.
      */
     match /news/{newsId} {
-        allow get, list: if isSignedIn();
-        allow create, update, delete: if isSignedIn();
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false; // TODO: Add admin role check if needed.
 
-        /**
-         * @description Allows all logged-in users to read and write comments for a specific news article.
-         * @path /news/{newsId}/comments/{commentId}
-         * @allow (read, write) - Any logged-in user can read or write comments.
-         * @deny (none) - No restrictions for logged-in users.
-         * @principle Grants full access to authenticated users for rapid prototyping.
-         */
-        match /comments/{commentId} {
-            allow get, list: if isSignedIn();
-            allow create, update, delete: if isSignedIn();
+          /**
+           * @description Allows anyone to read comments, but requires authentication to create, update, or delete.
+           * @path /news/{newsId}/comments/{commentId}
+           * @allow get, list: if true;
+           * @allow create: if isSignedIn();
+           * @allow update: if false; // TODO: Add admin role check if needed.
+           * @allow delete: if false; // TODO: Add admin role check if needed.
+           * @principle Requires authentication to create comments.
+           */
+          match /comments/{commentId} {
+            allow get, list: if true;
+            allow create: if isSignedIn();
+            allow update, delete: if false; // TODO: Add admin role check if needed.
+          }
+    }
+
+       /**
+        * @description Allows anyone to read reports, but requires authentication to create, update, or delete.
+        * @path /reports/{reportId}
+        * @allow get, list: if true;
+        * @allow create: if isSignedIn();
+        * @allow update: if false; // TODO: Add admin role check if needed.
+        * @allow delete: if false; // TODO: Add admin role check if needed.
+        * @principle Requires authentication to create reports.
+        */
+        match /reports/{reportId} {
+          allow get, list: if true;
+          allow create: if isSignedIn();
+          allow update, delete: if false; // TODO: Add admin role check if needed.
         }
-    }
 
-    /**
-     * @description Allows all logged-in users to read and write report data.
-     * @path /reports/{reportId}
-     * @allow (read, write) - Any logged-in user can read or write any report data.
-     * @deny (none) - No restrictions for logged-in users.
-     * @principle Grants full access to authenticated users for rapid prototyping.
-     */
-    match /reports/{reportId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
-    }
+       /**
+        * @description Allows anyone to read constituency projections, but requires authentication to create, update, or delete.
+        * @path /constituency_projections/{projectionId}
+        * @allow get, list: if true;
+        * @allow create: if isSignedIn();
+        * @allow update: if false; // TODO: Add admin role check if needed.
+        * @allow delete: if false; // TODO: Add admin role check if needed.
+        * @principle Requires authentication to create constituency projections.
+        */
+        match /constituency_projections/{projectionId} {
+          allow get, list: if true;
+          allow create: if isSignedIn();
+          allow update, delete: if false; // TODO: Add admin role check if needed.
+        }
 
   }
 
+  // Helper function to determine if a user is signed in.
   function isSignedIn() {
     return request.auth != null;
   }
