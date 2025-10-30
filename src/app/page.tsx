@@ -239,7 +239,6 @@ export default function Home() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <CardTitle className="font-headline">Seat Count</CardTitle>
-                                <CardDescription>Current political leaning of the 17 constituencies.</CardDescription>
                             </div>
                         </div>
                     </CardHeader>
