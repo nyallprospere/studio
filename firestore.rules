@@ -1,342 +1,269 @@
 /**
- * @file Firebase Security Rules
- * @description This ruleset enforces a role-based access control model, with open reads
- * for many collections and restricted writes. It prioritizes security by requiring authentication
- * for most write operations and implements owner-only access where applicable.
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a public-read, restricted-write model for most data,
+ *  with some exceptions for user-generated content and administrative settings.
  *
  * Data Structure:
- * - Top-level collections for core entities: /parties, /events, /candidates, etc.
- * - Subcollections for nested data: /news/{newsId}/comments/{commentId}
- * - Single-document settings: /settings/pageLayouts, /settings/site
+ * - Top-level collections generally represent public data (e.g., parties, candidates, constituencies).
+ * - Documents nested under /news/{newsId} allow for article-specific data (e.g., comments).
+ * - The /settings collection contains singleton documents for global configurations.
  *
  * Key Security Decisions:
- * - Open reads for many collections to facilitate data-driven UIs.
- * - Authentication required for most writes to prevent unauthorized data modification.
- * - No user-specific data trees are used.
- * - All listing of user-specific private data (e.g. user activity) is disabled.
+ * - Mailing list subscribers are write-protected for now.
+ * - Site settings and page layouts can't be modified via client.
+ * - Public read access is granted where appropriate to facilitate data consumption.
  *
- * IMPORTANT: In order to reduce the amount of expensive `get()` operations, the following
- * principles are applied:
- *
- * 1. Denormalization for Authorization: Data required for authorization decisions is copied
- * directly onto the documents being secured. For example, ownership information is stored
- * directly within the document, avoiding the need to fetch related documents.
- *
- * 2. Structural Segregation: Data with different privacy requirements is stored in separate
- * collections. For example, public news articles are stored in a top-level collection,
- * while user-specific data is stored (hypothetically, since there's none) in a private
- * subcollection.
+ * Access Control Patterns:
+ * - Public Read with Owner-Only Writes: Used for top-level collections intended for public consumption where authors must retain control.
+ * - Nested data: Data nested under a parent document will inherit the security rules of the parent.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read mailing list subscribers, but requires authentication to create, update, or delete.
-     * @path /mailing_list_subscribers/{subscriberId}
-     * @allow get, list: if true;
-     * @allow create: if isSignedIn();
-     * @allow update: if false; // TODO: Add admin role check if needed.
-     * @allow delete: if false; // TODO: Add admin role check if needed.
-     * @principle Requires authentication to create mailing list subscribers.
+     * @description Allows anyone to read the voter information. Writing is disallowed for now.
+     * @path /databases/{database}/documents/voter_information/{infoId}
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read access.
      */
-    match /mailing_list_subscribers/{subscriberId} {
+    match /voter_information/{infoId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if false; // TODO: Add admin role check if needed.
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read party information, but requires authentication to create, update, or delete.
-     * @path /parties/{partyId}
-     * @allow get, list: if true;
-     * @allow create: if isSignedIn();
-     * @allow update: if false; // TODO: Add admin role check if needed.
-     * @allow delete: if false; // TODO: Add admin role check if needed.
-     * @principle Requires authentication to create political parties.
+     * @description Allows anyone to read constituency projection data. Writing is disallowed for now.
+     * @path /databases/{database}/documents/constituency_projections/{projectionId}
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read access.
      */
-    match /parties/{partyId} {
+    match /constituency_projections/{projectionId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if false; // TODO: Add admin role check if needed.
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read party logos, but requires authentication to create, update, or delete.
-     * @path /party_logos/{partyLogoId}
-     * @allow get, list: if true;
-     * @allow create: if isSignedIn();
-     * @allow update: if false; // TODO: Add admin role check if needed.
-     * @allow delete: if false; // TODO: Add admin role check if needed.
-     * @principle Requires authentication to create party logos.
+     * @description Rules for reported comments.  No writes allowed from client side.
+     * @path /databases/{database}/documents/reports/{reportId}
+     * @allow get, list: if false
+     * @deny create, update, delete: if false
+     * @principle No client writes.
      */
-    match /party_logos/{partyLogoId} {
+    match /reports/{reportId} {
+      allow get, list: if false;
+      allow create, update, delete: if false;
+    }
+   /**
+     * @description Allows anyone to read news articles. Writing is disallowed for now.
+     * @path /databases/{database}/documents/news/{newsId}
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read access.
+     */
+    match /news/{newsId} {
+        allow get, list: if true;
+        allow create, update, delete: if false;
+
+        /**
+         * @description Rules for comments under a news article.  No writes allowed from client side.
+         * @path /databases/{database}/documents/news/{newsId}/comments/{commentId}
+         * @allow get, list: if false
+         * @deny create, update, delete: if false
+         * @principle No client writes.
+         */
+        match /comments/{commentId} {
+            allow get, list: if false;
+            allow create, update, delete: if false;
+        }
+    }
+
+    /**
+     * @description Allows anyone to read ads. Writing is disallowed for now.
+     * @path /databases/{database}/documents/ads/{adId}
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read access.
+     */
+    match /ads/{adId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if false; // TODO: Add admin role check if needed.
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read event information, but requires authentication to create, update, or delete.
-     * @path /events/{eventId}
-     * @allow get, list: if true;
-     * @allow create: if isSignedIn();
-     * @allow update: if false; // TODO: Add admin role check if needed.
-     * @allow delete: if false; // TODO: Add admin role check if needed.
-     * @principle Requires authentication to create political events.
+     * @description Allows anyone to read user maps. Writing is disallowed for now.
+     * @path /databases/{database}/documents/user_maps/{userMapId}
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read access.
      */
-    match /events/{eventId} {
+    match /user_maps/{userMapId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if false; // TODO: Add admin role check if needed.
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read candidate information, but requires authentication to create, update, or delete.
-     * @path /candidates/{candidateId}
-     * @allow get, list: if true;
-     * @allow create: if isSignedIn();
-     * @allow update: if false; // TODO: Add admin role check if needed.
-     * @allow delete: if false; // TODO: Add admin role check if needed.
-     * @principle Requires authentication to create candidates.
+     * @description Allows anyone to read region data. Writing is disallowed for now.
+     * @path /databases/{database}/documents/regions/{regionId}
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read access.
      */
-    match /candidates/{candidateId} {
+    match /regions/{regionId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if false; // TODO: Add admin role check if needed.
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read archived candidate information, but requires authentication to create, update, or delete.
-     * @path /archived_candidates/{archivedCandidateId}
-     * @allow get, list: if true;
-     * @allow create: if isSignedIn();
-     * @allow update: if false; // TODO: Add admin role check if needed.
-     * @allow delete: if false; // TODO: Add admin role check if needed.
-     * @principle Requires authentication to create archived candidates.
-     */
-    match /archived_candidates/{archivedCandidateId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if false; // TODO: Add admin role check if needed.
-    }
-
-    /**
-     * @description Allows anyone to read election information, but requires authentication to create, update, or delete.
-     * @path /elections/{electionId}
-     * @allow get, list: if true;
-     * @allow create: if isSignedIn();
-     * @allow update: if false; // TODO: Add admin role check if needed.
-     * @allow delete: if false; // TODO: Add admin role check if needed.
-     * @principle Requires authentication to create elections.
-     */
-    match /elections/{electionId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if false; // TODO: Add admin role check if needed.
-    }
-
-    /**
-     * @description Allows anyone to read polling data, but requires authentication to create, update, or delete.
-     * @path /polling_data/{pollingDataId}
-     * @allow get, list: if true;
-     * @allow create: if isSignedIn();
-     * @allow update: if false; // TODO: Add admin role check if needed.
-     * @allow delete: if false; // TODO: Add admin role check if needed.
-     * @principle Requires authentication to create polling data.
-     */
-    match /polling_data/{pollingDataId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if false; // TODO: Add admin role check if needed.
-    }
-
-    /**
-     * @description Allows anyone to read constituency information, but requires authentication to create, update, or delete.
-     * @path /constituencies/{constituencyId}
-     * @allow get, list: if true;
-     * @allow create: if isSignedIn();
-     * @allow update: if false; // TODO: Add admin role check if needed.
-     * @allow delete: if false; // TODO: Add admin role check if needed.
-     * @principle Requires authentication to create constituencies.
-     */
-    match /constituencies/{constituencyId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if false; // TODO: Add admin role check if needed.
-    }
-
-    /**
-     * @description Allows anyone to read election results, but requires authentication to create, update, or delete.
-     * @path /election_results/{electionResultId}
-     * @allow get, list: if true;
-     * @allow create: if isSignedIn();
-     * @allow update: if false; // TODO: Add admin role check if needed.
-     * @allow delete: if false; // TODO: Add admin role check if needed.
-     * @principle Requires authentication to create election results.
-     */
-    match /election_results/{electionResultId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if false; // TODO: Add admin role check if needed.
-    }
-
-    /**
-     * @description Allows anyone to read page layouts, but requires authentication to create, update, or delete.
-     * @path /settings/pageLayouts
-     * @allow get: if true;
-     * @allow list: if false;
-     * @allow create: if isSignedIn();
-     * @allow update: if isSignedIn();
-     * @allow delete: if false; // TODO: Add admin role check if needed.
-     * @principle Requires authentication to create or update page layouts.
-     */
-    match /settings/pageLayouts {
-      allow get: if true;
-      allow list: if false;
-      allow create, update: if isSignedIn();
-      allow delete: if false; // TODO: Add admin role check if needed.
-    }
-
-    /**
-     * @description Allows anyone to read site settings, but requires authentication to create, update, or delete.
-     * @path /settings/site
-     * @allow get: if true;
-     * @allow list: if false;
-     * @allow create: if isSignedIn();
-     * @allow update: if isSignedIn();
-     * @allow delete: if false; // TODO: Add admin role check if needed.
-     * @principle Requires authentication to create or update site settings.
-     */
-    match /settings/site {
-      allow get: if true;
-      allow list: if false;
-      allow create, update: if isSignedIn();
-      allow delete: if false; // TODO: Add admin role check if needed.
-    }
-
-    /**
-     * @description Denies all access to user activity. User activity should never be publicly accessible.
-     * @path /user_activity/{activityId}
-     * @allow get, list: if false;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle User activity data should never be exposed.
+     * @description Allows anyone to read user activity, but writing is disallowed.
+     * @path /databases/{database}/documents/user_activity/{activityId}
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read access.
      */
     match /user_activity/{activityId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Disallows any access to site settings.
+     * @path /databases/{database}/documents/settings/site
+     * @deny get, list, create, update, delete: if false
+     * @principle No client access to settings.
+     */
+    match /settings/site {
       allow get, list, create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read region information, but requires authentication to create, update, or delete.
-     * @path /regions/{regionId}
-     * @allow get, list: if true;
-     * @allow create: if isSignedIn();
-     * @allow update: if false; // TODO: Add admin role check if needed.
-     * @allow delete: if false; // TODO: Add admin role check if needed.
-     * @principle Requires authentication to create regions.
+     * @description Disallows any access to page layouts.
+     * @path /databases/{database}/documents/settings/pageLayouts
+     * @deny get, list, create, update, delete: if false
+     * @principle No client access to settings.
      */
-    match /regions/{regionId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if false; // TODO: Add admin role check if needed.
+    match /settings/pageLayouts {
+      allow get, list, create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read user maps, but requires authentication to create, update, or delete.
-     * @path /user_maps/{userMapId}
-     * @allow get, list: if true;
-     * @allow create: if isSignedIn();
-     * @allow update: if false; // TODO: Add admin role check if needed.
-     * @allow delete: if false; // TODO: Add admin role check if needed.
-     * @principle Requires authentication to create user maps.
+     * @description Allows anyone to read election results. Writing is disallowed for now.
+     * @path /databases/{database}/documents/election_results/{electionResultId}
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read access.
      */
-    match /user_maps/{userMapId} {
+    match /election_results/{electionResultId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if false; // TODO: Add admin role check if needed.
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read ads, but requires authentication to create, update, or delete.
-     * @path /ads/{adId}
-     * @allow get, list: if true;
-     * @allow create: if isSignedIn();
-     * @allow update: if false; // TODO: Add admin role check if needed.
-     * @allow delete: if false; // TODO: Add admin role check if needed.
-     * @principle Requires authentication to create ads.
+     * @description Allows anyone to read constituency data. Writing is disallowed for now.
+     * @path /databases/{database}/documents/constituencies/{constituencyId}
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read access.
      */
-    match /ads/{adId} {
+    match /constituencies/{constituencyId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if false; // TODO: Add admin role check if needed.
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read news articles, but requires authentication to create, update, or delete.
-     * @path /news/{newsId}
-     * @allow get, list: if true;
-     * @allow create: if isSignedIn();
-     * @allow update: if false; // TODO: Add admin role check if needed.
-     * @allow delete: if false; // TODO: Add admin role check if needed.
-     * @principle Requires authentication to create news articles.
+     * @description Allows anyone to read polling data. Writing is disallowed for now.
+     * @path /databases/{database}/documents/polling_data/{pollingDataId}
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read access.
      */
-    match /news/{newsId} {
+    match /polling_data/{pollingDataId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if false; // TODO: Add admin role check if needed.
-
-          /**
-           * @description Allows anyone to read comments, but requires authentication to create, update, or delete.
-           * @path /news/{newsId}/comments/{commentId}
-           * @allow get, list: if true;
-           * @allow create: if isSignedIn();
-           * @allow update: if false; // TODO: Add admin role check if needed.
-           * @allow delete: if false; // TODO: Add admin role check if needed.
-           * @principle Requires authentication to create comments.
-           */
-          match /comments/{commentId} {
-            allow get, list: if true;
-            allow create: if isSignedIn();
-            allow update, delete: if false; // TODO: Add admin role check if needed.
-          }
+      allow create, update, delete: if false;
     }
 
-       /**
-        * @description Allows anyone to read reports, but requires authentication to create, update, or delete.
-        * @path /reports/{reportId}
-        * @allow get, list: if true;
-        * @allow create: if isSignedIn();
-        * @allow update: if false; // TODO: Add admin role check if needed.
-        * @allow delete: if false; // TODO: Add admin role check if needed.
-        * @principle Requires authentication to create reports.
-        */
-        match /reports/{reportId} {
-          allow get, list: if true;
-          allow create: if isSignedIn();
-          allow update, delete: if false; // TODO: Add admin role check if needed.
-        }
+    /**
+     * @description Allows anyone to read election data. Writing is disallowed for now.
+     * @path /databases/{database}/documents/elections/{electionId}
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read access.
+     */
+    match /elections/{electionId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
 
-       /**
-        * @description Allows anyone to read constituency projections, but requires authentication to create, update, or delete.
-        * @path /constituency_projections/{projectionId}
-        * @allow get, list: if true;
-        * @allow create: if isSignedIn();
-        * @allow update: if false; // TODO: Add admin role check if needed.
-        * @allow delete: if false; // TODO: Add admin role check if needed.
-        * @principle Requires authentication to create constituency projections.
-        */
-        match /constituency_projections/{projectionId} {
-          allow get, list: if true;
-          allow create: if isSignedIn();
-          allow update, delete: if false; // TODO: Add admin role check if needed.
-        }
+    /**
+     * @description Allows anyone to read archived candidate data. Writing is disallowed for now.
+     * @path /databases/{database}/documents/archived_candidates/{archivedCandidateId}
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read access.
+     */
+    match /archived_candidates/{archivedCandidateId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
 
-  }
+    /**
+     * @description Allows anyone to read candidate data. Writing is disallowed for now.
+     * @path /databases/{database}/documents/candidates/{candidateId}
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read access.
+     */
+    match /candidates/{candidateId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
 
-  // Helper function to determine if a user is signed in.
-  function isSignedIn() {
-    return request.auth != null;
+    /**
+     * @description Allows anyone to read event data. Writing is disallowed for now.
+     * @path /databases/{database}/documents/events/{eventId}
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read access.
+     */
+    match /events/{eventId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Allows anyone to read party logo data. Writing is disallowed for now.
+     * @path /databases/{database}/documents/party_logos/{partyLogoId}
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read access.
+     */
+    match /party_logos/{partyLogoId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Allows anyone to read party data. Writing is disallowed for now.
+     * @path /databases/{database}/documents/parties/{partyId}
+     * @allow get, list: if true
+     * @deny create, update, delete: if false
+     * @principle Public read access.
+     */
+    match /parties/{partyId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+     /**
+      * @description Disallows any access to mailing list subscribers
+      * @path /databases/{database}/documents/mailing_list_subscribers/{subscriberId}
+      * @deny get, list, create, update, delete: if false
+      * @principle No client access to mailing list subscribers
+      */
+    match /mailing_list_subscribers/{subscriberId} {
+      allow get, list, create, update, delete: if false;
+    }
   }
 }
