@@ -4,7 +4,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
-import { collection, doc, updateDoc, writeBatch, getDocs, setDoc } from 'firebase/firestore';
+import { collection, doc, updateDoc, writeBatch, getDocs, setDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import type { Constituency } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,12 @@ import { isEqual } from 'lodash';
 import { ImportDialog } from './import-dialog';
 import * as XLSX from 'xlsx';
 import { Textarea } from '@/components/ui/textarea';
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns"
+import { DateRange } from "react-day-picker"
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
 
 const initialConstituencies = [
     { name: "Castries Central", registeredVoters: 0 },
@@ -68,6 +74,8 @@ export default function AdminConstituenciesPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [isImportOpen, setIsImportOpen] = useState(false);
     const [selectedConstituencyId, setSelectedConstituencyId] = useState<string | null>(null);
+    const [date, setDate] = useState<DateRange | undefined>();
+    const [datePreset, setDatePreset] = useState('day');
 
 
     const hasUnsavedChanges = useMemo(() => {
@@ -85,6 +93,10 @@ export default function AdminConstituenciesPage() {
             setEditableConstituencies(JSON.parse(JSON.stringify(constituencies)));
         }
     }, [constituencies]);
+
+    useEffect(() => {
+        handleDatePresetChange('day');
+    }, [])
 
     const handleSeedConstituencies = async () => {
         if (!firestore) return;
@@ -195,6 +207,28 @@ export default function AdminConstituenciesPage() {
             });
     }
 
+    const handleSaveSnapshot = async () => {
+        if (!firestore) return;
+        setIsSaving(true);
+        try {
+            const snapshotData = {
+                date: serverTimestamp(),
+                constituencies: editableConstituencies,
+            };
+            await addDoc(collection(firestore, 'constituency_projections'), snapshotData);
+            toast({ title: 'Snapshot Saved', description: "Today's projections have been saved." });
+        } catch (e) {
+             const permissionError = new FirestorePermissionError({
+                path: 'constituency_projections',
+                operation: 'create',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+
     const handleExport = () => {
         if (!constituencies) {
           toast({ variant: "destructive", title: "Error", description: "Data not loaded yet." });
@@ -272,7 +306,11 @@ export default function AdminConstituenciesPage() {
         }
       };
 
-      const calculatePercentages = (forecast: number, party: 'slp' | 'uwp' | 'ind' | undefined) => {
+      const calculatePercentages = (forecast: number | undefined, party: 'slp' | 'uwp' | 'ind' | undefined) => {
+        if (typeof forecast === 'undefined' || !party) {
+            return { slp: 50, uwp: 50 }; // Default to 50/50 if no forecast
+        }
+
         if (party === 'ind') {
             return { slp: 0, uwp: 0 };
         }
@@ -291,6 +329,30 @@ export default function AdminConstituenciesPage() {
 
         return { slp: slpPercent, uwp: uwpPercent };
     };
+
+     const handleDatePresetChange = (preset: string) => {
+      setDatePreset(preset);
+      const now = new Date();
+      switch (preset) {
+          case 'all':
+              setDate(undefined);
+              break;
+          case 'day':
+              setDate({ from: startOfDay(now), to: endOfDay(now) });
+              break;
+          case 'week':
+              setDate({ from: startOfWeek(now), to: endOfWeek(now) });
+              break;
+          case 'month':
+              setDate({ from: startOfMonth(now), to: endOfMonth(now) });
+              break;
+          case 'year':
+              setDate({ from: startOfYear(now), to: endOfYear(now) });
+              break;
+          default:
+              setDate(undefined);
+      }
+  }
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -313,6 +375,10 @@ export default function AdminConstituenciesPage() {
                     <Button variant="outline" onClick={handleExport} disabled={!constituencies || constituencies.length === 0}>
                         <Download className="mr-2 h-4 w-4" />
                         Export
+                    </Button>
+                    <Button onClick={handleSaveSnapshot} disabled={isSaving}>
+                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        Save Daily Snapshot
                     </Button>
                     <Button onClick={handleSaveAll} disabled={isSaving || !hasUnsavedChanges}>
                         {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
@@ -347,8 +413,26 @@ export default function AdminConstituenciesPage() {
                 </Card>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Constituency Data</CardTitle>
-                        <CardDescription>Edit voter numbers, leanings, and predictions.</CardDescription>
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <CardTitle>Constituency Data</CardTitle>
+                                <CardDescription>Edit voter numbers, leanings, and predictions.</CardDescription>
+                            </div>
+                             <div className="flex items-center gap-2">
+                                <Select value={datePreset} onValueChange={handleDatePresetChange}>
+                                    <SelectTrigger className="w-[120px]">
+                                        <SelectValue placeholder="Date Range" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All Time</SelectItem>
+                                        <SelectItem value="day">Today</SelectItem>
+                                        <SelectItem value="week">This Week</SelectItem>
+                                        <SelectItem value="month">This Month</SelectItem>
+                                        <SelectItem value="year">This Year</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
                     </CardHeader>
                     <CardContent>
                         {loadingConstituencies ? <p>Loading...</p> : 
@@ -469,5 +553,3 @@ export default function AdminConstituenciesPage() {
         </div>
     );
 }
-
-    
