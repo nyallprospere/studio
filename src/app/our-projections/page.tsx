@@ -66,7 +66,7 @@ export default function OurProjectionsPage() {
                                 <TableCell className={cn(getPartyColorClass(c.aiForecastParty))}>
                                   {c.aiForecastParty?.toUpperCase() || 'N/A'}
                                 </TableCell>
-                                <TableCell>{c.aiForecast ? `${c.aiForecast.toFixed(1)}%` : 'N/A'}</TableCell>
+                                <TableCell>{c.aiForecast ? `${c.aiForecast > 0 ? '+' : ''}${c.aiForecast.toFixed(1)}%` : 'N/A'}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
