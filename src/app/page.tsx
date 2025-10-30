@@ -420,7 +420,6 @@ export default function Home() {
                     <h3 className="font-semibold">Key Dates & Deadlines</h3>
                     <ul className="list-disc list-inside text-muted-foreground">
                         <li>Voter Registration Deadline: TBD</li>
-                        <li>Advance Polling Day: TBD</li>
                         <li>General Election Day: July 26, 2026 (Tentative)</li>
                     </ul>
                 </div>
