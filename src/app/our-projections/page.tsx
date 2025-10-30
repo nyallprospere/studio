@@ -113,7 +113,7 @@ export default function OurProjectionsPage() {
     <div className="container mx-auto px-4 py-8">
       <PageHeader
         title="Our Projections"
-        description="Detailed AI-powered projections for the upcoming 2026 General Elections."
+        description="Detailed projections for the upcoming 2026 General Elections."
       />
       <div className="mt-8">
         <Card>
@@ -122,7 +122,7 @@ export default function OurProjectionsPage() {
                 <div>
                     <CardTitle>Constituency Forecast</CardTitle>
                     <CardDescription>
-                    Our AI's prediction for the winner of each constituency based on historical data, trends, and volatility.
+                    Our prediction for the winner of each constituency based on historical data, trends, and volatility.
                     </CardDescription>
                 </div>
                  <div className="flex items-center gap-2">
