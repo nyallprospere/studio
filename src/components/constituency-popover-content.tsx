@@ -494,6 +494,11 @@ export function ConstituencyPopoverContent({
                  {popoverVariant === 'dashboard' && (
                     <p className="text-sm font-semibold text-center mt-1" style={{ color: leaningStyle.color }}>
                         {leaningStyle.label}
+                        {constituency.aiForecast && (
+                            <span className="ml-1">
+                                (+{constituency.aiForecast.toFixed(1)}%)
+                            </span>
+                        )}
                     </p>
                 )}
             </div>
