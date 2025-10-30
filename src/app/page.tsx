@@ -192,10 +192,7 @@ export default function Home() {
   return (
     <div className="container mx-auto px-4 py-8">
       <MailingListPopup />
-      <PageHeader
-        title="LucianVotes"
-        description="Your comprehensive guide to the 2026 General Elections."
-      />
+      
 
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 mb-8">
         <Card className="lg:col-span-1 bg-card shadow-lg border-primary/20">
