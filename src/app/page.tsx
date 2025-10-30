@@ -312,7 +312,7 @@ export default function Home() {
                         </ChartContainer>
                         {tossupConstituencies.length > 0 && (
                             <div className="w-full mt-4 text-center">
-                                <h4 className="font-semibold text-sm mb-2 text-muted-foreground">Constituencies To Watch</h4>
+                                <h4 className="font-semibold text-base mb-2">Constituencies To Watch</h4>
                                 <ul className="text-sm space-y-1">
                                     {tossupConstituencies.map(c => (
                                         <li key={c.id} className="flex justify-between items-center text-left">
