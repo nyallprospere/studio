@@ -104,8 +104,8 @@ export default function Home() {
 
   const visibleAllEvents = useMemo(() => filterAndSortEvents(events || [], allEventsViewMode), [events, allEventsViewMode]);
 
-   const { chartData, seatCounts, tossupConstituencies } = useMemo(() => {
-    if (!constituencies) return { chartData: [], seatCounts: {}, tossupConstituencies: [] };
+   const { chartData, seatCounts, tossupConstituencies, aiForecastSeatCounts } = useMemo(() => {
+    if (!constituencies) return { chartData: [], seatCounts: {}, tossupConstituencies: [], aiForecastSeatCounts: {} };
 
     const counts = constituencies.reduce((acc, constituency) => {
         let leaning = constituency.politicalLeaning || 'tossup';
@@ -149,8 +149,14 @@ export default function Home() {
     (seatCounts as any).indTotal = seatCounts.solidInd + seatCounts.leanInd;
 
     const tossupConstituencies = counts['tossup']?.constituencies || [];
+    
+    const aiForecastSeatCounts = constituencies.reduce((acc, c) => {
+        const party = c.aiForecastParty || 'tossup';
+        acc[party] = (acc[party] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
 
-    return { chartData, seatCounts: seatCounts as any, tossupConstituencies };
+    return { chartData, seatCounts: seatCounts as any, tossupConstituencies, aiForecastSeatCounts };
 }, [constituencies]);
 
     const chartConfig = politicalLeaningOptions.reduce((acc, option) => {
@@ -244,6 +250,12 @@ export default function Home() {
                             <span className="font-bold" style={{color: 'hsl(var(--chart-1))'}}>UWP - {seatCounts.uwpTotal}</span> | {' '}
                             <span className="font-bold" style={{color: 'hsl(221, 83%, 53%)'}}>IND - {seatCounts.indTotal}</span>
                         </div>
+                        <div className="text-center mb-4 text-lg font-medium">
+                            Forecasted Results (No Tossups):{' '}
+                            <span className="font-bold" style={{color: 'hsl(var(--chart-5))'}}>SLP - {aiForecastSeatCounts['slp'] || 0}</span> |{' '}
+                            <span className="font-bold" style={{color: 'hsl(var(--chart-1))'}}>UWP - {aiForecastSeatCounts['uwp'] || 0}</span> |{' '}
+                            <span className="font-bold" style={{color: 'hsl(221, 83%, 53%)'}}>IND - {aiForecastSeatCounts['ind'] || 0}</span>
+                        </div>
                         <ChartContainer config={chartConfig} className="h-40 w-full relative">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
@@ -320,7 +332,7 @@ export default function Home() {
                                             {c.aiForecast && c.aiForecastParty && (
                                                 <span className="text-xs font-mono p-1 rounded-md bg-muted">
                                                     <span className={cn('font-bold', getAiForecastPartyColor(c.aiForecastParty))}>
-                                                        {c.aiForecastParty.toUpperCase()} {c.aiForecast}%
+                                                        {c.aiForecastParty.toUpperCase()} {c.aiForecast > 0 ? '+' : ''}{c.aiForecast.toFixed(1)}%
                                                     </span>
                                                 </span>
                                             )}
