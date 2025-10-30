@@ -250,12 +250,6 @@ export default function Home() {
                             <span className="font-bold" style={{color: 'hsl(var(--chart-1))'}}>UWP - {seatCounts.uwpTotal}</span> | {' '}
                             <span className="font-bold" style={{color: 'hsl(221, 83%, 53%)'}}>IND - {seatCounts.indTotal}</span>
                         </div>
-                        <div className="text-center mb-4 text-lg font-medium">
-                            Forecasted Results (No Tossups):{' '}
-                            <span className="font-bold" style={{color: 'hsl(var(--chart-5))'}}>SLP - {aiForecastSeatCounts['slp'] || 0}</span> |{' '}
-                            <span className="font-bold" style={{color: 'hsl(var(--chart-1))'}}>UWP - {aiForecastSeatCounts['uwp'] || 0}</span> |{' '}
-                            <span className="font-bold" style={{color: 'hsl(221, 83%, 53%)'}}>IND - {aiForecastSeatCounts['ind'] || 0}</span>
-                        </div>
                         <ChartContainer config={chartConfig} className="h-40 w-full relative">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
@@ -339,6 +333,12 @@ export default function Home() {
                                         </li>
                                     ))}
                                 </ul>
+                                 <div className="text-center mt-4 text-lg font-medium">
+                                    Forecasted Results (No Tossups):{' '}
+                                    <span className="font-bold" style={{color: 'hsl(var(--chart-5))'}}>SLP - {aiForecastSeatCounts['slp'] || 0}</span> |{' '}
+                                    <span className="font-bold" style={{color: 'hsl(var(--chart-1))'}}>UWP - {aiForecastSeatCounts['uwp'] || 0}</span> |{' '}
+                                    <span className="font-bold" style={{color: 'hsl(221, 83%, 53%)'}}>IND - {aiForecastSeatCounts['ind'] || 0}</span>
+                                </div>
                             </div>
                         )}
                     </CardContent>
