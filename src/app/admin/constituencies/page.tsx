@@ -13,18 +13,17 @@ import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Save, Lock, Unlock, Upload, Download, BrainCircuit } from 'lucide-react';
+import { Loader2, Save, Upload, Download, BrainCircuit, Calendar as CalendarIcon } from 'lucide-react';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { isEqual } from 'lodash';
 import { ImportDialog } from './import-dialog';
 import * as XLSX from 'xlsx';
-import { Textarea } from '@/components/ui/textarea';
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns"
 import { DateRange } from "react-day-picker"
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Calendar } from '@/components/ui/calendar';
 
 
 const initialConstituencies = [
@@ -352,7 +351,22 @@ export default function AdminConstituenciesPage() {
           default:
               setDate(undefined);
       }
-  }
+    }
+    
+    const getCardTitle = () => {
+        if (!date) return 'Constituency Data for All Time';
+        if (date.from && date.to) {
+            if (format(date.from, 'PPP') === format(date.to, 'PPP')) {
+                return `Constituency Data for ${format(date.from, 'MM/dd/yyyy')}`;
+            }
+            return `Constituency Data: ${format(date.from, 'MM/dd/yyyy')} - ${format(date.to, 'MM/dd/yyyy')}`;
+        }
+        if (date.from) {
+             return `Constituency Data for ${format(date.from, 'MM/dd/yyyy')}`;
+        }
+        return 'Constituency Data';
+    }
+
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -415,10 +429,46 @@ export default function AdminConstituenciesPage() {
                     <CardHeader>
                         <div className="flex justify-between items-center">
                             <div>
-                                <CardTitle>Constituency Data</CardTitle>
+                                <CardTitle>{getCardTitle()}</CardTitle>
                                 <CardDescription>Edit voter numbers, leanings, and predictions.</CardDescription>
                             </div>
                              <div className="flex items-center gap-2">
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            id="date"
+                                            variant={"outline"}
+                                            className={cn(
+                                            "w-[260px] justify-start text-left font-normal",
+                                            !date && "text-muted-foreground"
+                                            )}
+                                        >
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {date?.from ? (
+                                            date.to ? (
+                                                <>
+                                                {format(date.from, "LLL dd, y")} -{" "}
+                                                {format(date.to, "LLL dd, y")}
+                                                </>
+                                            ) : (
+                                                format(date.from, "LLL dd, y")
+                                            )
+                                            ) : (
+                                            <span>Pick a date</span>
+                                            )}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="end">
+                                        <Calendar
+                                            initialFocus
+                                            mode="range"
+                                            defaultMonth={date?.from}
+                                            selected={date}
+                                            onSelect={(range) => { setDate(range); setDatePreset('custom'); }}
+                                            numberOfMonths={2}
+                                        />
+                                    </PopoverContent>
+                                </Popover>
                                 <Select value={datePreset} onValueChange={handleDatePresetChange}>
                                     <SelectTrigger className="w-[120px]">
                                         <SelectValue placeholder="Date Range" />
@@ -429,6 +479,7 @@ export default function AdminConstituenciesPage() {
                                         <SelectItem value="week">This Week</SelectItem>
                                         <SelectItem value="month">This Month</SelectItem>
                                         <SelectItem value="year">This Year</SelectItem>
+                                        <SelectItem value="custom" disabled>Custom</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -531,7 +582,7 @@ export default function AdminConstituenciesPage() {
                                                                     handleFieldChange(c.id, 'aiForecast', 0);
                                                                 }
                                                             }}
-                                                            className="w-24 pl-5"
+                                                            className="w-24"
                                                         />
                                                      </div>
                                                 </div>
