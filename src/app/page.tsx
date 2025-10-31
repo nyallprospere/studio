@@ -242,11 +242,6 @@ export default function Home() {
                 </CardContent>
             </Card>
              <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline">
-                        Build Your Election Map
-                    </CardTitle>
-                </CardHeader>
                 <CardContent className="pt-6">
                     <Button asChild className="w-full bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
                         <Link href="/make-your-own">
