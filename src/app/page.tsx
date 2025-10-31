@@ -241,21 +241,19 @@ export default function Home() {
                     />
                 </CardContent>
             </Card>
-             <Card>
-                <CardContent className="pt-6">
-                    <Button asChild className="w-full bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
-                        <Link href="/make-your-own">
-                            Create and share your own election prediction.
-                        </Link>
-                    </Button>
-                </CardContent>
-            </Card>
           </div>
             <div className="space-y-8">
+                 <Card>
+                    <CardContent className="pt-6">
+                        <Button asChild className="w-full bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
+                            <Link href="/make-your-own">
+                                Create and share your own election prediction.
+                            </Link>
+                        </Button>
+                    </CardContent>
+                </Card>
                 <Card>
-                    <CardHeader>
-                    </CardHeader>
-                    <CardContent className="flex flex-col items-center">
+                    <CardContent className="flex flex-col items-center pt-6">
                         <div className="text-center mb-4 text-lg font-medium">
                             Forecasted Results: {' '}
                             <span className="font-bold" style={{color: 'hsl(var(--chart-5))'}}>SLP - {seatCounts.slpTotal}</span> | {' '}
@@ -355,7 +353,6 @@ export default function Home() {
                         )}
                     </CardContent>
                 </Card>
-
                 <Card>
                     <CardHeader>
                         <div>
