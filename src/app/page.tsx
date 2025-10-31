@@ -422,7 +422,18 @@ export default function Home() {
                     <div key={item.id}>
                         <h3 className="font-semibold">{item.title}</h3>
                         <ul className="list-disc list-inside text-muted-foreground">
-                           {item.items.map((text, index) => <li key={index}>{text}</li>)}
+                           {item.items.map((text, index) => {
+                             const isUrl = text.startsWith('http');
+                             return (
+                               <li key={index}>
+                                 {isUrl ? (
+                                   <a href={text} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{text}</a>
+                                 ) : (
+                                   text
+                                 )}
+                               </li>
+                             );
+                           })}
                         </ul>
                     </div>
                 ))}
