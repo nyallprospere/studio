@@ -270,6 +270,7 @@ export default function Home() {
           <div className="lg:col-span-1 space-y-8">
              <Card>
                 <CardHeader>
+                    <CardTitle className="font-headline">Interactive Map</CardTitle>
                     <CardDescription>Click on a constituency to learn more.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0.5">
@@ -300,7 +301,6 @@ export default function Home() {
                 </Card>
                  <Card>
                     <CardHeader>
-                        <CardTitle className="font-headline">Seat Count</CardTitle>
                         <CardDescription>Our current projection for the 2026 general election.</CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col items-center">
