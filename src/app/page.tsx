@@ -57,6 +57,55 @@ const politicalLeaningOptions = [
     { value: 'solid-uwp', label: 'Solid UWP', color: 'hsl(var(--chart-1))' },
 ];
 
+const getVictoryStatus = (slpSeats: number, uwpSeats: number, indSeats: number) => {
+    const getStatus = (seats: number) => {
+        if (seats >= 16) return 'SLP Wins a Landslide!';
+        if (seats >= 14) return 'SLP Wins a Decisive Victory';
+        if (seats >= 11) return 'SLP Wins The Election.';
+        if (seats >= 9) return 'SLP Wins Close Victory';
+        return null;
+    };
+
+    const getUWPStatus = (seats: number) => {
+        if (seats >= 16) return 'UWP Wins a Landslide!';
+        if (seats >= 14) return 'UWP Wins a Decisive Victory';
+        if (seats >= 11) return 'UWP Wins The Election.';
+        if (seats >= 9) return 'UWP Wins Close Victory';
+        return null;
+    }
+
+    const slpStatus = getStatus(slpSeats);
+    const uwpStatus = getUWPStatus(uwpSeats);
+
+    let status = 'Too Early To Tell';
+    let color = 'bg-purple-500';
+
+    if (slpStatus) {
+        status = slpStatus;
+        color = 'bg-red-500';
+    } else if (uwpStatus) {
+        status = uwpStatus;
+        color = 'bg-yellow-400 text-black';
+    } else if (slpSeats + indSeats >= 9) {
+        status = 'SLP Wins Very Close Victory';
+        color = 'bg-red-500';
+    }
+    
+    return { status, color };
+};
+
+
+const VictoryStatusBar = ({ slpSeats, uwpSeats, indSeats }: { slpSeats: number, uwpSeats: number, indSeats: number }) => {
+  const { status, color } = getVictoryStatus(slpSeats, uwpSeats, indSeats);
+
+  return (
+    <div className={`p-2 rounded-md text-center text-white font-bold mb-4 ${color}`}>
+        {status}
+    </div>
+  );
+};
+
+
 export default function Home() {
   const { user } = useUser();
   const electionDate = new Date('2026-07-26T00:00:00');
@@ -242,24 +291,19 @@ export default function Home() {
                 </CardContent>
             </Card>
             <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline">Build Your Election Map</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <Button asChild className="w-full bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
-                        <Link href="/make-your-own">
-                            Create and share your own election prediction.
-                        </Link>
-                    </Button>
-                </CardContent>
+              <CardContent className="pt-6">
+                <Button asChild className="w-full bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
+                  <Link href="/make-your-own">
+                    Create and share your own election prediction.
+                  </Link>
+                </Button>
+              </CardContent>
             </Card>
           </div>
             <div className="space-y-8">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline">Seat Count</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-col items-center">
+                 <Card>
+                    <CardContent className="flex flex-col items-center pt-6">
+                        <VictoryStatusBar slpSeats={seatCounts.slpTotal} uwpSeats={seatCounts.uwpTotal} indSeats={seatCounts.indTotal} />
                         <div className="text-center mb-4 text-lg font-medium">
                             Forecasted Results: {' '}
                             <span className="font-bold" style={{color: 'hsl(var(--chart-5))'}}>SLP - {seatCounts.slpTotal}</span> | {' '}
@@ -381,7 +425,7 @@ export default function Home() {
                         </div>
                     </CardContent>
                 </Card>
-                <Card>
+                 <Card>
                     <CardHeader>
                         <CardTitle className="font-headline flex items-center gap-2">
                             <Vote /> Voter Information
