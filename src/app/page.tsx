@@ -225,7 +225,7 @@ export default function Home() {
             LucianVotes Election Forecast
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-8">
             <Card>
                 <CardHeader>
                     <CardTitle>Interactive Map</CardTitle>
@@ -242,7 +242,21 @@ export default function Home() {
                     />
                 </CardContent>
             </Card>
-            </div>
+             <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline">
+                        Build Your Election Map
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                    <Button asChild className="w-full bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
+                        <Link href="/make-your-own">
+                            Create and share your own election prediction.
+                        </Link>
+                    </Button>
+                </CardContent>
+            </Card>
+          </div>
             <div className="space-y-8">
                 <Card>
                     <CardHeader>
@@ -350,21 +364,6 @@ export default function Home() {
                 </Card>
 
                 <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline">
-                            Build Your Election Map
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-6">
-                        <Button asChild className="w-full bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
-                            <Link href="/make-your-own">
-                                Create and share your own election prediction.
-                            </Link>
-                        </Button>
-                    </CardContent>
-                </Card>
-
-                 <Card>
                     <CardHeader>
                         <div>
                             <CardTitle>Events</CardTitle>
