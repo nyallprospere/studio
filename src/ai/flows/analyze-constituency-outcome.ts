@@ -67,7 +67,7 @@ const prompt = ai.definePrompt({
       - **Incumbency**: There's often a disadvantage for the incumbent *party* in government. Consider this alongside the individual candidate's incumbency status.
       - **Comeback Candidates**: Assess the chances of any former incumbents attempting to reclaim their seat.
       - **Party Leader Impact**: The negative public perception of UWP leader Allen Chastanet can impact the party's performance.
-      - **Candidate Specific Factors**: Acknowledge anomalies. For example, in Micoud North for the 2021 election, the specific UWP candidate was highly unpopular. The current candidate, Jeremiah, is viewed more favorably, so you should moderate the expected swing *against* the UWP accordingly, as the new candidate isn't burdened by the same negative perception.
+      - **Candidate Specific Factors**: Acknowledge anomalies. For example, in Micoud North for the 2021 election, the specific UWP candidate was highly unpopular. The current candidate, Jeremiah, is viewed more favorably, so you should moderate the expected swing *against* the UWP accordingly, as the new candidate isn't burdened by the same negative perception. Jeremiah has done a really good job as an incumbent and has done well to retain his support.
 
   Synthesize these factors to formulate your prediction. Your analysis should be concise and explain the key reasons for your conclusion.
 
