@@ -286,9 +286,6 @@ export default function Home() {
           </div>
             <div className="space-y-8">
                 <Card>
-                    <CardHeader>
-                        <CardDescription>Create and share your own election prediction.</CardDescription>
-                    </CardHeader>
                     <CardContent className="pt-6">
                         <Button asChild className="w-full bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
                             <Link href="/make-your-own">
@@ -460,7 +457,7 @@ export default function Home() {
         <Card>
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2">
-              News
+              <Rss /> News
             </CardTitle>
             <CardDescription>The latest headlines shaping the election.</CardDescription>
           </CardHeader>
@@ -510,5 +507,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
