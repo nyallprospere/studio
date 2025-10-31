@@ -95,7 +95,7 @@ const ProjectionTrendChart = () => {
             });
 
             return {
-                date: format(proj.date.toDate(), 'MMM d'),
+                date: proj.date ? format(proj.date.toDate(), 'MMM d') : '',
                 SLP: totalVoters > 0 ? parseFloat((weightedSlpTotal / totalVoters).toFixed(1)) : 0,
                 UWP: totalVoters > 0 ? parseFloat((weightedUwpTotal / totalVoters).toFixed(1)) : 0,
             };
@@ -229,16 +229,13 @@ const ProjectionTrendChart = () => {
 
 const calculatePercentages = (forecast: number | undefined, party: 'slp' | 'uwp' | 'ind' | undefined) => {
     if (typeof forecast === 'undefined' || !party) {
-        return { slp: null, uwp: null };
-    }
-
-    if (party === 'ind') {
-        return { slp: null, uwp: null };
+        return { slp: null, uwp: null, ind: null };
     }
 
     const baseline = 50;
     let slpPercent = baseline;
     let uwpPercent = baseline;
+    let indPercent = null;
 
     if (party === 'slp') {
         slpPercent = baseline + forecast / 2;
@@ -246,9 +243,13 @@ const calculatePercentages = (forecast: number | undefined, party: 'slp' | 'uwp'
     } else if (party === 'uwp') {
         uwpPercent = baseline + forecast / 2;
         slpPercent = 100 - uwpPercent;
+    } else if (party === 'ind') {
+        indPercent = baseline + forecast / 2;
+        uwpPercent = 100 - indPercent;
+        slpPercent = indPercent; // Display IND % in SLP column for UI
     }
 
-    return { slp: slpPercent, uwp: uwpPercent };
+    return { slp: slpPercent, uwp: uwpPercent, ind: indPercent };
 };
 
 export default function OurProjectionsPage() {
@@ -400,7 +401,7 @@ export default function OurProjectionsPage() {
                     <TableHeader>
                         <TableRow>
                         <TableHead>Constituency</TableHead>
-                        <TableHead>SLP %</TableHead>
+                        <TableHead>SLP % / IND %</TableHead>
                         <TableHead>UWP %</TableHead>
                         <TableHead>Predicted Winner</TableHead>
                         <TableHead className="text-right">Forecasted Vote Advantage</TableHead>
@@ -408,11 +409,13 @@ export default function OurProjectionsPage() {
                     </TableHeader>
                     <TableBody>
                         {sortedConstituencies.map((c) => {
-                             const { slp, uwp } = calculatePercentages(c.aiForecast, c.aiForecastParty);
+                             const { slp, uwp, ind } = calculatePercentages(c.aiForecast, c.aiForecastParty);
+                             const displaySlp = c.aiForecastParty === 'ind' ? ind : slp;
+
                             return (
                                 <TableRow key={c.id}>
                                     <TableCell className="font-medium">{c.name}</TableCell>
-                                    <TableCell>{slp !== null ? `${slp.toFixed(1)}%` : 'N/A'}</TableCell>
+                                    <TableCell>{displaySlp !== null ? `${displaySlp.toFixed(1)}%` : 'N/A'}</TableCell>
                                     <TableCell>{uwp !== null ? `${uwp.toFixed(1)}%` : 'N/A'}</TableCell>
                                     <TableCell className={cn(getPartyColorClass(c.aiForecastParty))}>
                                         {c.aiForecastParty?.toUpperCase() || 'N/A'}
@@ -432,4 +435,3 @@ export default function OurProjectionsPage() {
     </div>
   );
 }
-
