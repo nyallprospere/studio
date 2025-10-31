@@ -259,7 +259,6 @@ export default function Home() {
             <div className="space-y-8">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="font-headline">Seat Count</CardTitle>
                     </CardHeader>
                     <CardContent className="flex flex-col items-center">
                         <div className="text-center mb-4 text-lg font-medium">
