@@ -206,6 +206,17 @@ export default function Home() {
           <CardContent>
             <Countdown date={electionDate} />
           </CardContent>
+          <CardFooter className="flex justify-center">
+            <Button asChild>
+              <Link
+                href="https://www.sluelectoral.com/electoral/voter-record-search/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Check Your Voter Registration Status
+              </Link>
+            </Button>
+          </CardFooter>
         </Card>
       </div>
       
@@ -332,7 +343,7 @@ export default function Home() {
                                     ))}
                                 </ul>
                                 <div className="text-center mt-4 text-lg font-medium">
-                                    Forecasted Results (No Tossups):{' '}
+                                    Forecasted Results (No Tossups): {' '}
                                     <span className="font-bold" style={{color: 'hsl(var(--chart-5))'}}>SLP - {aiForecastSeatCounts['slp'] || 0}</span> |{' '}
                                     <span className="font-bold" style={{color: 'hsl(var(--chart-1))'}}>UWP - {aiForecastSeatCounts['uwp'] || 0}</span> |{' '}
                                     <span className="font-bold" style={{color: 'hsl(221, 83%, 53%)'}}>IND - {aiForecastSeatCounts['ind'] || 0}</span>
@@ -427,7 +438,7 @@ export default function Home() {
                              return (
                                <li key={index}>
                                  {isUrl ? (
-                                   <a href={text} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{text}</a>
+                                   <Link href={text} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{text}</Link>
                                  ) : (
                                    text
                                  )}
