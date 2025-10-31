@@ -226,7 +226,7 @@ export default function Home() {
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="lg:col-span-1 space-y-8">
-            <Card>
+             <Card>
                 <CardHeader>
                     <CardDescription>Click on a constituency to learn more.</CardDescription>
                 </CardHeader>
@@ -241,19 +241,25 @@ export default function Home() {
                     />
                 </CardContent>
             </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline">Build Your Election Map</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Button asChild className="w-full bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
+                        <Link href="/make-your-own">
+                            Create and share your own election prediction.
+                        </Link>
+                    </Button>
+                </CardContent>
+            </Card>
           </div>
             <div className="space-y-8">
-                 <Card>
-                    <CardContent className="pt-6">
-                        <Button asChild className="w-full bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
-                            <Link href="/make-your-own">
-                                Create and share your own election prediction.
-                            </Link>
-                        </Button>
-                    </CardContent>
-                </Card>
                 <Card>
-                    <CardContent className="flex flex-col items-center pt-6">
+                    <CardHeader>
+                        <CardTitle className="font-headline">Seat Count</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-col items-center">
                         <div className="text-center mb-4 text-lg font-medium">
                             Forecasted Results: {' '}
                             <span className="font-bold" style={{color: 'hsl(var(--chart-5))'}}>SLP - {seatCounts.slpTotal}</span> | {' '}
@@ -411,7 +417,7 @@ export default function Home() {
         <Card>
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2">
-              <Rss /> Recent News
+              <Rss /> News
             </CardTitle>
             <CardDescription>The latest headlines shaping the election.</CardDescription>
           </CardHeader>
