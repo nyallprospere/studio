@@ -246,11 +246,7 @@ export default function Home() {
             <div className="space-y-8">
                 <Card>
                     <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle className="font-headline">Seat Count</CardTitle>
-                            </div>
-                        </div>
+                        <CardTitle className="font-headline">Seat Count</CardTitle>
                     </CardHeader>
                     <CardContent className="flex flex-col items-center">
                         <div className="text-center mb-4 text-lg font-medium">
@@ -390,41 +386,38 @@ export default function Home() {
                         </div>
                     </CardContent>
                 </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2">
+                            <Vote /> Voter Information
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {loadingVoterInfo ? <p>Loading information...</p> : voterInfoItems?.map(item => (
+                            <div key={item.id}>
+                                <h3 className="font-semibold">{item.title}</h3>
+                                <ul className="list-disc list-inside text-muted-foreground">
+                                {item.items.map((text, index) => {
+                                    const isUrl = text.startsWith('http');
+                                    return (
+                                    <li key={index}>
+                                        {isUrl ? (
+                                        <a href={text} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{text}</a>
+                                        ) : (
+                                        text
+                                        )}
+                                    </li>
+                                    );
+                                })}
+                                </ul>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
             </div>
         </div>
       </div>
       
-       <div className="mt-12 grid grid-cols-1 lg:grid-cols-1 gap-8">
-        <Card>
-            <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2">
-                    <Vote /> Voter Information
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                 {loadingVoterInfo ? <p>Loading information...</p> : voterInfoItems?.map(item => (
-                    <div key={item.id}>
-                        <h3 className="font-semibold">{item.title}</h3>
-                        <ul className="list-disc list-inside text-muted-foreground">
-                           {item.items.map((text, index) => {
-                             const isUrl = text.startsWith('http');
-                             return (
-                               <li key={index}>
-                                 {isUrl ? (
-                                   <Link href={text} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{text}</Link>
-                                 ) : (
-                                   text
-                                 )}
-                               </li>
-                             );
-                           })}
-                        </ul>
-                    </div>
-                ))}
-            </CardContent>
-        </Card>
-      </div>
-
        <div className="mt-12">
         <Card>
           <CardHeader>
