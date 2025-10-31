@@ -394,33 +394,6 @@ export default function Home() {
         </div>
       </div>
       
-       <div className="mt-12">
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline flex items-center gap-2">
-              <Rss /> Recent News
-            </CardTitle>
-            <CardDescription>The latest headlines shaping the election.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {loadingNews ? (
-              Array.from({ length: 3 }).map((_, i) => <Card key={i}><CardContent className="p-4"><p>Loading...</p></CardContent></Card>)
-            ) : trendingNews.length > 0 ? (
-              trendingNews.map((article) => (
-                <NewsCard key={article.id} article={article} />
-              ))
-            ) : (
-              <p className="text-muted-foreground col-span-full text-center">No recent news.</p>
-            )}
-          </CardContent>
-           <CardFooter>
-                <Button asChild variant="secondary" className="w-full">
-                    <Link href="/election-news">View All News</Link>
-                </Button>
-           </CardFooter>
-        </Card>
-      </div>
-
        <div className="mt-12 grid grid-cols-1 lg:grid-cols-1 gap-8">
         <Card>
             <CardHeader>
@@ -449,6 +422,33 @@ export default function Home() {
                     </div>
                 ))}
             </CardContent>
+        </Card>
+      </div>
+
+       <div className="mt-12">
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline flex items-center gap-2">
+              <Rss /> Recent News
+            </CardTitle>
+            <CardDescription>The latest headlines shaping the election.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {loadingNews ? (
+              Array.from({ length: 3 }).map((_, i) => <Card key={i}><CardContent className="p-4"><p>Loading...</p></CardContent></Card>)
+            ) : trendingNews.length > 0 ? (
+              trendingNews.map((article) => (
+                <NewsCard key={article.id} article={article} />
+              ))
+            ) : (
+              <p className="text-muted-foreground col-span-full text-center">No recent news.</p>
+            )}
+          </CardContent>
+           <CardFooter>
+                <Button asChild variant="secondary" className="w-full">
+                    <Link href="/election-news">View All News</Link>
+                </Button>
+           </CardFooter>
         </Card>
       </div>
 
