@@ -372,6 +372,10 @@ export default function AdminConstituenciesPage() {
     }
 
     const handleEditSnapshot = (snapshot: ConstituencyProjection) => {
+        if (!snapshot.date) {
+            toast({ title: 'Cannot Load Snapshot', description: `Snapshot is still pending server timestamp.`, variant: 'destructive'});
+            return;
+        }
         setEditableConstituencies(JSON.parse(JSON.stringify(snapshot.constituencies)));
         toast({ title: 'Snapshot Loaded', description: `Loaded projections from ${format(snapshot.date.toDate(), 'PPP')}.` });
     };
@@ -639,7 +643,7 @@ export default function AdminConstituenciesPage() {
                                     {dailyProjections && dailyProjections.length > 0 ? (
                                         dailyProjections.map(snapshot => (
                                             <TableRow key={snapshot.id}>
-                                                <TableCell className="font-medium">{format(snapshot.date.toDate(), 'PPP, p')}</TableCell>
+                                                <TableCell className="font-medium">{snapshot.date ? format(snapshot.date.toDate(), 'PPP, p') : 'Processing...'}</TableCell>
                                                 <TableCell className="text-right">
                                                     <Button variant="outline" size="sm" onClick={() => handleEditSnapshot(snapshot)} className="mr-2">
                                                         <Edit className="mr-2 h-4 w-4" />
@@ -656,7 +660,7 @@ export default function AdminConstituenciesPage() {
                                                             <AlertDialogHeader>
                                                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                                             <AlertDialogDescription>
-                                                                This action will permanently delete the snapshot from {format(snapshot.date.toDate(), 'PPP')}. This cannot be undone.
+                                                                This action will permanently delete the snapshot from {snapshot.date ? format(snapshot.date.toDate(), 'PPP') : 'this date'}. This cannot be undone.
                                                             </AlertDialogDescription>
                                                             </AlertDialogHeader>
                                                             <AlertDialogFooter>
