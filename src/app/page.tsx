@@ -219,7 +219,7 @@ export default function Home() {
       .sort((a, b) => {
         const scoreA = (a.articleDate?.toDate() > oneWeekAgo ? a.likeCount || 0 : 0);
         const scoreB = (b.articleDate?.toDate() > oneWeekAgo ? b.likeCount || 0 : 0);
-        if (scoreB !== scoreA) return scoreB - scoreA;
+        if (scoreB !== scoreA) return scoreB - a.likeCount;
         return b.articleDate.toDate().getTime() - a.articleDate.toDate().getTime();
       })
       .slice(0, 3);
@@ -268,9 +268,8 @@ export default function Home() {
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="lg:col-span-1 space-y-8">
-             <Card>
+            <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline">Interactive Map</CardTitle>
                     <CardDescription>Click on a constituency to learn more.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0.5">
@@ -286,9 +285,8 @@ export default function Home() {
             </Card>
           </div>
             <div className="space-y-8">
-                 <Card>
+                <Card>
                     <CardHeader>
-                        <CardTitle className="font-headline">Build Your Election Map</CardTitle>
                         <CardDescription>Create and share your own election prediction.</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-6">
@@ -404,7 +402,7 @@ export default function Home() {
                         )}
                     </CardContent>
                 </Card>
-                <Card>
+                 <Card>
                     <CardHeader>
                         <div>
                             <CardTitle>Events</CardTitle>
@@ -462,7 +460,7 @@ export default function Home() {
         <Card>
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2">
-              <Rss /> Recent News
+              News
             </CardTitle>
             <CardDescription>The latest headlines shaping the election.</CardDescription>
           </CardHeader>
