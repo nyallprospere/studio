@@ -25,6 +25,7 @@ const politicalLeaningOptions = [
     { value: 'tossup', label: 'Tossup', color: '#a855f7' },
     { value: 'lean-slp', label: 'Likely SLP', color: '#f87171' },
     { value: 'solid-slp', label: 'Solid SLP', color: '#dc2626' },
+    { value: 'solid-ind', label: 'Solid IND', color: '#3b82f6' },
 ];
 
 const makeYourOwnLeaningOptions = [
@@ -36,10 +37,19 @@ const makeYourOwnLeaningOptions = [
 ];
 
 
-const getLeaningStyle = (leaningValue?: string, isMakeYourOwn?: boolean) => {
+const getLeaningStyle = (constituency: Constituency, isMakeYourOwn?: boolean) => {
+    const leaningValue = constituency.politicalLeaning;
     const options = isMakeYourOwn ? makeYourOwnLeaningOptions : politicalLeaningOptions;
     const defaultLeaningValue = isMakeYourOwn ? 'unselected' : 'tossup';
-    const leaningInfo = options.find(o => o.value === leaningValue) || options.find(o => o.value === defaultLeaningValue);
+    
+    let effectiveLeaning = leaningValue;
+    if (constituency.name === 'Castries North' || constituency.name === 'Castries Central') {
+        if (leaningValue === 'solid-slp' || leaningValue === 'lean-slp' || leaningValue === 'ind') {
+             effectiveLeaning = 'solid-ind';
+        }
+    }
+
+    const leaningInfo = options.find(o => o.value === effectiveLeaning) || options.find(o => o.value === defaultLeaningValue);
     
     let label = leaningInfo?.label || 'Tossup';
     if (leaningValue?.includes('ind')) {
@@ -473,9 +483,7 @@ export function ConstituencyPopoverContent({
         return null;
     }, [constituency]);
 
-    const isSpecialConstituencyForIND = constituency.name === 'Castries North' || constituency.name === 'Castries Central';
-
-    const leaningStyle = getLeaningStyle(constituency.politicalLeaning?.includes('slp') && isSpecialConstituencyForIND ? constituency.politicalLeaning.replace('slp', 'ind') : constituency.politicalLeaning);
+    const leaningStyle = getLeaningStyle(constituency, isMakeYourOwn);
 
     if (isLoading) {
         return <Skeleton className="h-40 w-full" />;
@@ -508,12 +516,12 @@ export function ConstituencyPopoverContent({
                          <GaugeChart 
                             slpPercentage={constituency.predictedSlpPercentage} 
                             uwpPercentage={constituency.predictedUwpPercentage} 
-                            slpColor={isSpecialConstituencyForIND ? '#3b82f6' : (slpParty?.color || '#ef4444')}
+                            slpColor={(constituency.name === 'Castries North' || constituency.name === 'Castries Central') ? '#3b82f6' : (slpParty?.color || '#ef4444')}
                             uwpColor={uwpParty?.color}
                         />
                     </div>
                     {uwpParty && slpParty && <div className="grid grid-cols-2 gap-2">
-                        {isSpecialConstituencyForIND ? (
+                        {(constituency.name === 'Castries North' || constituency.name === 'Castries Central') ? (
                             <>
                                 {independentCandidate && <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center cursor-pointer" onClick={() => independentCandidate && setProfileOpen(true)}>
                                     <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
