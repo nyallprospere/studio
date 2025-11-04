@@ -25,6 +25,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { ConstituencyAnalyzer } from '@/components/predictions/constituency-analyzer';
 
 
 const initialConstituencies = [
@@ -432,23 +433,26 @@ export default function AdminConstituenciesPage() {
             />
 
             <div className="grid grid-cols-1 gap-8">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Map Preview</CardTitle>
-                        <CardDescription>
-                            Click a constituency on the map to edit its details in the table below.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <InteractiveSvgMap 
-                            constituencies={editableConstituencies} 
-                            selectedConstituencyId={selectedConstituencyId}
-                            onConstituencyClick={setSelectedConstituencyId}
-                            onLeaningChange={handleLeaningChange}
-                            onPredictionChange={handlePredictionChange}
-                        />
-                    </CardContent>
-                </Card>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Map Preview</CardTitle>
+                            <CardDescription>
+                                Click a constituency on the map to edit its details in the table below.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <InteractiveSvgMap 
+                                constituencies={editableConstituencies} 
+                                selectedConstituencyId={selectedConstituencyId}
+                                onConstituencyClick={setSelectedConstituencyId}
+                                onLeaningChange={handleLeaningChange}
+                                onPredictionChange={handlePredictionChange}
+                            />
+                        </CardContent>
+                    </Card>
+                    <ConstituencyAnalyzer />
+                </div>
                 <Card>
                     <CardHeader>
                         <div className="flex justify-between items-center">
