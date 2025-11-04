@@ -15,11 +15,12 @@ import type { ChartConfig } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Image from 'next/image';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
-import { ArrowUp, ArrowDown, Minus, Sparkles, UserSquare } from 'lucide-react';
+import { ArrowUp, ArrowDown, Minus, Sparkles, UserSquare, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { analyzePastElection, type PastElectionAnalysisInput } from '@/ai/flows/analyze-past-election';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
 
 const constituencyMapOrder = [
     "Gros Islet",
@@ -525,6 +526,8 @@ export default function ResultsPage() {
       </div>
     );
   }
+  
+  const winningPartyId = summaryData.length > 0 ? summaryData[0].partyId : null;
 
   const SeatChangeIndicator = ({ change }: { change: number | null }) => {
     if (change === null || !previousElection) return null;
@@ -626,10 +629,17 @@ export default function ResultsPage() {
                                 if (!leader) return null;
                                 const party = getPartyById(leader.partyId);
                                 if (!party) return null;
+                                const isWinner = winningPartyId === party.id;
                                 return (
                                     <Link key={leader.id} href={`/candidates/${leader.originalId}?archive=true`}>
-                                        <Card className="hover:bg-muted/50 transition-colors flex items-center gap-4 p-4">
-                                             <div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">
+                                        <Card className="hover:bg-muted/50 transition-colors flex items-center gap-4 p-4 relative">
+                                            {isWinner && (
+                                                <Badge className="absolute top-2 right-2 bg-green-100 text-green-800 border-green-300">
+                                                    <CheckCircle className="mr-1 h-3 w-3" />
+                                                    Winner
+                                                </Badge>
+                                            )}
+                                            <div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">
                                                 {leader.imageUrl ? (
                                                 <Image src={leader.imageUrl} alt={`${leader.firstName} ${leader.lastName}`} fill className="object-cover" />
                                                 ) : (
