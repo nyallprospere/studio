@@ -703,26 +703,6 @@ export default function ResultsPage() {
                      <div className="md:col-span-1 space-y-8">
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Sparkles className="text-accent" />
-                                    Election Analysis
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                {loadingAnalysis ? (
-                                    <div className="space-y-2">
-                                        <Skeleton className="h-4 w-full" />
-                                        <Skeleton className="h-4 w-full" />
-                                        <Skeleton className="h-4 w-2/3" />
-                                        <Skeleton className="h-4 w-full" />
-                                    </div>
-                                ) : (
-                                    <p className="text-sm text-muted-foreground whitespace-pre-line">{analysis}</p>
-                                )}
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader>
                                 <CardTitle>Closest Races</CardTitle>
                                 <CardDescription>Top 5 closest constituency results by vote margin.</CardDescription>
                             </CardHeader>
@@ -748,6 +728,26 @@ export default function ResultsPage() {
                                         })}
                                     </TableBody>
                                 </Table>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Sparkles className="text-accent" />
+                                    Election Analysis
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {loadingAnalysis ? (
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-full" />
+                                        <Skeleton className="h-4 w-full" />
+                                        <Skeleton className="h-4 w-2/3" />
+                                        <Skeleton className="h-4 w-full" />
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground whitespace-pre-line">{analysis}</p>
+                                )}
                             </CardContent>
                         </Card>
                     </div>
