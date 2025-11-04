@@ -2,12 +2,12 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import type { Election, ElectionResult, Party, Constituency, PartyLogo, Region } from '@/lib/types';
+import type { Election, ElectionResult, Party, Constituency, PartyLogo, Region, Candidate } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
-import { collection, orderBy, query, getDocs } from 'firebase/firestore';
+import { collection, orderBy, query, getDocs, where, limit } from 'firebase/firestore';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Bar, BarChart, ResponsiveContainer, XAxis, Tooltip, CartesianGrid, LabelList, Cell, YAxis } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -15,10 +15,11 @@ import type { ChartConfig } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Image from 'next/image';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
-import { ArrowUp, ArrowDown, Minus, Sparkles } from 'lucide-react';
+import { ArrowUp, ArrowDown, Minus, Sparkles, UserSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { analyzePastElection, type PastElectionAnalysisInput } from '@/ai/flows/analyze-past-election';
 import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
 
 const constituencyMapOrder = [
     "Gros Islet",
@@ -52,12 +53,14 @@ export default function ResultsPage() {
   const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
   const partyLogosQuery = useMemoFirebase(() => firestore ? collection(firestore, 'party_logos') : null, [firestore]);
   const regionsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'regions') : null, [firestore]);
+  const candidatesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'archived_candidates')) : null, [firestore]);
 
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
   const { data: partyLogos, isLoading: loadingLogos } = useCollection<PartyLogo>(partyLogosQuery);
   const { data: regions, isLoading: loadingRegions } = useCollection<Region>(regionsQuery);
+  const { data: archivedCandidates, isLoading: loadingArchivedCandidates } = useCollection<ArchivedCandidate>(candidatesQuery);
   
   const [selectedElectionId, setSelectedElectionId] = useState<string | undefined>(undefined);
   const [resultsByYear, setResultsByYear] = useState<Record<string, ElectionResult[]>>({});
@@ -127,7 +130,7 @@ export default function ResultsPage() {
   const getPartyById = (id: string) => parties?.find(p => p.id === id);
   const getConstituencyById = (id: string) => constituencies?.find(c => c.id === id);
   
-  const loading = loadingElections || loadingParties || loadingConstituencies || loadingLogos || loadingRegions;
+  const loading = loadingElections || loadingParties || loadingConstituencies || loadingLogos || loadingRegions || loadingArchivedCandidates;
 
   const currentElectionResults = selectedElectionId ? resultsByYear[selectedElectionId] : [];
   const currentElection = useMemo(() => sortedElections.find(e => e.id === selectedElectionId), [selectedElectionId, sortedElections]);
@@ -475,6 +478,17 @@ export default function ResultsPage() {
     }).sort((a, b) => a.name.localeCompare(b.name));
   }, [regions, currentElectionResults, previousElectionResults, constituencies, currentElection, previousElection, parties]);
 
+  const { slpLeaderCandidate, uwpLeaderCandidate } = useMemo(() => {
+    if (!archivedCandidates || !currentElection) {
+      return { slpLeaderCandidate: null, uwpLeaderCandidate: null };
+    }
+    const electionCandidates = archivedCandidates.filter(c => c.electionId === currentElection.id);
+    const slpLeader = electionCandidates.find(c => c.isPartyLeader && getPartyById(c.partyId)?.acronym === 'SLP');
+    const uwpLeader = electionCandidates.find(c => c.isPartyLeader && getPartyById(c.partyId)?.acronym === 'UWP');
+
+    return { slpLeaderCandidate: slpLeader, uwpLeaderCandidate: uwpLeader };
+  }, [archivedCandidates, currentElection, getPartyById]);
+
 
   const handleYearChange = (electionId: string) => {
     setSelectedElectionId(electionId);
@@ -603,6 +617,36 @@ export default function ResultsPage() {
                         </Card>
                         ))}
                     </div>
+                     <Card className="mb-8">
+                        <CardHeader>
+                            <CardTitle>Party Leaders</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid md:grid-cols-2 gap-4">
+                            {[slpLeaderCandidate, uwpLeaderCandidate].map(leader => {
+                                if (!leader) return null;
+                                const party = getPartyById(leader.partyId);
+                                if (!party) return null;
+                                return (
+                                    <Link key={leader.id} href={`/candidates/${leader.originalId}?archive=true`}>
+                                        <Card className="hover:bg-muted/50 transition-colors flex items-center gap-4 p-4">
+                                             <div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">
+                                                {leader.imageUrl ? (
+                                                <Image src={leader.imageUrl} alt={`${leader.firstName} ${leader.lastName}`} fill className="object-cover" />
+                                                ) : (
+                                                <UserSquare className="h-full w-full text-muted-foreground" />
+                                                )}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold">{leader.firstName} {leader.lastName}</p>
+                                                <p className="text-sm" style={{color: party.color}}>{party.name}</p>
+                                                <p className="text-sm text-muted-foreground">{getConstituencyById(leader.constituencyId)?.name}</p>
+                                            </div>
+                                        </Card>
+                                    </Link>
+                                )
+                            })}
+                        </CardContent>
+                    </Card>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                      <div className="md:col-span-1">
                         <Card>
