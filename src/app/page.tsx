@@ -153,12 +153,12 @@ export default function Home() {
     if (!constituencies) return { chartData: [], seatCounts: {}, tossupConstituencies: [], aiForecastSeatCounts: {} };
 
     const counts = constituencies.reduce((acc, constituency) => {
-        let leaning = constituency.politicalLeaning || 'tossup';
+        const leaningValue = constituency.politicalLeaning || 'tossup';
         const isSpecialConstituency = constituency.name === 'Castries North' || constituency.name === 'Castries Central';
 
-        let effectiveLeaning = leaning;
+        let effectiveLeaning = leaningValue;
         if (isSpecialConstituency) {
-            if (leaning === 'solid-slp' || leaning === 'lean-slp' || leaning === 'ind') {
+            if (leaningValue === 'solid-slp' || leaningValue === 'lean-slp' || leaningValue === 'ind') {
                  effectiveLeaning = 'solid-ind';
             }
         }
@@ -273,7 +273,7 @@ export default function Home() {
           <div className="lg:col-span-1 space-y-8">
             <Card>
                 <CardHeader>
-                    <CardTitle>Interactive Map</CardTitle>
+                    
                     <CardDescription>Click on a constituency to learn more.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0.5">
@@ -291,8 +291,8 @@ export default function Home() {
             <div className="space-y-8">
                  <Card>
                     <CardHeader>
-                        <CardTitle className="font-headline">Build Your Election Map</CardTitle>
-                        <CardDescription>Create and share your own election prediction.</CardDescription>
+                        
+                        
                     </CardHeader>
                     <CardContent>
                         <Button asChild className="w-full bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
@@ -304,17 +304,18 @@ export default function Home() {
                 </Card>
                  <Card>
                     <CardHeader>
-                        <CardTitle className="font-headline">Seat Count</CardTitle>
+                        
                         <CardDescription>Our current projection for the 2026 general election.</CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col items-center">
-                        <VictoryStatusBar slpSeats={seatCounts.slpTotal} uwpSeats={seatCounts.uwpTotal} indSeats={seatCounts.indTotal} />
+                        
                         <div className="text-center mb-4 text-lg font-medium">
                             Forecasted Results: {' '}
                             <span className="font-bold" style={{color: 'hsl(var(--chart-5))'}}>SLP - {seatCounts.slpTotal}</span> | {' '}
                             <span className="font-bold" style={{color: 'hsl(var(--chart-1))'}}>UWP - {seatCounts.uwpTotal}</span> | {' '}
                             <span className="font-bold" style={{color: 'hsl(221, 83%, 53%)'}}>IND - {seatCounts.indTotal}</span>
                         </div>
+                        <VictoryStatusBar slpSeats={seatCounts.slpTotal} uwpSeats={seatCounts.uwpTotal} indSeats={seatCounts.indTotal} />
                         <ChartContainer config={chartConfig} className="h-40 w-full relative">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
