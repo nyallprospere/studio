@@ -490,6 +490,48 @@ export default function ResultsPage() {
     return { slpLeaderCandidate: slpLeader, uwpLeaderCandidate: uwpLeader };
   }, [archivedCandidates, currentElection, getPartyById]);
 
+  const closestRaces = useMemo(() => {
+    if (!currentElectionResults || !constituencies || !parties) return [];
+
+    return currentElectionResults
+      .map(result => {
+        const constituency = getConstituencyById(result.constituencyId);
+        if (!constituency) return null;
+        
+        const is2021 = currentElection?.year === 2021;
+        const isSpecialConstituency = is2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
+        
+        let votesArray: {party: string, count: number}[] = [];
+        if (isSpecialConstituency) {
+            votesArray.push({party: 'IND', count: result.slpVotes});
+            votesArray.push({party: 'UWP', count: result.uwpVotes});
+            if(result.otherVotes > 0) votesArray.push({party: 'OTHER', count: result.otherVotes});
+        } else {
+            votesArray.push({party: 'SLP', count: result.slpVotes});
+            votesArray.push({party: 'UWP', count: result.uwpVotes});
+            if(result.otherVotes > 0) votesArray.push({party: 'IND', count: result.otherVotes});
+        }
+        
+        votesArray.sort((a, b) => b.count - a.count);
+
+        const winner = votesArray[0];
+        const runnerUp = votesArray[1];
+        const margin = winner.count - runnerUp.count;
+
+        return {
+          constituencyName: constituency.name,
+          winnerParty: winner.party,
+          margin: margin,
+          winnerVotes: winner.count,
+          runnerUpVotes: runnerUp.count,
+          runnerUpParty: runnerUp.party
+        };
+      })
+      .filter(item => item !== null)
+      .sort((a, b) => a!.margin - b!.margin)
+      .slice(0, 5) as NonNullable<typeof result>[];
+  }, [currentElectionResults, constituencies, parties, currentElection]);
+
 
   const handleYearChange = (electionId: string) => {
     setSelectedElectionId(electionId);
@@ -658,7 +700,7 @@ export default function ResultsPage() {
                         </CardContent>
                     </Card>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                     <div className="md:col-span-1">
+                     <div className="md:col-span-1 space-y-8">
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
@@ -677,6 +719,35 @@ export default function ResultsPage() {
                                 ) : (
                                     <p className="text-sm text-muted-foreground whitespace-pre-line">{analysis}</p>
                                 )}
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Closest Races</CardTitle>
+                                <CardDescription>Top 5 closest constituency results by vote margin.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Constituency</TableHead>
+                                            <TableHead>Winner</TableHead>
+                                            <TableHead className="text-right">Margin</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {closestRaces.map((race, index) => {
+                                            const winnerParty = parties?.find(p => p.acronym === race.winnerParty);
+                                            return (
+                                                <TableRow key={index}>
+                                                    <TableCell>{race.constituencyName}</TableCell>
+                                                    <TableCell style={{color: winnerParty?.color}}>{race.winnerParty}</TableCell>
+                                                    <TableCell className="text-right font-medium">+{race.margin.toLocaleString()}</TableCell>
+                                                </TableRow>
+                                            )
+                                        })}
+                                    </TableBody>
+                                </Table>
                             </CardContent>
                         </Card>
                     </div>
