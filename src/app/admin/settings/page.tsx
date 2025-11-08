@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { PageHeader } from '@/components/page-header';
@@ -42,7 +41,7 @@ export default function SettingsPage() {
 
     useEffect(() => {
         if (siteSettings) {
-          setCurrentLogoUrl(siteSettings.siteLogoUrl);
+          setCurrentLogoUrl(siteSettings.siteBannerUrl);
         }
     }, [siteSettings]);
 
@@ -125,16 +124,16 @@ export default function SettingsPage() {
                 }
             }
           
-            const newLogoUrl = await uploadFile(logoFile, `logos/site_logo_${Date.now()}`);
+            const newLogoUrl = await uploadFile(logoFile, `logos/site_banner_${Date.now()}`);
           
-            await setDoc(settingsRef, { siteLogoUrl: newLogoUrl }, { merge: true });
+            await setDoc(settingsRef, { siteBannerUrl: newLogoUrl }, { merge: true });
           
             setCurrentLogoUrl(newLogoUrl);
             setLogoFile(null);
-            toast({ title: 'Success', description: 'Site logo has been updated.' });
+            toast({ title: 'Success', description: 'Site banner has been updated.' });
         } catch (error) {
-            console.error('Logo upload error:', error);
-            toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload the logo.' });
+            console.error('Banner upload error:', error);
+            toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload the banner.' });
         } finally {
             setIsUploading(false);
         }
@@ -150,20 +149,20 @@ export default function SettingsPage() {
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <Database className="w-5 h-5" /> Site Logo
+                    <Database className="w-5 h-5" /> Site Banner
                 </CardTitle>
-                <CardDescription>Upload or change the main logo for the website.</CardDescription>
+                <CardDescription>Upload or change the main banner for the website.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                  {loadingSettings ? (
-                    <p>Loading logo...</p>
+                    <p>Loading banner...</p>
                  ) : currentLogoUrl ? (
                     <div className="relative h-24 border rounded-md p-2">
-                        <Image src={currentLogoUrl} alt="Current Site Logo" fill className="object-contain" />
+                        <Image src={currentLogoUrl} alt="Current Site Banner" fill className="object-contain" />
                     </div>
                 ) : (
                     <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-md">
-                        <p className="text-muted-foreground">No logo uploaded</p>
+                        <p className="text-muted-foreground">No banner uploaded</p>
                     </div>
                 )}
                 <div className="flex items-center gap-2">

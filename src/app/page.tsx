@@ -241,288 +241,288 @@ export default function Home() {
 
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="flex flex-col">
       <MailingListPopup />
       
-      {siteSettings?.siteLogoUrl && (
-        <div className="mb-8 relative h-24 md:h-32 lg:h-40 w-full">
-            <Image src={siteSettings.siteLogoUrl} alt="Site Logo" fill className="object-contain" />
+      {siteSettings?.siteBannerUrl && (
+        <div className="mb-8 relative w-full aspect-[5/1] max-h-48">
+            <Image src={siteSettings.siteBannerUrl} alt="Site Banner" fill className="object-cover" />
         </div>
       )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 mb-8">
-        <Card className="lg:col-span-1 bg-card shadow-lg border-primary/20">
-          <CardHeader>
-            <CardTitle className="text-center text-2xl font-headline md:text-3xl text-primary">
-              Countdown to Election Day 2026
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Countdown date={electionDate} />
-          </CardContent>
-          <CardFooter className="flex justify-center">
-            <Button asChild>
-              <Link
-                href="https://www.sluelectoral.com/electoral/voter-record-search/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Check Your Voter Registration Status
-              </Link>
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-      
-       <div className="mt-12">
-        <h2 className="text-3xl md:text-4xl font-bold tracking-tight font-headline text-center mb-6 text-primary">
-            LucianVotes Election Forecast
-        </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="lg:col-span-1 space-y-8">
-            <Card>
-                <CardHeader>
-                    
-                    <CardDescription>Click on a constituency to learn more.</CardDescription>
-                </CardHeader>
-                <CardContent className="p-0.5">
-                    <InteractiveSvgMap 
-                        constituencies={constituencies ?? []} 
-                        selectedConstituencyId={selectedConstituencyId}
-                        onConstituencyClick={setSelectedConstituencyId}
-                        election={currentElection}
-                        hideLogos={true}
-                        popoverVariant="dashboard"
-                    />
-                </CardContent>
-            </Card>
-          </div>
-            <div className="space-y-8">
-                 <Card>
-                    <CardHeader>
-                        
-                        
-                    </CardHeader>
-                    <CardContent>
-                        <Button asChild className="w-full bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
-                            <Link href="/make-your-own">
-                            Create and share your own election prediction.
-                            </Link>
-                        </Button>
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader>
-                        
-                        <CardDescription>Our current projection for the 2026 general election.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex flex-col items-center">
-                        
-                        <div className="text-center mb-4 text-lg font-medium">
-                            Forecasted Results: {' '}
-                            <span className="font-bold" style={{color: 'hsl(var(--chart-5))'}}>SLP - {seatCounts.slpTotal}</span> | {' '}
-                            <span className="font-bold" style={{color: 'hsl(var(--chart-1))'}}>UWP - {seatCounts.uwpTotal}</span> | {' '}
-                            <span className="font-bold" style={{color: 'hsl(221, 83%, 53%)'}}>IND - {seatCounts.indTotal}</span>
-                        </div>
-                        <VictoryStatusBar slpSeats={seatCounts.slpTotal} uwpSeats={seatCounts.uwpTotal} indSeats={seatCounts.indTotal} />
-                        <ChartContainer config={chartConfig} className="h-40 w-full relative">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <ChartTooltip 
-                                        cursor={false}
-                                        content={(props) => {
-                                            const { payload } = props;
-                                            if (!payload || payload.length === 0) return null;
-                                            const item = payload[0].payload;
-                                            return (
-                                                <div className="bg-background border p-2 rounded-md shadow-lg text-sm max-w-xs">
-                                                    <p className="font-bold text-base mb-1">{item.name} ({item.value})</p>
-                                                    <ul className="list-disc pl-5">
-                                                        {item.constituencies.map((c: Constituency) => <li key={c.id}>{c.name}</li>)}
-                                                    </ul>
-                                                </div>
-                                            )
-                                        }}
-                                    />
-                                    <Pie 
-                                        data={chartData} 
-                                        dataKey="value"
-                                        nameKey="name"
-                                        cx="50%" 
-                                        cy="100%" 
-                                        startAngle={180} 
-                                        endAngle={0} 
-                                        innerRadius="60%"
-                                        outerRadius="100%"
-                                        paddingAngle={2}
-                                    >
-                                        <Label
-                                            content={({ viewBox }) => {
-                                                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                                                    return (
-                                                        <text
-                                                            x={viewBox.cx}
-                                                            y={viewBox.cy}
-                                                            textAnchor="middle"
-                                                            dominantBaseline="middle"
-                                                        >
-                                                            <tspan
-                                                                x={viewBox.cx}
-                                                                y={viewBox.cy}
-                                                                className="text-3xl font-bold"
-                                                            >
-                                                            </tspan>
-                                                        </text>
-                                                    )
-                                                }
-                                            }}
-                                            />
-                                        {chartData.map((entry) => (
-                                            <Cell key={`cell-${entry.name}`} fill={entry.fill} />
-                                        ))}
-                                    </Pie>
-                                </PieChart>
-                            </ResponsiveContainer>
-                            <div
-                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full w-px h-[calc(50%+4px)] bg-black"
-                                style={{ top: '100%', transform: 'translateX(-50%) translateY(-100%)' }}
-                            ></div>
-                            <div className="absolute bottom-[-10px] left-1/2 -translate-x-1/2 text-xs font-semibold text-black bg-background px-1">
-                                9 to win
-                            </div>
-                        </ChartContainer>
-                        {tossupConstituencies.length > 0 && (
-                            <div className="w-full mt-4 text-center">
-                                <h4 className="font-semibold text-base mb-2">Constituencies To Watch</h4>
-                                <ul className="text-sm space-y-1">
-                                    {tossupConstituencies.map(c => (
-                                        <li key={c.id} className="flex justify-between items-center text-left">
-                                            <span>{c.name}</span>
-                                            {c.aiForecast && c.aiForecastParty && (
-                                                <span className="text-xs font-mono p-1 rounded-md bg-muted">
-                                                    <span className={cn('font-bold', getAiForecastPartyColor(c.aiForecastParty))}>
-                                                        {c.aiForecastParty.toUpperCase()} {c.aiForecast > 0 ? '+' : ''}{c.aiForecast.toFixed(1)}%
-                                                    </span>
-                                                </span>
-                                            )}
-                                        </li>
-                                    ))}
-                                </ul>
-                                <div className="text-center mt-4 text-lg font-medium">
-                                    Forecasted Results (No Tossups): {' '}
-                                    <span className="font-bold" style={{color: 'hsl(var(--chart-5))'}}>SLP - {aiForecastSeatCounts['slp'] || 0}</span> |{' '}
-                                    <span className="font-bold" style={{color: 'hsl(var(--chart-1))'}}>UWP - {aiForecastSeatCounts['uwp'] || 0}</span> |{' '}
-                                    <span className="font-bold" style={{color: 'hsl(221, 83%, 53%)'}}>IND - {aiForecastSeatCounts['ind'] || 0}</span>
-                                </div>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader>
-                        <div>
-                            <CardTitle>Events</CardTitle>
-                        </div>
-                        <div className="flex w-full items-center gap-1 p-1 bg-muted rounded-md mt-4">
-                            <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')} className="flex-1">Upcoming</Button>
-                            <Button size="sm" variant={allEventsViewMode === 'past' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('past')} className="flex-1">Past</Button>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                        {loadingEvents || loadingParties ? <p>Loading events...</p> : visibleAllEvents.length > 0 ? (
-                            visibleAllEvents.map((event) => (
-                            <EventCard key={event.id} event={event} party={getParty(event.partyId)} />
-                            ))
-                        ) : (
-                            <p className="text-center text-muted-foreground py-8">No {allEventsViewMode} events found.</p>
-                        )}
-                        </div>
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline flex items-center gap-2">
-                            <Vote /> Voter Information
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {loadingVoterInfo ? <p>Loading information...</p> : voterInfoItems?.map(item => (
-                            <div key={item.id}>
-                                <h3 className="font-semibold">{item.title}</h3>
-                                <ul className="list-disc list-inside text-muted-foreground">
-                                {item.items.map((text, index) => {
-                                    const isUrl = text.startsWith('http');
-                                    return (
-                                    <li key={index}>
-                                        {isUrl ? (
-                                        <a href={text} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{text}</a>
-                                        ) : (
-                                        text
-                                        )}
-                                    </li>
-                                    );
-                                })}
-                                </ul>
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 mb-8">
+          <Card className="lg:col-span-1 bg-card shadow-lg border-primary/20">
+            <CardHeader>
+              <CardTitle className="text-center text-2xl font-headline md:text-3xl text-primary">
+                Countdown to Election Day 2026
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Countdown date={electionDate} />
+            </CardContent>
+            <CardFooter className="flex justify-center">
+              <Button asChild>
+                <Link
+                  href="https://www.sluelectoral.com/electoral/voter-record-search/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Check Your Voter Registration Status
+                </Link>
+              </Button>
+            </CardFooter>
+          </Card>
         </div>
-      </div>
-      
-       <div className="mt-12">
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline flex items-center gap-2">
-              <Rss /> Recent News
-            </CardTitle>
-            <CardDescription>The latest headlines shaping the election.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {loadingNews ? (
-              Array.from({ length: 3 }).map((_, i) => <Card key={i}><CardContent className="p-4"><p>Loading...</p></CardContent></Card>)
-            ) : trendingNews.length > 0 ? (
-              trendingNews.map((article) => (
-                <NewsCard key={article.id} article={article} />
-              ))
-            ) : (
-              <p className="text-muted-foreground col-span-full text-center">No recent news.</p>
-            )}
-          </CardContent>
-           <CardFooter>
-                <Button asChild variant="secondary" className="w-full">
-                    <Link href="/election-news">View All News</Link>
-                </Button>
-           </CardFooter>
-        </Card>
-      </div>
-
-
-      {user && (
-          <div className="mt-12">
-            <PageHeader
-                title="Admin Dashboard"
-                description="Manage the content for LucianVotes."
-            />
-             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {adminSections.map((section) => (
-                    <Card key={section.id}>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle className="font-headline">{section.title}</CardTitle>
-                            <section.icon className="w-6 h-6 text-muted-foreground"/>
-                        </CardHeader>
-                        <CardContent>
-                            <Button asChild className="w-full">
-                                <Link href={section.href}>Go to section</Link>
-                            </Button>
-                        </CardContent>
-                    </Card>
-                ))}
+        
+        <div className="mt-12">
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight font-headline text-center mb-6 text-primary">
+              LucianVotes Election Forecast
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="lg:col-span-1 space-y-8">
+              <Card>
+                  <CardHeader>
+                      <CardDescription>Click on a constituency to learn more.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0.5">
+                      <InteractiveSvgMap 
+                          constituencies={constituencies ?? []} 
+                          selectedConstituencyId={selectedConstituencyId}
+                          onConstituencyClick={setSelectedConstituencyId}
+                          election={currentElection}
+                          hideLogos={true}
+                          popoverVariant="dashboard"
+                      />
+                  </CardContent>
+              </Card>
             </div>
+              <div className="space-y-8">
+                  <Card>
+                      <CardHeader>
+                          
+                          
+                      </CardHeader>
+                      <CardContent>
+                          <Button asChild className="w-full bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
+                              <Link href="/make-your-own">
+                              Create and share your own election prediction.
+                              </Link>
+                          </Button>
+                      </CardContent>
+                  </Card>
+                  <Card>
+                      <CardHeader>
+                          
+                          <CardDescription>Our current projection for the 2026 general election.</CardDescription>
+                      </CardHeader>
+                      <CardContent className="flex flex-col items-center">
+                          
+                          <div className="text-center mb-4 text-lg font-medium">
+                              Forecasted Results: {' '}
+                              <span className="font-bold" style={{color: 'hsl(var(--chart-5))'}}>SLP - {seatCounts.slpTotal}</span> | {' '}
+                              <span className="font-bold" style={{color: 'hsl(var(--chart-1))'}}>UWP - {seatCounts.uwpTotal}</span> | {' '}
+                              <span className="font-bold" style={{color: 'hsl(221, 83%, 53%)'}}>IND - {seatCounts.indTotal}</span>
+                          </div>
+                          <VictoryStatusBar slpSeats={seatCounts.slpTotal} uwpSeats={seatCounts.uwpTotal} indSeats={seatCounts.indTotal} />
+                          <ChartContainer config={chartConfig} className="h-40 w-full relative">
+                              <ResponsiveContainer width="100%" height="100%">
+                                  <PieChart>
+                                      <ChartTooltip 
+                                          cursor={false}
+                                          content={(props) => {
+                                              const { payload } = props;
+                                              if (!payload || payload.length === 0) return null;
+                                              const item = payload[0].payload;
+                                              return (
+                                                  <div className="bg-background border p-2 rounded-md shadow-lg text-sm max-w-xs">
+                                                      <p className="font-bold text-base mb-1">{item.name} ({item.value})</p>
+                                                      <ul className="list-disc pl-5">
+                                                          {item.constituencies.map((c: Constituency) => <li key={c.id}>{c.name}</li>)}
+                                                      </ul>
+                                                  </div>
+                                              )
+                                          }}
+                                      />
+                                      <Pie 
+                                          data={chartData} 
+                                          dataKey="value"
+                                          nameKey="name"
+                                          cx="50%" 
+                                          cy="100%" 
+                                          startAngle={180} 
+                                          endAngle={0} 
+                                          innerRadius="60%"
+                                          outerRadius="100%"
+                                          paddingAngle={2}
+                                      >
+                                          <Label
+                                              content={({ viewBox }) => {
+                                                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                                                      return (
+                                                          <text
+                                                              x={viewBox.cx}
+                                                              y={viewBox.cy}
+                                                              textAnchor="middle"
+                                                              dominantBaseline="middle"
+                                                          >
+                                                              <tspan
+                                                                  x={viewBox.cx}
+                                                                  y={viewBox.cy}
+                                                                  className="text-3xl font-bold"
+                                                              >
+                                                              </tspan>
+                                                          </text>
+                                                      )
+                                                  }
+                                              }}
+                                              />
+                                          {chartData.map((entry) => (
+                                              <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                                          ))}
+                                      </Pie>
+                                  </PieChart>
+                              </ResponsiveContainer>
+                              <div
+                                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full w-px h-[calc(50%+4px)] bg-black"
+                                  style={{ top: '100%', transform: 'translateX(-50%) translateY(-100%)' }}
+                              ></div>
+                              <div className="absolute bottom-[-10px] left-1/2 -translate-x-1/2 text-xs font-semibold text-black bg-background px-1">
+                                  9 to win
+                              </div>
+                          </ChartContainer>
+                          {tossupConstituencies.length > 0 && (
+                              <div className="w-full mt-4 text-center">
+                                  <h4 className="font-semibold text-base mb-2">Constituencies To Watch</h4>
+                                  <ul className="text-sm space-y-1">
+                                      {tossupConstituencies.map(c => (
+                                          <li key={c.id} className="flex justify-between items-center text-left">
+                                              <span>{c.name}</span>
+                                              {c.aiForecast && c.aiForecastParty && (
+                                                  <span className="text-xs font-mono p-1 rounded-md bg-muted">
+                                                      <span className={cn('font-bold', getAiForecastPartyColor(c.aiForecastParty))}>
+                                                          {c.aiForecastParty.toUpperCase()} {c.aiForecast > 0 ? '+' : ''}{c.aiForecast.toFixed(1)}%
+                                                      </span>
+                                                  </span>
+                                              )}
+                                          </li>
+                                      ))}
+                                  </ul>
+                                  <div className="text-center mt-4 text-lg font-medium">
+                                      Forecasted Results (No Tossups): {' '}
+                                      <span className="font-bold" style={{color: 'hsl(var(--chart-5))'}}>SLP - {aiForecastSeatCounts['slp'] || 0}</span> |{' '}
+                                      <span className="font-bold" style={{color: 'hsl(var(--chart-1))'}}>UWP - {aiForecastSeatCounts['uwp'] || 0}</span> |{' '}
+                                      <span className="font-bold" style={{color: 'hsl(221, 83%, 53%)'}}>IND - {aiForecastSeatCounts['ind'] || 0}</span>
+                                  </div>
+                              </div>
+                          )}
+                      </CardContent>
+                  </Card>
+                  <Card>
+                      <CardHeader>
+                          <div>
+                              <CardTitle>Events</CardTitle>
+                          </div>
+                          <div className="flex w-full items-center gap-1 p-1 bg-muted rounded-md mt-4">
+                              <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')} className="flex-1">Upcoming</Button>
+                              <Button size="sm" variant={allEventsViewMode === 'past' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('past')} className="flex-1">Past</Button>
+                          </div>
+                      </CardHeader>
+                      <CardContent>
+                          <div className="space-y-4">
+                          {loadingEvents || loadingParties ? <p>Loading events...</p> : visibleAllEvents.length > 0 ? (
+                              visibleAllEvents.map((event) => (
+                              <EventCard key={event.id} event={event} party={getParty(event.partyId)} />
+                              ))
+                          ) : (
+                              <p className="text-center text-muted-foreground py-8">No {allEventsViewMode} events found.</p>
+                          )}
+                          </div>
+                      </CardContent>
+                  </Card>
+                  <Card>
+                      <CardHeader>
+                          <CardTitle className="font-headline flex items-center gap-2">
+                              <Vote /> Voter Information
+                          </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                          {loadingVoterInfo ? <p>Loading information...</p> : voterInfoItems?.map(item => (
+                              <div key={item.id}>
+                                  <h3 className="font-semibold">{item.title}</h3>
+                                  <ul className="list-disc list-inside text-muted-foreground">
+                                  {item.items.map((text, index) => {
+                                      const isUrl = text.startsWith('http');
+                                      return (
+                                      <li key={index}>
+                                          {isUrl ? (
+                                          <a href={text} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{text}</a>
+                                          ) : (
+                                          text
+                                          )}
+                                      </li>
+                                      );
+                                  })}
+                                  </ul>
+                              </div>
+                          ))}
+                      </CardContent>
+                  </Card>
+              </div>
           </div>
-      )}
+        </div>
+        
+        <div className="mt-12">
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-headline flex items-center gap-2">
+                <Rss /> Recent News
+              </CardTitle>
+              <CardDescription>The latest headlines shaping the election.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {loadingNews ? (
+                Array.from({ length: 3 }).map((_, i) => <Card key={i}><CardContent className="p-4"><p>Loading...</p></CardContent></Card>)
+              ) : trendingNews.length > 0 ? (
+                trendingNews.map((article) => (
+                  <NewsCard key={article.id} article={article} />
+                ))
+              ) : (
+                <p className="text-muted-foreground col-span-full text-center">No recent news.</p>
+              )}
+            </CardContent>
+            <CardFooter>
+                  <Button asChild variant="secondary" className="w-full">
+                      <Link href="/election-news">View All News</Link>
+                  </Button>
+            </CardFooter>
+          </Card>
+        </div>
+
+
+        {user && (
+            <div className="mt-12">
+              <PageHeader
+                  title="Admin Dashboard"
+                  description="Manage the content for LucianVotes."
+              />
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {adminSections.map((section) => (
+                      <Card key={section.id}>
+                          <CardHeader className="flex flex-row items-center justify-between">
+                              <CardTitle className="font-headline">{section.title}</CardTitle>
+                              <section.icon className="w-6 h-6 text-muted-foreground"/>
+                          </CardHeader>
+                          <CardContent>
+                              <Button asChild className="w-full">
+                                  <Link href={section.href}>Go to section</Link>
+                              </Button>
+                          </CardContent>
+                      </Card>
+                  ))}
+              </div>
+            </div>
+        )}
+      </div>
     </div>
   );
 }

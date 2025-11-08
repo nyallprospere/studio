@@ -156,7 +156,7 @@ export interface UserMap {
 export interface SiteSettings {
     defaultShareTitle: string;
     defaultShareDescription: string;
-    siteLogoUrl?: string;
+    siteBannerUrl?: string;
 }
 
 export interface Region {

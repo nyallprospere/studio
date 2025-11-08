@@ -482,10 +482,10 @@
           "type": "string",
           "description": "Default description for social media sharing."
         },
-        "siteLogoUrl": {
+        "siteBannerUrl": {
           "type": "string",
           "format": "uri",
-          "description": "URL of the main site logo."
+          "description": "URL of the main site banner image."
         }
       }
     },
