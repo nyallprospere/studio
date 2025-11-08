@@ -245,8 +245,8 @@ export default function Home() {
       <MailingListPopup />
       
       {siteSettings?.siteBannerUrl && (
-        <div className="relative w-full aspect-video max-h-48 mb-8 container px-0">
-            <Image src={siteSettings.siteBannerUrl} alt="Site Banner" fill className="object-contain" />
+        <div className="relative w-full aspect-video max-h-96 mb-8">
+            <Image src={siteSettings.siteBannerUrl} alt="Site Banner" fill className="object-cover" />
         </div>
       )}
       <div className="container mx-auto px-4 py-8">
