@@ -43,7 +43,7 @@ const adminSections = [
     { id: 'admin-mailing-list', title: 'Manage Mailing List', href: '/admin/mailing-list', icon: Users },
     { id: 'admin-events', title: 'Manage Events', href: '/admin/events', icon: Calendar },
     { id: 'admin-results', title: 'Manage Election Results', href: '/admin/results', icon: Landmark },
-    { id: 'admin-constituencies', title: 'Manage Constituencies', href: '/admin/constituencies', icon: FilePlus },
+    { id: 'admin-constituencies', title: 'Manage Projection Map', href: '/admin/constituencies', icon: FilePlus },
     { id: 'admin-map', title: 'Manage Map', href: '/admin/map', icon: Map },
     { id: 'admin-settings', title: 'Manage Settings', href: '/admin/settings', icon: Settings },
 ];
@@ -115,7 +115,7 @@ export default function Home() {
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), where('isCurrent', '==', true)) : null, [firestore]);
   const newsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'news'), orderBy('articleDate', 'desc')) : null, [firestore]);
   const voterInfoQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'voter_information'), orderBy('title')) : null, [firestore]);
-  const siteSettingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'site') : null, [firestore]);
+  const siteSettingsRef = useMemoFirebase(() => (firestore ? doc(firestore, 'settings', 'site') : null), [firestore]);
   
   const { data: events, isLoading: loadingEvents } = useCollection<Event>(eventsQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
@@ -245,8 +245,8 @@ export default function Home() {
       <MailingListPopup />
       
       {siteSettings?.siteLogoUrl && (
-        <div className="mb-8 flex justify-center">
-            <Image src={siteSettings.siteLogoUrl} alt="Site Logo" width={200} height={100} className="object-contain" />
+        <div className="mb-8 relative h-24 md:h-32 lg:h-40">
+            <Image src={siteSettings.siteLogoUrl} alt="Site Logo" fill className="object-contain" />
         </div>
       )}
 
