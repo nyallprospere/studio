@@ -5,12 +5,15 @@
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { useFirebase, errorEmitter, FirestorePermissionError, useDoc, useMemoFirebase } from '@/firebase';
 import { collection, getDocs, writeBatch, doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
-import { Loader2, Database } from 'lucide-react';
-
+import { useState, useEffect } from 'react';
+import { Loader2, Database, UploadCloud } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { uploadFile, deleteFile } from '@/firebase/storage';
+import type { SiteSettings } from '@/lib/types';
+import Image from 'next/image';
 
 const electionYearsToSeed = [
   { year: 2021, name: '2021 General Election' },
@@ -30,6 +33,18 @@ export default function SettingsPage() {
     const { firestore } = useFirebase();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
+    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+
+    const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'site') : null, [firestore]);
+    const { data: siteSettings, isLoading: loadingSettings } = useDoc<SiteSettings>(settingsRef);
+    const [currentLogoUrl, setCurrentLogoUrl] = useState<string | undefined>(undefined);
+
+    useEffect(() => {
+        if (siteSettings) {
+          setCurrentLogoUrl(siteSettings.siteLogoUrl);
+        }
+    }, [siteSettings]);
 
     const handleSeedElections = async () => {
         if (!firestore) {
@@ -88,6 +103,43 @@ export default function SettingsPage() {
         }
     };
     
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setLogoFile(e.target.files[0]);
+        }
+    };
+
+    const handleUpload = async () => {
+        if (!logoFile || !firestore || !settingsRef) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Please select a file to upload.' });
+            return;
+        }
+        
+        setIsUploading(true);
+        try {
+            if (currentLogoUrl) {
+                try {
+                    await deleteFile(currentLogoUrl);
+                } catch (e) {
+                    console.warn("Could not delete old logo, it may have already been removed.", e)
+                }
+            }
+          
+            const newLogoUrl = await uploadFile(logoFile, `logos/site_logo_${Date.now()}`);
+          
+            await setDoc(settingsRef, { siteLogoUrl: newLogoUrl }, { merge: true });
+          
+            setCurrentLogoUrl(newLogoUrl);
+            setLogoFile(null);
+            toast({ title: 'Success', description: 'Site logo has been updated.' });
+        } catch (error) {
+            console.error('Logo upload error:', error);
+            toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload the logo.' });
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <PageHeader
@@ -95,6 +147,34 @@ export default function SettingsPage() {
         description="Update site-wide settings and configurations."
       />
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Database className="w-5 h-5" /> Site Logo
+                </CardTitle>
+                <CardDescription>Upload or change the main logo for the website.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                 {loadingSettings ? (
+                    <p>Loading logo...</p>
+                 ) : currentLogoUrl ? (
+                    <div className="relative h-24 border rounded-md p-2">
+                        <Image src={currentLogoUrl} alt="Current Site Logo" fill className="object-contain" />
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-md">
+                        <p className="text-muted-foreground">No logo uploaded</p>
+                    </div>
+                )}
+                <div className="flex items-center gap-2">
+                    <Input id="logo-upload" type="file" onChange={handleFileChange} className="flex-1" />
+                    <Button onClick={handleUpload} disabled={!logoFile || isUploading}>
+                        {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
+                        Upload
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
         <Card>
             <CardHeader>
             <CardTitle className="flex items-center gap-2">

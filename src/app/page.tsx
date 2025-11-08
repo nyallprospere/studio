@@ -21,9 +21,9 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { useUser, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, Timestamp, where } from 'firebase/firestore';
-import type { Event, Party, Constituency, Election, NewsArticle, VoterInformation } from '@/lib/types';
+import { useUser, useCollection, useFirebase, useMemoFirebase, useDoc } from '@/firebase';
+import { collection, query, orderBy, Timestamp, where, doc } from 'firebase/firestore';
+import type { Event, Party, Constituency, Election, NewsArticle, VoterInformation, SiteSettings } from '@/lib/types';
 import { EventCard } from '@/components/event-card';
 import { SortableFeatureCard } from '@/components/sortable-feature-card';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
@@ -34,6 +34,7 @@ import { NewsCard } from '@/components/news-card';
 import { subDays } from 'date-fns';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 const adminSections = [
     { id: 'admin-elections', title: 'Manage Elections', href: '/admin/elections', icon: Vote },
@@ -114,6 +115,7 @@ export default function Home() {
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), where('isCurrent', '==', true)) : null, [firestore]);
   const newsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'news'), orderBy('articleDate', 'desc')) : null, [firestore]);
   const voterInfoQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'voter_information'), orderBy('title')) : null, [firestore]);
+  const siteSettingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'site') : null, [firestore]);
   
   const { data: events, isLoading: loadingEvents } = useCollection<Event>(eventsQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
@@ -121,6 +123,8 @@ export default function Home() {
   const { data: currentElections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
   const { data: news, isLoading: loadingNews } = useCollection<NewsArticle>(newsQuery);
   const { data: voterInfoItems, isLoading: loadingVoterInfo } = useCollection<VoterInformation>(voterInfoQuery);
+  const { data: siteSettings } = useDoc<SiteSettings>(siteSettingsRef);
+
   
   const currentElection = useMemo(() => currentElections?.[0], [currentElections]);
   
@@ -154,9 +158,9 @@ export default function Home() {
 
     const counts = constituencies.reduce((acc, constituency) => {
         const leaningValue = constituency.politicalLeaning || 'tossup';
+        let effectiveLeaning = leaningValue;
         const isSpecialConstituency = constituency.name === 'Castries North' || constituency.name === 'Castries Central';
 
-        let effectiveLeaning = leaningValue;
         if (isSpecialConstituency) {
             if (leaningValue === 'solid-slp' || leaningValue === 'lean-slp' || leaningValue === 'ind') {
                  effectiveLeaning = 'solid-ind';
@@ -240,6 +244,11 @@ export default function Home() {
     <div className="container mx-auto px-4 py-8">
       <MailingListPopup />
       
+      {siteSettings?.siteLogoUrl && (
+        <div className="mb-8 flex justify-center">
+            <Image src={siteSettings.siteLogoUrl} alt="Site Logo" width={200} height={100} className="object-contain" />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 mb-8">
         <Card className="lg:col-span-1 bg-card shadow-lg border-primary/20">

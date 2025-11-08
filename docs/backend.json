@@ -481,6 +481,11 @@
         "defaultShareDescription": {
           "type": "string",
           "description": "Default description for social media sharing."
+        },
+        "siteLogoUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the main site logo."
         }
       }
     },
