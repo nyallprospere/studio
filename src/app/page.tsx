@@ -245,7 +245,7 @@ export default function Home() {
       <MailingListPopup />
       
       {siteSettings?.siteLogoUrl && (
-        <div className="mb-8 relative h-24 md:h-32 lg:h-40">
+        <div className="mb-8 relative h-24 md:h-32 lg:h-40 w-full">
             <Image src={siteSettings.siteLogoUrl} alt="Site Logo" fill className="object-contain" />
         </div>
       )}
