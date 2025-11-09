@@ -61,7 +61,7 @@ const prompt = ai.definePrompt({
   - Recent Polling: {{pollingData}}
 
   Consider the following factors in your analysis:
-  1.  **Historical Volatility**: How much has the vote swung in this constituency in the past? Is it a stable seat or prone to large changes?
+  1.  **Historical Volatility**: How much has the vote swung in this constituency in the past? Is it a stable seat or prone to large changes? While considering past swings, you should weigh the 2021 results most heavily in your calculations.
   2.  **Regional & National Trends**: Does this constituency tend to vote with its region or follow the national mood? How does its swing compare to the national average?
   3.  **On-the-Ground Enthusiasm**: The election call is getting nearer, and both parties seem to be somewhat excited. Momentum is pretty close to what it was last week, maybe slightly more in the UWP's favor this week.
   4.  **Critical St. Lucian Political Dynamics**:
@@ -91,6 +91,7 @@ const analyzeConstituencyOutcomeFlow = ai.defineFlow(
     return output!;
   }
 );
+
 
 
 
