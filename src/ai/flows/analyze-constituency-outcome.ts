@@ -63,7 +63,7 @@ const prompt = ai.definePrompt({
   Consider the following factors in your analysis:
   1.  **Historical Volatility**: How much has the vote swung in this constituency in the past? Is it a stable seat or prone to large changes?
   2.  **Regional & National Trends**: Does this constituency tend to vote with its region or follow the national mood? How does its swing compare to the national average?
-  3.  **On-the-Ground Enthusiasm**: SLP events are currently drawing much larger crowds and generating more enthusiasm compared to UWP events. Factor this heightened SLP mobilization into your prediction.
+  3.  **On-the-Ground Enthusiasm**: The election call is getting nearer, and both parties seem to be somewhat excited. Momentum is pretty close to what it was last week, maybe slightly more in the UWP's favor this week.
   4.  **Critical St. Lucian Political Dynamics**:
       - **Incumbency**: There's often a disadvantage for the incumbent *party* in government. Consider this alongside the individual candidate's incumbency status.
       - **Comeback Candidates**: Assess the chances of any former incumbents attempting to reclaim their seat.
@@ -91,4 +91,5 @@ const analyzeConstituencyOutcomeFlow = ai.defineFlow(
     return output!;
   }
 );
+
 
