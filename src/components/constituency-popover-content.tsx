@@ -41,7 +41,7 @@ const makeYourOwnLeaningOptions = [
 
 const getLeaningStyle = (constituency: Constituency, isMakeYourOwn?: boolean) => {
     const leaningValue = constituency.politicalLeaning;
-    const options = isMakeYourOwn ? makeYourOwnLeaningOptions : politicalLeaningOptions;
+    const options = isMakeYourOwn ? makeYourOwnLeaningOptions.map(o => ({...o, color: o.value === 'uwp' ? '#facc15' : o.value === 'slp' ? '#ef4444' : '#d1d5db'})) : politicalLeaningOptions;
     const defaultLeaningValue = isMakeYourOwn ? 'unselected' : 'tossup';
     
     let effectiveLeaning = leaningValue;
@@ -194,7 +194,7 @@ function CandidateBox({
     );
 }
 
-const GaugeChart = ({ slpPercentage = 50, uwpPercentage = 50, slpColor = '#ef4444', uwpColor = '#f59e0b' }) => {
+const GaugeChart = ({ slpPercentage = 50, uwpPercentage = 50, slpColor = '#ef4444', uwpColor = '#facc15' }) => {
     // Map 0-100 range to -90 to 90 degrees for the rotation.
     // SLP 100% -> -90deg, 50% -> 0deg, 0% -> 90deg
     const rotation = (50 - slpPercentage) * 1.8;
@@ -345,12 +345,12 @@ export function ConstituencyPopoverContent({
         
         const data = isSpecialConstituency
             ? [
-                { party: 'uwp', votes: uwpPercentage, fill: uwpParty?.color || '#f59e0b' },
+                { party: 'uwp', votes: uwpPercentage, fill: uwpParty?.color || '#facc15' },
                 { party: 'ind', votes: constituency.predictedSlpPercentage || 50, fill: '#3b82f6' },
               ]
             : [
                 { party: 'slp', votes: constituency.predictedSlpPercentage || 50, fill: slpParty?.color || '#ef4444' },
-                { party: 'uwp', votes: uwpPercentage, fill: uwpParty?.color || '#f59e0b' },
+                { party: 'uwp', votes: uwpPercentage, fill: uwpParty?.color || '#facc15' },
               ];
     
         return { chartData: data.sort((a, b) => (a.party > b.party ? 1 : -1)), chartConfig: config };

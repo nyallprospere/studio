@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
@@ -40,7 +41,7 @@ const politicalLeaningOptions = [
 
 const makeYourOwnLeaningOptions = [
   { value: 'slp', label: 'SLP', color: '#ef4444' }, // red-500
-  { value: 'uwp', label: 'UWP', color: '#f59e0b' }, // amber-500
+  { value: 'uwp', label: 'UWP', color: '#facc15' }, // yellow-400
   { value: 'ind', label: 'IND', color: '#3b82f6' }, // blue-500
   { value: 'unselected', label: 'To be selected', color: '#d1d5db' }, // gray-300
 ];
@@ -370,7 +371,7 @@ export default function MakeYourOwnClientPage() {
             return {
                 name: opt.label,
                 value: value,
-                fill: opt.value === 'slp' ? '#ef4444' : opt.value === 'uwp' ? '#f59e0b' : opt.value === 'ind' ? '#3b82f6' : '#d1d5db',
+                fill: opt.value === 'slp' ? '#ef4444' : opt.value === 'uwp' ? '#facc15' : opt.value === 'ind' ? '#3b82f6' : '#d1d5db',
             };
         });
 
@@ -415,7 +416,7 @@ export default function MakeYourOwnClientPage() {
     };
 
     const slpColor = parties?.find(p => p.acronym === 'SLP')?.color || '#ef4444';
-    const uwpColor = parties?.find(p => p.acronym === 'UWP')?.color || '#f59e0b';
+    const uwpColor = parties?.find(p => p.acronym === 'UWP')?.color || '#facc15';
 
   return (
     <div className="container mx-auto px-4 py-8">
