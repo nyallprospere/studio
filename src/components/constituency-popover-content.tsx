@@ -18,6 +18,8 @@ import { Progress } from './ui/progress';
 import { Pie, PieChart, Cell, ResponsiveContainer } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from './ui/chart';
 import type { ChartConfig } from './ui/chart';
+import { Popover } from './ui/popover';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const politicalLeaningOptions = [
     { value: 'solid-uwp', label: 'Solid UWP', color: '#facc15' },
@@ -234,7 +236,7 @@ export function ConstituencyPopoverContent({
     constituency: Constituency,
     election?: Election | null;
     onLeaningChange?: (leaning: string) => void;
-    onPredictionChange?: (slp: number, uwp: number) => void;
+    onPredictionChange?: (id: string, slp: number, uwp: number) => void;
     electionResults?: ElectionResult[];
     previousElectionResults?: ElectionResult[];
     previousElection?: Election | null;
@@ -247,6 +249,9 @@ export function ConstituencyPopoverContent({
     const { firestore } = useFirebase();
     const [isProfileOpen, setProfileOpen] = useState(false);
     const [profileCandidate, setProfileCandidate] = useState<Candidate | ArchivedCandidate | null>(null);
+    const isMobile = useIsMobile();
+    const { setOpen } = useContext(Popover.Context);
+
 
     const openProfile = (candidate: Candidate | ArchivedCandidate) => {
         setProfileCandidate(candidate);
@@ -693,18 +698,19 @@ export function ConstituencyPopoverContent({
                 
                 {onLeaningChange && isMakeYourOwn && (
                     <div className="space-y-2 pt-2">
-                        <div className={cn("grid gap-2 text-center text-xs font-semibold items-start", (constituency.name === 'Castries North' || constituency.name === 'Castries Central') ? "grid-cols-2" : "grid-cols-2")}>
+                        <div className="grid grid-cols-2 gap-2 text-center text-xs font-semibold items-start">
                             
                              {(constituency.name === 'Castries North' || constituency.name === 'Castries Central') ? (
                                 <>
-                                    <div className="flex flex-col items-center gap-1 cursor-pointer" onClick={() => uwpCandidate && openProfile(uwpCandidate)}>
+                                    <div className="flex flex-col items-center gap-1">
+                                        {uwpCandidate && <Button variant="link" className="h-auto p-0 text-xs" onClick={() => openProfile(uwpCandidate)}>View Profile</Button>}
                                         <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
                                             {uwpCandidate?.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                         </div>
                                         <p className="font-semibold">{uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'UWP Candidate'}</p>
                                         <RadioGroup 
                                             value={constituency.politicalLeaning} 
-                                            onValueChange={onLeaningChange}
+                                            onValueChange={(v) => { onLeaningChange(v); if(isMobile) setOpen(false); }}
                                             className="grid grid-cols-1 gap-1 pt-1"
                                         >
                                             <Label htmlFor={`${constituency.id}-uwp`} className={cn("flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors", constituency.politicalLeaning === 'uwp' ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
@@ -713,14 +719,15 @@ export function ConstituencyPopoverContent({
                                             </Label>
                                         </RadioGroup>
                                     </div>
-                                    <div className="flex flex-col items-center gap-1 cursor-pointer" onClick={() => independentCandidate && openProfile(independentCandidate)}>
+                                    <div className="flex flex-col items-center gap-1">
+                                        {independentCandidate && <Button variant="link" className="h-auto p-0 text-xs" onClick={() => openProfile(independentCandidate)}>View Profile</Button>}
                                         <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
                                             {independentCandidate?.imageUrl ? <Image src={independentCandidate.imageUrl} alt={independentCandidate.firstName || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                         </div>
                                         <p className="font-semibold">{independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName}` : 'IND Candidate'}{(independentCandidate as Candidate)?.isIncumbent && ' (Inc.)'}</p>
                                         <RadioGroup 
                                             value={constituency.politicalLeaning} 
-                                            onValueChange={onLeaningChange}
+                                            onValueChange={(v) => { onLeaningChange(v); if(isMobile) setOpen(false); }}
                                             className="grid grid-cols-1 gap-1 pt-1"
                                         >
                                             <Label htmlFor={`${constituency.id}-ind`} className={cn("flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors", constituency.politicalLeaning === 'ind' ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
@@ -732,14 +739,15 @@ export function ConstituencyPopoverContent({
                                 </>
                             ) : (
                                 <>
-                                    <div className="flex flex-col items-center gap-1 cursor-pointer" onClick={() => slpCandidate && openProfile(slpCandidate)}>
+                                    <div className="flex flex-col items-center gap-1">
+                                        {slpCandidate && <Button variant="link" className="h-auto p-0 text-xs" onClick={() => openProfile(slpCandidate)}>View Profile</Button>}
                                         <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
                                             {slpCandidate?.imageUrl ? <Image src={slpCandidate.imageUrl} alt={slpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                         </div>
                                         <p className="font-semibold">{slpCandidate ? `${slpCandidate.firstName} ${slpCandidate.lastName}` : 'SLP Candidate'}</p>
                                         <RadioGroup 
                                             value={constituency.politicalLeaning} 
-                                            onValueChange={onLeaningChange}
+                                            onValueChange={(v) => { onLeaningChange(v); if(isMobile) setOpen(false); }}
                                             className="grid grid-cols-1 gap-1 pt-1"
                                         >
                                             <Label htmlFor={`${constituency.id}-slp`} className={cn("flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors", constituency.politicalLeaning === 'slp' ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
@@ -748,14 +756,15 @@ export function ConstituencyPopoverContent({
                                             </Label>
                                         </RadioGroup>
                                     </div>
-                                    <div className="flex flex-col items-center gap-1 cursor-pointer" onClick={() => uwpCandidate && openProfile(uwpCandidate)}>
+                                    <div className="flex flex-col items-center gap-1">
+                                        {uwpCandidate && <Button variant="link" className="h-auto p-0 text-xs" onClick={() => openProfile(uwpCandidate)}>View Profile</Button>}
                                         <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
                                             {uwpCandidate?.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                         </div>
                                         <p className="font-semibold">{uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'UWP Candidate'}</p>
                                         <RadioGroup 
                                             value={constituency.politicalLeaning} 
-                                            onValueChange={onLeaningChange}
+                                            onValueChange={(v) => { onLeaningChange(v); if(isMobile) setOpen(false); }}
                                             className="grid grid-cols-1 gap-1 pt-1"
                                         >
                                             <Label htmlFor={`${constituency.id}-uwp`} className={cn("flex-1 text-center border rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-colors", constituency.politicalLeaning === 'uwp' ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
@@ -803,7 +812,7 @@ export function ConstituencyPopoverContent({
                             <span className="text-xs font-semibold" style={{color: slpParty?.color}}>SLP: {constituency.predictedSlpPercentage || 50}%</span>
                             <Slider
                                 value={[constituency.predictedSlpPercentage || 50]}
-                                onValueChange={(value) => onPredictionChange(value[0], 100 - value[0])}
+                                onValueChange={(value) => onPredictionChange(constituency.id, value[0], 100 - value[0])}
                                 max={100}
                                 step={1}
                             />
@@ -817,4 +826,6 @@ export function ConstituencyPopoverContent({
     );
 }
 
+// Add this to the top of your component file
+import { useContext } from 'react';
     

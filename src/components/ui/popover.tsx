@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -5,7 +6,30 @@ import * as PopoverPrimitive from "@radix-ui/react-popover"
 
 import { cn } from "@/lib/utils"
 
-const Popover = PopoverPrimitive.Root
+const PopoverContext = React.createContext<{
+  open: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}>({
+  open: false,
+  setOpen: () => {},
+});
+
+
+const Popover = ({ children, ...props }: PopoverPrimitive.PopoverProps) => {
+  const [open, setOpen] = React.useState(false);
+  
+  const contextValue = React.useMemo(() => ({ open, setOpen }), [open, setOpen]);
+
+  return (
+    <PopoverContext.Provider value={contextValue}>
+      <PopoverPrimitive.Root open={open} onOpenChange={setOpen} {...props}>
+        {children}
+      </PopoverPrimitive.Root>
+    </PopoverContext.Provider>
+  )
+}
+Popover.Context = PopoverContext;
+
 
 const PopoverTrigger = PopoverPrimitive.Trigger
 
