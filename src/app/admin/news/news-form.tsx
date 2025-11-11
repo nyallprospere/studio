@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -42,11 +41,14 @@ const newsArticleSchema = z.object({
   author: z.string().optional(),
   tags: z.array(z.string()).optional(),
   mainImageFile: z.any().optional(),
-  galleryImageFiles: z.any().optional(),
   imageUrl: z.string().url().optional().or(z.literal('')),
+  galleryImageFiles: z.any().optional(),
   galleryImageUrls: z.array(z.string().url()).optional(),
   publishedAt: z.date().optional(),
   articleDate: z.date().optional(),
+}).refine(data => data.mainImageFile || data.imageUrl, {
+    message: "A main image is required. Please upload a file or provide a URL.",
+    path: ["mainImageFile"],
 });
 
 
@@ -285,6 +287,20 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
                     {initialData?.imageUrl && (
                         <a href={initialData.imageUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 hover:underline">View current image</a>
                     )}
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="imageUrl"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Or Image URL</FormLabel>
+                    <FormControl>
+                        <Input type="url" placeholder="https://example.com/image.jpg" {...field} />
+                    </FormControl>
+                    <FormDescription>Provide a direct link to an image.</FormDescription>
                     <FormMessage />
                     </FormItem>
                 )}

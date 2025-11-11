@@ -89,15 +89,19 @@ export default function AdminNewsPage() {
     if (!firestore) return;
     
     try {
-      let imageUrl = values.imageUrl;
+      let imageUrl = values.imageUrl || '';
+      let galleryImageUrls = values.galleryImageUrls || [];
+
+      // Handle main image upload
       if (values.mainImageFile) {
         if (editingArticle?.imageUrl) {
           await deleteFile(editingArticle.imageUrl).catch(console.warn);
         }
-        imageUrl = await uploadFile(values.mainImageFile, `news/${values.mainImageFile.name}_main`);
+        const fileName = `${Date.now()}_${values.mainImageFile.name}`;
+        imageUrl = await uploadFile(values.mainImageFile, `news/${fileName}_main`);
       }
 
-      let galleryImageUrls = values.galleryImageUrls || [];
+      // Handle gallery images upload
       if (values.galleryImageFiles && values.galleryImageFiles.length > 0) {
           if (editingArticle?.galleryImageUrls) {
               for (const url of editingArticle.galleryImageUrls) {
@@ -105,7 +109,10 @@ export default function AdminNewsPage() {
               }
           }
           galleryImageUrls = await Promise.all(
-              Array.from(values.galleryImageFiles).map((file: any) => uploadFile(file, `news/gallery/${file.name}`))
+              Array.from(values.galleryImageFiles).map((file: any) => {
+                const fileName = `${Date.now()}_${file.name}`;
+                return uploadFile(file, `news/gallery/${fileName}`);
+              })
           );
       }
 
@@ -116,6 +123,8 @@ export default function AdminNewsPage() {
         tags: values.tags || [],
         articleDate: values.articleDate ? Timestamp.fromDate(values.articleDate) : Timestamp.now(),
       };
+      
+      // Clean up file objects before saving to Firestore
       delete articleData.mainImageFile;
       delete articleData.galleryImageFiles;
       
@@ -125,32 +134,20 @@ export default function AdminNewsPage() {
         // Don't update publishedAt when editing
         delete articleData.publishedAt;
         const articleDoc = doc(firestore, 'news', editingArticle.id);
-        updateDoc(articleDoc, articleData)
-          .catch(error => {
-            const contextualError = new FirestorePermissionError({
-              path: articleDoc.path,
-              operation: 'update',
-              requestResourceData: articleData,
-            });
-            errorEmitter.emit('permission-error', contextualError);
-          });
+        await updateDoc(articleDoc, articleData);
         toast({ title: "Article Updated", description: `The article "${articleData.title}" has been successfully updated.` });
       } else {
         articleData.publishedAt = Timestamp.now();
-        addDoc(newsColRef, articleData)
-          .catch(error => {
-            const contextualError = new FirestorePermissionError({
-              path: newsColRef.path,
-              operation: 'create',
-              requestResourceData: articleData,
-            });
-            errorEmitter.emit('permission-error', contextualError);
-          });
+        await addDoc(newsColRef, articleData);
         toast({ title: "Article Added", description: `The article "${articleData.title}" has been successfully added.` });
       }
-    } catch (e) {
+    } catch (e: any) {
         console.error("Error saving article:", e);
-        toast({variant: 'destructive', title: 'Error', description: 'Could not save article.'})
+        toast({
+            variant: 'destructive', 
+            title: 'Save Failed', 
+            description: e.message || 'Could not save the article. Please check the console for more details.'
+        });
     } finally {
         setIsFormOpen(false);
         setEditingArticle(null);
