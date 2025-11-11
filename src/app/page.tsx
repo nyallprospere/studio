@@ -264,7 +264,7 @@ export default function Home() {
               <Button asChild className="whitespace-normal h-auto text-center px-4">
                 <a href="https://www.sluelectoral.com/electoral/voter-record-search/"
                   target="_blank"
-                  rel="noopener noreferrer" className="whitespace-normal h-auto text-center">
+                  rel="noopener noreferrer">
                     Check Your Voter Registration
                 </a>
               </Button>
@@ -446,6 +446,12 @@ export default function Home() {
                                             <a href="https://www.sluelectoral.com/electoral/voter-record-search/" target="_blank" rel="noopener noreferrer" className="hover:underline">
                                                 {item.title}
                                             </a>
+                                        ) : item.title === 'Register to Vote' ? (
+                                             <Button asChild variant="secondary" className="w-full">
+                                                <a href="https://www.sluelectoral.com/electoral/registration/" target="_blank" rel="noopener noreferrer">
+                                                    {item.title}
+                                                </a>
+                                            </Button>
                                         ) : (
                                             item.title
                                         )}
