@@ -135,22 +135,7 @@ export function HeaderNav() {
         </DropdownMenu>
       );
     }
-    return (
-      <>
-        <Button asChild variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
-          <Link href="/login">
-            <LogIn className="mr-2 h-4 w-4" />
-            Login
-          </Link>
-        </Button>
-        <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
-          <Link href="/signup">
-            <UserPlus className="mr-2 h-4 w-4" />
-            Sign Up
-          </Link>
-        </Button>
-      </>
-    );
+    return null;
   };
   
   const adminLinks = [
@@ -165,6 +150,7 @@ export function HeaderNav() {
     { href: '/admin/news', label: 'Manage News' },
     { href: '/admin/mailing-list', label: 'Manage Mailing List' },
     { href: '/admin/ads', label: 'Manage Ads' },
+    { href: '/admin/analytics', label: 'Analytics' },
     { href: '/admin/map-submissions', label: 'Map Submissions' },
     { href: '/admin/ai-analyzer', label: 'AI Analyzer' },
     { href: '/admin/voter-information', label: 'Manage Voter Info' },
