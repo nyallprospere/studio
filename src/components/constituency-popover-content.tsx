@@ -101,7 +101,6 @@ function CandidateBox({
 }) {
     const [isProfileOpen, setProfileOpen] = useState(false);
     const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}` : 'Candidate(s) N/A';
-    const displayName = candidate ? `${candidate.firstName} ${candidate.lastName}` : 'Candidate(s) N/A';
 
 
     const votePercentage = totalVotes && votes ? (votes / totalVotes) * 100 : 0;
@@ -147,7 +146,7 @@ function CandidateBox({
                             )}
                         </div>
                          <p className="text-xs font-semibold whitespace-normal leading-tight" onClick={() => candidate && setProfileOpen(true)}>
-                           {displayName}
+                           {candidateName}
                         </p>
                         {isWinner && <CheckCircle2 className="h-4 w-4 text-green-600 absolute top-[-4px] right-[-4px] bg-white rounded-full" />}
                     </div>
