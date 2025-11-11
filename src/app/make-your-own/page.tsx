@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
@@ -144,33 +142,6 @@ const charToLeaning: { [key: string]: string } = {
     'x': 'unselected'
 };
 
-const encodeMapData = (constituencies: Constituency[]): string => {
-    const orderedConstituencies = [...constituencies].sort((a, b) => a.id.localeCompare(b.id));
-    const encodedString = orderedConstituencies.map(c => leaningToChar[c.politicalLeaning || 'unselected']).join('');
-    return btoa(encodedString);
-};
-
-const decodeMapData = (encodedData: string, initialConstituencies: Constituency[]): Constituency[] => {
-    try {
-        const decodedString = atob(encodedData);
-        const orderedConstituencies = [...initialConstituencies].sort((a, b) => a.id.localeCompare(b.id));
-        
-        if (decodedString.length !== orderedConstituencies.length) {
-            console.error("Decoded data length mismatch");
-            return initialConstituencies;
-        }
-
-        return orderedConstituencies.map((c, index) => ({
-            ...c,
-            politicalLeaning: charToLeaning[decodedString[index]] || 'unselected'
-        }));
-    } catch (e) {
-        console.error("Failed to decode map data:", e);
-        return initialConstituencies;
-    }
-};
-
-
 export default function MakeYourOwnPage() {
     const { firestore } = useFirebase();
     const { toast } = useToast();
@@ -234,8 +205,25 @@ export default function MakeYourOwnPage() {
         if(constituencies) {
             const mapData = searchParams.get('map');
             if (mapData) {
-                const decodedConstituencies = decodeMapData(mapData, constituencies);
-                setMyMapConstituencies(decodedConstituencies);
+                try {
+                    const decodedString = atob(mapData);
+                    const orderedConstituencies = [...constituencies].sort((a, b) => a.id.localeCompare(b.id));
+                    
+                    if (decodedString.length !== orderedConstituencies.length) {
+                        console.error("Decoded data length mismatch");
+                        setMyMapConstituencies(constituencies.map(c => ({...c, politicalLeaning: 'unselected'})));
+                        return;
+                    }
+
+                    const decodedConstituencies = orderedConstituencies.map((c, index) => ({
+                        ...c,
+                        politicalLeaning: charToLeaning[decodedString[index]] || 'unselected'
+                    }));
+                    setMyMapConstituencies(decodedConstituencies);
+                } catch (e) {
+                    console.error("Failed to decode map data:", e);
+                    setMyMapConstituencies(constituencies.map(c => ({...c, politicalLeaning: 'unselected'})));
+                }
             } else {
                  setMyMapConstituencies(constituencies.map(c => ({...c, politicalLeaning: 'unselected'})))
             }
@@ -614,3 +602,6 @@ export default function MakeYourOwnPage() {
 
 
 
+
+
+    
