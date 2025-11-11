@@ -13,7 +13,12 @@ import { Switch } from '@/components/ui/switch';
 const voterInfoSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(1, "Title is required"),
-  items: z.array(z.string().min(1, "Item text cannot be empty.")).min(1, "At least one item is required."),
+  items: z.array(
+    z.object({
+      text: z.string().min(1, "Item text cannot be empty."),
+      isVisible: z.boolean().default(true),
+    })
+  ).min(1, "At least one item is required."),
   isVisible: z.boolean().default(true),
 });
 
@@ -30,7 +35,7 @@ export function VoterInformationForm({ onSubmit, initialData, onCancel }: VoterI
     resolver: zodResolver(voterInfoSchema),
     defaultValues: {
       title: '',
-      items: [''],
+      items: [{ text: '', isVisible: true }],
       isVisible: true,
     },
   });
@@ -47,7 +52,7 @@ export function VoterInformationForm({ onSubmit, initialData, onCancel }: VoterI
           isVisible: initialData.isVisible !== false, // Default to true if undefined
       });
     } else {
-        form.reset({ title: '', items: [''], isVisible: true });
+        form.reset({ title: '', items: [{ text: '', isVisible: true }], isVisible: true });
     }
   }, [initialData, form]);
 
@@ -72,27 +77,37 @@ export function VoterInformationForm({ onSubmit, initialData, onCancel }: VoterI
             <FormLabel>Items</FormLabel>
             <div className="space-y-2 mt-2">
                 {fields.map((field, index) => (
+                  <div key={field.id} className="flex items-center gap-2">
                     <FormField
-                        key={field.id}
-                        control={form.control}
-                        name={`items.${index}`}
-                        render={({ field }) => (
-                            <FormItem>
-                                <div className="flex items-center gap-2">
-                                    <FormControl>
-                                        <Input placeholder={`Item ${index + 1}`} {...field} />
-                                    </FormControl>
-                                    <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                                <FormMessage />
-                            </FormItem>
-                        )}
+                      control={form.control}
+                      name={`items.${index}.text`}
+                      render={({ field }) => (
+                        <FormItem className="flex-grow">
+                          <FormControl>
+                            <Input placeholder={`Item ${index + 1}`} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
+                     <FormField
+                      control={form.control}
+                      name={`items.${index}.isVisible`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 ))}
             </div>
-             <Button type="button" variant="outline" size="sm" onClick={() => append('')} className="mt-2">
+             <Button type="button" variant="outline" size="sm" onClick={() => append({ text: '', isVisible: true })} className="mt-2">
                 <PlusCircle className="mr-2 h-4 w-4" /> Add Item
             </Button>
         </div>
@@ -103,9 +118,9 @@ export function VoterInformationForm({ onSubmit, initialData, onCancel }: VoterI
             render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                 <div className="space-y-0.5">
-                    <FormLabel className="text-base">Visible on Homepage</FormLabel>
+                    <FormLabel className="text-base">Section Visible</FormLabel>
                     <FormDescription>
-                    Control whether this section is shown to the public.
+                    Control whether this entire section is shown to the public.
                     </FormDescription>
                 </div>
                 <FormControl>

@@ -840,7 +840,14 @@
         "title": { "type": "string" },
         "items": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": { "type": "string" },
+              "isVisible": { "type": "boolean" }
+            },
+            "required": ["text", "isVisible"]
+          }
         },
         "isVisible": {
           "type": "boolean",

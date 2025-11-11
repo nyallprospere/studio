@@ -225,6 +225,9 @@ export interface ConstituencyProjection {
 export interface VoterInformation {
   id: string;
   title: string;
-  items: string[];
+  items: {
+    text: string;
+    isVisible: boolean;
+  }[];
   isVisible?: boolean;
 }

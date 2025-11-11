@@ -11,6 +11,7 @@ import { PlusCircle, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { VoterInformationForm, type VoterInformation } from './voter-information-form';
+import { cn } from '@/lib/utils';
 
 export default function VoterInformationPage() {
   const { firestore } = useFirebase();
@@ -95,8 +96,13 @@ export default function VoterInformationPage() {
                        {item.isVisible === false ? <EyeOff className="h-5 w-5 text-muted-foreground mt-1" /> : <Eye className="h-5 w-5 text-muted-foreground mt-1" />}
                       <div>
                         <h3 className="font-semibold">{item.title}</h3>
-                        <ul className="list-disc list-inside text-muted-foreground mt-2 text-sm">
-                          {item.items.map((text, index) => <li key={index}>{text}</li>)}
+                        <ul className="list-disc list-inside text-muted-foreground mt-2 text-sm space-y-1">
+                          {item.items.map((textItem, index) => (
+                            <li key={index} className="flex items-center gap-2">
+                                {textItem.isVisible ? <Eye className="h-4 w-4 text-green-500" /> : <EyeOff className="h-4 w-4 text-gray-400" />}
+                                <span className={cn(!textItem.isVisible && "line-through text-gray-400")}>{textItem.text}</span>
+                            </li>
+                          ))}
                         </ul>
                       </div>
                     </div>

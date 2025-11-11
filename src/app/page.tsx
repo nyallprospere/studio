@@ -457,14 +457,14 @@ export default function Home() {
                                         )}
                                     </h3>
                                     <ul className="list-disc list-inside text-muted-foreground">
-                                    {item.items.map((text, index) => {
-                                        const isUrl = text.startsWith('http');
+                                    {item.items.filter(i => i.isVisible).map((textItem, index) => {
+                                        const isUrl = textItem.text.startsWith('http');
                                         return (
                                         <li key={index}>
                                             {isUrl ? (
-                                            <a href={text} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{text}</a>
+                                            <a href={textItem.text} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{textItem.text}</a>
                                             ) : (
-                                            text
+                                            textItem.text
                                             )}
                                         </li>
                                         );
