@@ -245,7 +245,7 @@ export default function Home() {
       <MailingListPopup />
       
       {siteSettings?.siteBannerUrl && (
-        <div className="relative w-full aspect-[21/9] max-h-32 md:max-h-48">
+        <div className="relative w-full aspect-[21/9] max-h-24 md:max-h-32">
             <Image src={siteSettings.siteBannerUrl} alt="Site Banner" fill className="object-contain" />
         </div>
       )}
@@ -275,9 +275,18 @@ export default function Home() {
         </div>
         
         <div className="mt-12">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight font-headline text-center mb-6 text-primary">
-              LucianVotes Election Forecast
-          </h2>
+            <div className="text-center mb-6">
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight font-headline text-primary">
+                    LucianVotes Election Forecast
+                </h2>
+                 <div className="mt-4">
+                    <Button asChild className="w-full max-w-md mx-auto bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
+                        <Link href="/make-your-own">
+                        Build and Share your Map!
+                        </Link>
+                    </Button>
+                </div>
+            </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="lg:col-span-1 space-y-8">
               <Card>
@@ -401,13 +410,6 @@ export default function Home() {
                               </div>
                           )}
                       </CardContent>
-                      <CardFooter>
-                          <Button asChild className="w-full bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
-                              <Link href="/make-your-own">
-                              Create and share your own election prediction.
-                              </Link>
-                          </Button>
-                      </CardFooter>
                   </Card>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-8">
                     <Card>
@@ -520,3 +522,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
