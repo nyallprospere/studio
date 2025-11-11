@@ -245,6 +245,13 @@ export function ConstituencyPopoverContent({
     popoverVariant?: 'default' | 'dashboard';
 }) {
     const { firestore } = useFirebase();
+    const [isProfileOpen, setProfileOpen] = useState(false);
+    const [profileCandidate, setProfileCandidate] = useState<Candidate | ArchivedCandidate | null>(null);
+
+    const openProfile = (candidate: Candidate | ArchivedCandidate) => {
+        setProfileCandidate(candidate);
+        setProfileOpen(true);
+    };
 
     const isCurrentElection = !election || election.isCurrent;
     const collectionName = useMemo(() => (isCurrentElection ? 'candidates' : 'archived_candidates'), [isCurrentElection]);
@@ -490,6 +497,7 @@ export function ConstituencyPopoverContent({
     
     return (
         <div className="space-y-3 w-80">
+             <CandidateProfileDialog candidate={profileCandidate as Candidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />
              <div className="text-center">
                 <h4 className="font-bold leading-none text-xl flex items-center justify-center gap-2">
                     {constituency.logoUrl && <Image src={constituency.logoUrl} alt={constituency.name} width={24} height={24} />}
@@ -522,16 +530,16 @@ export function ConstituencyPopoverContent({
                     {uwpParty && slpParty && <div className="grid grid-cols-2 gap-2">
                         {(constituency.name === 'Castries North' || constituency.name === 'Castries Central') ? (
                             <>
-                                {independentCandidate && <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center cursor-pointer" onClick={() => independentCandidate && setProfileOpen(true)}>
+                                {independentCandidate && <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center cursor-pointer" onClick={() => independentCandidate && openProfile(independentCandidate)}>
                                     <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
                                         {independentCandidate?.imageUrl ? <Image src={independentCandidate.imageUrl} alt={independentCandidate.firstName || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                     </div>
                                     <p className="text-xs font-semibold mt-1">{independentCandidate ? `${independentCandidate.firstName} ${independentCandidate.lastName}` : 'IND Candidate'}{(independentCandidate as Candidate)?.isIncumbent && ' (Inc.)'}</p>
                                     <p className="text-xs text-muted-foreground">IND</p>
                                 </div>}
-                                {uwpCandidate && <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center cursor-pointer" onClick={() => uwpCandidate && setProfileOpen(true)}>
+                                {uwpCandidate && <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center cursor-pointer" onClick={() => uwpCandidate && openProfile(uwpCandidate)}>
                                     <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
-                                        {uwpCandidate?.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
+                                        {uwpCandidate?.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate?.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                     </div>
                                     <p className="text-xs font-semibold mt-1">{uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'UWP Candidate'}{uwpCandidate?.isIncumbent && ' (Inc.)'}</p>
                                     <p className="text-xs text-muted-foreground">{uwpParty?.acronym}</p>
@@ -540,7 +548,7 @@ export function ConstituencyPopoverContent({
                         ) : (
                             <>
                                 {slpCandidate && (
-                                    <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center cursor-pointer" onClick={() => slpCandidate && setProfileOpen(true)}>
+                                    <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center cursor-pointer" onClick={() => slpCandidate && openProfile(slpCandidate)}>
                                         <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
                                             {slpCandidate.imageUrl ? <Image src={slpCandidate.imageUrl} alt={slpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                         </div>
@@ -549,9 +557,9 @@ export function ConstituencyPopoverContent({
                                     </div>
                                 )}
                                 {uwpCandidate && (
-                                    <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center cursor-pointer" onClick={() => uwpCandidate && setProfileOpen(true)}>
+                                    <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center cursor-pointer" onClick={() => uwpCandidate && openProfile(uwpCandidate)}>
                                         <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-300">
-                                            {uwpCandidate.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
+                                            {uwpCandidate.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate?.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                         </div>
                                         <p className="text-xs font-semibold mt-1">{uwpCandidate ? `${uwpCandidate.firstName} ${uwpCandidate.lastName}` : 'UWP Candidate'}{uwpCandidate?.isIncumbent && ' (Inc.)'}</p>
                                         <p className="text-xs text-muted-foreground">{uwpParty?.acronym}</p>
@@ -571,7 +579,7 @@ export function ConstituencyPopoverContent({
                 {showCandidateBoxes && (election?.isCurrent || !election) && !isMakeYourOwn ? (
                     <div className="space-y-2">
                         {uwpCandidate && (
-                            <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center cursor-pointer" onClick={() => uwpCandidate && setProfileOpen(true)}>
+                            <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center cursor-pointer" onClick={() => uwpCandidate && openProfile(uwpCandidate)}>
                                 <div className="relative h-8 w-8 mb-2">
                                     {uwpParty?.logoUrl && !hideLogos ? (
                                         <Image src={uwpParty.logoUrl} alt={uwpParty.name} fill className="object-contain" />
@@ -589,7 +597,7 @@ export function ConstituencyPopoverContent({
                             </div>
                         )}
                         {independentCandidate && (
-                            <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center cursor-pointer" onClick={() => independentCandidate && setProfileOpen(true)}>
+                            <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center cursor-pointer" onClick={() => independentCandidate && openProfile(independentCandidate)}>
                                 <div className="relative h-8 w-8 mb-2">
                                     {indLogoUrl && !hideLogos && <Image src={indLogoUrl} alt="Independent" fill className="object-contain" />}
                                 </div>
@@ -605,7 +613,7 @@ export function ConstituencyPopoverContent({
                             </div>
                         )}
                         {slpCandidate && (
-                            <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center cursor-pointer" onClick={() => slpCandidate && setProfileOpen(true)}>
+                            <div className="flex flex-col items-center p-2 rounded-md bg-muted text-center cursor-pointer" onClick={() => slpCandidate && openProfile(slpCandidate)}>
                                 <div className="relative h-8 w-8 mb-2">
                                     {slpParty?.logoUrl && !hideLogos ? (
                                         <Image src={slpParty.logoUrl} alt={slpParty.name} fill className="object-contain" />
@@ -689,7 +697,7 @@ export function ConstituencyPopoverContent({
                             
                              {(constituency.name === 'Castries North' || constituency.name === 'Castries Central') ? (
                                 <>
-                                    <div className="flex flex-col items-center gap-1 cursor-pointer" onClick={() => uwpCandidate && setProfileOpen(true)}>
+                                    <div className="flex flex-col items-center gap-1 cursor-pointer" onClick={() => uwpCandidate && openProfile(uwpCandidate)}>
                                         <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
                                             {uwpCandidate?.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                         </div>
@@ -705,7 +713,7 @@ export function ConstituencyPopoverContent({
                                             </Label>
                                         </RadioGroup>
                                     </div>
-                                    <div className="flex flex-col items-center gap-1 cursor-pointer" onClick={() => independentCandidate && setProfileOpen(true)}>
+                                    <div className="flex flex-col items-center gap-1 cursor-pointer" onClick={() => independentCandidate && openProfile(independentCandidate)}>
                                         <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
                                             {independentCandidate?.imageUrl ? <Image src={independentCandidate.imageUrl} alt={independentCandidate.firstName || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                         </div>
@@ -724,7 +732,7 @@ export function ConstituencyPopoverContent({
                                 </>
                             ) : (
                                 <>
-                                    <div className="flex flex-col items-center gap-1 cursor-pointer" onClick={() => slpCandidate && setProfileOpen(true)}>
+                                    <div className="flex flex-col items-center gap-1 cursor-pointer" onClick={() => slpCandidate && openProfile(slpCandidate)}>
                                         <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
                                             {slpCandidate?.imageUrl ? <Image src={slpCandidate.imageUrl} alt={slpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                         </div>
@@ -740,7 +748,7 @@ export function ConstituencyPopoverContent({
                                             </Label>
                                         </RadioGroup>
                                     </div>
-                                    <div className="flex flex-col items-center gap-1 cursor-pointer" onClick={() => uwpCandidate && setProfileOpen(true)}>
+                                    <div className="flex flex-col items-center gap-1 cursor-pointer" onClick={() => uwpCandidate && openProfile(uwpCandidate)}>
                                         <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
                                             {uwpCandidate?.imageUrl ? <Image src={uwpCandidate.imageUrl} alt={uwpCandidate.name || ''} fill className="object-cover" /> : <UserSquare className="h-full w-full text-gray-400" />}
                                         </div>
