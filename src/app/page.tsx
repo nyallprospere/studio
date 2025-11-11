@@ -261,13 +261,13 @@ export default function Home() {
               <Countdown date={electionDate} />
             </CardContent>
             <CardFooter className="flex justify-center">
-              <Button asChild className="whitespace-normal h-auto text-center">
+              <Button asChild className="whitespace-normal h-auto text-center px-4">
                 <Link
                   href="https://www.sluelectoral.com/electoral/voter-record-search/"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Check Your Voter Registration Status
+                  Check Your Voter Registration
                 </Link>
               </Button>
             </CardFooter>
