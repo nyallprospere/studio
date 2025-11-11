@@ -36,8 +36,10 @@ interface LogoUploadDialogProps {
 const uploadSchema = z.object({
   electionIds: z.array(z.string()).min(1, 'Please select at least one election.'),
   standardLogoFile: z.any().optional(),
+  standardLogoUrl: z.string().url().optional().or(z.literal('')),
   standardLogoFiles: z.any().optional(),
   expandedLogoFile: z.any().optional(),
+  expandedLogoUrl: z.string().url().optional().or(z.literal('')),
   expandedLogoFiles: z.any().optional(),
   candidateName: z.string().optional(),
   constituencyIds: z.array(z.string()).optional(),
@@ -45,11 +47,12 @@ const uploadSchema = z.object({
   existingExpandedLogo: z.string().optional(),
 }).refine(data => {
     if(data.candidateName || (data.constituencyIds && data.constituencyIds.length > 0)) return true;
-    return data.standardLogoFile || data.expandedLogoFile || (data.standardLogoFiles && data.standardLogoFiles.length > 0) || data.existingStandardLogo || data.existingExpandedLogo;
+    return data.standardLogoFile || data.expandedLogoFile || (data.standardLogoFiles && data.standardLogoFiles.length > 0) || data.existingStandardLogo || data.existingExpandedLogo || data.standardLogoUrl || data.expandedLogoUrl;
 }, {
-  message: 'At least one logo file or existing logo is required.',
+  message: 'At least one logo file, URL, or existing logo is required.',
   path: ['standardLogoFile'],
 });
+
 
 export function LogoUploadDialog({ isOpen, onClose, party, elections, constituencies, partyLogos, onSuccess }: LogoUploadDialogProps) {
   const { firestore } = useFirebase();
@@ -63,6 +66,8 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
       electionIds: [],
       candidateName: '',
       constituencyIds: [],
+      standardLogoUrl: '',
+      expandedLogoUrl: '',
     },
   });
 
@@ -122,6 +127,8 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                     if (fileToUpload) {
                         const path = `logos/ind_${electionId}_${constituencyId}_std.png`;
                         logoData.logoUrl = await uploadFile(fileToUpload as File, path);
+                    } else if (values.standardLogoUrl) {
+                        logoData.logoUrl = values.standardLogoUrl;
                     } else if (values.existingStandardLogo) {
                         logoData.logoUrl = values.existingStandardLogo;
                     }
@@ -129,6 +136,8 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                     if (values.expandedLogoFile) {
                         const path = `logos/ind_${electionId}_${constituencyId}_exp.png`;
                         logoData.expandedLogoUrl = await uploadFile(values.expandedLogoFile, path);
+                    } else if (values.expandedLogoUrl) {
+                        logoData.expandedLogoUrl = values.expandedLogoUrl;
                     } else if (values.existingExpandedLogo) {
                         logoData.expandedLogoUrl = values.existingExpandedLogo;
                     }
@@ -175,11 +184,16 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                     if (standardUrl && !values.existingStandardLogo) await deleteFile(standardUrl).catch(console.warn);
                     const path = `logos/${party.id}_${electionId}_std.png`;
                     standardUrl = await uploadFile(files.standard, path);
+                } else if(values.standardLogoUrl) {
+                    standardUrl = values.standardLogoUrl;
                 }
+
                 if (files.expanded) {
                     if (expandedUrl && !values.existingExpandedLogo) await deleteFile(expandedUrl).catch(console.warn);
                         const path = `logos/${party.id}_${electionId}_exp.png`;
                     expandedUrl = await uploadFile(files.expanded, path);
+                } else if(values.expandedLogoUrl) {
+                    expandedUrl = values.expandedLogoUrl;
                 }
 
                 const dataToSave = {
@@ -372,7 +386,19 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                                     <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
                                 </FormControl>
                                 <FormMessage />
-                                <FormDescription>Or, select an existing logo below.</FormDescription>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="standardLogoUrl"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Or Standard Logo URL</FormLabel>
+                                <FormControl>
+                                    <Input type="url" placeholder="https://example.com/logo.png" {...field} />
+                                </FormControl>
+                                <FormMessage />
                                 </FormItem>
                             )}
                         />
@@ -386,10 +412,23 @@ export function LogoUploadDialog({ isOpen, onClose, party, elections, constituen
                                     <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
                                 </FormControl>
                                 <FormMessage />
-                                <FormDescription>Or, select an existing logo below.</FormDescription>
                                 </FormItem>
                             )}
                         />
+                        <FormField
+                            control={form.control}
+                            name="expandedLogoUrl"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Or Expanded Logo URL</FormLabel>
+                                <FormControl>
+                                    <Input type="url" placeholder="https://example.com/banner.png" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormDescription>Or, select an existing logo below.</FormDescription>
                     </>
                  )}
                 
