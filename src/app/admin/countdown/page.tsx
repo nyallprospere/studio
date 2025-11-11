@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { collection, doc, query, where, updateDoc, Timestamp } from 'firebase/firestore';
 import { PageHeader } from '@/components/page-header';
