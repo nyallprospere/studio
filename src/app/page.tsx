@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -245,8 +244,8 @@ export default function Home() {
       <MailingListPopup />
       
       {siteSettings?.siteBannerUrl && (
-        <div className="relative w-full aspect-[21/9] max-h-64">
-            <Image src={siteSettings.siteBannerUrl} alt="Site Banner" fill className="object-cover" />
+        <div className="relative w-full aspect-[21/9] max-h-48">
+            <Image src={siteSettings.siteBannerUrl} alt="Site Banner" fill className="object-contain" />
         </div>
       )}
       <div className="container mx-auto px-4 py-8">
