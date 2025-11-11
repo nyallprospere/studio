@@ -155,7 +155,7 @@ export default function Home() {
 
    const { chartData, seatCounts, tossupConstituencies, aiForecastSeatCounts } = useMemo(() => {
     if (!constituencies) return { chartData: [], seatCounts: {}, tossupConstituencies: [], aiForecastSeatCounts: {} };
-
+    
     const counts = constituencies.reduce((acc, constituency) => {
         const leaningValue = constituency.politicalLeaning || 'tossup';
         let effectiveLeaning = leaningValue;
@@ -233,7 +233,7 @@ export default function Home() {
   }, [news]);
 
   const getAiForecastPartyColor = (party?: 'slp' | 'uwp' | 'ind') => {
-    if (party === 'slp') return 'text-red-500';
+    if (party === 'slp') return 'text-red-600';
     if (party === 'uwp') return 'text-yellow-500';
     if (party === 'ind') return 'text-blue-500';
     return 'text-muted-foreground';
@@ -262,13 +262,11 @@ export default function Home() {
             </CardContent>
             <CardFooter className="flex justify-center">
               <Button asChild className="whitespace-normal h-auto text-center px-4">
-                <Link
-                  href="https://www.sluelectoral.com/electoral/voter-record-search/"
+                <a href="https://www.sluelectoral.com/electoral/voter-record-search/"
                   target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Check Your Voter Registration
-                </Link>
+                  rel="noopener noreferrer" className="whitespace-normal h-auto text-center">
+                    Check Your Voter Registration
+                </a>
               </Button>
             </CardFooter>
           </Card>
@@ -443,7 +441,15 @@ export default function Home() {
                         <CardContent className="space-y-4">
                             {loadingVoterInfo ? <p>Loading information...</p> : voterInfoItems?.map(item => (
                                 <div key={item.id}>
-                                    <h3 className="font-semibold">{item.title}</h3>
+                                     <h3 className="font-semibold">
+                                        {item.title === 'Confirm Your Registration & Polling Station' ? (
+                                            <a href="https://www.sluelectoral.com/electoral/voter-record-search/" target="_blank" rel="noopener noreferrer" className="hover:underline">
+                                                {item.title}
+                                            </a>
+                                        ) : (
+                                            item.title
+                                        )}
+                                    </h3>
                                     <ul className="list-disc list-inside text-muted-foreground">
                                     {item.items.map((text, index) => {
                                         const isUrl = text.startsWith('http');
