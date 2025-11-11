@@ -313,7 +313,7 @@ export default function Home() {
                   <Card>
                       <CardHeader>
                           
-                          <CardDescription>Our current projection for the 2026 general election.</CardDescription>
+                          <CardDescription>Our current projection for the 2025 general election.</CardDescription>
                       </CardHeader>
                       <CardContent className="flex flex-col items-center">
                           
@@ -526,5 +526,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
