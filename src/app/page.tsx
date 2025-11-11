@@ -261,7 +261,7 @@ export default function Home() {
               <Countdown date={electionDate} />
             </CardContent>
             <CardFooter className="flex justify-center">
-              <Button asChild>
+              <Button asChild className="whitespace-normal h-auto text-center">
                 <Link
                   href="https://www.sluelectoral.com/electoral/voter-record-search/"
                   target="_blank"
@@ -522,5 +522,7 @@ export default function Home() {
     </div>
   );
 }
+
+    
 
     
