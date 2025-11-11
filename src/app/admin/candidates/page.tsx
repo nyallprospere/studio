@@ -55,34 +55,58 @@ export default function AdminCandidatesPage() {
 
   const handleFormSubmit = async (values: any) => {
     if (!firestore || !candidatesCollection) return;
-    try {
-      let imageUrl = values.imageUrl;
-      if (values.photoFile) {
-        if(editingCandidate?.imageUrl) {
-            await deleteFile(editingCandidate.imageUrl);
-        }
-        imageUrl = await uploadFile(values.photoFile, `candidates/${values.photoFile.name}`);
-      }
+    
+    const candidateName = `${values.firstName} ${values.lastName}`;
+    let imageUrl = values.imageUrl;
 
+    try {
+      // Handle file upload if a new file is provided
+      if (values.photoFile) {
+        // If editing and there's an old image, delete it
+        if (editingCandidate?.imageUrl) {
+          await deleteFile(editingCandidate.imageUrl).catch(console.warn);
+        }
+        const uniqueFileName = `${candidateName.replace(/ /g, '_')}_${Date.now()}`;
+        imageUrl = await uploadFile(values.photoFile, `candidates/${uniqueFileName}`);
+      } else if (values.removePhoto && editingCandidate?.imageUrl) {
+        // Handle photo removal
+        await deleteFile(editingCandidate.imageUrl).catch(console.warn);
+        imageUrl = '';
+      }
+      
       let customLogoUrl = values.customLogoUrl;
       if (values.customLogoFile) {
         if (editingCandidate?.customLogoUrl) {
-          await deleteFile(editingCandidate.customLogoUrl);
+          await deleteFile(editingCandidate.customLogoUrl).catch(console.warn);
         }
         customLogoUrl = await uploadFile(values.customLogoFile, `logos/ind_${values.lastName}_${Date.now()}.png`);
       }
-      
-      const candidateData = { ...values, imageUrl, customLogoUrl };
-      delete candidateData.photoFile;
-      delete candidateData.customLogoFile;
 
+      const candidateData: Omit<Candidate, 'id'> = {
+        name: candidateName,
+        firstName: values.firstName,
+        lastName: values.lastName,
+        partyId: values.partyId,
+        constituencyId: values.constituencyId,
+        bio: values.bio || '',
+        imageUrl: imageUrl || '',
+        customLogoUrl: customLogoUrl || '',
+        isIncumbent: values.isIncumbent,
+        isPartyLeader: values.isPartyLeader,
+        isDeputyLeader: values.isDeputyLeader,
+        partyLevel: values.partyLevel,
+        isIndependentCastriesNorth: values.isIndependentCastriesNorth,
+        isIndependentCastriesCentral: values.isIndependentCastriesCentral,
+        policyPositions: [], // Ensure this is initialized
+      };
+      
       if (editingCandidate) {
         const candidateDoc = doc(firestore, 'candidates', editingCandidate.id);
         await updateDoc(candidateDoc, candidateData);
-        toast({ title: "Candidate Updated", description: `${candidateData.firstName} ${candidateData.lastName} has been successfully updated.` });
+        toast({ title: "Candidate Updated", description: `${candidateName} has been successfully updated.` });
       } else {
         await addDoc(candidatesCollection, candidateData);
-        toast({ title: "Candidate Added", description: `${candidateData.firstName} ${candidateData.lastName} has been successfully added.` });
+        toast({ title: "Candidate Added", description: `${candidateName} has been successfully added.` });
       }
     } catch (error) {
       console.error("Error saving candidate: ", error);
@@ -388,7 +412,7 @@ export default function AdminCandidatesPage() {
                             <Image src={candidate.imageUrl} alt={`${candidate.firstName} ${candidate.lastName}`} width={48} height={48} className="rounded-full object-cover" />
                         ) : (
                             <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                                <span className="text-2xl font-bold text-gray-500">X</span>
+                                <UserSquare className="h-6 w-6 text-muted-foreground" />
                             </div>
                         )}
                         <div>

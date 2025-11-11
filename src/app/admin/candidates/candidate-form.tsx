@@ -14,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useEffect, useState } from 'react';
 import type { Candidate, Party, Constituency } from '@/lib/types';
-import { ChevronsUpDown } from 'lucide-react';
+import { ChevronsUpDown, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -28,13 +28,26 @@ const candidateSchema = z.object({
   customLogoFile: z.any().optional(),
   imageUrl: z.string().url().optional().or(z.literal('')),
   customLogoUrl: z.string().url().optional().or(z.literal('')),
+  removePhoto: z.boolean().default(false),
   isIncumbent: z.boolean().default(false),
   isPartyLeader: z.boolean().default(false),
   isDeputyLeader: z.boolean().default(false),
   partyLevel: z.enum(['higher', 'lower']).default('lower'),
   isIndependentCastriesNorth: z.boolean().default(false),
   isIndependentCastriesCentral: z.boolean().default(false),
+}).refine(data => {
+    return !!data.photoFile || !!data.imageUrl || data.removePhoto;
+}, {
+    message: "A photo is required. Please upload a file or provide a URL.",
+    path: ["photoFile"],
+}).refine(data => {
+    if (data.removePhoto) return true;
+    return !!data.photoFile || !!data.imageUrl;
+}, {
+    message: "A photo is required. Please upload a file or provide a URL.",
+    path: ["photoFile"],
 });
+
 
 type CandidateFormProps = {
   onSubmit: (data: z.infer<typeof candidateSchema>) => void;
@@ -58,6 +71,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
       bio: '',
       imageUrl: '',
       customLogoUrl: '',
+      removePhoto: false,
       isIncumbent: false,
       isPartyLeader: false,
       isDeputyLeader: false,
@@ -80,6 +94,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
         isIndependentCastriesNorth: initialData.isIndependentCastriesNorth ?? false,
         isIndependentCastriesCentral: initialData.isIndependentCastriesCentral ?? false,
         customLogoUrl: initialData.customLogoUrl ?? '',
+        removePhoto: false,
       });
     } else {
         form.reset({
@@ -90,6 +105,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
           bio: '',
           imageUrl: '',
           customLogoUrl: '',
+          removePhoto: false,
           isIncumbent: false,
           isPartyLeader: false,
           isDeputyLeader: false,
@@ -102,6 +118,11 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
 
   const handleFormSubmit = (values: z.infer<typeof candidateSchema>) => {
     onSubmit(values);
+  };
+
+  const handleRemovePhoto = () => {
+    form.setValue('imageUrl', '');
+    form.setValue('removePhoto', true);
   };
   
   return (
@@ -260,7 +281,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
         />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
+          <FormField
             control={form.control}
             name="photoFile"
             render={({ field }) => (
@@ -270,28 +291,49 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
                     <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
                 </FormControl>
                 <FormDescription>Upload a PNG or JPG file. A square image works best.</FormDescription>
-                {initialData?.imageUrl && <a href={initialData.imageUrl} target="_blank" className="text-sm text-blue-500 hover:underline">View current photo</a>}
                 <FormMessage />
                 </FormItem>
             )}
-            />
-            {isIndependent && (
-                 <FormField
-                    control={form.control}
-                    name="customLogoFile"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Custom Party Logo</FormLabel>
-                        <FormControl>
-                            <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
-                        </FormControl>
-                        <FormDescription>Upload a logo for this independent candidate.</FormDescription>
-                        {initialData?.customLogoUrl && <a href={initialData.customLogoUrl} target="_blank" className="text-sm text-blue-500 hover:underline">View current logo</a>}
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
+          />
+          <FormField
+            control={form.control}
+            name="imageUrl"
+            render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Or Image URL</FormLabel>
+                  <FormControl>
+                      <Input type="url" placeholder="https://example.com/photo.jpg" {...field} />
+                  </FormControl>
+                  <FormDescription>Provide a direct URL to an image.</FormDescription>
+                   {initialData?.imageUrl && !form.getValues('removePhoto') && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <a href={initialData.imageUrl} target="_blank" className="text-sm text-blue-500 hover:underline">View current photo</a>
+                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={handleRemovePhoto}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  )}
+                  <FormMessage />
+                </FormItem>
             )}
+          />
+          {isIndependent && (
+               <FormField
+                  control={form.control}
+                  name="customLogoFile"
+                  render={({ field }) => (
+                      <FormItem>
+                      <FormLabel>Custom Party Logo</FormLabel>
+                      <FormControl>
+                          <Input type="file" accept="image/png, image/jpeg" onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} />
+                      </FormControl>
+                      <FormDescription>Upload a logo for this independent candidate.</FormDescription>
+                      {initialData?.customLogoUrl && <a href={initialData.customLogoUrl} target="_blank" className="text-sm text-blue-500 hover:underline">View current logo</a>}
+                      <FormMessage />
+                      </FormItem>
+                  )}
+              />
+          )}
         </div>
         
         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
