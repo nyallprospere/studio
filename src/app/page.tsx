@@ -443,11 +443,11 @@ export default function Home() {
                                 <div key={item.id}>
                                      <h3 className="font-semibold">
                                         {item.title === 'Confirm Your Registration & Polling Station' ? (
-                                            <a href="https://www.sluelectoral.com/electoral/voter-record-search/" target="_blank" rel="noopener noreferrer" className="hover:underline">
+                                            <a href="https://www.sluelectoral.com/electoral/voter-record-search/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                                                 {item.title}
                                             </a>
                                         ) : item.title === 'Register to Vote' ? (
-                                             <Button asChild variant="secondary" className="w-full">
+                                             <Button asChild className="w-full">
                                                 <a href="https://www.sluelectoral.com/electoral/registration/" target="_blank" rel="noopener noreferrer">
                                                     {item.title}
                                                 </a>
@@ -534,7 +534,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
-
-    
