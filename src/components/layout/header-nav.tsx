@@ -27,11 +27,15 @@ import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { collection, query, orderBy, where } from 'firebase/firestore';
 import type { Election, Party, PartyLogo, Candidate } from '@/lib/types';
-import { Vote, ChevronDown, LogIn, LogOut, UserPlus, Star, User } from 'lucide-react';
+import { Vote, ChevronDown, LogIn, LogOut, UserPlus, Star, User, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SlpLogo, UwpLogo } from '../icons';
 import { Separator } from '../ui/separator';
 import Image from 'next/image';
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
+import { adminNavItems, mainNavItems } from './sidebar-nav';
+import { ScrollArea } from '../ui/scroll-area';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 
 export function HeaderNav() {
   const pathname = usePathname();
@@ -39,6 +43,7 @@ export function HeaderNav() {
   const auth = useAuth();
   const router = useRouter();
   const { firestore } = useFirebase();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
   const { data: elections } = useCollection<Election>(electionsQuery);
@@ -158,13 +163,15 @@ export function HeaderNav() {
     { href: '/admin/settings', label: 'Manage Settings' },
   ];
 
-  const NavLink = ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
-    <Link href={href} className={cn("text-sm font-medium transition-colors hover:text-white", pathname === href ? "text-white" : "text-primary-foreground/80", className)}>
+  const NavLink = ({ href, children, className, onClick }: { href: string; children: React.ReactNode; className?: string; onClick?: () => void; }) => (
+    <Link href={href} className={cn("text-sm font-medium transition-colors hover:text-white", pathname === href ? "text-white" : "text-primary-foreground/80", className)} onClick={onClick}>
       {children}
     </Link>
   );
   
   const NavSeparator = () => <Separator orientation="vertical" className="h-6 bg-primary-foreground/20" />;
+  
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   return (
     <div className="flex w-full items-center justify-between">
@@ -173,134 +180,167 @@ export function HeaderNav() {
             <Vote className="w-8 h-8 text-white" />
             <span className="font-bold font-headline text-lg text-white">LucianVotes</span>
         </Link>
-        <Menubar className="border-none shadow-none bg-transparent p-0 gap-x-6">
-          
-          <MenubarMenu>
-            <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80 flex items-center gap-2">
-                {uwpLogo?.logoUrl ? (
-                    <Image src={uwpLogo.logoUrl} alt="UWP Logo" width={20} height={20} />
-                ) : (
-                    <UwpLogo className="h-5 w-5" />
-                )}
-                UWP
-            </MenubarTrigger>
-            <MenubarContent>
-                <MenubarItem asChild>
-                    <Link href={`/parties/${uwpParty?.id}`}>UWP Main Page</Link>
-                </MenubarItem>
-                 <MenubarItem asChild>
-                    <Link href={`/events`}>UWP Events</Link>
-                </MenubarItem>
-                <MenubarSeparator />
-                <MenubarItem disabled>2026 Slate of Candidates</MenubarItem>
-                {uwpLeader && (
-                    <MenubarItem key={uwpLeader.id} asChild>
-                        <Link href={`/candidates/${uwpLeader.id}`} className="flex items-center justify-between">
-                            {uwpLeader.firstName} {uwpLeader.lastName}
-                            <Star className="h-4 w-4 text-accent" />
-                        </Link>
+        <div className="hidden md:flex items-center gap-x-6">
+            <Menubar className="border-none shadow-none bg-transparent p-0 gap-x-6">
+            <MenubarMenu>
+                <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80 flex items-center gap-2">
+                    {uwpLogo?.logoUrl ? (
+                        <Image src={uwpLogo.logoUrl} alt="UWP Logo" width={20} height={20} />
+                    ) : (
+                        <UwpLogo className="h-5 w-5" />
+                    )}
+                    UWP
+                </MenubarTrigger>
+                <MenubarContent>
+                    <MenubarItem asChild>
+                        <Link href={`/parties/${uwpParty?.id}`}>UWP Main Page</Link>
                     </MenubarItem>
-                )}
-                {uwpOtherCandidates.map(candidate => (
-                    <MenubarItem key={candidate.id} asChild>
-                        <Link href={`/candidates/${candidate.id}`}>{candidate.firstName} {candidate.lastName}</Link>
+                    <MenubarItem asChild>
+                        <Link href={`/events`}>UWP Events</Link>
                     </MenubarItem>
-                ))}
-            </MenubarContent>
-          </MenubarMenu>
-          
-          <NavSeparator />
+                    <MenubarSeparator />
+                    <MenubarItem disabled>2026 Slate of Candidates</MenubarItem>
+                    {uwpLeader && (
+                        <MenubarItem key={uwpLeader.id} asChild>
+                            <Link href={`/candidates/${uwpLeader.id}`} className="flex items-center justify-between">
+                                {uwpLeader.firstName} {uwpLeader.lastName}
+                                <Star className="h-4 w-4 text-accent" />
+                            </Link>
+                        </MenubarItem>
+                    )}
+                    {uwpOtherCandidates.map(candidate => (
+                        <MenubarItem key={candidate.id} asChild>
+                            <Link href={`/candidates/${candidate.id}`}>{candidate.firstName} {candidate.lastName}</Link>
+                        </MenubarItem>
+                    ))}
+                </MenubarContent>
+            </MenubarMenu>
+            
+            <NavSeparator />
 
-          <MenubarMenu>
-             <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80 flex items-center gap-2">
-                {slpLogo?.logoUrl ? (
-                    <Image src={slpLogo.logoUrl} alt="SLP Logo" width={20} height={20} />
-                ) : (
-                    <SlpLogo className="h-5 w-5" />
-                )}
-                SLP
-              </MenubarTrigger>
-            <MenubarContent>
-                 <MenubarItem asChild>
-                    <Link href={`/parties/${slpParty?.id}`}>SLP Main Page</Link>
-                </MenubarItem>
-                 <MenubarItem asChild>
-                    <Link href={`/events-2`}>SLP Events</Link>
-                </MenubarItem>
-                <MenubarSeparator />
-                <MenubarItem disabled>2026 Slate of Candidates</MenubarItem>
-                {slpLeader && (
-                    <MenubarItem key={slpLeader.id} asChild>
-                        <Link href={`/candidates/${slpLeader.id}`} className="flex items-center justify-between">
-                            {slpLeader.firstName} {slpLeader.lastName}
-                             <Star className="h-4 w-4 text-accent" />
-                        </Link>
+            <MenubarMenu>
+                <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80 flex items-center gap-2">
+                    {slpLogo?.logoUrl ? (
+                        <Image src={slpLogo.logoUrl} alt="SLP Logo" width={20} height={20} />
+                    ) : (
+                        <SlpLogo className="h-5 w-5" />
+                    )}
+                    SLP
+                </MenubarTrigger>
+                <MenubarContent>
+                    <MenubarItem asChild>
+                        <Link href={`/parties/${slpParty?.id}`}>SLP Main Page</Link>
                     </MenubarItem>
-                )}
-                {slpOtherCandidates.map(candidate => (
-                    <MenubarItem key={candidate.id} asChild>
-                        <Link href={`/candidates/${candidate.id}`}>{candidate.firstName} {candidate.lastName}</Link>
+                    <MenubarItem asChild>
+                        <Link href={`/events-2`}>SLP Events</Link>
                     </MenubarItem>
-                ))}
-            </MenubarContent>
-          </MenubarMenu>
-          
-          <NavSeparator />
+                    <MenubarSeparator />
+                    <MenubarItem disabled>2026 Slate of Candidates</MenubarItem>
+                    {slpLeader && (
+                        <MenubarItem key={slpLeader.id} asChild>
+                            <Link href={`/candidates/${slpLeader.id}`} className="flex items-center justify-between">
+                                {slpLeader.firstName} {slpLeader.lastName}
+                                <Star className="h-4 w-4 text-accent" />
+                            </Link>
+                        </MenubarItem>
+                    )}
+                    {slpOtherCandidates.map(candidate => (
+                        <MenubarItem key={candidate.id} asChild>
+                            <Link href={`/candidates/${candidate.id}`}>{candidate.firstName} {candidate.lastName}</Link>
+                        </MenubarItem>
+                    ))}
+                </MenubarContent>
+            </MenubarMenu>
+            
+            <NavSeparator />
 
-          <MenubarMenu>
-             <NavLink href="/election-news">News</NavLink>
-          </MenubarMenu>
-          
-          <NavSeparator />
+            <NavLink href="/election-news">News</NavLink>
+            
+            <NavSeparator />
 
-          <MenubarMenu>
             <Button asChild size="sm" className="bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
                 <Link href="/make-your-own">Build Your Election Map</Link>
             </Button>
-          </MenubarMenu>
 
-          <NavSeparator />
+            <NavSeparator />
 
-           <MenubarMenu>
-            <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80">
-              Analysis <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
-            </MenubarTrigger>
-            <MenubarContent>
-              <MenubarItem asChild>
-                <Link href="/our-projections">Our Projections</Link>
-              </MenubarItem>
-              <MenubarItem asChild>
-                <Link href="/historical-trends">Historical Trends</Link>
-              </MenubarItem>
-            </MenubarContent>
-          </MenubarMenu>
-          
-          <NavSeparator />
+            <MenubarMenu>
+                <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80">
+                Analysis <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
+                </MenubarTrigger>
+                <MenubarContent>
+                <MenubarItem asChild>
+                    <Link href="/our-projections">Our Projections</Link>
+                </MenubarItem>
+                <MenubarItem asChild>
+                    <Link href="/historical-trends">Historical Trends</Link>
+                </MenubarItem>
+                </MenubarContent>
+            </MenubarMenu>
+            
+            <NavSeparator />
 
-          <MenubarMenu>
-            <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80">
-              Past Results <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
-            </MenubarTrigger>
-            <MenubarContent>
-                {sortedElections.map(election => (
-                    <MenubarItem key={election.id} asChild>
-                        <Link href={`/results?year=${election.id}`}>
-                            {election.name.replace('General ', '')}
-                        </Link>
-                    </MenubarItem>
-                ))}
-            </MenubarContent>
-          </MenubarMenu>
-        </Menubar>
+            <MenubarMenu>
+                <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80">
+                Past Results <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
+                </MenubarTrigger>
+                <MenubarContent>
+                    {sortedElections.map(election => (
+                        <MenubarItem key={election.id} asChild>
+                            <Link href={`/results?year=${election.id}`}>
+                                {election.name.replace('General ', '')}
+                            </Link>
+                        </MenubarItem>
+                    ))}
+                </MenubarContent>
+            </MenubarMenu>
+            </Menubar>
+        </div>
       </div>
 
-       <div className="flex items-center gap-x-2">
+      <div className="flex items-center gap-x-2">
         <div className="flex items-center gap-2">
           <AuthNav />
+           <div className="md:hidden">
+              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-white hover:text-white hover:bg-primary/80">
+                    <Menu className="h-6 w-6" />
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="bg-primary text-primary-foreground">
+                  <ScrollArea className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
+                    <div className="flex flex-col space-y-3">
+                        {mainNavItems.map(item => (
+                            <NavLink key={item.href} href={item.href} onClick={closeMobileMenu}>
+                                {item.label}
+                            </NavLink>
+                        ))}
+                    </div>
+                    <Separator className="my-4 bg-primary-foreground/20"/>
+                     <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="uwp">
+                            <AccordionTrigger>UWP</AccordionTrigger>
+                            <AccordionContent className="flex flex-col space-y-2 pl-4">
+                                <Link href={`/parties/${uwpParty?.id}`} onClick={closeMobileMenu}>UWP Main Page</Link>
+                                <Link href={`/events`} onClick={closeMobileMenu}>UWP Events</Link>
+                            </AccordionContent>
+                        </AccordionItem>
+                        <AccordionItem value="slp">
+                            <AccordionTrigger>SLP</AccordionTrigger>
+                            <AccordionContent className="flex flex-col space-y-2 pl-4">
+                                <Link href={`/parties/${slpParty?.id}`} onClick={closeMobileMenu}>SLP Main Page</Link>
+                                <Link href={`/events-2`} onClick={closeMobileMenu}>SLP Events</Link>
+                            </AccordionContent>
+                        </AccordionItem>
+                     </Accordion>
+                  </ScrollArea>
+                </SheetContent>
+              </Sheet>
+            </div>
         </div>
       </div>
     </div>
   );
 }
-
-    

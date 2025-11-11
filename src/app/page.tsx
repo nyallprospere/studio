@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -244,7 +245,7 @@ export default function Home() {
       <MailingListPopup />
       
       {siteSettings?.siteBannerUrl && (
-        <div className="relative w-full aspect-[21/9] max-h-48">
+        <div className="relative w-full aspect-[21/9] max-h-32 md:max-h-48">
             <Image src={siteSettings.siteBannerUrl} alt="Site Banner" fill className="object-contain" />
         </div>
       )}
@@ -298,24 +299,9 @@ export default function Home() {
               <div className="space-y-8">
                   <Card>
                       <CardHeader>
-                          
-                          
-                      </CardHeader>
-                      <CardContent>
-                          <Button asChild className="w-full bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
-                              <Link href="/make-your-own">
-                              Create and share your own election prediction.
-                              </Link>
-                          </Button>
-                      </CardContent>
-                  </Card>
-                  <Card>
-                      <CardHeader>
-                          
                           <CardDescription>Our current projection for the 2025 general election.</CardDescription>
                       </CardHeader>
                       <CardContent className="flex flex-col items-center">
-                          
                           <div className="text-center mb-4 text-lg font-medium">
                               Forecasted Results: {' '}
                               <span className="font-bold" style={{color: 'hsl(var(--chart-5))'}}>SLP - {seatCounts.slpTotal}</span> | {' '}
@@ -415,57 +401,66 @@ export default function Home() {
                               </div>
                           )}
                       </CardContent>
+                      <CardFooter>
+                          <Button asChild className="w-full bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity">
+                              <Link href="/make-your-own">
+                              Create and share your own election prediction.
+                              </Link>
+                          </Button>
+                      </CardFooter>
                   </Card>
-                  <Card>
-                      <CardHeader>
-                          <div>
-                              <CardTitle>Events</CardTitle>
-                          </div>
-                          <div className="flex w-full items-center gap-1 p-1 bg-muted rounded-md mt-4">
-                              <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')} className="flex-1">Upcoming</Button>
-                              <Button size="sm" variant={allEventsViewMode === 'past' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('past')} className="flex-1">Past</Button>
-                          </div>
-                      </CardHeader>
-                      <CardContent>
-                          <div className="space-y-4">
-                          {loadingEvents || loadingParties ? <p>Loading events...</p> : visibleAllEvents.length > 0 ? (
-                              visibleAllEvents.map((event) => (
-                              <EventCard key={event.id} event={event} party={getParty(event.partyId)} />
-                              ))
-                          ) : (
-                              <p className="text-center text-muted-foreground py-8">No {allEventsViewMode} events found.</p>
-                          )}
-                          </div>
-                      </CardContent>
-                  </Card>
-                  <Card>
-                      <CardHeader>
-                          <CardTitle className="font-headline flex items-center gap-2">
-                              <Vote /> Voter Information
-                          </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                          {loadingVoterInfo ? <p>Loading information...</p> : voterInfoItems?.map(item => (
-                              <div key={item.id}>
-                                  <h3 className="font-semibold">{item.title}</h3>
-                                  <ul className="list-disc list-inside text-muted-foreground">
-                                  {item.items.map((text, index) => {
-                                      const isUrl = text.startsWith('http');
-                                      return (
-                                      <li key={index}>
-                                          {isUrl ? (
-                                          <a href={text} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{text}</a>
-                                          ) : (
-                                          text
-                                          )}
-                                      </li>
-                                      );
-                                  })}
-                                  </ul>
-                              </div>
-                          ))}
-                      </CardContent>
-                  </Card>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-8">
+                    <Card>
+                        <CardHeader>
+                            <div>
+                                <CardTitle>Events</CardTitle>
+                            </div>
+                            <div className="flex w-full items-center gap-1 p-1 bg-muted rounded-md mt-4">
+                                <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')} className="flex-1">Upcoming</Button>
+                                <Button size="sm" variant={allEventsViewMode === 'past' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('past')} className="flex-1">Past</Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                            {loadingEvents || loadingParties ? <p>Loading events...</p> : visibleAllEvents.length > 0 ? (
+                                visibleAllEvents.map((event) => (
+                                <EventCard key={event.id} event={event} party={getParty(event.partyId)} />
+                                ))
+                            ) : (
+                                <p className="text-center text-muted-foreground py-8">No {allEventsViewMode} events found.</p>
+                            )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2">
+                                <Vote /> Voter Information
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {loadingVoterInfo ? <p>Loading information...</p> : voterInfoItems?.map(item => (
+                                <div key={item.id}>
+                                    <h3 className="font-semibold">{item.title}</h3>
+                                    <ul className="list-disc list-inside text-muted-foreground">
+                                    {item.items.map((text, index) => {
+                                        const isUrl = text.startsWith('http');
+                                        return (
+                                        <li key={index}>
+                                            {isUrl ? (
+                                            <a href={text} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{text}</a>
+                                            ) : (
+                                            text
+                                            )}
+                                        </li>
+                                        );
+                                    })}
+                                    </ul>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                  </div>
               </div>
           </div>
         </div>
