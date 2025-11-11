@@ -27,7 +27,7 @@ import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { collection, query, orderBy, where } from 'firebase/firestore';
 import type { Election, Party, PartyLogo, Candidate } from '@/lib/types';
-import { Vote, ChevronDown, LogIn, LogOut, UserPlus, Star, User, Menu } from 'lucide-react';
+import { Vote, ChevronDown, LogIn, LogOut, UserPlus, Star, User, Menu, LineChart, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SlpLogo, UwpLogo } from '../icons';
 import { Separator } from '../ui/separator';
@@ -175,11 +175,14 @@ export function HeaderNav() {
 
   return (
     <div className="flex w-full items-center justify-between">
-      <div className="flex items-center gap-x-6">
-        <Link href="/" className="flex items-center gap-2 mr-6">
+      <div className="flex items-center gap-x-2 md:gap-x-6">
+        <Link href="/" className="flex items-center gap-2 mr-2 md:mr-6">
             <Vote className="w-8 h-8 text-white" />
             <span className="font-bold font-headline text-lg text-white">LucianVotes</span>
         </Link>
+         <Button asChild size="sm" className="bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity md:hidden">
+            <Link href="/make-your-own">Build Your Map</Link>
+        </Button>
         <div className="hidden md:flex items-center gap-x-6">
             <Menubar className="border-none shadow-none bg-transparent p-0 gap-x-6">
             <MenubarMenu>
@@ -312,15 +315,7 @@ export function HeaderNav() {
                 <SheetContent side="left" className="bg-primary text-primary-foreground">
                   <ScrollArea className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
                     <div className="flex flex-col space-y-3">
-                        <Button asChild size="sm" className="bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity mr-6">
-                            <Link href="/make-your-own" onClick={closeMobileMenu}>Build Your Election Map</Link>
-                        </Button>
-                        <Separator className="my-4 bg-primary-foreground/20"/>
-                        {mainNavItems.map(item => (
-                            <NavLink key={item.href} href={item.href} onClick={closeMobileMenu}>
-                                {item.label}
-                            </NavLink>
-                        ))}
+                        <NavLink href="/election-news" onClick={closeMobileMenu}>News</NavLink>
                     </div>
                     <Separator className="my-4 bg-primary-foreground/20"/>
                      <Accordion type="single" collapsible className="w-full">
@@ -329,6 +324,17 @@ export function HeaderNav() {
                             <AccordionContent className="flex flex-col space-y-2 pl-4">
                                 <Link href={`/parties/${uwpParty?.id}`} onClick={closeMobileMenu}>UWP Main Page</Link>
                                 <Link href={`/events`} onClick={closeMobileMenu}>UWP Events</Link>
+                                <Separator className="my-2 bg-primary-foreground/20"/>
+                                <p className="font-semibold text-sm">Candidates</p>
+                                {uwpLeader && (
+                                    <Link href={`/candidates/${uwpLeader.id}`} onClick={closeMobileMenu} className="flex items-center justify-between text-sm">
+                                        {uwpLeader.firstName} {uwpLeader.lastName}
+                                        <Star className="h-4 w-4 text-accent" />
+                                    </Link>
+                                )}
+                                {uwpOtherCandidates.map(c => (
+                                     <Link key={c.id} href={`/candidates/${c.id}`} onClick={closeMobileMenu} className="text-sm">{c.firstName} {c.lastName}</Link>
+                                ))}
                             </AccordionContent>
                         </AccordionItem>
                         <AccordionItem value="slp">
@@ -336,6 +342,34 @@ export function HeaderNav() {
                             <AccordionContent className="flex flex-col space-y-2 pl-4">
                                 <Link href={`/parties/${slpParty?.id}`} onClick={closeMobileMenu}>SLP Main Page</Link>
                                 <Link href={`/events-2`} onClick={closeMobileMenu}>SLP Events</Link>
+                                 <Separator className="my-2 bg-primary-foreground/20"/>
+                                <p className="font-semibold text-sm">Candidates</p>
+                                {slpLeader && (
+                                    <Link href={`/candidates/${slpLeader.id}`} onClick={closeMobileMenu} className="flex items-center justify-between text-sm">
+                                        {slpLeader.firstName} {slpLeader.lastName}
+                                        <Star className="h-4 w-4 text-accent" />
+                                    </Link>
+                                )}
+                                {slpOtherCandidates.map(c => (
+                                     <Link key={c.id} href={`/candidates/${c.id}`} onClick={closeMobileMenu} className="text-sm">{c.firstName} {c.lastName}</Link>
+                                ))}
+                            </AccordionContent>
+                        </AccordionItem>
+                         <AccordionItem value="analysis">
+                            <AccordionTrigger>Analysis</AccordionTrigger>
+                            <AccordionContent className="flex flex-col space-y-2 pl-4">
+                               <Link href="/our-projections" onClick={closeMobileMenu}>Our Projections</Link>
+                               <Link href="/historical-trends" onClick={closeMobileMenu}>Historical Trends</Link>
+                            </AccordionContent>
+                        </AccordionItem>
+                        <AccordionItem value="results">
+                            <AccordionTrigger>Past Results</AccordionTrigger>
+                            <AccordionContent className="flex flex-col space-y-2 pl-4">
+                                {sortedElections.map(election => (
+                                    <Link key={election.id} href={`/results?year=${election.id}`} onClick={closeMobileMenu}>
+                                        {election.name.replace('General ', '')}
+                                    </Link>
+                                ))}
                             </AccordionContent>
                         </AccordionItem>
                      </Accordion>
