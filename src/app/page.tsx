@@ -103,7 +103,6 @@ const VictoryStatusBar = ({ slpSeats, uwpSeats, indSeats }: { slpSeats: number, 
 
 export default function Home() {
   const { user } = useUser();
-  const electionDate = new Date('2026-07-26T00:00:00');
   
   const { firestore } = useFirebase();
   const [allEventsViewMode, setAllEventsViewMode] = useState<'upcoming' | 'past'>('upcoming');
@@ -127,6 +126,7 @@ export default function Home() {
 
   
   const currentElection = useMemo(() => currentElections?.[0], [currentElections]);
+  const electionDate = useMemo(() => currentElection?.date ? (currentElection.date as unknown as Timestamp).toDate() : new Date('2026-07-26T00:00:00'), [currentElection]);
   
   const getParty = (partyId: string) => parties?.find(p => p.id === partyId);
 
@@ -245,7 +245,7 @@ export default function Home() {
       <MailingListPopup />
       
       {siteSettings?.siteBannerUrl && (
-        <div className="relative w-full aspect-video max-h-96 mb-8">
+        <div className="relative w-full aspect-[21/9] max-h-96">
             <Image src={siteSettings.siteBannerUrl} alt="Site Banner" fill className="object-cover" />
         </div>
       )}
@@ -254,7 +254,7 @@ export default function Home() {
           <Card className="lg:col-span-1 bg-card shadow-lg border-primary/20">
             <CardHeader>
               <CardTitle className="text-center text-2xl font-headline md:text-3xl text-primary">
-                Countdown to Election Day 2026
+                Countdown to Election Day {electionDate.getFullYear()}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -526,3 +526,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

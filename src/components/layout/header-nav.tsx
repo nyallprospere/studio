@@ -168,6 +168,7 @@ export function HeaderNav() {
     { href: '/admin/map-submissions', label: 'Map Submissions' },
     { href: '/admin/ai-analyzer', label: 'AI Analyzer' },
     { href: '/admin/voter-information', label: 'Manage Voter Info' },
+    { href: '/admin/countdown', label: 'Manage Countdown' },
     { href: '/admin/settings', label: 'Manage Settings' },
   ];
 
@@ -315,3 +316,5 @@ export function HeaderNav() {
     </div>
   );
 }
+
+    
