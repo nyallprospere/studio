@@ -312,6 +312,10 @@ export function HeaderNav() {
                 <SheetContent side="left" className="bg-primary text-primary-foreground">
                   <ScrollArea className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
                     <div className="flex flex-col space-y-3">
+                        <Button asChild size="sm" className="bg-gradient-to-r from-red-600 to-yellow-400 text-white hover:opacity-90 transition-opacity mr-6">
+                            <Link href="/make-your-own" onClick={closeMobileMenu}>Build Your Election Map</Link>
+                        </Button>
+                        <Separator className="my-4 bg-primary-foreground/20"/>
                         {mainNavItems.map(item => (
                             <NavLink key={item.href} href={item.href} onClick={closeMobileMenu}>
                                 {item.label}
