@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { Timestamp, collection, addDoc, serverTimestamp, query, orderBy, doc, updateDoc, increment, getDocs, where, deleteDoc } from 'firebase/firestore';
-import { Calendar, User, Rss, ThumbsUp, MessageSquare, Share2, Twitter, Facebook, Send, MoreVertical, Flag, Trash2 } from 'lucide-react';
+import { Calendar, User, Rss, ThumbsUp, MessageSquare, Share2, Twitter, Facebook, Send, MoreVertical, Flag, Trash2, Mail } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { useFirebase, useUser, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -306,6 +306,8 @@ export function NewsArticleDialog({ article, isOpen, onClose }: NewsArticleDialo
     const shareText = `Check out this article: ${article.title}`;
     const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(articleUrl)}`;
     const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`;
+    const whatsappShareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + " " + articleUrl)}`;
+
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -352,22 +354,28 @@ export function NewsArticleDialog({ article, isOpen, onClose }: NewsArticleDialo
                          <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline">
-                                <Share2 className="mr-2 h-4 w-4" />
-                                Share
+                                  <Share2 className="mr-2 h-4 w-4" />
+                                  Share
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
                                 <DropdownMenuItem asChild>
-                                <Link href={twitterShareUrl} target="_blank" rel="noopener noreferrer">
+                                  <Link href={twitterShareUrl} target="_blank" rel="noopener noreferrer">
                                     <Twitter className="mr-2 h-4 w-4" />
                                     Share on Twitter
-                                </Link>
+                                  </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
-                                <Link href={facebookShareUrl} target="_blank" rel="noopener noreferrer">
+                                  <Link href={facebookShareUrl} target="_blank" rel="noopener noreferrer">
                                     <Facebook className="mr-2 h-4 w-4" />
                                     Share on Facebook
-                                </Link>
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                  <Link href={whatsappShareUrl} target="_blank" rel="noopener noreferrer">
+                                    <Mail className="mr-2 h-4 w-4" />
+                                    Share on WhatsApp
+                                  </Link>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>

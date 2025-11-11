@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { Rss, ThumbsUp, MessageSquare, Share2, Twitter, Facebook, User } from 'lucide-react';
+import { Rss, ThumbsUp, MessageSquare, Share2, Twitter, Facebook, User, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
@@ -63,6 +63,7 @@ export function NewsCard({ article }: { article: NewsArticle }) {
     const shareText = `Check out this article: ${article.title}`;
     const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(articleUrl)}`;
     const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`;
+    const whatsappShareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + " " + articleUrl)}`;
 
     const truncatedSummary = useMemo(() => {
         if (!article.summary) return '';
@@ -123,6 +124,12 @@ export function NewsCard({ article }: { article: NewsArticle }) {
                                     <Link href={facebookShareUrl} target="_blank" rel="noopener noreferrer">
                                         <Facebook className="mr-2 h-4 w-4" />
                                         Share on Facebook
+                                    </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                    <Link href={whatsappShareUrl} target="_blank" rel="noopener noreferrer">
+                                        <Mail className="mr-2 h-4 w-4" />
+                                        Share on WhatsApp
                                     </Link>
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
