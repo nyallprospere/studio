@@ -226,4 +226,5 @@ export interface VoterInformation {
   id: string;
   title: string;
   items: string[];
+  isVisible?: boolean;
 }

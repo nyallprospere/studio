@@ -439,7 +439,7 @@ export default function Home() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {loadingVoterInfo ? <p>Loading information...</p> : voterInfoItems?.map(item => (
+                            {loadingVoterInfo ? <p>Loading information...</p> : voterInfoItems?.filter(item => item.isVisible !== false).map(item => (
                                 <div key={item.id}>
                                      <h3 className="font-semibold">
                                         {item.title === 'Confirm Your Registration & Polling Station' ? (

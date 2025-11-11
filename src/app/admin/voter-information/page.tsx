@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Pencil, Trash2 } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { VoterInformationForm, type VoterInformation } from './voter-information-form';
@@ -91,11 +91,14 @@ export default function VoterInformationPage() {
               {voterInfoItems && voterInfoItems.length > 0 ? (
                 voterInfoItems.map(item => (
                   <div key={item.id} className="flex items-start justify-between p-4 border rounded-md">
-                    <div>
-                      <h3 className="font-semibold">{item.title}</h3>
-                      <ul className="list-disc list-inside text-muted-foreground mt-2 text-sm">
-                        {item.items.map((text, index) => <li key={index}>{text}</li>)}
-                      </ul>
+                    <div className="flex items-start gap-4">
+                       {item.isVisible === false ? <EyeOff className="h-5 w-5 text-muted-foreground mt-1" /> : <Eye className="h-5 w-5 text-muted-foreground mt-1" />}
+                      <div>
+                        <h3 className="font-semibold">{item.title}</h3>
+                        <ul className="list-disc list-inside text-muted-foreground mt-2 text-sm">
+                          {item.items.map((text, index) => <li key={index}>{text}</li>)}
+                        </ul>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                        <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setIsFormOpen(true);}}>

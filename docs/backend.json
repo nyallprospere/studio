@@ -841,6 +841,10 @@
         "items": {
           "type": "array",
           "items": { "type": "string" }
+        },
+        "isVisible": {
+          "type": "boolean",
+          "description": "Controls whether the section is visible on the homepage."
         }
       },
       "required": ["title", "items"]

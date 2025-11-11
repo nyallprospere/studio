@@ -5,14 +5,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Trash2, PlusCircle } from 'lucide-react';
 import { useEffect } from 'react';
+import { Switch } from '@/components/ui/switch';
 
 const voterInfoSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(1, "Title is required"),
   items: z.array(z.string().min(1, "Item text cannot be empty.")).min(1, "At least one item is required."),
+  isVisible: z.boolean().default(true),
 });
 
 export type VoterInformation = z.infer<typeof voterInfoSchema>;
@@ -29,6 +31,7 @@ export function VoterInformationForm({ onSubmit, initialData, onCancel }: VoterI
     defaultValues: {
       title: '',
       items: [''],
+      isVisible: true,
     },
   });
 
@@ -39,9 +42,12 @@ export function VoterInformationForm({ onSubmit, initialData, onCancel }: VoterI
 
   useEffect(() => {
     if (initialData) {
-      form.reset(initialData);
+      form.reset({
+          ...initialData,
+          isVisible: initialData.isVisible !== false, // Default to true if undefined
+      });
     } else {
-        form.reset({ title: '', items: [''] });
+        form.reset({ title: '', items: [''], isVisible: true });
     }
   }, [initialData, form]);
 
@@ -91,6 +97,26 @@ export function VoterInformationForm({ onSubmit, initialData, onCancel }: VoterI
             </Button>
         </div>
 
+        <FormField
+            control={form.control}
+            name="isVisible"
+            render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                    <FormLabel className="text-base">Visible on Homepage</FormLabel>
+                    <FormDescription>
+                    Control whether this section is shown to the public.
+                    </FormDescription>
+                </div>
+                <FormControl>
+                    <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    />
+                </FormControl>
+                </FormItem>
+            )}
+        />
 
         <div className="flex justify-end gap-4 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>
