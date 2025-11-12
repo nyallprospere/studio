@@ -32,7 +32,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { uploadFile, deleteFile } from '@/firebase/storage';
 
 export default function AdminResultsPage() {
-  const { firestore } = useFirebase();
+  const { firestore, storage } = useFirebase();
   const { toast } = useToast();
 
   const [selectedElectionId, setSelectedElectionId] = useState<string>('');
@@ -124,14 +124,14 @@ export default function AdminResultsPage() {
 
       let uwpLeaderImageUrl = values.uwpLeaderImageUrl;
       if (values.uwpLeaderPhotoFile) {
-        if(election.uwpLeaderImageUrl) await deleteFile(election.uwpLeaderImageUrl);
-        uwpLeaderImageUrl = await uploadFile(values.uwpLeaderPhotoFile, `leaders/${election.year}_uwp.jpg`);
+        if(election.uwpLeaderImageUrl) await deleteFile(election.uwpLeaderImageUrl, storage);
+        uwpLeaderImageUrl = await uploadFile(values.uwpLeaderPhotoFile, `leaders/${election.year}_uwp.jpg`, storage);
       }
 
       let slpLeaderImageUrl = values.slpLeaderImageUrl;
       if (values.slpLeaderPhotoFile) {
-        if(election.slpLeaderImageUrl) await deleteFile(election.slpLeaderImageUrl);
-        slpLeaderImageUrl = await uploadFile(values.slpLeaderPhotoFile, `leaders/${election.year}_slp.jpg`);
+        if(election.slpLeaderImageUrl) await deleteFile(election.slpLeaderImageUrl, storage);
+        slpLeaderImageUrl = await uploadFile(values.slpLeaderPhotoFile, `leaders/${election.year}_slp.jpg`, storage);
       }
       
       const leaderData = {

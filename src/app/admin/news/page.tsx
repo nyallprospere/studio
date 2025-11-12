@@ -36,7 +36,7 @@ import { cn } from '@/lib/utils';
 
 
 export default function AdminNewsPage() {
-  const { firestore } = useFirebase();
+  const { firestore, storage } = useFirebase();
   const { toast } = useToast();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -95,23 +95,23 @@ export default function AdminNewsPage() {
       // Handle main image upload
       if (values.mainImageFile) {
         if (editingArticle?.imageUrl) {
-          await deleteFile(editingArticle.imageUrl).catch(console.warn);
+          await deleteFile(editingArticle.imageUrl, storage).catch(console.warn);
         }
         const fileName = `${Date.now()}_${values.mainImageFile.name}`;
-        imageUrl = await uploadFile(values.mainImageFile, `news/${fileName}_main`);
+        imageUrl = await uploadFile(values.mainImageFile, `news/${fileName}_main`, storage);
       }
 
       // Handle gallery images upload
       if (values.galleryImageFiles && values.galleryImageFiles.length > 0) {
           if (editingArticle?.galleryImageUrls) {
               for (const url of editingArticle.galleryImageUrls) {
-                  await deleteFile(url).catch(console.warn);
+                  await deleteFile(url, storage).catch(console.warn);
               }
           }
           galleryImageUrls = await Promise.all(
               Array.from(values.galleryImageFiles).map((file: any) => {
                 const fileName = `${Date.now()}_${file.name}`;
-                return uploadFile(file, `news/gallery/${fileName}`);
+                return uploadFile(file, `news/gallery/${fileName}`, storage);
               })
           );
       }
@@ -163,11 +163,11 @@ export default function AdminNewsPage() {
     if (!firestore) return;
     try {
       if (article.imageUrl) {
-        await deleteFile(article.imageUrl).catch(console.warn);
+        await deleteFile(article.imageUrl, storage).catch(console.warn);
       }
       if (article.galleryImageUrls) {
           for (const url of article.galleryImageUrls) {
-              await deleteFile(url).catch(console.warn);
+              await deleteFile(url, storage).catch(console.warn);
           }
       }
       const articleDoc = doc(firestore, 'news', article.id);

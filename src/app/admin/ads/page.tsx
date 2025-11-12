@@ -95,7 +95,7 @@ function AdItem({ ad, onEdit, onDelete }: { ad: Ad; onEdit: (ad: Ad) => void; on
 
 
 export default function AdminAdsPage() {
-  const { firestore } = useFirebase();
+  const { firestore, storage } = useFirebase();
   const { toast } = useToast();
 
   const adsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'ads') : null, [firestore]);
@@ -128,9 +128,9 @@ export default function AdminAdsPage() {
     try {
       if (values.imageFile) {
         if (editingAd?.imageUrl) {
-          await deleteFile(editingAd.imageUrl).catch(console.warn);
+          await deleteFile(editingAd.imageUrl, storage).catch(console.warn);
         }
-        imageUrl = await uploadFile(values.imageFile, `ads/${values.imageFile.name}`);
+        imageUrl = await uploadFile(values.imageFile, `ads/${values.imageFile.name}`, storage);
       }
 
       const adData = { 
@@ -187,7 +187,7 @@ export default function AdminAdsPage() {
     if (!firestore) return;
     try {
       if (ad.imageUrl) {
-        await deleteFile(ad.imageUrl);
+        await deleteFile(ad.imageUrl, storage);
       }
       const adDoc = doc(firestore, 'ads', ad.id);
       deleteDoc(adDoc)

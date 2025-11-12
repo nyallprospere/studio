@@ -271,10 +271,10 @@ export default function MakeYourOwnClientPage() {
       const dataUrl = await toPng(mapRef.current);
       const imageId = uuidv4();
       const imagePath = `SavedMaps/${imageId}.png`;
-      const imageRef = storageRef(storage, imagePath);
-
-      await uploadString(imageRef, dataUrl, 'data_url');
-      imageUrl = await getDownloadURL(imageRef);
+      const blob = await (await fetch(dataUrl)).blob();
+      const imageFile = new File([blob], `${imageId}.png`, { type: 'image/png' });
+      
+      imageUrl = await uploadFile(imageFile, imagePath, storage);
     } catch (error) {
       console.error('Image generation or upload failed:', error);
       toast({

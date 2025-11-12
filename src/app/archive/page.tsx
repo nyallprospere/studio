@@ -66,7 +66,7 @@ const CustomUploadButton = ({ onFileSelect, candidate, isLoading }: { onFileSele
 
 
 export default function ArchivePage() {
-  const { firestore } = useFirebase();
+  const { firestore, storage } = useFirebase();
   const { toast } = useToast();
 
   const [selectedElectionId, setSelectedElectionId] = useState('');
@@ -194,9 +194,9 @@ export default function ArchivePage() {
       let imageUrl = values.imageUrl;
       if (values.photoFile) {
         if (editingCandidate.imageUrl) {
-          await deleteFile(editingCandidate.imageUrl);
+          await deleteFile(editingCandidate.imageUrl, storage);
         }
-        imageUrl = await uploadFile(values.photoFile, `candidates/${values.photoFile.name}`);
+        imageUrl = await uploadFile(values.photoFile, `candidates/${values.photoFile.name}`, storage);
       }
 
       const updatedCandidateData = {
@@ -286,7 +286,7 @@ export default function ArchivePage() {
     try {
       const batch = writeBatch(firestore);
       for (const candidate of archive.candidates) {
-        if (candidate.imageUrl) await deleteFile(candidate.imageUrl);
+        if (candidate.imageUrl) await deleteFile(candidate.imageUrl, storage);
         const docRef = doc(firestore, 'archived_candidates', candidate.id);
         batch.update(docRef, {
           firstName: '',
@@ -316,7 +316,7 @@ export default function ArchivePage() {
     try {
         const batch = writeBatch(firestore);
         for(const candidate of archive.candidates) {
-            if (candidate.imageUrl) await deleteFile(candidate.imageUrl);
+            if (candidate.imageUrl) await deleteFile(candidate.imageUrl, storage);
             const docRef = doc(firestore, 'archived_candidates', candidate.id);
             batch.delete(docRef);
         }
@@ -392,9 +392,9 @@ export default function ArchivePage() {
     setUploadingPhotoId(candidateId);
     try {
       if (candidate.imageUrl) {
-        await deleteFile(candidate.imageUrl);
+        await deleteFile(candidate.imageUrl, storage);
       }
-      const newImageUrl = await uploadFile(file, `candidates/${candidate.originalId || candidate.id}.jpg`);
+      const newImageUrl = await uploadFile(file, `candidates/${candidate.originalId || candidate.id}.jpg`, storage);
       
       const candidateDoc = doc(firestore, 'archived_candidates', candidate.id);
       await updateDoc(candidateDoc, { imageUrl: newImageUrl });
@@ -429,7 +429,7 @@ export default function ArchivePage() {
             <Button variant="outline" onClick={() => setIsImportOpen(true)} disabled={isLoading}>
                 <Upload className="mr-2 h-4 w-4" /> Import
             </Button>
-            <Select onValueChange={setSelectedElectionId} value={selectedElectionId}>
+            <Select value={selectedElectionId} onValueChange={setSelectedElectionId}>
                 <SelectTrigger className="w-[220px]">
                     <SelectValue placeholder="Filter by election..." />
                 </SelectTrigger>

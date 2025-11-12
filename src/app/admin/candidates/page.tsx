@@ -32,7 +32,7 @@ import Link from 'next/link';
 
 
 export default function AdminCandidatesPage() {
-  const { firestore } = useFirebase();
+  const { firestore, storage } = useFirebase();
   const { toast } = useToast();
 
   const candidatesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'candidates') : null, [firestore]);
@@ -64,22 +64,22 @@ export default function AdminCandidatesPage() {
       if (values.photoFile) {
         // If editing and there's an old image, delete it
         if (editingCandidate?.imageUrl) {
-          await deleteFile(editingCandidate.imageUrl).catch(console.warn);
+          await deleteFile(editingCandidate.imageUrl, storage).catch(console.warn);
         }
         const uniqueFileName = `${candidateName.replace(/ /g, '_')}_${Date.now()}`;
-        imageUrl = await uploadFile(values.photoFile, `candidates/${uniqueFileName}`);
+        imageUrl = await uploadFile(values.photoFile, `candidates/${uniqueFileName}`, storage);
       } else if (values.removePhoto && editingCandidate?.imageUrl) {
         // Handle photo removal
-        await deleteFile(editingCandidate.imageUrl).catch(console.warn);
+        await deleteFile(editingCandidate.imageUrl, storage).catch(console.warn);
         imageUrl = '';
       }
       
       let customLogoUrl = values.customLogoUrl;
       if (values.customLogoFile) {
         if (editingCandidate?.customLogoUrl) {
-          await deleteFile(editingCandidate.customLogoUrl).catch(console.warn);
+          await deleteFile(editingCandidate.customLogoUrl, storage).catch(console.warn);
         }
-        customLogoUrl = await uploadFile(values.customLogoFile, `logos/ind_${values.lastName}_${Date.now()}.png`);
+        customLogoUrl = await uploadFile(values.customLogoFile, `logos/ind_${values.lastName}_${Date.now()}.png`, storage);
       }
 
       const candidateData: Omit<Candidate, 'id'> = {
@@ -120,7 +120,7 @@ export default function AdminCandidatesPage() {
   const handleDelete = async (candidate: Candidate) => {
     if (!firestore) return;
     try {
-      if (candidate.imageUrl) await deleteFile(candidate.imageUrl);
+      if (candidate.imageUrl) await deleteFile(candidate.imageUrl, storage);
       
       const candidateDoc = doc(firestore, 'candidates', candidate.id);
       await deleteDoc(candidateDoc);
@@ -244,7 +244,7 @@ export default function AdminCandidatesPage() {
      try {
         const deleteBatch = writeBatch(firestore);
         for (const candidate of candidates) {
-            if (candidate.imageUrl) await deleteFile(candidate.imageUrl);
+            if (candidate.imageUrl) await deleteFile(candidate.imageUrl, storage);
             const originalDocRef = doc(candidatesCollection, candidate.id);
             deleteBatch.delete(originalDocRef);
         }

@@ -29,7 +29,7 @@ const electionYearsToSeed = [
 ];
 
 export default function SettingsPage() {
-    const { firestore } = useFirebase();
+    const { firestore, storage } = useFirebase();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
     const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -118,13 +118,13 @@ export default function SettingsPage() {
         try {
             if (currentLogoUrl) {
                 try {
-                    await deleteFile(currentLogoUrl);
+                    await deleteFile(currentLogoUrl, storage);
                 } catch (e) {
                     console.warn("Could not delete old logo, it may have already been removed.", e)
                 }
             }
           
-            const newLogoUrl = await uploadFile(logoFile, `logos/site_banner_${Date.now()}`);
+            const newLogoUrl = await uploadFile(logoFile, `logos/site_banner_${Date.now()}`, storage);
           
             await setDoc(settingsRef, { siteBannerUrl: newLogoUrl }, { merge: true });
           

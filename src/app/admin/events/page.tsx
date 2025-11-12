@@ -28,7 +28,7 @@ import { uploadFile, deleteFile } from '@/firebase/storage';
 import Image from 'next/image';
 
 export default function AdminEventsPage() {
-  const { firestore } = useFirebase();
+  const { firestore, storage } = useFirebase();
   const { toast } = useToast();
   
   const eventsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'events'), orderBy('date', 'desc')) : null, [firestore]);
@@ -63,9 +63,9 @@ export default function AdminEventsPage() {
       let imageUrl = values.imageUrl;
       if (values.photoFile) {
           if (editingEvent?.imageUrl) {
-              await deleteFile(editingEvent.imageUrl);
+              await deleteFile(editingEvent.imageUrl, storage);
           }
-          imageUrl = await uploadFile(values.photoFile, `events/${values.photoFile.name}`);
+          imageUrl = await uploadFile(values.photoFile, `events/${values.photoFile.name}`, storage);
       }
 
       const eventData = { 
@@ -97,7 +97,7 @@ export default function AdminEventsPage() {
   const handleDelete = async (event: Event) => {
     if (!firestore) return;
     try {
-      if (event.imageUrl) await deleteFile(event.imageUrl);
+      if (event.imageUrl) await deleteFile(event.imageUrl, storage);
       const eventDoc = doc(firestore, 'events', event.id);
       await deleteDoc(eventDoc);
       toast({ title: "Event Deleted", description: `The event "${event.title}" has been deleted.` });

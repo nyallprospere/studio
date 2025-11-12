@@ -31,7 +31,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { IndependentLogoForm } from './independent-logo-form';
 
 export default function AdminPartiesPage() {
-  const { firestore } = useFirebase();
+  const { firestore, storage } = useFirebase();
   const { toast } = useToast();
   const partiesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const { data: parties, isLoading } = useCollection<Party>(partiesCollection);
@@ -56,20 +56,20 @@ export default function AdminPartiesPage() {
 
     try {
       if (values.logoFile) {
-        if(editingParty?.logoUrl) await deleteFile(editingParty.logoUrl).catch(console.warn);
-        logoUrl = await uploadFile(values.logoFile, `parties/${values.logoFile.name}`);
+        if(editingParty?.logoUrl) await deleteFile(editingParty.logoUrl, storage).catch(console.warn);
+        logoUrl = await uploadFile(values.logoFile, `parties/${values.logoFile.name}`, storage);
       }
       if (values.expandedLogoFile) {
-        if(editingParty?.expandedLogoUrl) await deleteFile(editingParty.expandedLogoUrl).catch(console.warn);
-        expandedLogoUrl = await uploadFile(values.expandedLogoFile, `parties/expanded_${values.expandedLogoFile.name}`);
+        if(editingParty?.expandedLogoUrl) await deleteFile(editingParty.expandedLogoUrl, storage).catch(console.warn);
+        expandedLogoUrl = await uploadFile(values.expandedLogoFile, `parties/expanded_${values.expandedLogoFile.name}`, storage);
       }
       if (values.oldLogoFile) {
-        if(editingParty?.oldLogoUrl) await deleteFile(editingParty.oldLogoUrl).catch(console.warn);
-        oldLogoUrl = await uploadFile(values.oldLogoFile, `parties/old_${values.oldLogoFile.name}`);
+        if(editingParty?.oldLogoUrl) await deleteFile(editingParty.oldLogoUrl, storage).catch(console.warn);
+        oldLogoUrl = await uploadFile(values.oldLogoFile, `parties/old_${values.oldLogoFile.name}`, storage);
       }
       if (values.manifestoFile) {
-        if(editingParty?.manifestoUrl) await deleteFile(editingParty.manifestoUrl).catch(console.warn);
-        manifestoUrl = await uploadFile(values.manifestoFile, `parties/${values.manifestoFile.name}`);
+        if(editingParty?.manifestoUrl) await deleteFile(editingParty.manifestoUrl, storage).catch(console.warn);
+        manifestoUrl = await uploadFile(values.manifestoFile, `parties/${values.manifestoFile.name}`, storage);
       }
 
       const partyData = {
@@ -108,14 +108,14 @@ export default function AdminPartiesPage() {
     try {
       let independentLogoUrl = values.independentLogoUrl || currentElection.independentLogoUrl;
       if (values.independentLogoFile) {
-        if (currentElection.independentLogoUrl) await deleteFile(currentElection.independentLogoUrl);
-        independentLogoUrl = await uploadFile(values.independentLogoFile, `logos/independent_${currentElection.year}.png`);
+        if (currentElection.independentLogoUrl) await deleteFile(currentElection.independentLogoUrl, storage);
+        independentLogoUrl = await uploadFile(values.independentLogoFile, `logos/independent_${currentElection.year}.png`, storage);
       }
 
       let independentExpandedLogoUrl = values.independentExpandedLogoUrl || currentElection.independentExpandedLogoUrl;
       if (values.independentExpandedLogoFile) {
-        if (currentElection.independentExpandedLogoUrl) await deleteFile(currentElection.independentExpandedLogoUrl);
-        independentExpandedLogoUrl = await uploadFile(values.independentExpandedLogoFile, `logos/independent_expanded_${currentElection.year}.png`);
+        if (currentElection.independentExpandedLogoUrl) await deleteFile(currentElection.independentExpandedLogoUrl, storage);
+        independentExpandedLogoUrl = await uploadFile(values.independentExpandedLogoFile, `logos/independent_expanded_${currentElection.year}.png`, storage);
       }
 
       const electionDocRef = doc(firestore, 'elections', currentElection.id);
@@ -142,10 +142,10 @@ export default function AdminPartiesPage() {
   const handleDelete = async (party: Party) => {
     if (!firestore) return;
 
-    if(party.logoUrl) await deleteFile(party.logoUrl).catch(console.warn);
-    if(party.expandedLogoUrl) await deleteFile(party.expandedLogoUrl).catch(console.warn);
-    if(party.oldLogoUrl) await deleteFile(party.oldLogoUrl).catch(console.warn);
-    if(party.manifestoUrl) await deleteFile(party.manifestoUrl).catch(console.warn);
+    if(party.logoUrl) await deleteFile(party.logoUrl, storage).catch(console.warn);
+    if(party.expandedLogoUrl) await deleteFile(party.expandedLogoUrl, storage).catch(console.warn);
+    if(party.oldLogoUrl) await deleteFile(party.oldLogoUrl, storage).catch(console.warn);
+    if(party.manifestoUrl) await deleteFile(party.manifestoUrl, storage).catch(console.warn);
 
     const partyDoc = doc(firestore, 'parties', party.id);
     deleteDoc(partyDoc)
