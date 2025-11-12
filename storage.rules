@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service firebase.storage {
@@ -6,10 +7,10 @@ service firebase.storage {
     match /{allPaths=**} {
       allow read: if true;
     }
-    
+
     // Allow public write access for map sharing images.
     match /SavedMaps/{allPaths=**} {
-      allow create: if true;
+      allow write: if true;
     }
 
     // Restrict writes in other admin folders to authenticated users.
