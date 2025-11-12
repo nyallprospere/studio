@@ -24,7 +24,7 @@ export function initializeFirebase() {
 
     try {
       initializeAppCheck(firebaseApp, {
-        provider: new ReCaptchaV3Provider('6Ld-i-wUAAAAAOf-1-g_lA_s-g_lA_s-g_lA_s-g'),
+        provider: new ReCaptchaV3Provider('6Le-i-wUAAAAAAN-g_lA_s-g_lA_s-g_lA_s-g_lA_s'),
         isTokenAutoRefreshEnabled: true
       });
     } catch (error) {
