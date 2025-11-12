@@ -144,7 +144,7 @@ const charToLeaning: { [key: string]: string } = {
 };
 
 export default function MakeYourOwnClientPage() {
-    const { firestore } = useFirebase();
+    const { firestore, storage } = useFirebase();
     const { toast } = useToast();
     const { user } = useUser();
     const searchParams = useSearchParams();
@@ -256,7 +256,7 @@ export default function MakeYourOwnClientPage() {
     };
     
    const handleSaveAndShare = async () => {
-    if (!mapRef.current || !firestore) {
+    if (!mapRef.current || !firestore || !storage) {
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -269,7 +269,6 @@ export default function MakeYourOwnClientPage() {
     let imageUrl = '';
     try {
       const dataUrl = await toPng(mapRef.current);
-      const storage = getStorage();
       const imageId = uuidv4();
       const imagePath = `SavedMaps/${imageId}.png`;
       const imageRef = storageRef(storage, imagePath);
