@@ -18,8 +18,8 @@ export const uploadFile = async (storage: FirebaseStorage, file: File, path: str
     return downloadURL;
   } catch (error: any) {
     console.error(`Storage Upload Error for path: ${path}`, error);
-    // Re-throw a more specific error to be caught by the calling function
-    throw new Error(`Failed to upload file. (Code: ${error.code})`);
+    // Re-throw the original error to preserve its details
+    throw error;
   }
 };
 
