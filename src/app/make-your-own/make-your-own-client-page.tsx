@@ -6,7 +6,6 @@ import type { Constituency, ElectionResult, Election, SiteSettings, UserMap, Par
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirebase, useMemoFirebase, useUser, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, doc, serverTimestamp, query, orderBy, where, getDocs, addDoc } from 'firebase/firestore';
-import { ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Pie, PieChart, ResponsiveContainer, Cell, Label } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -169,6 +168,15 @@ export default function MakeYourOwnClientPage() {
     
     const [previousElectionResults, setPreviousElectionResults] = useState<ElectionResult[]>([]);
     
+    const layoutConfig = useMemo(() => {
+        const saved = savedLayouts?.constituenciesPage as LayoutConfiguration | undefined;
+        return {
+            pageTitle: saved?.pageTitle || DEFAULT_LAYOUT.pageTitle,
+            pageDescription: saved?.pageDescription || DEFAULT_LAYOUT.pageDescription,
+            seatCountTitle: saved?.seatCountTitle || DEFAULT_LAYOUT.seatCountTitle,
+            seatCountDescription: saved?.seatCountDescription || DEFAULT_LAYOUT.seatCountDescription,
+        };
+    }, [savedLayouts]);
 
 
     useEffect(() => {
@@ -186,12 +194,6 @@ export default function MakeYourOwnClientPage() {
         });
 
     }, [firestore, elections]);
-    
-
-    const [pageTitle, setPageTitle] = useState(DEFAULT_LAYOUT.pageTitle);
-    const [pageDescription, setPageDescription] = useState(DEFAULT_LAYOUT.pageDescription);
-    const [seatCountTitle, setSeatCountTitle] = useState(DEFAULT_LAYOUT.seatCountTitle);
-    const [seatCountDescription, setSeatCountDescription] = useState(DEFAULT_LAYOUT.seatCountDescription);
     
     const [myMapConstituencies, setMyMapConstituencies] = useState<Constituency[]>([]);
     const [selectedMyMapConstituencyId, setSelectedMyMapConstituencyId] = useState<string | null>(null);
@@ -232,21 +234,6 @@ export default function MakeYourOwnClientPage() {
             }
         }
     }, [constituencies, searchParams])
-
-    useEffect(() => {
-        const savedConstituenciesLayout = savedLayouts?.constituenciesPage as LayoutConfiguration | undefined;
-        if (savedConstituenciesLayout) {
-            setPageTitle(savedConstituenciesLayout.pageTitle || DEFAULT_LAYOUT.pageTitle);
-            setPageDescription(savedConstituenciesLayout.pageDescription || DEFAULT_LAYOUT.pageDescription);
-            setSeatCountTitle(savedConstituenciesLayout.seatCountTitle || DEFAULT_LAYOUT.seatCountTitle);
-            setSeatCountDescription(savedConstituenciesLayout.seatCountDescription || DEFAULT_LAYOUT.seatCountDescription);
-        } else {
-            setPageTitle(DEFAULT_LAYOUT.pageTitle);
-            setPageDescription(DEFAULT_LAYOUT.pageDescription);
-            setSeatCountTitle(DEFAULT_LAYOUT.seatCountTitle);
-            setSeatCountDescription(DEFAULT_LAYOUT.seatCountDescription);
-        }
-    }, [savedLayouts]);
     
     const handleMyMapLeaningChange = useCallback((id: string, newLeaning: string) => {
         setMyMapConstituencies(prev =>
@@ -428,7 +415,7 @@ export default function MakeYourOwnClientPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-        <PageHeader title={pageTitle} description={pageDescription} />
+        <PageHeader title={layoutConfig.pageTitle} description={layoutConfig.pageDescription} />
 
       {isLoading || !constituencies ? (
           <ConstituenciesPageSkeleton />
@@ -450,8 +437,8 @@ export default function MakeYourOwnClientPage() {
             <div>
                 <Card>
                     <CardHeader>
-                        <CardTitle className="font-headline">{seatCountTitle}</CardTitle>
-                        <CardDescription>{seatCountDescription}</CardDescription>
+                        <CardTitle className="font-headline">{layoutConfig.seatCountTitle}</CardTitle>
+                        <CardDescription>{layoutConfig.seatCountDescription}</CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col items-center">
                         <VictoryStatusBar slpSeats={seatCounts.slp} uwpSeats={seatCounts.uwp} indSeats={seatCounts.ind} />
@@ -540,7 +527,7 @@ export default function MakeYourOwnClientPage() {
       )}
 
       <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
-          <DialogContent className="sm:max-w-[425px] md:max-w-4xl">
+          <DialogContent className="sm:max-w-[425px] md:max-w-screen-md">
               <DialogHeader>
                   <DialogTitle>
                         I predict{' '}

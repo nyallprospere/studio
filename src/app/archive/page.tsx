@@ -77,9 +77,6 @@ export default function ArchivePage() {
   const [uploadingPhotoId, setUploadingPhotoId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [partyFilter, setPartyFilter] = useState<string | null>(null);
-
-  const [editableArchives, setEditableArchives] = useState<Record<string, ArchivedCandidate[]>>({});
-  const [originalArchives, setOriginalArchives] = useState<Record<string, ArchivedCandidate[]>>({});
   const [sortBy, setSortBy] = useState<'lastName' | 'constituency'>('lastName');
   const [candidatePhotos, setCandidatePhotos] = useState<Record<string, File | null>>({});
 
@@ -112,79 +109,52 @@ export default function ArchivePage() {
     }
   }, [electionsWithArchives, selectedElectionId]);
 
-  const displayedArchivedCandidates = useMemo(() => {
-    if (!allArchivedCandidates) return [];
-    if (selectedElectionId === 'all') return allArchivedCandidates;
-    return allArchivedCandidates.filter(c => c.electionId === selectedElectionId);
-  }, [selectedElectionId, allArchivedCandidates]);
-
-
   const getPartyAcronym = (partyId: string) => parties?.find(p => p.id === partyId)?.acronym || 'N/A';
   const getParty = (partyId: string) => parties?.find(p => p.id === partyId);
   const getConstituencyName = (constituencyId: string) => constituencies?.find(c => c.id === constituencyId)?.name || 'N/A';
   const isLoading = loadingArchived || loadingParties || loadingConstituencies || loadingElections;
   
-  const groupedArchives = useMemo(() => {
-    if (!displayedArchivedCandidates) return {};
-    return displayedArchivedCandidates.reduce((acc, candidate) => {
-      const { electionId } = candidate;
-      if (!acc[electionId]) {
-        const election = allElections?.find(e => e.id === electionId);
-        acc[electionId] = {
-          electionName: election?.name || 'Unknown Election',
-          date: candidate.archiveDate,
-          candidates: []
-        };
-      }
-      acc[electionId].candidates.push(candidate);
-      return acc;
-    }, {} as Record<string, { electionName: string; date: string; candidates: ArchivedCandidate[] }>);
-  }, [displayedArchivedCandidates, allElections]);
+  const sortedAndFilteredCandidates = useMemo(() => {
+    if (!allArchivedCandidates) return [];
+  
+    const candidatesForSelectedElection = selectedElectionId === 'all' 
+      ? allArchivedCandidates 
+      : allArchivedCandidates.filter(c => c.electionId === selectedElectionId);
 
-  useEffect(() => {
-    const archives: Record<string, ArchivedCandidate[]> = {};
-     for (const electionId in groupedArchives) {
-        archives[electionId] = JSON.parse(JSON.stringify(groupedArchives[electionId].candidates));
-    }
-    setEditableArchives(archives);
-    setOriginalArchives(archives);
-  }, [groupedArchives]);
+    return candidatesForSelectedElection
+      .filter(c => {
+        if (!searchTerm && !partyFilter) return true;
+        const nameMatch = searchTerm ? `${c.firstName} ${c.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) : true;
+        const partyMatch = partyFilter ? c.partyId === partyFilter : true;
+        return nameMatch && partyMatch;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'constituency') {
+          const nameA = getConstituencyName(a.constituencyId);
+          const nameB = getConstituencyName(b.constituencyId);
+          return nameA.localeCompare(nameB);
+        }
+        return a.lastName.localeCompare(b.lastName);
+      });
+  }, [selectedElectionId, allArchivedCandidates, searchTerm, partyFilter, sortBy, getConstituencyName]);
 
-  const handleIncumbentChange = (electionId: string, candidateId: string, isIncumbent: boolean) => {
-    setEditableArchives(prev => ({
-        ...prev,
-        [electionId]: prev[electionId].map(c => 
-            c.id === candidateId ? { ...c, isIncumbent } : c
-        )
-    }));
+
+  const handleIncumbentChange = (candidateId: string, isIncumbent: boolean) => {
+    // This function will now be purely for immediate visual feedback if needed,
+    // but the actual state update will happen directly via Firestore.
   };
 
-  const handleSaveChanges = async (electionId: string) => {
+  const handleSaveChanges = async (candidateId: string, updates: Partial<ArchivedCandidate>) => {
     if (!firestore) return;
-    const original = originalArchives[electionId];
-    const editable = editableArchives[electionId];
-    if (!original || !editable) return;
-    
-    const changes = editable.filter((c, index) => !isEqual(c, original[index]));
-    
-    if (changes.length === 0) {
-        toast({ title: 'No changes to save.' });
-        return;
-    }
-
+    const docRef = doc(firestore, 'archived_candidates', candidateId);
     try {
-        const batch = writeBatch(firestore);
-        changes.forEach(candidate => {
-            const docRef = doc(firestore, 'archived_candidates', candidate.id);
-            batch.update(docRef, { isIncumbent: candidate.isIncumbent });
-        });
-        await batch.commit();
-        toast({ title: 'Success', description: `${changes.length} candidate(s) updated.` });
-    } catch(e) {
-        console.error("Error saving changes: ", e);
-        toast({ variant: "destructive", title: "Error", description: "Failed to save changes." });
+      await updateDoc(docRef, updates);
+      toast({ title: 'Success', description: 'Candidate updated.' });
+    } catch (e) {
+      console.error("Error saving changes: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Failed to save changes." });
     }
-  }
+  };
 
 
   const handleFormSubmit = async (values: any) => {
@@ -220,14 +190,15 @@ export default function ArchivePage() {
     }
   };
 
-  const handleExport = (electionId: string) => {
-    const archive = groupedArchives[electionId];
-    if (!archive || !parties || !constituencies) {
+  const handleExport = () => {
+    const candidatesToExport = sortedAndFilteredCandidates;
+    if (!candidatesToExport.length || !parties || !constituencies) {
         toast({ variant: "destructive", title: "Error", description: "Data not loaded yet." });
         return;
     }
+    const electionName = allElections?.find(e => e.id === selectedElectionId)?.name || 'Archive';
 
-    const dataToExport = archive.candidates.map(c => ({
+    const dataToExport = candidatesToExport.map(c => ({
         'First Name': c.firstName,
         'Last Name': c.lastName,
         'Party': getPartyAcronym(c.partyId),
@@ -241,15 +212,15 @@ export default function ArchivePage() {
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "ArchivedCandidates");
-    XLSX.writeFile(workbook, `archive-${archive.electionName.replace(/\s/g, '_')}.xlsx`);
+    XLSX.writeFile(workbook, `archive-${electionName.replace(/\s/g, '_')}.xlsx`);
     toast({ title: "Export Successful", description: "Archived candidates have been exported." });
   };
   
-  const handleRestoreAll = async (electionId: string) => {
-    if (!firestore) return;
+  const handleRestoreAll = async () => {
+    if (!firestore || !selectedElectionId) return;
 
-    const archive = groupedArchives[electionId];
-    if (!archive) return;
+    const candidatesToRestore = allArchivedCandidates?.filter(c => c.electionId === selectedElectionId);
+    if (!candidatesToRestore || candidatesToRestore.length === 0) return;
 
     const candidatesCollectionRef = collection(firestore, 'candidates');
     const archiveCollectionRef = collection(firestore, 'archived_candidates');
@@ -258,7 +229,7 @@ export default function ArchivePage() {
         const restoreBatch = writeBatch(firestore);
         const deleteBatch = writeBatch(firestore);
 
-        for (const candidate of archive.candidates) {
+        for (const candidate of candidatesToRestore) {
             const { id, originalId, archiveDate, electionId: aId, ...candidateData} = candidate;
             
             const newCandidateRef = doc(candidatesCollectionRef, originalId);
@@ -271,21 +242,21 @@ export default function ArchivePage() {
         await restoreBatch.commit();
         await deleteBatch.commit();
 
-        toast({ title: 'Restore Successful', description: `Restored ${archive.candidates.length} candidates for ${archive.electionName}.` });
+        toast({ title: 'Restore Successful', description: `Restored ${candidatesToRestore.length} candidates.` });
     } catch (e) {
         console.error("Error restoring archive:", e);
         toast({ variant: 'destructive', title: 'Restore Failed', description: 'Could not restore candidates. Check console for details.' });
     }
   };
 
-  const handleClearCandidateInfo = async (electionId: string) => {
-    if (!firestore) return;
-    const archive = groupedArchives[electionId];
-    if (!archive) return;
+  const handleClearCandidateInfo = async () => {
+    if (!firestore || !selectedElectionId) return;
+    const candidatesToClear = allArchivedCandidates?.filter(c => c.electionId === selectedElectionId);
+    if (!candidatesToClear || candidatesToClear.length === 0) return;
 
     try {
       const batch = writeBatch(firestore);
-      for (const candidate of archive.candidates) {
+      for (const candidate of candidatesToClear) {
         if (candidate.imageUrl) await deleteFile(candidate.imageUrl, storage);
         const docRef = doc(firestore, 'archived_candidates', candidate.id);
         batch.update(docRef, {
@@ -301,27 +272,27 @@ export default function ArchivePage() {
         });
       }
       await batch.commit();
-      toast({ title: 'Candidate Info Cleared', description: `Cleared info for ${archive.candidates.length} candidates in ${archive.electionName}.` });
+      toast({ title: 'Candidate Info Cleared', description: `Cleared info for ${candidatesToClear.length} candidates.` });
     } catch (e) {
       console.error("Error clearing candidate info:", e);
       toast({ variant: 'destructive', title: 'Clear Failed', description: 'Could not clear candidate info. Check console for details.' });
     }
   }
 
-  const handleDeleteArchive = async (electionId: string) => {
-    if (!firestore) return;
-    const archive = groupedArchives[electionId];
-    if (!archive) return;
+  const handleDeleteArchive = async () => {
+    if (!firestore || !selectedElectionId) return;
+    const candidatesToDelete = allArchivedCandidates?.filter(c => c.electionId === selectedElectionId);
+    if (!candidatesToDelete || candidatesToDelete.length === 0) return;
 
     try {
         const batch = writeBatch(firestore);
-        for(const candidate of archive.candidates) {
+        for(const candidate of candidatesToDelete) {
             if (candidate.imageUrl) await deleteFile(candidate.imageUrl, storage);
             const docRef = doc(firestore, 'archived_candidates', candidate.id);
             batch.delete(docRef);
         }
         await batch.commit();
-        toast({ title: 'Archive Deleted', description: `Archive for ${archive.electionName} has been deleted.` });
+        toast({ title: 'Archive Deleted', description: `Archive has been deleted.` });
     } catch (e) {
         console.error("Error deleting archive:", e);
         toast({ variant: 'destructive', title: 'Delete Failed', description: 'Could not delete archive. Check console for details.' });
@@ -417,6 +388,9 @@ export default function ArchivePage() {
     };
   }, [parties]);
 
+  const electionName = allElections?.find(e => e.id === selectedElectionId)?.name || 'Archive';
+  const electionCandidateCount = allArchivedCandidates?.filter(c => c.electionId === selectedElectionId).length || 0;
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -471,208 +445,182 @@ export default function ArchivePage() {
             </DialogContent>
         </Dialog>
 
-      {isLoading ? <p>Loading archives...</p> : (
-        <div className="space-y-8">
-            {Object.keys(groupedArchives).length > 0 ? (
-                Object.entries(groupedArchives).map(([electionId, archiveData]) => {
-                  const hasChanges = !isEqual(originalArchives[electionId], editableArchives[electionId]);
-                  
-                  const sortedCandidates = [...(editableArchives[electionId] || [])]
-                    .filter(c => {
-                      if (!searchTerm && !partyFilter) return true;
-                      
-                      const nameMatch = searchTerm ? `${c.firstName} ${c.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) : true;
-                      const partyMatch = partyFilter ? c.partyId === partyFilter : true;
-                      
-                      return nameMatch && partyMatch;
-                    })
-                    .sort((a, b) => {
-                      if (sortBy === 'constituency') {
-                          const nameA = getConstituencyName(a.constituencyId);
-                          const nameB = getConstituencyName(b.constituencyId);
-                          return nameA.localeCompare(nameB);
-                      }
-                      return a.lastName.localeCompare(b.lastName);
-                    });
-
-                  return (
-                    <Card key={electionId}>
-                        <CardHeader>
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <CardTitle>{archiveData.electionName}</CardTitle>
-                                    <CardDescription>
-                                        {archiveData.candidates.length} candidates archived on <span className="text-xs">{new Date(archiveData.date).toLocaleString()}</span>
-                                    </CardDescription>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                     {hasChanges && <Button size="sm" onClick={() => handleSaveChanges(electionId)}><Save className="mr-2 h-4 w-4" /> Save Changes</Button>}
-                                     <Button variant="outline" size="sm" onClick={() => handleExport(electionId)}>
-                                        <Download className="mr-2 h-4 w-4" /> Export
-                                    </Button>
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="outline" size="sm" disabled={restoreLocks[electionId] !== false}>
-                                                <Eraser className="mr-2 h-4 w-4" /> Clear All Candidate Info
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    This will clear all personal information for {archiveData.candidates.length} candidates in this archive, leaving only their party and constituency. This action cannot be undone.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleClearCandidateInfo(electionId)}>Yes, Clear Info</AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                    <div className="flex items-center gap-1">
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <Button variant="outline" size="sm" disabled={restoreLocks[electionId] !== false}>
-                                                    <History className="mr-2 h-4 w-4" /> Restore All
-                                                </Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                    This will restore all {archiveData.candidates.length} candidates from this archive to the main list and remove them from the archive.
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleRestoreAll(electionId)}>Yes, Restore All</AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
-                                        <Button 
-                                            variant="outline" 
-                                            size="icon" 
-                                            onClick={() => setRestoreLocks(prev => ({...prev, [electionId]: !prev[electionId]}))}
-                                        >
-                                            {restoreLocks[electionId] !== false ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+        {isLoading ? <p>Loading archives...</p> : (
+            selectedElectionId ? (
+                <Card>
+                    <CardHeader>
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <CardTitle>{electionName}</CardTitle>
+                                <CardDescription>
+                                    {electionCandidateCount} candidates in this archive.
+                                </CardDescription>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                 <Button variant="outline" size="sm" onClick={() => handleExport(selectedElectionId)}>
+                                    <Download className="mr-2 h-4 w-4" /> Export
+                                </Button>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="outline" size="sm" disabled={restoreLocks[selectedElectionId] !== false}>
+                                            <Eraser className="mr-2 h-4 w-4" /> Clear All Candidate Info
                                         </Button>
-                                    </div>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will clear all personal information for candidates in this archive, leaving only their party and constituency. This action cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleClearCandidateInfo(selectedElectionId)}>Yes, Clear Info</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                                <div className="flex items-center gap-1">
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                            <Button variant="destructive" size="sm" disabled={restoreLocks[electionId] !== false}>
-                                                <Trash2 className="mr-2 h-4 w-4" /> Delete Archive
+                                            <Button variant="outline" size="sm" disabled={restoreLocks[selectedElectionId] !== false}>
+                                                <History className="mr-2 h-4 w-4" /> Restore All
                                             </Button>
                                         </AlertDialogTrigger>
                                         <AlertDialogContent>
                                             <AlertDialogHeader>
                                                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    This will permanently delete this entire archive of {archiveData.candidates.length} candidates. This action cannot be undone.
+                                                This will restore all candidates from this archive to the main list and remove them from the archive.
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
                                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleDeleteArchive(electionId)}>Yes, Delete Archive</AlertDialogAction>
+                                                <AlertDialogAction onClick={() => handleRestoreAll(selectedElectionId)}>Yes, Restore All</AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
                                     </AlertDialog>
+                                    <Button 
+                                        variant="outline" 
+                                        size="icon" 
+                                        onClick={() => setRestoreLocks(prev => ({...prev, [selectedElectionId]: !prev[selectedElectionId]}))}
+                                    >
+                                        {restoreLocks[selectedElectionId] !== false ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                                    </Button>
                                 </div>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" size="sm" disabled={restoreLocks[selectedElectionId] !== false}>
+                                            <Trash2 className="mr-2 h-4 w-4" /> Delete Archive
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will permanently delete this entire archive. This action cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDeleteArchive(selectedElectionId)}>Yes, Delete Archive</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
                             </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex justify-between items-center mb-4">
-                                <Input 
-                                    placeholder="Search by candidate name..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="max-w-sm"
-                                />
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex justify-between items-center mb-4">
+                            <Input 
+                                placeholder="Search by candidate name..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="max-w-sm"
+                            />
+                            <div className="flex items-center gap-2">
+                                <Button variant={!partyFilter ? "secondary" : "outline"} size="sm" onClick={() => setPartyFilter(null)}>All</Button>
+                                {partyDetails.slp && <Button variant={partyFilter === partyDetails.slp.id ? "secondary" : "outline"} size="sm" onClick={() => setPartyFilter(partyDetails.slp!.id)}>SLP</Button>}
+                                {partyDetails.uwp && <Button variant={partyFilter === partyDetails.uwp.id ? "secondary" : "outline"} size="sm" onClick={() => setPartyFilter(partyDetails.uwp!.id)}>UWP</Button>}
+                            </div>
+                        </div>
+                        <ScrollArea className="h-96">
+                            <div className="space-y-2 pr-4">
+                            <div className="flex items-center justify-between p-3 border-b text-sm font-medium text-muted-foreground">
                                 <div className="flex items-center gap-2">
-                                    <Button variant={!partyFilter ? "secondary" : "outline"} size="sm" onClick={() => setPartyFilter(null)}>All</Button>
-                                    {partyDetails.slp && <Button variant={partyFilter === partyDetails.slp.id ? "secondary" : "outline"} size="sm" onClick={() => setPartyFilter(partyDetails.slp!.id)}>SLP</Button>}
-                                    {partyDetails.uwp && <Button variant={partyFilter === partyDetails.uwp.id ? "secondary" : "outline"} size="sm" onClick={() => setPartyFilter(partyDetails.uwp!.id)}>UWP</Button>}
+                                    <p>Candidate</p>
+                                    <Select value={sortBy} onValueChange={(value: 'lastName' | 'constituency') => setSortBy(value)}>
+                                        <SelectTrigger className="w-auto h-7 text-xs">
+                                            <SelectValue placeholder="Sort by..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="lastName">Name</SelectItem>
+                                            <SelectItem value="constituency">Constituency</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <p className="w-40 text-center">Photo</p>
+                                    <p className="w-12 text-center">Inc.</p>
+                                    <p>Actions</p>
                                 </div>
                             </div>
-                            <ScrollArea className="h-96">
-                                <div className="space-y-2 pr-4">
-                                <div className="flex items-center justify-between p-3 border-b text-sm font-medium text-muted-foreground">
-                                    <div className="flex items-center gap-2">
-                                        <p>Candidate</p>
-                                        <Select value={sortBy} onValueChange={(value: 'lastName' | 'constituency') => setSortBy(value)}>
-                                            <SelectTrigger className="w-auto h-7 text-xs">
-                                                <SelectValue placeholder="Sort by..." />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="lastName">Name</SelectItem>
-                                                <SelectItem value="constituency">Constituency</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <p className="w-40 text-center">Photo</p>
-                                        <p className="w-12 text-center">Inc.</p>
-                                        <p>Actions</p>
-                                    </div>
-                                </div>
-                                {sortedCandidates.map(c => {
-                                    const party = getParty(c.partyId);
-                                    return (
-                                        <div key={c.id} className="flex items-center justify-between p-3 border rounded-md text-sm">
-                                            <div className="flex items-center gap-3">
-                                                <Dialog>
-                                                    <DialogTrigger asChild>
-                                                        <div className="relative h-10 w-10 flex-shrink-0 rounded-full overflow-hidden bg-muted flex items-center justify-center cursor-pointer">
-                                                            {c.imageUrl ? (
-                                                                <Image src={c.imageUrl} alt={`${c.firstName} ${c.lastName}`} fill className="object-cover" />
-                                                            ) : party?.logoUrl ? (
-                                                                <Image src={party.logoUrl} alt={`${party.name} logo`} fill className="object-contain p-1" />
-                                                            ) : (
-                                                                <span className="text-xl font-bold text-gray-500">X</span>
-                                                            )}
-                                                        </div>
-                                                    </DialogTrigger>
-                                                    {c.imageUrl && (
-                                                        <DialogContent className="p-0 border-0 max-w-fit bg-transparent">
-                                                            <Image src={c.imageUrl} alt={`${c.firstName} ${c.lastName}`} width={512} height={512} className="object-contain" />
-                                                        </DialogContent>
-                                                    )}
-                                                </Dialog>
-                                                <div>
-                                                    <p className="font-medium flex items-center gap-2">
-                                                        {c.firstName} {c.lastName}
-                                                        {c.isPartyLeader && <Star className="h-4 w-4 text-accent" />}
-                                                    </p>
-                                                    <p className="text-muted-foreground text-xs">{getPartyAcronym(c.partyId)} &bull; {getConstituencyName(c.constituencyId)}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-40 flex items-center gap-2">
-                                                    <CustomUploadButton onFileSelect={handlePhotoUpload} candidate={c} isLoading={uploadingPhotoId === c.id} />
-                                                </div>
-                                                <Checkbox
-                                                    checked={c.isIncumbent}
-                                                    onCheckedChange={(checked) => handleIncumbentChange(electionId, c.id, !!checked)}
-                                                    className="w-12"
-                                                />
-                                                <Button variant="ghost" size="icon" onClick={() => { setEditingCandidate(c); setIsFormOpen(true);}}>
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
+                            {sortedAndFilteredCandidates.map(c => {
+                                const party = getParty(c.partyId);
+                                return (
+                                    <div key={c.id} className="flex items-center justify-between p-3 border rounded-md text-sm">
+                                        <div className="flex items-center gap-3">
+                                            <Dialog>
+                                                <DialogTrigger asChild>
+                                                    <div className="relative h-10 w-10 flex-shrink-0 rounded-full overflow-hidden bg-muted flex items-center justify-center cursor-pointer">
+                                                        {c.imageUrl ? (
+                                                            <Image src={c.imageUrl} alt={`${c.firstName} ${c.lastName}`} fill className="object-cover" />
+                                                        ) : party?.logoUrl ? (
+                                                            <Image src={party.logoUrl} alt={`${party.name} logo`} fill className="object-contain p-1" />
+                                                        ) : (
+                                                            <span className="text-xl font-bold text-gray-500">X</span>
+                                                        )}
+                                                    </div>
+                                                </DialogTrigger>
+                                                {c.imageUrl && (
+                                                    <DialogContent className="p-0 border-0 max-w-fit bg-transparent">
+                                                        <Image src={c.imageUrl} alt={`${c.firstName} ${c.lastName}`} width={512} height={512} className="object-contain" />
+                                                    </DialogContent>
+                                                )}
+                                            </Dialog>
+                                            <div>
+                                                <p className="font-medium flex items-center gap-2">
+                                                    {c.firstName} {c.lastName}
+                                                    {c.isPartyLeader && <Star className="h-4 w-4 text-accent" />}
+                                                </p>
+                                                <p className="text-muted-foreground text-xs">{getPartyAcronym(c.partyId)} &bull; {getConstituencyName(c.constituencyId)}</p>
                                             </div>
                                         </div>
-                                    )
-                                })}
-                                </div>
-                            </ScrollArea>
-                        </CardContent>
-                    </Card>
-                )})
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-40 flex items-center gap-2">
+                                                <CustomUploadButton onFileSelect={handlePhotoUpload} candidate={c} isLoading={uploadingPhotoId === c.id} />
+                                            </div>
+                                            <Checkbox
+                                                checked={c.isIncumbent}
+                                                onCheckedChange={(checked) => handleSaveChanges(c.id, { isIncumbent: !!checked })}
+                                                className="w-12"
+                                            />
+                                            <Button variant="ghost" size="icon" onClick={() => { setEditingCandidate(c); setIsFormOpen(true);}}>
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                            </div>
+                        </ScrollArea>
+                    </CardContent>
+                </Card>
             ) : (
                 <div className="text-center text-muted-foreground py-16">
-                    <p>No archived candidates found for the selected election.</p>
+                    <p>No archived candidates found.</p>
                 </div>
-            )}
-        </div>
-      )}
+            )
+        )}
     </div>
   )
 }
