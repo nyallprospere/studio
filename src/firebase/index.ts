@@ -5,7 +5,7 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import { initializeAppCheck, ReCaptchaV3Provider, CustomProvider } from 'firebase/app-check';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
@@ -24,19 +24,16 @@ export function initializeFirebase() {
   }
 
   if (typeof window !== 'undefined') {
+    // Pass your reCAPTCHA v3 site key (public key) to activate(). Make sure this
+    // key is the counterpart to the secret key you set in the Firebase console.
     try {
-      // Pass your reCAPTCHA v3 site key (public key) to activate(). Make sure this
-      // key is the counterpart to the secret key you set in the Firebase console.
-      const appCheck = initializeAppCheck(firebaseApp, {
-        provider: new CustomProvider({
-          getToken: () => {
-            // Your logic to get a token from your trusted server.
-            return Promise.resolve({
-              token: "dummy-token-for-local-dev",
-              expireTimeMillis: Date.now() + 60 * 60 * 1000, // 1 hour
-            });
-          },
-        }),
+      // Set the debug token to allow local development.
+      // This will be logged to the console. You must then add it to your
+      // Firebase project's App Check settings.
+      (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = process.env.NODE_ENV !== 'production';
+
+      initializeAppCheck(firebaseApp, {
+        provider: new ReCaptchaV3Provider('6Ld-i-wUAAAAAOf-1-g_lA_s-g_lA_s-g_lA_s-g'),
         isTokenAutoRefreshEnabled: true
       });
       console.log('App Check initialized');
