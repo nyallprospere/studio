@@ -2,22 +2,20 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow read access to all files by default
+    // Allow public read access to all files.
     match /{allPaths=**} {
-      allow read;
+      allow read: if true;
     }
     
-    // Allow public write access to the SavedMaps folder for map sharing
+    // Allow public write access for map sharing.
     match /SavedMaps/{allPaths=**} {
       allow write: if true;
     }
 
-    // Allow write access (create, update, delete) only to authenticated users
-    // in other specific folders.
-    match /(candidates|logos|events|parties|maps|news|constituency-logos|leaders)/{allPaths=**} {
-        allow write: if request.auth != null;
+    // Restrict writes in admin folders to authenticated users.
+    match /{folder}/{allPaths=**} {
+      allow write: if request.auth != null &&
+                   folder in ['candidates', 'constituency-logos', 'events', 'leaders', 'logos', 'maps', 'news', 'parties'];
     }
   }
 }
-
-    
