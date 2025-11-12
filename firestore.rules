@@ -207,14 +207,15 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows authenticated users to create user maps.
+     * @description Allows any user to create a user map.
      * @path /user_maps/{userMapId}
-     * @allow create: if isSignedIn();
+     * @allow create: if true;
      * @allow get, list, update, delete: if false;
      */
     match /user_maps/{userMapId} {
-      allow create: if isSignedIn();
-      allow get, list, update, delete: if false;
+      allow create: if true;
+      allow get: if true;
+      allow list, update, delete: if false;
     }
 
     /**
@@ -247,23 +248,22 @@ service cloud.firestore {
        * @path /news/{newsId}/comments/{commentId}
        */
       match /comments/{commentId} {
-          allow create: if isSignedIn();
+          allow create: if true;
           allow get, list: if true;
-          allow update, delete: if false;
+          allow update: if request.auth != null && request.resource.data.author == request.auth.token.name;
+          allow delete: if request.auth != null && resource.data.author == request.auth.token.name;
       }
     }
 
     /**
-     * @description Allows admins to manage reports.
+     * @description Allows authenticated users to create reports.
      * @path /reports/{reportId}
-     * @allow (create, update, delete) - Authenticated admin user.
-     * @allow (get, list) - Public read access.
-     * @deny (create, update, delete) - Non-authenticated user.
-     * @principle Enforces admin-only writes and public reads.
+     * @allow create - Any user.
+     * @allow (get, list, update, delete) - Admin only.
      */
     match /reports/{reportId} {
-        allow get, list: if isSignedIn();
-        allow create, update, delete: if false;
+        allow get, list, update, delete: if isSignedIn();
+        allow create: if true;
     }
 
     /**
@@ -300,3 +300,4 @@ service cloud.firestore {
     return request.auth != null;
   }
 }
+    
