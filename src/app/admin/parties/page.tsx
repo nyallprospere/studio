@@ -56,19 +56,19 @@ export default function AdminPartiesPage() {
 
     try {
       if (values.logoFile) {
-        if(editingParty?.logoUrl) await deleteFile(editingParty.logoUrl);
+        if(editingParty?.logoUrl) await deleteFile(editingParty.logoUrl).catch(console.warn);
         logoUrl = await uploadFile(values.logoFile, `parties/${values.logoFile.name}`);
       }
       if (values.expandedLogoFile) {
-        if(editingParty?.expandedLogoUrl) await deleteFile(editingParty.expandedLogoUrl);
+        if(editingParty?.expandedLogoUrl) await deleteFile(editingParty.expandedLogoUrl).catch(console.warn);
         expandedLogoUrl = await uploadFile(values.expandedLogoFile, `parties/expanded_${values.expandedLogoFile.name}`);
       }
       if (values.oldLogoFile) {
-        if(editingParty?.oldLogoUrl) await deleteFile(editingParty.oldLogoUrl);
+        if(editingParty?.oldLogoUrl) await deleteFile(editingParty.oldLogoUrl).catch(console.warn);
         oldLogoUrl = await uploadFile(values.oldLogoFile, `parties/old_${values.oldLogoFile.name}`);
       }
       if (values.manifestoFile) {
-        if(editingParty?.manifestoUrl) await deleteFile(editingParty.manifestoUrl);
+        if(editingParty?.manifestoUrl) await deleteFile(editingParty.manifestoUrl).catch(console.warn);
         manifestoUrl = await uploadFile(values.manifestoFile, `parties/${values.manifestoFile.name}`);
       }
 
@@ -87,27 +87,15 @@ export default function AdminPartiesPage() {
 
       if (editingParty) {
         const partyDoc = doc(firestore, 'parties', editingParty.id);
-        updateDoc(partyDoc, partyData)
-        .then(() => {
-          toast({ title: "Party Updated", description: `${partyData.name} has been successfully updated.` });
-        })
-        .catch(error => {
-            const contextualError = new FirestorePermissionError({ path: partyDoc.path, operation: 'update', requestResourceData: partyData });
-            errorEmitter.emit('permission-error', contextualError);
-        });
+        await updateDoc(partyDoc, partyData);
+        toast({ title: "Party Updated", description: `${partyData.name} has been successfully updated.` });
       } else {
-        addDoc(partiesCollection, partyData)
-        .then(() => {
-            toast({ title: "Party Added", description: `${partyData.name} has been successfully added.` });
-        })
-        .catch(error => {
-            const contextualError = new FirestorePermissionError({ path: partiesCollection.path, operation: 'create', requestResourceData: partyData });
-            errorEmitter.emit('permission-error', contextualError);
-        });
+        await addDoc(partiesCollection, partyData);
+        toast({ title: "Party Added", description: `${partyData.name} has been successfully added.` });
       }
     } catch (error) {
-      console.error("Error during file upload: ", error);
-      toast({ variant: "destructive", title: "File Upload Error", description: "Could not upload a file. Check console for details." });
+      console.error("Error during file upload or Firestore operation: ", error);
+      toast({ variant: "destructive", title: "Operation Failed", description: "Could not save party details. Check console for errors." });
     } finally {
       setIsFormOpen(false);
       setEditingParty(null);

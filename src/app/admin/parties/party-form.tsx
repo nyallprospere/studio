@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -268,6 +267,20 @@ export function PartyForm({ onSubmit, initialData, onCancel }: PartyFormProps) {
                 </FormItem>
             )}
             />
+            <FormField
+              control={form.control}
+              name="logoUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Or Logo URL</FormLabel>
+                  <FormControl>
+                    <Input type="url" placeholder="https://example.com/logo.png" {...field} />
+                  </FormControl>
+                  <FormDescription>Provide a direct link to the logo image.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
              <FormField
               control={form.control}
               name="oldLogoFile"
@@ -282,6 +295,20 @@ export function PartyForm({ onSubmit, initialData, onCancel }: PartyFormProps) {
                   <FormMessage />
                   </FormItem>
               )}
+              />
+              <FormField
+                control={form.control}
+                name="oldLogoUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Or Old Logo URL</FormLabel>
+                    <FormControl>
+                      <Input type="url" placeholder="https://example.com/old-logo.png" {...field} />
+                    </FormControl>
+                    <FormDescription>Provide a direct link to the old logo image.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             <FormField
             control={form.control}
@@ -299,6 +326,20 @@ export function PartyForm({ onSubmit, initialData, onCancel }: PartyFormProps) {
             )}
             />
             <FormField
+              control={form.control}
+              name="expandedLogoUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Or Expanded Logo URL</FormLabel>
+                  <FormControl>
+                    <Input type="url" placeholder="https://example.com/expanded-logo.png" {...field} />
+                  </FormControl>
+                  <FormDescription>Provide a direct link to the expanded logo image.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
             control={form.control}
             name="manifestoFile"
             render={({ field }) => (
@@ -312,6 +353,20 @@ export function PartyForm({ onSubmit, initialData, onCancel }: PartyFormProps) {
                 <FormMessage />
                 </FormItem>
             )}
+            />
+             <FormField
+                control={form.control}
+                name="manifestoUrl"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Or Manifesto URL</FormLabel>
+                    <FormControl>
+                        <Input type="url" placeholder="https://example.com/manifesto.pdf" {...field} />
+                    </FormControl>
+                    <FormDescription>Provide a direct link to the manifesto PDF.</FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
             />
         </div>
 
