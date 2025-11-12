@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -25,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
+import { MainLayout } from '@/components/layout/main-layout';
 
 export default function AdminElectionsPage() {
   const { firestore } = useFirebase();
@@ -206,99 +206,101 @@ export default function AdminElectionsPage() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-start mb-8">
-        <PageHeader
-          title="Manage Elections"
-          description="Add, edit, or remove election years."
-        />
-        <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setIsImportOpen(true)}>
-                <Upload className="mr-2 h-4 w-4" /> Import
-            </Button>
-            <Button variant="outline" onClick={handleExport} disabled={!elections || elections.length === 0}>
-                <Download className="mr-2 h-4 w-4" /> Export
-            </Button>
-            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-            <DialogTrigger asChild>
-                <Button onClick={() => { setEditingElection(null); setIsFormOpen(true)}}>Add New Election</Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                <DialogTitle>{editingElection ? 'Edit Election' : 'Add New Election'}</DialogTitle>
-                </DialogHeader>
-                <ElectionForm
-                onSubmit={handleFormSubmit}
-                initialData={editingElection}
-                onCancel={() => setIsFormOpen(false)}
-                />
-            </DialogContent>
-            </Dialog>
-        </div>
-      </div>
-
-       <ImportDialog
-        isOpen={isImportOpen}
-        onClose={() => setIsImportOpen(false)}
-        onImport={handleImport}
-      />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>St. Lucian General Elections</CardTitle>
-          <CardDescription>A list of all elections currently in the system.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <p>Loading elections...</p>
-          ) : (
-            <div className="space-y-4">
-              {sortedElections && sortedElections.length > 0 ? (
-                sortedElections.map((election) => (
-                  <div key={election.id} className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50">
-                    <div className="flex items-center gap-3">
-                      {election.isCurrent && <Star className="h-5 w-5 text-accent fill-accent" />}
-                      <div>
-                        <p className="font-semibold">{election.name}</p>
-                        <p className="text-sm text-muted-foreground">Year: {election.year}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                       <Button variant="outline" size="sm" onClick={() => handleSetCurrent(election.id)} disabled={election.isCurrent || election.year < currentYear}>
-                           Set as Current
-                       </Button>
-                       <Button variant="ghost" size="icon" onClick={() => { setEditingElection(election); setIsFormOpen(true);}}>
-                           <Pencil className="h-4 w-4" />
-                       </Button>
-                       <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will permanently delete the election "{election.name}". This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(election)}>Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-center text-muted-foreground py-8">No elections have been added yet.</p>
-              )}
+    <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-start mb-8">
+            <PageHeader
+            title="Manage Elections"
+            description="Add, edit, or remove election years."
+            />
+            <div className="flex items-center gap-2">
+                <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+                    <Upload className="mr-2 h-4 w-4" /> Import
+                </Button>
+                <Button variant="outline" onClick={handleExport} disabled={!elections || elections.length === 0}>
+                    <Download className="mr-2 h-4 w-4" /> Export
+                </Button>
+                <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+                <DialogTrigger asChild>
+                    <Button onClick={() => { setEditingElection(null); setIsFormOpen(true)}}>Add New Election</Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                    <DialogTitle>{editingElection ? 'Edit Election' : 'Add New Election'}</DialogTitle>
+                    </DialogHeader>
+                    <ElectionForm
+                    onSubmit={handleFormSubmit}
+                    initialData={editingElection}
+                    onCancel={() => setIsFormOpen(false)}
+                    />
+                </DialogContent>
+                </Dialog>
             </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+
+        <ImportDialog
+            isOpen={isImportOpen}
+            onClose={() => setIsImportOpen(false)}
+            onImport={handleImport}
+        />
+
+        <Card>
+            <CardHeader>
+            <CardTitle>St. Lucian General Elections</CardTitle>
+            <CardDescription>A list of all elections currently in the system.</CardDescription>
+            </CardHeader>
+            <CardContent>
+            {isLoading ? (
+                <p>Loading elections...</p>
+            ) : (
+                <div className="space-y-4">
+                {sortedElections && sortedElections.length > 0 ? (
+                    sortedElections.map((election) => (
+                    <div key={election.id} className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50">
+                        <div className="flex items-center gap-3">
+                        {election.isCurrent && <Star className="h-5 w-5 text-accent fill-accent" />}
+                        <div>
+                            <p className="font-semibold">{election.name}</p>
+                            <p className="text-sm text-muted-foreground">Year: {election.year}</p>
+                        </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleSetCurrent(election.id)} disabled={election.isCurrent || election.year < currentYear}>
+                            Set as Current
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => { setEditingElection(election); setIsFormOpen(true);}}>
+                            <Pencil className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will permanently delete the election "{election.name}". This action cannot be undone.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(election)}>Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
+                    </div>
+                    ))
+                ) : (
+                    <p className="text-center text-muted-foreground py-8">No elections have been added yet.</p>
+                )}
+                </div>
+            )}
+            </CardContent>
+        </Card>
+        </div>
+    </MainLayout>
   );
 }

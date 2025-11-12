@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -12,6 +11,7 @@ import { BarChart, Bar } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MainLayout } from '@/components/layout/main-layout';
 
 const NationalSeatTrend = ({ elections, results, parties }: { elections: Election[], results: ElectionResult[], parties: Party[] }) => {
   const chartData = useMemo(() => {
@@ -660,58 +660,60 @@ export default function HistoricalTrendsPage() {
   const isLoading = loadingElections || loadingResults || loadingParties || loadingConstituencies;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Historical Trends"
-        description="Visualize election results from past years."
-      />
-      {isLoading ? (
-        <p>Loading historical data...</p>
-      ) : (
-        <div className="space-y-8">
-          <NationalSeatTrend elections={elections || []} results={results || []} parties={parties || []} />
-          <NationalVoteTrend 
-            elections={elections || []} 
-            results={results || []} 
-            parties={parties || []} 
-            constituencies={constituencies || []} 
-            selectedConstituencyId={selectedConstituencyId}
-            setSelectedConstituencyId={setSelectedConstituencyId}
-          />
-           <NationalSwingTrend 
-            elections={elections || []} 
-            results={results || []} 
-            parties={parties || []} 
-            constituencies={constituencies || []} 
-            selectedConstituencyId={selectedConstituencyId}
-            setSelectedConstituencyId={setSelectedConstituencyId}
-          />
-          <VoterTurnoutTrend 
-            elections={elections || []} 
-            results={results || []}
-            constituencies={constituencies || []}
-            selectedConstituencyId={selectedConstituencyId}
-            setSelectedConstituencyId={setSelectedConstituencyId}
-          />
-          <SwingAnalysisScatterPlot
-            elections={elections || []}
-            results={results || []}
-            constituencies={constituencies || []}
-            parties={parties || []}
-            selectedConstituencyId={selectedConstituencyId}
-            setSelectedConstituencyId={setSelectedConstituencyId}
-          />
-          <SwingVsTurnoutQuadrant
-            elections={elections || []}
-            results={results || []}
-            constituencies={constituencies || []}
-            parties={parties || []}
-            selectedConstituencyId={selectedConstituencyId}
-            setSelectedConstituencyId={setSelectedConstituencyId}
-          />
+    <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+        <PageHeader
+            title="Historical Trends"
+            description="Visualize election results from past years."
+        />
+        {isLoading ? (
+            <p>Loading historical data...</p>
+        ) : (
+            <div className="space-y-8">
+            <NationalSeatTrend elections={elections || []} results={results || []} parties={parties || []} />
+            <NationalVoteTrend 
+                elections={elections || []} 
+                results={results || []} 
+                parties={parties || []} 
+                constituencies={constituencies || []} 
+                selectedConstituencyId={selectedConstituencyId}
+                setSelectedConstituencyId={setSelectedConstituencyId}
+            />
+            <NationalSwingTrend 
+                elections={elections || []} 
+                results={results || []} 
+                parties={parties || []} 
+                constituencies={constituencies || []} 
+                selectedConstituencyId={selectedConstituencyId}
+                setSelectedConstituencyId={setSelectedConstituencyId}
+            />
+            <VoterTurnoutTrend 
+                elections={elections || []} 
+                results={results || []}
+                constituencies={constituencies || []}
+                selectedConstituencyId={selectedConstituencyId}
+                setSelectedConstituencyId={setSelectedConstituencyId}
+            />
+            <SwingAnalysisScatterPlot
+                elections={elections || []}
+                results={results || []}
+                constituencies={constituencies || []}
+                parties={parties || []}
+                selectedConstituencyId={selectedConstituencyId}
+                setSelectedConstituencyId={setSelectedConstituencyId}
+            />
+            <SwingVsTurnoutQuadrant
+                elections={elections || []}
+                results={results || []}
+                constituencies={constituencies || []}
+                parties={parties || []}
+                selectedConstituencyId={selectedConstituencyId}
+                setSelectedConstituencyId={setSelectedConstituencyId}
+            />
+            </div>
+        )}
         </div>
-      )}
-    </div>
+    </MainLayout>
   );
 }
 

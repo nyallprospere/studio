@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -21,6 +19,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MainLayout } from '@/components/layout/main-layout';
 
 interface MailingListSubscriber {
   id: string;
@@ -140,111 +139,113 @@ export default function ManageMailingListPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Manage Mailing List"
-        description="View and manage your mailing list subscribers."
-      />
-      
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Subscriber</DialogTitle>
-          </DialogHeader>
-          <SubscriberForm onSubmit={handleFormSubmit} onCancel={() => setIsFormOpen(false)} />
-        </DialogContent>
-      </Dialog>
+    <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+        <PageHeader
+            title="Manage Mailing List"
+            description="View and manage your mailing list subscribers."
+        />
+        
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Add Subscriber</DialogTitle>
+            </DialogHeader>
+            <SubscriberForm onSubmit={handleFormSubmit} onCancel={() => setIsFormOpen(false)} />
+            </DialogContent>
+        </Dialog>
 
-      <Card>
-        <CardHeader className="flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <CardTitle>Subscribers</CardTitle>
-            <CardDescription>A list of all users subscribed to your mailing list.</CardDescription>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-             <Select value={datePreset} onValueChange={handleDatePresetChange}>
-                <SelectTrigger className="w-[120px]">
-                    <SelectValue placeholder="Date Range" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">All Time</SelectItem>
-                    <SelectItem value="day">Day</SelectItem>
-                    <SelectItem value="week">Week</SelectItem>
-                    <SelectItem value="month">Month</SelectItem>
-                    <SelectItem value="year">Year</SelectItem>
-                </SelectContent>
-            </Select>
-            <Button variant="outline" onClick={handleExport} disabled={!subscribers || subscribers.length === 0}>
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Button>
-            <Button onClick={() => setIsFormOpen(true)}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <p>Loading subscribers...</p>
-          ) : error ? (
-            <div className="text-red-600 bg-red-100 p-4 rounded-md">
-              <h3 className="font-bold">Error loading subscribers</h3>
-              <p>{error.message}</p>
-              <p className="text-sm mt-2">Please check the Firestore security rules and console for more details.</p>
+        <Card>
+            <CardHeader className="flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+                <CardTitle>Subscribers</CardTitle>
+                <CardDescription>A list of all users subscribed to your mailing list.</CardDescription>
             </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>First Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Subscription Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {subscribers && subscribers.length > 0 ? (
-                  subscribers.map((subscriber) => (
-                    <TableRow key={subscriber.id}>
-                      <TableCell>{subscriber.firstName}</TableCell>
-                      <TableCell>{subscriber.email}</TableCell>
-                      <TableCell>{subscriber.subscribedAt?.toDate ? new Date(subscriber.subscribedAt.toDate()).toLocaleDateString() : 'N/A'}</TableCell>
-                      <TableCell className="text-right">
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will permanently remove {subscriber.email} from your mailing list.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(subscriber.id)}>Remove</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </TableCell>
+            <div className="flex flex-wrap items-center gap-2">
+                <Select value={datePreset} onValueChange={handleDatePresetChange}>
+                    <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Date Range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Time</SelectItem>
+                        <SelectItem value="day">Day</SelectItem>
+                        <SelectItem value="week">Week</SelectItem>
+                        <SelectItem value="month">Month</SelectItem>
+                        <SelectItem value="year">Year</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Button variant="outline" onClick={handleExport} disabled={!subscribers || subscribers.length === 0}>
+                <Download className="mr-2 h-4 w-4" />
+                Export
+                </Button>
+                <Button onClick={() => setIsFormOpen(true)}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add
+                </Button>
+            </div>
+            </CardHeader>
+            <CardContent>
+            {isLoading ? (
+                <p>Loading subscribers...</p>
+            ) : error ? (
+                <div className="text-red-600 bg-red-100 p-4 rounded-md">
+                <h3 className="font-bold">Error loading subscribers</h3>
+                <p>{error.message}</p>
+                <p className="text-sm mt-2">Please check the Firestore security rules and console for more details.</p>
+                </div>
+            ) : (
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead>First Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Subscription Date</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center h-24">
-                      No subscribers match the current filters.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+                </TableHeader>
+                <TableBody>
+                    {subscribers && subscribers.length > 0 ? (
+                    subscribers.map((subscriber) => (
+                        <TableRow key={subscriber.id}>
+                        <TableCell>{subscriber.firstName}</TableCell>
+                        <TableCell>{subscriber.email}</TableCell>
+                        <TableCell>{subscriber.subscribedAt?.toDate ? new Date(subscriber.subscribedAt.toDate()).toLocaleDateString() : 'N/A'}</TableCell>
+                        <TableCell className="text-right">
+                            <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will permanently remove {subscriber.email} from your mailing list.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(subscriber.id)}>Remove</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                            </AlertDialog>
+                        </TableCell>
+                        </TableRow>
+                    ))
+                    ) : (
+                    <TableRow>
+                        <TableCell colSpan={4} className="text-center h-24">
+                        No subscribers match the current filters.
+                        </TableCell>
+                    </TableRow>
+                    )}
+                </TableBody>
+                </Table>
+            )}
+            </CardContent>
+        </Card>
+        </div>
+    </MainLayout>
   );
 }

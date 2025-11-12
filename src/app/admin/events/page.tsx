@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -26,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { uploadFile, deleteFile } from '@/firebase/storage';
 import Image from 'next/image';
+import { MainLayout } from '@/components/layout/main-layout';
 
 export default function AdminEventsPage() {
   const { firestore, storage } = useFirebase();
@@ -63,9 +63,9 @@ export default function AdminEventsPage() {
       let imageUrl = values.imageUrl;
       if (values.photoFile) {
           if (editingEvent?.imageUrl) {
-              await deleteFile(editingEvent.imageUrl, storage);
+              await deleteFile(editingEvent.imageUrl);
           }
-          imageUrl = await uploadFile(values.photoFile, `events/${values.photoFile.name}`, storage);
+          imageUrl = await uploadFile(values.photoFile, `events/${values.photoFile.name}`);
       }
 
       const eventData = { 
@@ -97,7 +97,7 @@ export default function AdminEventsPage() {
   const handleDelete = async (event: Event) => {
     if (!firestore) return;
     try {
-      if (event.imageUrl) await deleteFile(event.imageUrl, storage);
+      if (event.imageUrl) await deleteFile(event.imageUrl);
       const eventDoc = doc(firestore, 'events', event.id);
       await deleteDoc(eventDoc);
       toast({ title: "Event Deleted", description: `The event "${event.title}" has been deleted.` });
@@ -114,188 +114,190 @@ export default function AdminEventsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-start mb-8">
-        <PageHeader
-          title="Manage Events"
-          description="Add, edit, or remove party events."
-        />
-        <Dialog open={isFormOpen} onOpenChange={(isOpen) => {
-            if (!isOpen) {
-              setEditingEvent(null);
-              setPreselectedPartyId(undefined);
-            }
-            setIsFormOpen(isOpen);
-          }}>
-          <DialogContent className="sm:max-w-xl">
-            <DialogHeader>
-              <DialogTitle>{editingEvent ? 'Edit Event' : 'Add New Event'}</DialogTitle>
-            </DialogHeader>
-            <EventForm
-              onSubmit={handleFormSubmit}
-              initialData={editingEvent}
-              onCancel={() => setIsFormOpen(false)}
-              parties={parties || []}
-              preselectedPartyId={preselectedPartyId}
+    <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-start mb-8">
+            <PageHeader
+            title="Manage Events"
+            description="Add, edit, or remove party events."
             />
-          </DialogContent>
-        </Dialog>
-      </div>
+            <Dialog open={isFormOpen} onOpenChange={(isOpen) => {
+                if (!isOpen) {
+                setEditingEvent(null);
+                setPreselectedPartyId(undefined);
+                }
+                setIsFormOpen(isOpen);
+            }}>
+            <DialogContent className="sm:max-w-xl">
+                <DialogHeader>
+                <DialogTitle>{editingEvent ? 'Edit Event' : 'Add New Event'}</DialogTitle>
+                </DialogHeader>
+                <EventForm
+                onSubmit={handleFormSubmit}
+                initialData={editingEvent}
+                onCancel={() => setIsFormOpen(false)}
+                parties={parties || []}
+                preselectedPartyId={preselectedPartyId}
+                />
+            </DialogContent>
+            </Dialog>
+        </div>
 
-      <div className="grid md:grid-cols-2 gap-8">
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>UWP Events</CardTitle>
-              <CardDescription>A list of all UWP events currently in the system.</CardDescription>
-            </div>
-            {uwpParty && <Button onClick={() => openForm(uwpParty.id)}>Add UWP Event</Button>}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <p>Loading events...</p>
-          ) : errorEvents ? (
-            <div className="text-red-600 bg-red-100 p-4 rounded-md">
-                <h3 className="font-bold">Error loading events</h3>
-                <p>{errorEvents.message}</p>
-                <p className="text-sm mt-2">Please check the Firestore security rules and console for more details.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {uwpEvents && uwpEvents.length > 0 ? (
-                uwpEvents.map((event) => {
-                  const eventDate = (event.date as unknown as Timestamp)?.toDate ? (event.date as unknown as Timestamp).toDate() : new Date(event.date);
-                  const party = getParty(event.partyId);
-                  return (
-                  <div key={event.id} className="flex items-start justify-between p-4 border rounded-md hover:bg-muted/50 gap-4">
-                     {event.imageUrl ? (
-                        <Image src={event.imageUrl} alt={event.title} width={80} height={80} className="rounded-md object-cover aspect-square" />
-                      ) : (
-                        <div className="h-20 w-20 flex-shrink-0 rounded-md bg-muted flex items-center justify-center">
-                          <Calendar className="h-8 w-8 text-muted-foreground" />
-                        </div>
-                      )}
-                    <div className="flex-grow">
-                      <p className="font-semibold">{event.title}</p>
-                       <div className="text-sm text-muted-foreground mt-1 space-y-1">
-                          {party && <p className="flex items-center gap-2"><Shield className="h-4 w-4" /> {party.name}</p>}
-                          <p className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {format(eventDate, "PPP")}</p>
-                          <p className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {event.location}</p>
-                       </div>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                       <Button variant="ghost" size="icon" onClick={() => openForm(undefined, event)}>
-                           <Pencil className="h-4 w-4" />
-                       </Button>
-                       <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will permanently delete the event "{event.title}". This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(event)}>Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                    </div>
-                  </div>
-                  );
-                })
-              ) : (
-                <p className="text-center text-muted-foreground py-8">No UWP events have been added yet.</p>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
+        <div className="grid md:grid-cols-2 gap-8">
+        <Card>
+            <CardHeader>
             <div className="flex justify-between items-center">
                 <div>
-                    <CardTitle>SLP Events</CardTitle>
-                    <CardDescription>A list of all SLP events currently in the system.</CardDescription>
+                <CardTitle>UWP Events</CardTitle>
+                <CardDescription>A list of all UWP events currently in the system.</CardDescription>
                 </div>
-                {slpParty && <Button onClick={() => openForm(slpParty.id)}>Add SLP Event</Button>}
+                {uwpParty && <Button onClick={() => openForm(uwpParty.id)}>Add UWP Event</Button>}
             </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <p>Loading events...</p>
-          ) : errorEvents ? (
-            <div className="text-red-600 bg-red-100 p-4 rounded-md">
-                <h3 className="font-bold">Error loading events</h3>
-                <p>{errorEvents.message}</p>
-                <p className="text-sm mt-2">Please check the Firestore security rules and console for more details.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {slpEvents && slpEvents.length > 0 ? (
-                slpEvents.map((event) => {
-                  const eventDate = (event.date as unknown as Timestamp)?.toDate ? (event.date as unknown as Timestamp).toDate() : new Date(event.date);
-                  const party = getParty(event.partyId);
-                  return (
-                  <div key={event.id} className="flex items-start justify-between p-4 border rounded-md hover:bg-muted/50 gap-4">
-                    {event.imageUrl ? (
-                        <Image src={event.imageUrl} alt={event.title} width={80} height={80} className="rounded-md object-cover aspect-square" />
-                      ) : (
-                        <div className="h-20 w-20 flex-shrink-0 rounded-md bg-muted flex items-center justify-center">
-                          <Calendar className="h-8 w-8 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+            {isLoading ? (
+                <p>Loading events...</p>
+            ) : errorEvents ? (
+                <div className="text-red-600 bg-red-100 p-4 rounded-md">
+                    <h3 className="font-bold">Error loading events</h3>
+                    <p>{errorEvents.message}</p>
+                    <p className="text-sm mt-2">Please check the Firestore security rules and console for more details.</p>
+                </div>
+            ) : (
+                <div className="space-y-4">
+                {uwpEvents && uwpEvents.length > 0 ? (
+                    uwpEvents.map((event) => {
+                    const eventDate = (event.date as unknown as Timestamp)?.toDate ? (event.date as unknown as Timestamp).toDate() : new Date(event.date);
+                    const party = getParty(event.partyId);
+                    return (
+                    <div key={event.id} className="flex items-start justify-between p-4 border rounded-md hover:bg-muted/50 gap-4">
+                        {event.imageUrl ? (
+                            <Image src={event.imageUrl} alt={event.title} width={80} height={80} className="rounded-md object-cover aspect-square" />
+                        ) : (
+                            <div className="h-20 w-20 flex-shrink-0 rounded-md bg-muted flex items-center justify-center">
+                            <Calendar className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                        )}
+                        <div className="flex-grow">
+                        <p className="font-semibold">{event.title}</p>
+                        <div className="text-sm text-muted-foreground mt-1 space-y-1">
+                            {party && <p className="flex items-center gap-2"><Shield className="h-4 w-4" /> {party.name}</p>}
+                            <p className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {format(eventDate, "PPP")}</p>
+                            <p className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {event.location}</p>
                         </div>
-                      )}
-                    <div className="flex-grow">
-                      <p className="font-semibold">{event.title}</p>
-                      <div className="text-sm text-muted-foreground mt-1 space-y-1">
-                          {party && <p className="flex items-center gap-2"><Shield className="h-4 w-4" /> {party.name}</p>}
-                          <p className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {format(eventDate, "PPP")}</p>
-                          <p className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {event.location}</p>
-                       </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => openForm(undefined, event)}>
+                            <Pencil className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will permanently delete the event "{event.title}". This action cannot be undone.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(event)}>Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
                     </div>
-                    <div className="flex flex-col gap-2">
-                       <Button variant="ghost" size="icon" onClick={() => openForm(undefined, event)}>
-                           <Pencil className="h-4 w-4" />
-                       </Button>
-                       <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will permanently delete the event "{event.title}". This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(event)}>Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                    );
+                    })
+                ) : (
+                    <p className="text-center text-muted-foreground py-8">No UWP events have been added yet.</p>
+                )}
+                </div>
+            )}
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle>SLP Events</CardTitle>
+                        <CardDescription>A list of all SLP events currently in the system.</CardDescription>
                     </div>
-                  </div>
-                  );
-                })
-              ) : (
-                <p className="text-center text-muted-foreground py-8">No SLP events have been added yet.</p>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      </div>
-    </div>
+                    {slpParty && <Button onClick={() => openForm(slpParty.id)}>Add SLP Event</Button>}
+                </div>
+            </CardHeader>
+            <CardContent>
+            {isLoading ? (
+                <p>Loading events...</p>
+            ) : errorEvents ? (
+                <div className="text-red-600 bg-red-100 p-4 rounded-md">
+                    <h3 className="font-bold">Error loading events</h3>
+                    <p>{errorEvents.message}</p>
+                    <p className="text-sm mt-2">Please check the Firestore security rules and console for more details.</p>
+                </div>
+            ) : (
+                <div className="space-y-4">
+                {slpEvents && slpEvents.length > 0 ? (
+                    slpEvents.map((event) => {
+                    const eventDate = (event.date as unknown as Timestamp)?.toDate ? (event.date as unknown as Timestamp).toDate() : new Date(event.date);
+                    const party = getParty(event.partyId);
+                    return (
+                    <div key={event.id} className="flex items-start justify-between p-4 border rounded-md hover:bg-muted/50 gap-4">
+                        {event.imageUrl ? (
+                            <Image src={event.imageUrl} alt={event.title} width={80} height={80} className="rounded-md object-cover aspect-square" />
+                        ) : (
+                            <div className="h-20 w-20 flex-shrink-0 rounded-md bg-muted flex items-center justify-center">
+                            <Calendar className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                        )}
+                        <div className="flex-grow">
+                        <p className="font-semibold">{event.title}</p>
+                        <div className="text-sm text-muted-foreground mt-1 space-y-1">
+                            {party && <p className="flex items-center gap-2"><Shield className="h-4 w-4" /> {party.name}</p>}
+                            <p className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {format(eventDate, "PPP")}</p>
+                            <p className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {event.location}</p>
+                        </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => openForm(undefined, event)}>
+                            <Pencil className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will permanently delete the event "{event.title}". This action cannot be undone.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(event)}>Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
+                    </div>
+                    );
+                    })
+                ) : (
+                    <p className="text-center text-muted-foreground py-8">No SLP events have been added yet.</p>
+                )}
+                </div>
+            )}
+            </CardContent>
+        </Card>
+        </div>
+        </div>
+    </MainLayout>
   );
 }

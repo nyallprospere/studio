@@ -30,6 +30,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { MainLayout } from '@/components/layout/main-layout';
 
 function ContextDialog({ report, isOpen, onClose }: { report: Report; isOpen: boolean; onClose: () => void; }) {
     const { firestore } = useFirebase();
@@ -163,120 +164,122 @@ export default function ManageReportsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Manage Reports"
-        description="Review and manage reported comments."
-      />
-      
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>Reported Comments</CardTitle>
-              <CardDescription>
-                Showing {filter} reports.
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-               <Select value={datePreset} onValueChange={handleDatePresetChange}>
-                  <SelectTrigger className="w-[120px]">
-                      <SelectValue placeholder="Date Range" />
-                  </SelectTrigger>
-                  <SelectContent>
-                      <SelectItem value="all">All Time</SelectItem>
-                      <SelectItem value="day">Day</SelectItem>
-                      <SelectItem value="week">Week</SelectItem>
-                      <SelectItem value="month">Month</SelectItem>
-                      <SelectItem value="year">Year</SelectItem>
-                  </SelectContent>
-              </Select>
-              <Button variant={filter === 'pending' ? 'secondary' : 'outline'} onClick={() => setFilter('pending')}>
-                <ShieldAlert className="mr-2 h-4 w-4" />
-                Pending
-              </Button>
-              <Button variant={filter === 'resolved' ? 'secondary' : 'outline'} onClick={() => setFilter('resolved')}>
-                <Check className="mr-2 h-4 w-4" />
-                Resolved
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? <p>Loading reports...</p> : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Comment</TableHead>
-                  <TableHead>Author</TableHead>
-                  <TableHead>Context</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredReports.length > 0 ? (
-                  filteredReports.map(report => (
-                    <TableRow key={report.id}>
-                      <TableCell>{format(report.reportedAt.toDate(), 'PPP')}</TableCell>
-                      <TableCell className="max-w-sm">
-                        <p className="truncate">{report.commentText}</p>
-                      </TableCell>
-                      <TableCell>{report.commentAuthor}</TableCell>
-                      <TableCell>
-                          <Button variant="ghost" size="icon" onClick={() => setSelectedReport(report)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {filter === 'pending' && (
-                          <div className="flex justify-end gap-2">
-                            <Button size="sm" variant="outline" onClick={() => handleMarkResolved(report.id)}>
-                              Mark Resolved
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button size="sm" variant="destructive">
-                                  <Trash2 className="mr-2 h-4 w-4" /> Delete Comment
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                  <AlertDialogDescriptionComponent>
-                                    This will permanently delete the comment and resolve this report. This action cannot be undone.
-                                  </AlertDialogDescriptionComponent>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDeleteComment(report)}>Delete Comment</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
-                      No {filter} reports.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-      {selectedReport && (
-        <ContextDialog
-            report={selectedReport}
-            isOpen={!!selectedReport}
-            onClose={() => setSelectedReport(null)}
+    <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+        <PageHeader
+            title="Manage Reports"
+            description="Review and manage reported comments."
         />
-      )}
-    </div>
+        
+        <Card>
+            <CardHeader>
+            <div className="flex justify-between items-center">
+                <div>
+                <CardTitle>Reported Comments</CardTitle>
+                <CardDescription>
+                    Showing {filter} reports.
+                </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                <Select value={datePreset} onValueChange={handleDatePresetChange}>
+                    <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Date Range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Time</SelectItem>
+                        <SelectItem value="day">Day</SelectItem>
+                        <SelectItem value="week">Week</SelectItem>
+                        <SelectItem value="month">Month</SelectItem>
+                        <SelectItem value="year">Year</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Button variant={filter === 'pending' ? 'secondary' : 'outline'} onClick={() => setFilter('pending')}>
+                    <ShieldAlert className="mr-2 h-4 w-4" />
+                    Pending
+                </Button>
+                <Button variant={filter === 'resolved' ? 'secondary' : 'outline'} onClick={() => setFilter('resolved')}>
+                    <Check className="mr-2 h-4 w-4" />
+                    Resolved
+                </Button>
+                </div>
+            </div>
+            </CardHeader>
+            <CardContent>
+            {isLoading ? <p>Loading reports...</p> : (
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Comment</TableHead>
+                    <TableHead>Author</TableHead>
+                    <TableHead>Context</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {filteredReports.length > 0 ? (
+                    filteredReports.map(report => (
+                        <TableRow key={report.id}>
+                        <TableCell>{format(report.reportedAt.toDate(), 'PPP')}</TableCell>
+                        <TableCell className="max-w-sm">
+                            <p className="truncate">{report.commentText}</p>
+                        </TableCell>
+                        <TableCell>{report.commentAuthor}</TableCell>
+                        <TableCell>
+                            <Button variant="ghost" size="icon" onClick={() => setSelectedReport(report)}>
+                                <Eye className="h-4 w-4" />
+                            </Button>
+                        </TableCell>
+                        <TableCell className="text-right">
+                            {filter === 'pending' && (
+                            <div className="flex justify-end gap-2">
+                                <Button size="sm" variant="outline" onClick={() => handleMarkResolved(report.id)}>
+                                Mark Resolved
+                                </Button>
+                                <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button size="sm" variant="destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Comment
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescriptionComponent>
+                                        This will permanently delete the comment and resolve this report. This action cannot be undone.
+                                    </AlertDialogDescriptionComponent>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDeleteComment(report)}>Delete Comment</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
+                            )}
+                        </TableCell>
+                        </TableRow>
+                    ))
+                    ) : (
+                    <TableRow>
+                        <TableCell colSpan={5} className="h-24 text-center">
+                        No {filter} reports.
+                        </TableCell>
+                    </TableRow>
+                    )}
+                </TableBody>
+                </Table>
+            )}
+            </CardContent>
+        </Card>
+        {selectedReport && (
+            <ContextDialog
+                report={selectedReport}
+                isOpen={!!selectedReport}
+                onClose={() => setSelectedReport(null)}
+            />
+        )}
+        </div>
+    </MainLayout>
   );
 }

@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -29,6 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { IndependentLogoForm } from './independent-logo-form';
+import { MainLayout } from '@/components/layout/main-layout';
 
 export default function AdminPartiesPage() {
   const { firestore, storage } = useFirebase();
@@ -56,20 +55,20 @@ export default function AdminPartiesPage() {
 
     try {
       if (values.logoFile) {
-        if(editingParty?.logoUrl) await deleteFile(editingParty.logoUrl, storage).catch(console.warn);
-        logoUrl = await uploadFile(values.logoFile, `parties/${values.logoFile.name}`, storage);
+        if(editingParty?.logoUrl) await deleteFile(editingParty.logoUrl).catch(console.warn);
+        logoUrl = await uploadFile(values.logoFile, `parties/${values.logoFile.name}`);
       }
       if (values.expandedLogoFile) {
-        if(editingParty?.expandedLogoUrl) await deleteFile(editingParty.expandedLogoUrl, storage).catch(console.warn);
-        expandedLogoUrl = await uploadFile(values.expandedLogoFile, `parties/expanded_${values.expandedLogoFile.name}`, storage);
+        if(editingParty?.expandedLogoUrl) await deleteFile(editingParty.expandedLogoUrl).catch(console.warn);
+        expandedLogoUrl = await uploadFile(values.expandedLogoFile, `parties/expanded_${values.expandedLogoFile.name}`);
       }
       if (values.oldLogoFile) {
-        if(editingParty?.oldLogoUrl) await deleteFile(editingParty.oldLogoUrl, storage).catch(console.warn);
-        oldLogoUrl = await uploadFile(values.oldLogoFile, `parties/old_${values.oldLogoFile.name}`, storage);
+        if(editingParty?.oldLogoUrl) await deleteFile(editingParty.oldLogoUrl).catch(console.warn);
+        oldLogoUrl = await uploadFile(values.oldLogoFile, `parties/old_${values.oldLogoFile.name}`);
       }
       if (values.manifestoFile) {
-        if(editingParty?.manifestoUrl) await deleteFile(editingParty.manifestoUrl, storage).catch(console.warn);
-        manifestoUrl = await uploadFile(values.manifestoFile, `parties/${values.manifestoFile.name}`, storage);
+        if(editingParty?.manifestoUrl) await deleteFile(editingParty.manifestoUrl).catch(console.warn);
+        manifestoUrl = await uploadFile(values.manifestoFile, `parties/${values.manifestoFile.name}`);
       }
 
       const partyData = {
@@ -108,14 +107,14 @@ export default function AdminPartiesPage() {
     try {
       let independentLogoUrl = values.independentLogoUrl || currentElection.independentLogoUrl;
       if (values.independentLogoFile) {
-        if (currentElection.independentLogoUrl) await deleteFile(currentElection.independentLogoUrl, storage);
-        independentLogoUrl = await uploadFile(values.independentLogoFile, `logos/independent_${currentElection.year}.png`, storage);
+        if (currentElection.independentLogoUrl) await deleteFile(currentElection.independentLogoUrl);
+        independentLogoUrl = await uploadFile(values.independentLogoFile, `logos/independent_${currentElection.year}.png`);
       }
 
       let independentExpandedLogoUrl = values.independentExpandedLogoUrl || currentElection.independentExpandedLogoUrl;
       if (values.independentExpandedLogoFile) {
-        if (currentElection.independentExpandedLogoUrl) await deleteFile(currentElection.independentExpandedLogoUrl, storage);
-        independentExpandedLogoUrl = await uploadFile(values.independentExpandedLogoFile, `logos/independent_expanded_${currentElection.year}.png`, storage);
+        if (currentElection.independentExpandedLogoUrl) await deleteFile(currentElection.independentExpandedLogoUrl);
+        independentExpandedLogoUrl = await uploadFile(values.independentExpandedLogoFile, `logos/independent_expanded_${currentElection.year}.png`);
       }
 
       const electionDocRef = doc(firestore, 'elections', currentElection.id);
@@ -142,10 +141,10 @@ export default function AdminPartiesPage() {
   const handleDelete = async (party: Party) => {
     if (!firestore) return;
 
-    if(party.logoUrl) await deleteFile(party.logoUrl, storage).catch(console.warn);
-    if(party.expandedLogoUrl) await deleteFile(party.expandedLogoUrl, storage).catch(console.warn);
-    if(party.oldLogoUrl) await deleteFile(party.oldLogoUrl, storage).catch(console.warn);
-    if(party.manifestoUrl) await deleteFile(party.manifestoUrl, storage).catch(console.warn);
+    if(party.logoUrl) await deleteFile(party.logoUrl).catch(console.warn);
+    if(party.expandedLogoUrl) await deleteFile(party.expandedLogoUrl).catch(console.warn);
+    if(party.oldLogoUrl) await deleteFile(party.oldLogoUrl).catch(console.warn);
+    if(party.manifestoUrl) await deleteFile(party.manifestoUrl).catch(console.warn);
 
     const partyDoc = doc(firestore, 'parties', party.id);
     deleteDoc(partyDoc)
@@ -159,107 +158,109 @@ export default function AdminPartiesPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-start mb-8">
-        <PageHeader
-          title="Manage Parties"
-          description="Add, edit, or remove political parties."
-        />
-        <div className="flex items-center gap-2">
-          
-          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => { setEditingParty(null); setIsFormOpen(true)}}>Add New Party</Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-2xl h-[90vh]">
-              <DialogHeader>
-                <DialogTitle>{editingParty ? 'Edit Party' : 'Add New Party'}</DialogTitle>
-              </DialogHeader>
-              <ScrollArea className="h-full">
-                <div className="pr-6">
-                  <PartyForm
-                    onSubmit={handleFormSubmit}
-                    initialData={editingParty}
-                    onCancel={() => setIsFormOpen(false)}
-                  />
-                </div>
-              </ScrollArea>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Existing Parties</CardTitle>
-          <CardDescription>A list of all political parties currently in the system.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <p>Loading parties...</p>
-          ) : (
-            <div className="space-y-4">
-              {parties && parties.length > 0 ? (
-                parties.map((party) => (
-                  <div key={party.id} className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50">
-                    <div className="flex items-center gap-4">
-                      {party.logoUrl ? (
-                        <Image src={party.logoUrl} alt={party.name} width={48} height={48} className="rounded-full object-contain" />
-                      ) : (
-                        <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                            <Shield className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-semibold" style={{ color: party.color }}>{party.name} ({party.acronym})</p>
-                        <div className="text-sm text-muted-foreground flex items-center gap-2">
-                          <span>Leader: {party.leader}</span>
-                          {party.website && (
-                            <>
-                              <span>&bull;</span>
-                              <Link href={party.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline">
-                                <LinkIcon className="h-3 w-3" />
-                                Website
-                              </Link>
-                            </>
-                          )}
-                        </div>
-                      </div>
+    <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-start mb-8">
+            <PageHeader
+            title="Manage Parties"
+            description="Add, edit, or remove political parties."
+            />
+            <div className="flex items-center gap-2">
+            
+            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+                <DialogTrigger asChild>
+                <Button onClick={() => { setEditingParty(null); setIsFormOpen(true)}}>Add New Party</Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-2xl h-[90vh]">
+                <DialogHeader>
+                    <DialogTitle>{editingParty ? 'Edit Party' : 'Add New Party'}</DialogTitle>
+                </DialogHeader>
+                <ScrollArea className="h-full">
+                    <div className="pr-6">
+                    <PartyForm
+                        onSubmit={handleFormSubmit}
+                        initialData={editingParty}
+                        onCancel={() => setIsFormOpen(false)}
+                    />
                     </div>
-                    <div className="flex items-center gap-2">
-                       <Button variant="ghost" size="icon" onClick={() => { setEditingParty(party); setIsFormOpen(true);}}>
-                           <Pencil className="h-4 w-4" />
-                       </Button>
-                       <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescriptionComponent>
-                                This will permanently delete the party "{party.name}" and all associated data. This action cannot be undone.
-                              </AlertDialogDescriptionComponent>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(party)}>Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-center text-muted-foreground py-8">No parties have been added yet.</p>
-              )}
+                </ScrollArea>
+                </DialogContent>
+            </Dialog>
             </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+
+        <Card>
+            <CardHeader>
+            <CardTitle>Existing Parties</CardTitle>
+            <CardDescription>A list of all political parties currently in the system.</CardDescription>
+            </CardHeader>
+            <CardContent>
+            {isLoading ? (
+                <p>Loading parties...</p>
+            ) : (
+                <div className="space-y-4">
+                {parties && parties.length > 0 ? (
+                    parties.map((party) => (
+                    <div key={party.id} className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50">
+                        <div className="flex items-center gap-4">
+                        {party.logoUrl ? (
+                            <Image src={party.logoUrl} alt={party.name} width={48} height={48} className="rounded-full object-contain" />
+                        ) : (
+                            <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                                <Shield className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                        )}
+                        <div>
+                            <p className="font-semibold" style={{ color: party.color }}>{party.name} ({party.acronym})</p>
+                            <div className="text-sm text-muted-foreground flex items-center gap-2">
+                            <span>Leader: {party.leader}</span>
+                            {party.website && (
+                                <>
+                                <span>&bull;</span>
+                                <Link href={party.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline">
+                                    <LinkIcon className="h-3 w-3" />
+                                    Website
+                                </Link>
+                                </>
+                            )}
+                            </div>
+                        </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => { setEditingParty(party); setIsFormOpen(true);}}>
+                            <Pencil className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescriptionComponent>
+                                    This will permanently delete the party "{party.name}" and all associated data. This action cannot be undone.
+                                </AlertDialogDescriptionComponent>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(party)}>Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                            </AlertDialog>
+
+                        </div>
+                    </div>
+                    ))
+                ) : (
+                    <p className="text-center text-muted-foreground py-8">No parties have been added yet.</p>
+                )}
+                </div>
+            )}
+            </CardContent>
+        </Card>
+        </div>
+    </MainLayout>
   );
 }

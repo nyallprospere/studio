@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -31,6 +30,7 @@ import { Input } from '@/components/ui/input';
 import * as XLSX from 'xlsx';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import Image from 'next/image';
+import { MainLayout } from '@/components/layout/main-layout';
 
 export default function ManageMapSubmissionsPage() {
     const { firestore } = useFirebase();
@@ -136,124 +136,125 @@ export default function ManageMapSubmissionsPage() {
     }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-start mb-8">
-        <PageHeader
-          title="Manage Map Submissions"
-          description="View user-submitted election map predictions."
-        />
-      </div>
-       <div className="grid grid-cols-1 gap-8">
-        <div>
-            <Card>
-                <CardHeader>
-                    <CardTitle>User Submissions</CardTitle>
-                    <CardDescription>A list of all shared or completed maps from users.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex items-center gap-2 mb-4">
-                        <Input 
-                            placeholder="Filter by city..."
-                            value={cityFilter}
-                            onChange={(e) => setCityFilter(e.target.value)}
-                            className="w-48"
-                        />
-                        <Input 
-                            placeholder="Filter by country..."
-                            value={countryFilter}
-                            onChange={(e) => setCountryFilter(e.target.value)}
-                            className="w-48"
-                        />
-                        <Select value={datePreset} onValueChange={handleDatePresetChange}>
-                            <SelectTrigger className="w-[120px]">
-                                <SelectValue placeholder="Date Range" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Time</SelectItem>
-                                <SelectItem value="day">Day</SelectItem>
-                                <SelectItem value="week">Week</SelectItem>
-                                <SelectItem value="month">Month</SelectItem>
-                                <SelectItem value="year">Year</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Button variant="outline" onClick={handleExport}>
-                            <Download className="mr-2 h-4 w-4" />
-                            Export
-                        </Button>
-                    </div>
-                    {isLoading ? <p>Loading submissions...</p> : (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Image</TableHead>
-                                    <TableHead>IP Address</TableHead>
-                                    <TableHead>City</TableHead>
-                                    <TableHead>Country</TableHead>
-                                    <TableHead>SLP</TableHead>
-                                    <TableHead>UWP</TableHead>
-                                    <TableHead>IND</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {processedMaps && processedMaps.length > 0 ? (
-                                    processedMaps.map(map => (
-                                        <TableRow key={map.id}>
-                                            <TableCell>{map.createdAt?.toDate ? new Date(map.createdAt.toDate()).toLocaleString() : 'N/A'}</TableCell>
-                                            <TableCell>
-                                                {map.imageUrl ? (
-                                                    <a href={map.imageUrl} target="_blank" rel="noopener noreferrer">
-                                                        <ImageIcon className="h-5 w-5" />
-                                                    </a>
-                                                ) : 'N/A'}
-                                            </TableCell>
-                                            <TableCell>{map.ipAddress || 'N/A'}</TableCell>
-                                            <TableCell>{map.city || 'N/A'}</TableCell>
-                                            <TableCell>{map.country || 'N/A'}</TableCell>
-                                            <TableCell>{map.slpSeats}</TableCell>
-                                            <TableCell>{map.uwpSeats}</TableCell>
-                                            <TableCell>{map.indSeats}</TableCell>
-                                            <TableCell className="text-right">
-                                                <Button asChild variant="ghost" size="icon">
-                                                    <Link href={`/maps/${map.id}`} target="_blank">
-                                                        <Eye className="h-4 w-4" />
-                                                    </Link>
-                                                </Button>
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                            <AlertDialogDescription>This will permanently delete this submitted map. This action cannot be undone.</AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => handleDelete(map.id)}>Delete</AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
+    <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-start mb-8">
+            <PageHeader
+            title="Manage Map Submissions"
+            description="View user-submitted election map predictions."
+            />
+        </div>
+        <div className="grid grid-cols-1 gap-8">
+            <div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>User Submissions</CardTitle>
+                        <CardDescription>A list of all shared or completed maps from users.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex items-center gap-2 mb-4">
+                            <Input 
+                                placeholder="Filter by city..."
+                                value={cityFilter}
+                                onChange={(e) => setCityFilter(e.target.value)}
+                                className="w-48"
+                            />
+                            <Input 
+                                placeholder="Filter by country..."
+                                value={countryFilter}
+                                onChange={(e) => setCountryFilter(e.target.value)}
+                                className="w-48"
+                            />
+                            <Select value={datePreset} onValueChange={handleDatePresetChange}>
+                                <SelectTrigger className="w-[120px]">
+                                    <SelectValue placeholder="Date Range" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Time</SelectItem>
+                                    <SelectItem value="day">Day</SelectItem>
+                                    <SelectItem value="week">Week</SelectItem>
+                                    <SelectItem value="month">Month</SelectItem>
+                                    <SelectItem value="year">Year</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Button variant="outline" onClick={handleExport}>
+                                <Download className="mr-2 h-4 w-4" />
+                                Export
+                            </Button>
+                        </div>
+                        {isLoading ? <p>Loading submissions...</p> : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Image</TableHead>
+                                        <TableHead>IP Address</TableHead>
+                                        <TableHead>City</TableHead>
+                                        <TableHead>Country</TableHead>
+                                        <TableHead>SLP</TableHead>
+                                        <TableHead>UWP</TableHead>
+                                        <TableHead>IND</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {processedMaps && processedMaps.length > 0 ? (
+                                        processedMaps.map(map => (
+                                            <TableRow key={map.id}>
+                                                <TableCell>{map.createdAt?.toDate ? new Date(map.createdAt.toDate()).toLocaleString() : 'N/A'}</TableCell>
+                                                <TableCell>
+                                                    {map.imageUrl ? (
+                                                        <a href={map.imageUrl} target="_blank" rel="noopener noreferrer">
+                                                            <ImageIcon className="h-5 w-5" />
+                                                        </a>
+                                                    ) : 'N/A'}
+                                                </TableCell>
+                                                <TableCell>{map.ipAddress || 'N/A'}</TableCell>
+                                                <TableCell>{map.city || 'N/A'}</TableCell>
+                                                <TableCell>{map.country || 'N/A'}</TableCell>
+                                                <TableCell>{map.slpSeats}</TableCell>
+                                                <TableCell>{map.uwpSeats}</TableCell>
+                                                <TableCell>{map.indSeats}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button asChild variant="ghost" size="icon">
+                                                        <Link href={`/maps/${map.id}`} target="_blank">
+                                                            <Eye className="h-4 w-4" />
+                                                        </Link>
+                                                    </Button>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                <AlertDialogDescription>This will permanently delete this submitted map. This action cannot be undone.</AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handleDelete(map.id)}>Delete</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={9} className="text-center h-24">
+                                                No map submissions match the current filters.
                                             </TableCell>
                                         </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={9} className="text-center h-24">
-                                            No map submissions match the current filters.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    )}
-                </CardContent>
-            </Card>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
         </div>
-       </div>
-    </div>
+    </MainLayout>
   );
 }

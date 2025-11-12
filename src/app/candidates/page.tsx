@@ -10,6 +10,7 @@ import { Shield, Link as LinkIcon, UserSquare } from 'lucide-react';
 import { useDoc, useFirebase, useMemoFirebase, useCollection } from '@/firebase';
 import { doc, collection, query, where, limit } from 'firebase/firestore';
 import Link from 'next/link';
+import { MainLayout } from '@/components/layout/main-layout';
 
 function PartyPageSkeleton() {
   return (
@@ -59,92 +60,96 @@ export default function PartyDetailPage() {
 
   if (isLoading || !party) {
     return (
-        <div className="container mx-auto px-4 py-8">
-            <PartyPageSkeleton />
-        </div>
+        <MainLayout>
+            <div className="container mx-auto px-4 py-8">
+                <PartyPageSkeleton />
+            </div>
+        </MainLayout>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-8">
-                <Card className="flex flex-col overflow-hidden h-full" style={{ borderTop: `4px solid ${party.color}` }}>
-                    <CardHeader className="flex flex-row items-start gap-4">
-                        {party.logoUrl ? (
-                            <div className="relative h-16 w-16 flex-shrink-0">
-                                <Image src={party.logoUrl} alt={`${party.name} logo`} fill className="rounded-full object-contain" />
+    <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-8">
+                    <Card className="flex flex-col overflow-hidden h-full" style={{ borderTop: `4px solid ${party.color}` }}>
+                        <CardHeader className="flex flex-row items-start gap-4">
+                            {party.logoUrl ? (
+                                <div className="relative h-16 w-16 flex-shrink-0">
+                                    <Image src={party.logoUrl} alt={`${party.name} logo`} fill className="rounded-full object-contain" />
+                                </div>
+                            ) : (
+                                <div className="h-16 w-16 flex-shrink-0 rounded-full bg-muted flex items-center justify-center">
+                                    <Shield className="w-8 h-8 text-muted-foreground" />
+                                </div>
+                            )}
+                            <div>
+                            <CardTitle className="font-headline text-2xl">{party.name} ({party.acronym})</CardTitle>
+                            <CardDescription>Founded in {party.founded}</CardDescription>
                             </div>
-                        ) : (
-                            <div className="h-16 w-16 flex-shrink-0 rounded-full bg-muted flex items-center justify-center">
-                                <Shield className="w-8 h-8 text-muted-foreground" />
-                            </div>
-                        )}
-                        <div>
-                        <CardTitle className="font-headline text-2xl">{party.name} ({party.acronym})</CardTitle>
-                        <CardDescription>Founded in {party.founded}</CardDescription>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="flex-grow space-y-6">
-                        <div>
-                            <h4 className="font-semibold text-sm mb-1 uppercase tracking-wider text-muted-foreground">About the Party</h4>
-                            <p className="text-sm text-foreground whitespace-pre-line">{party.description || 'No description available.'}</p>
-                        </div>
-                        {party.history && (
-                        <div>
-                            <h4 className="font-semibold text-sm mb-1 uppercase tracking-wider text-muted-foreground">Party History</h4>
-                            <p className="text-sm text-foreground whitespace-pre-line">{party.history}</p>
-                        </div>
-                        )}
-                        <div>
-                            <h4 className="font-semibold text-sm mb-1 uppercase tracking-wider text-muted-foreground">Manifesto Summary</h4>
-                            <p className="text-sm text-foreground whitespace-pre-line">{party.manifestoSummary || 'No summary available.'}</p>
-                        </div>
-                    </CardContent>
-                    <CardFooter className="flex-wrap gap-2 bg-muted/50 p-4">
-                        {party.manifestoUrl && (
-                            <Link href={party.manifestoUrl} target="_blank" rel="noopener noreferrer">
-                                <Badge variant="outline">View Full Manifesto (PDF)</Badge>
-                            </Link>
-                        )}
-                        {party.website && (
-                            <Link href={party.website} target="_blank" rel="noopener noreferrer">
-                                <Badge variant="outline" className="flex items-center gap-1">
-                                    <LinkIcon className="h-3 w-3" />
-                                    Visit Website
-                                </Badge>
-                            </Link>
-                        )}
-                    </CardFooter>
-                </Card>
-            </div>
-             <div className="space-y-8">
-                {leader && (
-                     <Card>
-                        <CardHeader>
-                            <CardTitle>Party Leader</CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <Link href={`/candidates/${leader.id}`} className="flex flex-col items-center text-center gap-4 group">
-                                <div className="relative h-32 w-32 rounded-full overflow-hidden bg-muted">
-                                {leader.imageUrl ? (
-                                    <Image src={leader.imageUrl} alt={`Photo of ${leader.firstName} ${leader.lastName}`} fill className="object-cover group-hover:scale-105 transition-transform" />
-                                ) : (
-                                    <UserSquare className="h-full w-full text-muted-foreground" />
-                                )}
-                                </div>
-                                <div>
-                                    <p className="font-bold text-lg group-hover:text-primary transition-colors">{leader.firstName} {leader.lastName}</p>
-                                    {leaderConstituency && (
-                                        <p className="text-sm text-muted-foreground">Candidate for {leaderConstituency.name}</p>
-                                    )}
-                                </div>
-                            </Link>
+                        <CardContent className="flex-grow space-y-6">
+                            <div>
+                                <h4 className="font-semibold text-sm mb-1 uppercase tracking-wider text-muted-foreground">About the Party</h4>
+                                <p className="text-sm text-foreground whitespace-pre-line">{party.description || 'No description available.'}</p>
+                            </div>
+                            {party.history && (
+                            <div>
+                                <h4 className="font-semibold text-sm mb-1 uppercase tracking-wider text-muted-foreground">Party History</h4>
+                                <p className="text-sm text-foreground whitespace-pre-line">{party.history}</p>
+                            </div>
+                            )}
+                            <div>
+                                <h4 className="font-semibold text-sm mb-1 uppercase tracking-wider text-muted-foreground">Manifesto Summary</h4>
+                                <p className="text-sm text-foreground whitespace-pre-line">{party.manifestoSummary || 'No summary available.'}</p>
+                            </div>
                         </CardContent>
+                        <CardFooter className="flex-wrap gap-2 bg-muted/50 p-4">
+                            {party.manifestoUrl && (
+                                <Link href={party.manifestoUrl} target="_blank" rel="noopener noreferrer">
+                                    <Badge variant="outline">View Full Manifesto (PDF)</Badge>
+                                </Link>
+                            )}
+                            {party.website && (
+                                <Link href={party.website} target="_blank" rel="noopener noreferrer">
+                                    <Badge variant="outline" className="flex items-center gap-1">
+                                        <LinkIcon className="h-3 w-3" />
+                                        Visit Website
+                                    </Badge>
+                                </Link>
+                            )}
+                        </CardFooter>
                     </Card>
-                )}
-             </div>
+                </div>
+                <div className="space-y-8">
+                    {leader && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Party Leader</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <Link href={`/candidates/${leader.id}`} className="flex flex-col items-center text-center gap-4 group">
+                                    <div className="relative h-32 w-32 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                                    {leader.imageUrl ? (
+                                        <Image src={leader.imageUrl} alt={`Photo of ${leader.firstName} ${leader.lastName}`} fill className="object-cover group-hover:scale-105 transition-transform" />
+                                    ) : (
+                                        <UserSquare className="h-full w-full text-muted-foreground" />
+                                    )}
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-lg group-hover:text-primary transition-colors">{leader.firstName} {leader.lastName}</p>
+                                        {leaderConstituency && (
+                                            <p className="text-sm text-muted-foreground">Candidate for {leaderConstituency.name}</p>
+                                        )}
+                                    </div>
+                                </Link>
+                            </CardContent>
+                        </Card>
+                    )}
+                </div>
+            </div>
         </div>
-    </div>
+    </MainLayout>
   );
 }

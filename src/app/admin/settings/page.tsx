@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader } from '@/components/page-header';
@@ -13,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { uploadFile, deleteFile } from '@/firebase/storage';
 import type { SiteSettings } from '@/lib/types';
 import Image from 'next/image';
+import { MainLayout } from '@/components/layout/main-layout';
 
 const electionYearsToSeed = [
   { year: 2021, name: '2021 General Election' },
@@ -118,13 +118,13 @@ export default function SettingsPage() {
         try {
             if (currentLogoUrl) {
                 try {
-                    await deleteFile(currentLogoUrl, storage);
+                    await deleteFile(currentLogoUrl);
                 } catch (e) {
                     console.warn("Could not delete old logo, it may have already been removed.", e)
                 }
             }
           
-            const newLogoUrl = await uploadFile(logoFile, `logos/site_banner_${Date.now()}`, storage);
+            const newLogoUrl = await uploadFile(logoFile, `logos/site_banner_${Date.now()}`);
           
             await setDoc(settingsRef, { siteBannerUrl: newLogoUrl }, { merge: true });
           
@@ -140,64 +140,66 @@ export default function SettingsPage() {
     };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Manage Settings"
-        description="Update site-wide settings and configurations."
-      />
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-            <CardHeader>
+    <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+        <PageHeader
+            title="Manage Settings"
+            description="Update site-wide settings and configurations."
+        />
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Database className="w-5 h-5" /> Site Banner
+                    </CardTitle>
+                    <CardDescription>Upload or change the main banner for the website.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {loadingSettings ? (
+                        <p>Loading banner...</p>
+                    ) : currentLogoUrl ? (
+                        <div className="relative h-24 border rounded-md p-2">
+                            <Image src={currentLogoUrl} alt="Current Site Banner" fill className="object-contain" />
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-md">
+                            <p className="text-muted-foreground">No banner uploaded</p>
+                        </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                        <Input id="logo-upload" type="file" onChange={handleFileChange} className="flex-1" />
+                        <Button onClick={handleUpload} disabled={!logoFile || isUploading}>
+                            {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
+                            Upload
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <Database className="w-5 h-5" /> Site Banner
+                    <Database className="w-5 h-5" /> Data Seeding
                 </CardTitle>
-                <CardDescription>Upload or change the main banner for the website.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                 {loadingSettings ? (
-                    <p>Loading banner...</p>
-                 ) : currentLogoUrl ? (
-                    <div className="relative h-24 border rounded-md p-2">
-                        <Image src={currentLogoUrl} alt="Current Site Banner" fill className="object-contain" />
-                    </div>
-                ) : (
-                    <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-md">
-                        <p className="text-muted-foreground">No banner uploaded</p>
-                    </div>
-                )}
-                <div className="flex items-center gap-2">
-                    <Input id="logo-upload" type="file" onChange={handleFileChange} className="flex-1" />
-                    <Button onClick={handleUpload} disabled={!logoFile || isUploading}>
-                        {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-                        Upload
-                    </Button>
-                </div>
-            </CardContent>
-        </Card>
-        <Card>
-            <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-                <Database className="w-5 h-5" /> Data Seeding
-            </CardTitle>
-            <CardDescription>
-                Pre-populate your database with initial data. This is useful for first-time setup.
-            </CardDescription>
-            </CardHeader>
-            <CardContent>
-            <Button onClick={handleSeedElections} disabled={isLoading}>
-                {isLoading ? (
-                    <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Seeding...
-                    </>
-                ) : 'Seed Election Years'}
-            </Button>
-            <p className="text-xs text-muted-foreground mt-2">
-                Adds election years from 1979-2021. This operation will only run if no elections exist.
-            </p>
-            </CardContent>
-        </Card>
-      </div>
-    </div>
+                <CardDescription>
+                    Pre-populate your database with initial data. This is useful for first-time setup.
+                </CardDescription>
+                </CardHeader>
+                <CardContent>
+                <Button onClick={handleSeedElections} disabled={isLoading}>
+                    {isLoading ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Seeding...
+                        </>
+                    ) : 'Seed Election Years'}
+                </Button>
+                <p className="text-xs text-muted-foreground mt-2">
+                    Adds election years from 1979-2021. This operation will only run if no elections exist.
+                </p>
+                </CardContent>
+            </Card>
+        </div>
+        </div>
+    </MainLayout>
   );
 }

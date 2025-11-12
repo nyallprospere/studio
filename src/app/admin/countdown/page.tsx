@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -15,6 +14,7 @@ import type { Election } from '@/lib/types';
 import Countdown from '@/components/countdown';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MainLayout } from '@/components/layout/main-layout';
 
 
 export default function ManageCountdownPage() {
@@ -70,54 +70,56 @@ export default function ManageCountdownPage() {
     };
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <PageHeader
-                title="Manage Countdown"
-                description="Set the date and time for the homepage election countdown."
-            />
+        <MainLayout>
+            <div className="container mx-auto px-4 py-8">
+                <PageHeader
+                    title="Manage Countdown"
+                    description="Set the date and time for the homepage election countdown."
+                />
 
-            <div className="grid md:grid-cols-2 gap-8 mt-8">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Set Election Date & Time</CardTitle>
-                        <CardDescription>Select the date and time for the next general election.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex flex-col items-center">
-                        <div className="flex flex-col sm:flex-row gap-4">
-                             <Calendar
-                                mode="single"
-                                selected={selectedDate}
-                                onSelect={setSelectedDate}
-                                className="rounded-md border"
-                            />
-                            <div className="space-y-2">
-                                <Label htmlFor="time">Time</Label>
-                                <Input
-                                    id="time"
-                                    type="time"
-                                    value={time}
-                                    onChange={(e) => setTime(e.target.value)}
+                <div className="grid md:grid-cols-2 gap-8 mt-8">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Set Election Date & Time</CardTitle>
+                            <CardDescription>Select the date and time for the next general election.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex flex-col items-center">
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <Calendar
+                                    mode="single"
+                                    selected={selectedDate}
+                                    onSelect={setSelectedDate}
+                                    className="rounded-md border"
                                 />
-                                <p className="text-sm text-muted-foreground">Set the exact time for the countdown.</p>
+                                <div className="space-y-2">
+                                    <Label htmlFor="time">Time</Label>
+                                    <Input
+                                        id="time"
+                                        type="time"
+                                        value={time}
+                                        onChange={(e) => setTime(e.target.value)}
+                                    />
+                                    <p className="text-sm text-muted-foreground">Set the exact time for the countdown.</p>
+                                </div>
                             </div>
-                        </div>
-                        <Button onClick={handleSaveDate} disabled={isSaving || !selectedDate} className="mt-4">
-                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            Save Date & Time
-                        </Button>
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Live Preview</CardTitle>
-                        <CardDescription>This is how the countdown will appear on the homepage.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {combinedDateTime ? <Countdown date={combinedDateTime} /> : <p className="text-center text-muted-foreground">Select a date to see a preview.</p>}
-                    </CardContent>
-                </Card>
+                            <Button onClick={handleSaveDate} disabled={isSaving || !selectedDate} className="mt-4">
+                                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                Save Date & Time
+                            </Button>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Live Preview</CardTitle>
+                            <CardDescription>This is how the countdown will appear on the homepage.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {combinedDateTime ? <Countdown date={combinedDateTime} /> : <p className="text-center text-muted-foreground">Select a date to see a preview.</p>}
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
-        </div>
+        </MainLayout>
     );
 }
 

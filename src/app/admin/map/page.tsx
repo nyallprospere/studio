@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,6 +14,7 @@ import { Loader2, UploadCloud } from 'lucide-react';
 import type { SiteSettings, Constituency } from '@/lib/types';
 import { useMemoFirebase } from '@/firebase';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
+import { MainLayout } from '@/components/layout/main-layout';
 
 
 export default function AdminMapPage() {
@@ -81,31 +80,33 @@ export default function AdminMapPage() {
   const isLoading = loadingSettings || loadingConstituencies;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Manage Constituency Map"
-        description="A preview of the interactive map used on the dashboard page."
-      />
-      
-      <div className="grid grid-cols-1 gap-8">
-        <Card>
-            <CardHeader>
-            <CardTitle>Map Preview</CardTitle>
-            <CardDescription>This is a preview of the currently active map.</CardDescription>
-            </CardHeader>
-            <CardContent className="relative">
-                {isLoading ? (
-                    <p>Loading map preview...</p>
-                ) : (
-                  <InteractiveSvgMap 
-                    constituencies={constituencies ?? []} 
-                    selectedConstituencyId={selectedConstituencyId}
-                    onConstituencyClick={setSelectedConstituencyId}
-                  />
-                )}
-            </CardContent>
-        </Card>
-      </div>
-    </div>
+    <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+        <PageHeader
+            title="Manage Constituency Map"
+            description="A preview of the interactive map used on the dashboard page."
+        />
+        
+        <div className="grid grid-cols-1 gap-8">
+            <Card>
+                <CardHeader>
+                <CardTitle>Map Preview</CardTitle>
+                <CardDescription>This is a preview of the currently active map.</CardDescription>
+                </CardHeader>
+                <CardContent className="relative">
+                    {isLoading ? (
+                        <p>Loading map preview...</p>
+                    ) : (
+                    <InteractiveSvgMap 
+                        constituencies={constituencies ?? []} 
+                        selectedConstituencyId={selectedConstituencyId}
+                        onConstituencyClick={setSelectedConstituencyId}
+                    />
+                    )}
+                </CardContent>
+            </Card>
+        </div>
+        </div>
+    </MainLayout>
   );
 }

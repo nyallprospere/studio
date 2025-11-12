@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { VoterInformationForm, type VoterInformation } from './voter-information-form';
 import { cn } from '@/lib/utils';
+import { MainLayout } from '@/components/layout/main-layout';
 
 export default function VoterInformationPage() {
   const { firestore } = useFirebase();
@@ -57,86 +58,88 @@ export default function VoterInformationPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-start mb-8">
-        <PageHeader
-          title="Manage Voter Information"
-          description="Add, edit, or remove sections from the voter information card on the homepage."
-        />
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => { setEditingItem(null); setIsFormOpen(true) }}>
-              <PlusCircle className="mr-2 h-4 w-4" /> Add Section
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{editingItem ? 'Edit Section' : 'Add New Section'}</DialogTitle>
-            </DialogHeader>
-            <VoterInformationForm
-              onSubmit={handleFormSubmit}
-              initialData={editingItem}
-              onCancel={() => setIsFormOpen(false)}
+    <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-start mb-8">
+            <PageHeader
+            title="Manage Voter Information"
+            description="Add, edit, or remove sections from the voter information card on the homepage."
             />
-          </DialogContent>
-        </Dialog>
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Information Sections</CardTitle>
-          <CardDescription>The sections displayed on the homepage.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? <p>Loading...</p> : (
-            <div className="space-y-4">
-              {voterInfoItems && voterInfoItems.length > 0 ? (
-                voterInfoItems.map(item => (
-                  <div key={item.id} className="flex items-start justify-between p-4 border rounded-md">
-                    <div className="flex items-start gap-4">
-                       {item.isVisible === false ? <EyeOff className="h-5 w-5 text-muted-foreground mt-1" /> : <Eye className="h-5 w-5 text-muted-foreground mt-1" />}
-                      <div>
-                        <h3 className="font-semibold">{item.title}</h3>
-                        <ul className="list-disc list-inside text-muted-foreground mt-2 text-sm space-y-1">
-                          {item.items.map((textItem, index) => (
-                            <li key={index} className="flex items-center gap-2">
-                                {textItem.isVisible ? <Eye className="h-4 w-4 text-green-500" /> : <EyeOff className="h-4 w-4 text-gray-400" />}
-                                <span className={cn(!textItem.isVisible && "line-through text-gray-400")}>{textItem.text}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogTrigger asChild>
+                <Button onClick={() => { setEditingItem(null); setIsFormOpen(true) }}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Section
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                <DialogTitle>{editingItem ? 'Edit Section' : 'Add New Section'}</DialogTitle>
+                </DialogHeader>
+                <VoterInformationForm
+                onSubmit={handleFormSubmit}
+                initialData={editingItem}
+                onCancel={() => setIsFormOpen(false)}
+                />
+            </DialogContent>
+            </Dialog>
+        </div>
+        <Card>
+            <CardHeader>
+            <CardTitle>Information Sections</CardTitle>
+            <CardDescription>The sections displayed on the homepage.</CardDescription>
+            </CardHeader>
+            <CardContent>
+            {isLoading ? <p>Loading...</p> : (
+                <div className="space-y-4">
+                {voterInfoItems && voterInfoItems.length > 0 ? (
+                    voterInfoItems.map(item => (
+                    <div key={item.id} className="flex items-start justify-between p-4 border rounded-md">
+                        <div className="flex items-start gap-4">
+                        {item.isVisible === false ? <EyeOff className="h-5 w-5 text-muted-foreground mt-1" /> : <Eye className="h-5 w-5 text-muted-foreground mt-1" />}
+                        <div>
+                            <h3 className="font-semibold">{item.title}</h3>
+                            <ul className="list-disc list-inside text-muted-foreground mt-2 text-sm space-y-1">
+                            {item.items.map((textItem, index) => (
+                                <li key={index} className="flex items-center gap-2">
+                                    {textItem.isVisible ? <Eye className="h-4 w-4 text-green-500" /> : <EyeOff className="h-4 w-4 text-gray-400" />}
+                                    <span className={cn(!textItem.isVisible && "line-through text-gray-400")}>{textItem.text}</span>
+                                </li>
+                            ))}
+                            </ul>
+                        </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setIsFormOpen(true);}}>
+                            <Pencil className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>This will permanently delete the "{item.title}" section.</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(item)}>Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                       <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setIsFormOpen(true);}}>
-                           <Pencil className="h-4 w-4" />
-                       </Button>
-                       <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>This will permanently delete the "{item.title}" section.</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(item)}>Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-center py-8 text-muted-foreground">No voter information sections created yet.</p>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+                    ))
+                ) : (
+                    <p className="text-center py-8 text-muted-foreground">No voter information sections created yet.</p>
+                )}
+                </div>
+            )}
+            </CardContent>
+        </Card>
+        </div>
+    </MainLayout>
   )
 }

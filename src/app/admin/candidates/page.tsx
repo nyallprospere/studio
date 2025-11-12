@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -29,6 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
+import { MainLayout } from '@/components/layout/main-layout';
 
 
 export default function AdminCandidatesPage() {
@@ -64,22 +64,22 @@ export default function AdminCandidatesPage() {
       if (values.photoFile) {
         // If editing and there's an old image, delete it
         if (editingCandidate?.imageUrl) {
-          await deleteFile(editingCandidate.imageUrl, storage).catch(console.warn);
+          await deleteFile(editingCandidate.imageUrl).catch(console.warn);
         }
         const uniqueFileName = `${candidateName.replace(/ /g, '_')}_${Date.now()}`;
-        imageUrl = await uploadFile(values.photoFile, `candidates/${uniqueFileName}`, storage);
+        imageUrl = await uploadFile(values.photoFile, `candidates/${uniqueFileName}`);
       } else if (values.removePhoto && editingCandidate?.imageUrl) {
         // Handle photo removal
-        await deleteFile(editingCandidate.imageUrl, storage).catch(console.warn);
+        await deleteFile(editingCandidate.imageUrl).catch(console.warn);
         imageUrl = '';
       }
       
       let customLogoUrl = values.customLogoUrl;
       if (values.customLogoFile) {
         if (editingCandidate?.customLogoUrl) {
-          await deleteFile(editingCandidate.customLogoUrl, storage).catch(console.warn);
+          await deleteFile(editingCandidate.customLogoUrl).catch(console.warn);
         }
-        customLogoUrl = await uploadFile(values.customLogoFile, `logos/ind_${values.lastName}_${Date.now()}.png`, storage);
+        customLogoUrl = await uploadFile(values.customLogoFile, `logos/ind_${values.lastName}_${Date.now()}.png`);
       }
 
       const candidateData: Omit<Candidate, 'id'> = {
@@ -120,7 +120,7 @@ export default function AdminCandidatesPage() {
   const handleDelete = async (candidate: Candidate) => {
     if (!firestore) return;
     try {
-      if (candidate.imageUrl) await deleteFile(candidate.imageUrl, storage);
+      if (candidate.imageUrl) await deleteFile(candidate.imageUrl);
       
       const candidateDoc = doc(firestore, 'candidates', candidate.id);
       await deleteDoc(candidateDoc);
@@ -244,7 +244,7 @@ export default function AdminCandidatesPage() {
      try {
         const deleteBatch = writeBatch(firestore);
         for (const candidate of candidates) {
-            if (candidate.imageUrl) await deleteFile(candidate.imageUrl, storage);
+            if (candidate.imageUrl) await deleteFile(candidate.imageUrl);
             const originalDocRef = doc(candidatesCollection, candidate.id);
             deleteBatch.delete(originalDocRef);
         }
@@ -280,190 +280,192 @@ export default function AdminCandidatesPage() {
 
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-start mb-8">
-        <PageHeader
-          title="Manage Candidates"
-          description="Add, edit, or remove election candidates."
-        />
-        <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setIsImportOpen(true)}>
-                <Upload className="mr-2 h-4 w-4" />
-                Import
-            </Button>
-            <Button variant="outline" onClick={handleExport}>
-                <Download className="mr-2 h-4 w-4" />
-                Export
-            </Button>
-             <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button variant="outline" disabled={!candidates || candidates.length === 0 || !currentElection}>
-                        <Archive className="mr-2 h-4 w-4" />
-                        Archive
-                    </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This action will move all {candidates?.length || 0} current candidates to an archive under the election: <strong>{currentElection?.name}</strong>. You can clear them in a separate step.
-                    </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleArchiveAll}>Yes, Archive All</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-            <div className="flex items-center gap-1">
-                 <AlertDialog>
+    <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-start mb-8">
+            <PageHeader
+            title="Manage Candidates"
+            description="Add, edit, or remove election candidates."
+            />
+            <div className="flex items-center gap-2">
+                <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Import
+                </Button>
+                <Button variant="outline" onClick={handleExport}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Export
+                </Button>
+                <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button variant="destructive" disabled={!candidates || candidates.length === 0 || isClearAllLocked}>
-                            <XCircle className="mr-2 h-4 w-4" />
-                            Clear All
+                        <Button variant="outline" disabled={!candidates || candidates.length === 0 || !currentElection}>
+                            <Archive className="mr-2 h-4 w-4" />
+                            Archive
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                         <AlertDialogHeader>
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This will permanently delete all {candidates?.length || 0} candidates. This action cannot be undone. Consider archiving first.
+                            This action will move all {candidates?.length || 0} current candidates to an archive under the election: <strong>{currentElection?.name}</strong>. You can clear them in a separate step.
                         </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleClearAll}>Yes, Clear All</AlertDialogAction>
+                        <AlertDialogAction onClick={handleArchiveAll}>Yes, Archive All</AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
-                <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={() => setIsClearAllLocked(!isClearAllLocked)}
-                    disabled={!candidates || candidates.length === 0}
-                    >
-                    {isClearAllLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
-                </Button>
-            </div>
-            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-            <DialogTrigger asChild>
-                <Button onClick={() => { setEditingCandidate(null); setIsFormOpen(true)}}>Add New Candidate</Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-3xl h-[90vh]">
-                <DialogHeader>
-                <DialogTitle>{editingCandidate ? 'Edit Candidate' : 'Add New Candidate'}</DialogTitle>
-                </DialogHeader>
-                <ScrollArea className="h-full">
-                  <div className="pr-6">
-                    <CandidateForm
-                    onSubmit={handleFormSubmit}
-                    initialData={editingCandidate}
-                    onCancel={() => setIsFormOpen(false)}
-                    parties={parties || []}
-                    constituencies={constituencies || []}
-                    />
-                  </div>
-                </ScrollArea>
-            </DialogContent>
-            </Dialog>
-        </div>
-      </div>
-      
-       <ImportDialog
-        isOpen={isImportOpen}
-        onClose={() => setIsImportOpen(false)}
-        onImport={handleImport}
-        parties={parties || []}
-        constituencies={constituencies || []}
-      />
-
-
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>{cardTitle}</CardTitle>
-              <CardDescription>{cardDescription}</CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-                <Button variant={!partyFilter ? "secondary" : "outline"} size="sm" onClick={() => setPartyFilter(null)}>All</Button>
-                {partyDetails.slp && <Button variant={partyFilter === partyDetails.slp.id ? "secondary" : "outline"} size="sm" onClick={() => setPartyFilter(partyDetails.slp!.id)}>SLP</Button>}
-                {partyDetails.uwp && <Button variant={partyFilter === partyDetails.uwp.id ? "secondary" : "outline"} size="sm" onClick={() => setPartyFilter(partyDetails.uwp!.id)}>UWP</Button>}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <p>Loading candidates...</p>
-          ) : errorCandidates ? (
-             <div className="text-red-600 bg-red-100 p-4 rounded-md">
-                <h3 className="font-bold">Error loading candidates</h3>
-                <p>{errorCandidates.message}</p>
-                <p className="text-sm mt-2">Please check the Firestore security rules and console for more details.</p>
-             </div>
-          ) : (
-            <ScrollArea className="h-[640px] pr-4">
-                <div className="space-y-4">
-                {filteredCandidates && filteredCandidates.length > 0 ? (
-                    filteredCandidates.map((candidate) => (
-                    <div key={candidate.id} className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50">
-                        <div className="flex items-center gap-4">
-                        {candidate.imageUrl ? (
-                            <Image src={candidate.imageUrl} alt={`${candidate.firstName} ${candidate.lastName}`} width={48} height={48} className="rounded-full object-cover" />
-                        ) : (
-                            <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                                <UserSquare className="h-6 w-6 text-muted-foreground" />
-                            </div>
-                        )}
-                        <div>
-                            <p className="font-semibold">{candidate.firstName} {candidate.lastName} {candidate.isIncumbent && <span className="font-normal text-primary text-sm">(Inc.)</span>}</p>
-                            <p className="text-sm text-muted-foreground">
-                            {getPartyAcronym(candidate.partyId)} 
-                            {(candidate.isIndependentCastriesCentral || candidate.isIndependentCastriesNorth) && ' (IND)'}
-                             &bull; {getConstituencyName(candidate.constituencyId)}
-                            {candidate.isPartyLeader && <span className="font-bold text-primary"> (Party Leader)</span>}
-                            </p>
-                        </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingCandidate(candidate); setIsFormOpen(true);}}>
-                            <Pencil className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This will permanently delete the candidate "{candidate.firstName} {candidate.lastName}" and all associated data. This action cannot be undone.
-                                </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(candidate)}>Delete</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                            </AlertDialog>
-                        </div>
-                    </div>
-                    ))
-                ) : (
-                    <p className="text-center text-muted-foreground py-8">No candidates match the current filter.</p>
-                )}
+                <div className="flex items-center gap-1">
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" disabled={!candidates || candidates.length === 0 || isClearAllLocked}>
+                                <XCircle className="mr-2 h-4 w-4" />
+                                Clear All
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete all {candidates?.length || 0} candidates. This action cannot be undone. Consider archiving first.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleClearAll}>Yes, Clear All</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                    <Button 
+                        variant="outline" 
+                        size="icon" 
+                        onClick={() => setIsClearAllLocked(!isClearAllLocked)}
+                        disabled={!candidates || candidates.length === 0}
+                        >
+                        {isClearAllLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                    </Button>
                 </div>
-            </ScrollArea>
-          )}
-        </CardContent>
-      </Card>
-      <div className="mt-8">
-        <Button asChild variant="outline">
-            <Link href="/archive">Browse & Restore Archives</Link>
-        </Button>
-      </div>
-    </div>
+                <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+                <DialogTrigger asChild>
+                    <Button onClick={() => { setEditingCandidate(null); setIsFormOpen(true)}}>Add New Candidate</Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-3xl h-[90vh]">
+                    <DialogHeader>
+                    <DialogTitle>{editingCandidate ? 'Edit Candidate' : 'Add New Candidate'}</DialogTitle>
+                    </DialogHeader>
+                    <ScrollArea className="h-full">
+                    <div className="pr-6">
+                        <CandidateForm
+                        onSubmit={handleFormSubmit}
+                        initialData={editingCandidate}
+                        onCancel={() => setIsFormOpen(false)}
+                        parties={parties || []}
+                        constituencies={constituencies || []}
+                        />
+                    </div>
+                    </ScrollArea>
+                </DialogContent>
+                </Dialog>
+            </div>
+        </div>
+        
+        <ImportDialog
+            isOpen={isImportOpen}
+            onClose={() => setIsImportOpen(false)}
+            onImport={handleImport}
+            parties={parties || []}
+            constituencies={constituencies || []}
+        />
+
+
+        <Card>
+            <CardHeader>
+            <div className="flex justify-between items-center">
+                <div>
+                <CardTitle>{cardTitle}</CardTitle>
+                <CardDescription>{cardDescription}</CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button variant={!partyFilter ? "secondary" : "outline"} size="sm" onClick={() => setPartyFilter(null)}>All</Button>
+                    {partyDetails.slp && <Button variant={partyFilter === partyDetails.slp.id ? "secondary" : "outline"} size="sm" onClick={() => setPartyFilter(partyDetails.slp!.id)}>SLP</Button>}
+                    {partyDetails.uwp && <Button variant={partyFilter === partyDetails.uwp.id ? "secondary" : "outline"} size="sm" onClick={() => setPartyFilter(partyDetails.uwp!.id)}>UWP</Button>}
+                </div>
+            </div>
+            </CardHeader>
+            <CardContent>
+            {isLoading ? (
+                <p>Loading candidates...</p>
+            ) : errorCandidates ? (
+                <div className="text-red-600 bg-red-100 p-4 rounded-md">
+                    <h3 className="font-bold">Error loading candidates</h3>
+                    <p>{errorCandidates.message}</p>
+                    <p className="text-sm mt-2">Please check the Firestore security rules and console for more details.</p>
+                </div>
+            ) : (
+                <ScrollArea className="h-[640px] pr-4">
+                    <div className="space-y-4">
+                    {filteredCandidates && filteredCandidates.length > 0 ? (
+                        filteredCandidates.map((candidate) => (
+                        <div key={candidate.id} className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50">
+                            <div className="flex items-center gap-4">
+                            {candidate.imageUrl ? (
+                                <Image src={candidate.imageUrl} alt={`${candidate.firstName} ${candidate.lastName}`} width={48} height={48} className="rounded-full object-cover" />
+                            ) : (
+                                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                                    <UserSquare className="h-6 w-6 text-muted-foreground" />
+                                </div>
+                            )}
+                            <div>
+                                <p className="font-semibold">{candidate.firstName} {candidate.lastName} {candidate.isIncumbent && <span className="font-normal text-primary text-sm">(Inc.)</span>}</p>
+                                <p className="text-sm text-muted-foreground">
+                                {getPartyAcronym(candidate.partyId)} 
+                                {(candidate.isIndependentCastriesCentral || candidate.isIndependentCastriesNorth) && ' (IND)'}
+                                &bull; {getConstituencyName(candidate.constituencyId)}
+                                {candidate.isPartyLeader && <span className="font-bold text-primary"> (Party Leader)</span>}
+                                </p>
+                            </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="icon" onClick={() => { setEditingCandidate(candidate); setIsFormOpen(true);}}>
+                                <Pencil className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This will permanently delete the candidate "{candidate.firstName} {candidate.lastName}" and all associated data. This action cannot be undone.
+                                    </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDelete(candidate)}>Delete</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
+                        </div>
+                        ))
+                    ) : (
+                        <p className="text-center text-muted-foreground py-8">No candidates match the current filter.</p>
+                    )}
+                    </div>
+                </ScrollArea>
+            )}
+            </CardContent>
+        </Card>
+        <div className="mt-8">
+            <Button asChild variant="outline">
+                <Link href="/archive">Browse & Restore Archives</Link>
+            </Button>
+        </div>
+        </div>
+    </MainLayout>
   );
 }

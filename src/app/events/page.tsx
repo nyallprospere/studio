@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -10,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EventCard } from '@/components/event-card';
+import { MainLayout } from '@/components/layout/main-layout';
 
 
 function EventsPageSkeleton() {
@@ -76,41 +76,43 @@ export default function EventsPage() {
 
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="UWP Events"
-        description="Find out about rallies, town halls, and other events from the United Workers Party."
-      />
-      
-      {isLoading ? <EventsPageSkeleton /> : (
-          <div className="grid md:grid-cols-1 gap-8">
-            <Card>
-                <CardHeader>
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <CardTitle>UWP Events</CardTitle>
-                            <CardDescription>Events hosted by the United Workers Party.</CardDescription>
+    <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+        <PageHeader
+            title="UWP Events"
+            description="Find out about rallies, town halls, and other events from the United Workers Party."
+        />
+        
+        {isLoading ? <EventsPageSkeleton /> : (
+            <div className="grid md:grid-cols-1 gap-8">
+                <Card>
+                    <CardHeader>
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <CardTitle>UWP Events</CardTitle>
+                                <CardDescription>Events hosted by the United Workers Party.</CardDescription>
+                            </div>
+                            <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
+                                <Button size="sm" variant={uwpViewMode === 'upcoming' ? 'secondary' : 'ghost'} onClick={() => setUwpViewMode('upcoming')}>Upcoming</Button>
+                                <Button size="sm" variant={uwpViewMode === 'past' ? 'secondary' : 'ghost'} onClick={() => setUwpViewMode('past')}>Past</Button>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
-                            <Button size="sm" variant={uwpViewMode === 'upcoming' ? 'secondary' : 'ghost'} onClick={() => setUwpViewMode('upcoming')}>Upcoming</Button>
-                            <Button size="sm" variant={uwpViewMode === 'past' ? 'secondary' : 'ghost'} onClick={() => setUwpViewMode('past')}>Past</Button>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                        {visibleUwpEvents.length > 0 ? (
+                            visibleUwpEvents.map((event) => (
+                            <EventCard key={event.id} event={event} party={uwpParty || undefined} />
+                            ))
+                        ) : (
+                            <p className="text-center text-muted-foreground py-8">No {uwpViewMode} UWP events found.</p>
+                        )}
                         </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                    {visibleUwpEvents.length > 0 ? (
-                        visibleUwpEvents.map((event) => (
-                           <EventCard key={event.id} event={event} party={uwpParty || undefined} />
-                        ))
-                    ) : (
-                        <p className="text-center text-muted-foreground py-8">No {uwpViewMode} UWP events found.</p>
-                    )}
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </div>
+        )}
         </div>
-      )}
-    </div>
+    </MainLayout>
   );
 }

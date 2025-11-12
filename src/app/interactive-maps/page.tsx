@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MainLayout } from '@/components/layout/main-layout';
 
 function InteractiveMapPageSkeleton() {
     return (
@@ -38,56 +39,60 @@ export default function ConstituenciesPage() {
 
     if (loadingConstituencies) {
         return (
-             <div className="container mx-auto px-4 py-8">
-                <PageHeader
-                    title=""
-                    description="Click on a district to begin."
-                />
-                <InteractiveMapPageSkeleton />
-            </div>
+             <MainLayout>
+                <div className="container mx-auto px-4 py-8">
+                    <PageHeader
+                        title=""
+                        description="Click on a district to begin."
+                    />
+                    <InteractiveMapPageSkeleton />
+                </div>
+             </MainLayout>
         );
     }
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <PageHeader
-                title=""
-                description="Click on a district to begin."
-            />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="md:col-span-2">
-                     <Card>
-                        <CardContent className="p-2">
-                            <InteractiveSvgMap 
-                                constituencies={constituencies ?? []}
-                                selectedConstituencyId={selectedConstituencyId}
-                                onConstituencyClick={setSelectedConstituencyId}
-                            />
-                        </CardContent>
-                    </Card>
-                </div>
-                <div>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Constituency Details</CardTitle>
-                            <CardDescription>
-                                {selectedConstituency ? `Information for ${selectedConstituency.name}`: 'Select a constituency on the map.'}
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {selectedConstituency ? (
-                                <div className="space-y-2">
-                                    <p><span className="font-semibold">Name:</span> {selectedConstituency.name}</p>
-                                    <p><span className="font-semibold">Registered Voters:</span> {selectedConstituency.demographics.registeredVoters?.toLocaleString() || 'N/A'}</p>
-                                    <p><span className="font-semibold">Political Leaning:</span> {selectedConstituency.politicalLeaning || 'Tossup'}</p>
-                                </div>
-                            ) : (
-                               <p className="text-muted-foreground">No constituency selected.</p> 
-                            )}
-                        </CardContent>
-                    </Card>
+        <MainLayout>
+            <div className="container mx-auto px-4 py-8">
+                <PageHeader
+                    title=""
+                    description="Click on a district to begin."
+                />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="md:col-span-2">
+                        <Card>
+                            <CardContent className="p-2">
+                                <InteractiveSvgMap 
+                                    constituencies={constituencies ?? []}
+                                    selectedConstituencyId={selectedConstituencyId}
+                                    onConstituencyClick={setSelectedConstituencyId}
+                                />
+                            </CardContent>
+                        </Card>
+                    </div>
+                    <div>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Constituency Details</CardTitle>
+                                <CardDescription>
+                                    {selectedConstituency ? `Information for ${selectedConstituency.name}`: 'Select a constituency on the map.'}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {selectedConstituency ? (
+                                    <div className="space-y-2">
+                                        <p><span className="font-semibold">Name:</span> {selectedConstituency.name}</p>
+                                        <p><span className="font-semibold">Registered Voters:</span> {selectedConstituency.demographics.registeredVoters?.toLocaleString() || 'N/A'}</p>
+                                        <p><span className="font-semibold">Political Leaning:</span> {selectedConstituency.politicalLeaning || 'Tossup'}</p>
+                                    </div>
+                                ) : (
+                                <p className="text-muted-foreground">No constituency selected.</p> 
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
             </div>
-        </div>
+        </MainLayout>
     )
 }
