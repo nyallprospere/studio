@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -41,7 +40,7 @@ export default function ConstituenciesPage() {
         return (
              <div className="container mx-auto px-4 py-8">
                 <PageHeader
-                    title="Constituency Map"
+                    title=""
                     description="Click on a district to begin."
                 />
                 <InteractiveMapPageSkeleton />
