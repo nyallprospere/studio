@@ -3,12 +3,11 @@ import { Footer } from './footer';
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   return (
-      <div className="flex min-h-screen flex-col">
+      <>
         <Header />
-        <main className="flex-1 flex flex-col bg-background">
-          <div className="flex-1 overflow-y-auto">{children}</div>
-          <Footer />
-        </main>
-      </div>
+        <div className="flex-1">
+            {children}
+        </div>
+      </>
   );
 }

@@ -21,6 +21,7 @@ import { analyzePastElection, type PastElectionAnalysisInput } from '@/ai/flows/
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
+import { MainLayout } from '@/components/layout/main-layout';
 
 const constituencyMapOrder = [
     "Gros Islet",
@@ -598,417 +599,419 @@ export default function ResultsClientPage() {
 };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Past Election Results"
-      />
-      <div className="mb-6 flex justify-end">
-          <Select value={selectedElectionId} onValueChange={handleYearChange}>
-              <SelectTrigger className="w-[280px]">
-                  <SelectValue placeholder="Select an election year" />
-              </SelectTrigger>
-              <SelectContent>
-                  {sortedElections.map(election => (
-                      <SelectItem key={election.id} value={election.id}>
-                          {election.name}
-                      </SelectItem>
-                  ))}
-              </SelectContent>
-          </Select>
-      </div>
-      <Card>
-        <CardContent className="p-6">
-            {!selectedElectionId || !currentElection ? (
-                <div className="text-center py-12 text-muted-foreground">Please select an election to view results.</div>
-            ) : (
-                <div>
-                  <h3 className="text-2xl font-headline mb-4">
-                    {currentElection.name} Election Summary
-                  </h3>
-                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-                        {summaryData.map((summaryItem) => (
-                        <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
-                            <CardHeader className="flex flex-col items-center p-4">
-                                <p className="text-xs font-semibold text-muted-foreground">
-                                    {summaryItem.acronym === 'SLP' ? currentElection.slpLeader : currentElection.uwpLeader}
-                                </p>
-                                <CardTitle className="text-base mb-2">{summaryItem.name}</CardTitle>
-                                {summaryItem.logoUrl && (
-                                    <div className="relative h-12 w-24">
-                                        <Image src={summaryItem.logoUrl} alt={`${summaryItem.name} logo`} fill className="object-contain" />
-                                    </div>
-                                )}
-                            </CardHeader>
-                            <CardContent className="text-center p-4 pt-0">
-                                <div className="text-2xl font-bold">
-                                    {summaryItem.seats}
-                                    {summaryItem.seatChange !== null && (
-                                        <sup className={cn("text-xs font-semibold ml-1", summaryItem.seatChange > 0 ? 'text-green-600' : summaryItem.seatChange < 0 ? 'text-red-600' : 'text-muted-foreground')}>
-                                          {summaryItem.seatChange > 0 ? `+${summaryItem.seatChange}` : summaryItem.seatChange} Seats
-                                        </sup>
-                                    )}
-                                </div>
-                                <div className="mt-2">
-                                  <div className="font-bold">{summaryItem.votePercentage}%</div>
-                                   {summaryItem.votePercentageChange !== null && (
-                                        <div className={cn("text-xs font-semibold flex items-center justify-center", summaryItem.votePercentageChange > 0 ? 'text-green-600' : summaryItem.votePercentageChange < 0 ? 'text-red-600' : 'text-muted-foreground')}>
-                                            {summaryItem.votePercentageChange > 0 ? <ArrowUp className="h-3 w-3" /> : summaryItem.votePercentageChange < 0 ? <ArrowDown className="h-3 w-3" /> : null}
-                                            {Math.abs(summaryItem.votePercentageChange).toFixed(1)}%
+    <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+        <PageHeader
+            title="Past Election Results"
+        />
+        <div className="mb-6 flex justify-end">
+            <Select value={selectedElectionId} onValueChange={handleYearChange}>
+                <SelectTrigger className="w-[280px]">
+                    <SelectValue placeholder="Select an election year" />
+                </SelectTrigger>
+                <SelectContent>
+                    {sortedElections.map(election => (
+                        <SelectItem key={election.id} value={election.id}>
+                            {election.name}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
+        <Card>
+            <CardContent className="p-6">
+                {!selectedElectionId || !currentElection ? (
+                    <div className="text-center py-12 text-muted-foreground">Please select an election to view results.</div>
+                ) : (
+                    <div>
+                    <h3 className="text-2xl font-headline mb-4">
+                        {currentElection.name} Election Summary
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                            {summaryData.map((summaryItem) => (
+                            <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
+                                <CardHeader className="flex flex-col items-center p-4">
+                                    <p className="text-xs font-semibold text-muted-foreground">
+                                        {summaryItem.acronym === 'SLP' ? currentElection.slpLeader : currentElection.uwpLeader}
+                                    </p>
+                                    <CardTitle className="text-base mb-2">{summaryItem.name}</CardTitle>
+                                    {summaryItem.logoUrl && (
+                                        <div className="relative h-12 w-24">
+                                            <Image src={summaryItem.logoUrl} alt={`${summaryItem.name} logo`} fill className="object-contain" />
                                         </div>
                                     )}
-                                  <div className="text-sm text-muted-foreground">{summaryItem.totalVotes.toLocaleString()} votes</div>
-                                </div>
+                                </CardHeader>
+                                <CardContent className="text-center p-4 pt-0">
+                                    <div className="text-2xl font-bold">
+                                        {summaryItem.seats}
+                                        {summaryItem.seatChange !== null && (
+                                            <sup className={cn("text-xs font-semibold ml-1", summaryItem.seatChange > 0 ? 'text-green-600' : summaryItem.seatChange < 0 ? 'text-red-600' : 'text-muted-foreground')}>
+                                            {summaryItem.seatChange > 0 ? `+${summaryItem.seatChange}` : summaryItem.seatChange} Seats
+                                            </sup>
+                                        )}
+                                    </div>
+                                    <div className="mt-2">
+                                    <div className="font-bold">{summaryItem.votePercentage}%</div>
+                                    {summaryItem.votePercentageChange !== null && (
+                                            <div className={cn("text-xs font-semibold flex items-center justify-center", summaryItem.votePercentageChange > 0 ? 'text-green-600' : summaryItem.votePercentageChange < 0 ? 'text-red-600' : 'text-muted-foreground')}>
+                                                {summaryItem.votePercentageChange > 0 ? <ArrowUp className="h-3 w-3" /> : summaryItem.votePercentageChange < 0 ? <ArrowDown className="h-3 w-3" /> : null}
+                                                {Math.abs(summaryItem.votePercentageChange).toFixed(1)}%
+                                            </div>
+                                        )}
+                                    <div className="text-sm text-muted-foreground">{summaryItem.totalVotes.toLocaleString()} votes</div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                            ))}
+                        </div>
+                        <Card className="mb-8">
+                            <CardHeader>
+                                <CardTitle>Party Leaders</CardTitle>
+                            </CardHeader>
+                            <CardContent className="grid md:grid-cols-2 gap-4">
+                                {[slpLeaderCandidate, uwpLeaderCandidate].map(leader => {
+                                    if (!leader) return null;
+                                    const party = getPartyById(leader.partyId);
+                                    if (!party) return null;
+                                    const isWinner = winningPartyId === party.id;
+                                    return (
+                                        <Link key={leader.id} href={`/candidates/${leader.originalId}?archive=true`}>
+                                            <Card className="hover:bg-muted/50 transition-colors flex items-center gap-4 p-4 relative">
+                                                {isWinner && (
+                                                    <Badge className="absolute top-2 right-2 bg-green-100 text-green-800 border-green-300">
+                                                        <CheckCircle className="mr-1 h-3 w-3" />
+                                                        Winner
+                                                    </Badge>
+                                                )}
+                                                <div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">
+                                                    {leader.imageUrl ? (
+                                                    <Image src={leader.imageUrl} alt={`${leader.firstName} ${leader.lastName}`} fill className="object-cover" />
+                                                    ) : (
+                                                    <UserSquare className="h-full w-full text-muted-foreground" />
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold">{leader.firstName} {leader.lastName}</p>
+                                                    <p className="text-sm" style={{color: party.color}}>{party.name}</p>
+                                                    <p className="text-sm text-muted-foreground">{getConstituencyById(leader.constituencyId)?.name}</p>
+                                                </div>
+                                            </Card>
+                                        </Link>
+                                    )
+                                })}
                             </CardContent>
                         </Card>
-                        ))}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div className="md:col-span-1 space-y-8">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Closest Races</CardTitle>
+                                    <CardDescription>Top 5 closest constituency results by vote margin.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Constituency</TableHead>
+                                                <TableHead>Winner</TableHead>
+                                                <TableHead className="text-right">Margin</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {closestRaces.map((race, index) => {
+                                                const winnerParty = parties?.find(p => p.acronym === race.winnerParty);
+                                                return (
+                                                    <TableRow key={index}>
+                                                        <TableCell>{race.constituencyName}</TableCell>
+                                                        <TableCell style={{color: winnerParty?.color}}>{race.winnerParty}</TableCell>
+                                                        <TableCell className="text-right font-medium">+{race.margin.toLocaleString()}</TableCell>
+                                                    </TableRow>
+                                                )
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Sparkles className="text-accent" />
+                                        Election Analysis
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    {loadingAnalysis ? (
+                                        <div className="space-y-2">
+                                            <Skeleton className="h-4 w-full" />
+                                            <Skeleton className="h-4 w-full" />
+                                            <Skeleton className="h-4 w-2/3" />
+                                            <Skeleton className="h-4 w-full" />
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground whitespace-pre-line">{analysis}</p>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
+                        <div className="md:col-span-2">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Results Map</CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-2">
+                                    <InteractiveSvgMap 
+                                        constituencies={resultsMapConstituencies}
+                                        selectedConstituencyId={selectedConstituencyId}
+                                        onConstituencyClick={setSelectedConstituencyId}
+                                        election={currentElection}
+                                        electionResults={currentElectionResults}
+                                        previousElectionResults={previousElectionResults}
+                                        previousElection={previousElection}
+                                        partyLogos={partyLogos}
+                                    />
+                                </CardContent>
+                            </Card>
+                        </div>
                     </div>
-                     <Card className="mb-8">
-                        <CardHeader>
-                            <CardTitle>Party Leaders</CardTitle>
-                        </CardHeader>
-                        <CardContent className="grid md:grid-cols-2 gap-4">
-                            {[slpLeaderCandidate, uwpLeaderCandidate].map(leader => {
-                                if (!leader) return null;
-                                const party = getPartyById(leader.partyId);
-                                if (!party) return null;
-                                const isWinner = winningPartyId === party.id;
-                                return (
-                                    <Link key={leader.id} href={`/candidates/${leader.originalId}?archive=true`}>
-                                        <Card className="hover:bg-muted/50 transition-colors flex items-center gap-4 p-4 relative">
-                                            {isWinner && (
-                                                <Badge className="absolute top-2 right-2 bg-green-100 text-green-800 border-green-300">
-                                                    <CheckCircle className="mr-1 h-3 w-3" />
-                                                    Winner
-                                                </Badge>
-                                            )}
-                                            <div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">
-                                                {leader.imageUrl ? (
-                                                <Image src={leader.imageUrl} alt={`${leader.firstName} ${leader.lastName}`} fill className="object-cover" />
-                                                ) : (
-                                                <UserSquare className="h-full w-full text-muted-foreground" />
+                    <div className="grid grid-cols-1 gap-8 mt-8">
+                        <div className="grid grid-cols-1 gap-8">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Seat Count by Region</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    {loadingResults ? <p>Loading results...</p> : (
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>Region</TableHead>
+                                                    <TableHead>SLP Seats</TableHead>
+                                                    <TableHead>UWP Seats</TableHead>
+                                                    <TableHead>IND Seats</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {regionalSeatResults && regionalSeatResults.length > 0 ? regionalSeatResults.map((region) => (
+                                                    <TableRow key={region.id}>
+                                                        <TableCell className="font-medium">{region.name}</TableCell>
+                                                        <TableCell>{region.slpSeats}<SeatChangeIndicator change={region.slpSeatChange} /></TableCell>
+                                                        <TableCell>{region.uwpSeats}<SeatChangeIndicator change={region.uwpSeatChange} /></TableCell>
+                                                        <TableCell>{region.otherSeats}<SeatChangeIndicator change={region.otherSeatChange} /></TableCell>
+                                                    </TableRow>
+                                                )) : (
+                                                    <TableRow>
+                                                        <TableCell colSpan={4} className="text-center text-muted-foreground h-24">Regional data not available. Please define regions in the admin panel.</TableCell>
+                                                    </TableRow>
                                                 )}
-                                            </div>
-                                            <div>
-                                                <p className="font-bold">{leader.firstName} {leader.lastName}</p>
-                                                <p className="text-sm" style={{color: party.color}}>{party.name}</p>
-                                                <p className="text-sm text-muted-foreground">{getConstituencyById(leader.constituencyId)?.name}</p>
-                                            </div>
-                                        </Card>
-                                    </Link>
-                                )
-                            })}
-                        </CardContent>
-                    </Card>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                     <div className="md:col-span-1 space-y-8">
+                                            </TableBody>
+                                        </Table>
+                                    )}
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Vote Count by Region</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    {loadingResults ? <p>Loading results...</p> : (
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>Region</TableHead>
+                                                    <TableHead>SLP Votes</TableHead>
+                                                    <TableHead>SLP %</TableHead>
+                                                    <TableHead>UWP Votes</TableHead>
+                                                    <TableHead>UWP %</TableHead>
+                                                    <TableHead>IND Votes</TableHead>
+                                                    <TableHead>IND %</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {regionalVoteResults && regionalVoteResults.length > 0 ? regionalVoteResults.map((region) => (
+                                                    <TableRow key={region.id}>
+                                                        <TableCell className="font-medium">{region.name}</TableCell>
+                                                        <TableCell>
+                                                            <div>{region.slpVotes.toLocaleString()}</div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex flex-col">
+                                                                <span>{region.slpPercentage.toFixed(1)}%</span>
+                                                                <VotePercentageChangeIndicator change={region.slpPercentageChange} />
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div>{region.uwpVotes.toLocaleString()}</div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex flex-col">
+                                                            <span>{region.uwpPercentage.toFixed(1)}%</span>
+                                                            <VotePercentageChangeIndicator change={region.uwpPercentageChange} />
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div>{region.otherVotes > 0 ? region.otherVotes.toLocaleString() : '—'}</div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex flex-col">
+                                                                <span>{region.otherPercentage > 0 ? `${region.otherPercentage.toFixed(1)}%` : '—'}</span>
+                                                                <VotePercentageChangeIndicator change={region.otherPercentageChange} />
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )) : (
+                                                    <TableRow>
+                                                        <TableCell colSpan={7} className="text-center text-muted-foreground h-24">Regional data not available. Please define regions in the admin panel.</TableCell>
+                                                    </TableRow>
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
                         <Card>
-                            <CardHeader>
-                                <CardTitle>Closest Races</CardTitle>
-                                <CardDescription>Top 5 closest constituency results by vote margin.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
+                        <CardHeader>
+                            <CardTitle>Constituency Breakdown</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {loadingResults ? <p>Loading results...</p> : (
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Constituency</TableHead>
-                                            <TableHead>Winner</TableHead>
-                                            <TableHead className="text-right">Margin</TableHead>
+                                            <TableHead>Result</TableHead>
+                                            <TableHead>SLP Votes</TableHead>
+                                            <TableHead>SLP %</TableHead>
+                                            <TableHead>UWP Votes</TableHead>
+                                            <TableHead>UWP %</TableHead>
+                                            <TableHead>IND Votes</TableHead>
+                                            <TableHead>IND %</TableHead>
+                                            <TableHead>Total Votes</TableHead>
+                                            <TableHead>Turnout</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {closestRaces.map((race, index) => {
-                                            const winnerParty = parties?.find(p => p.acronym === race.winnerParty);
-                                            return (
-                                                <TableRow key={index}>
-                                                    <TableCell>{race.constituencyName}</TableCell>
-                                                    <TableCell style={{color: winnerParty?.color}}>{race.winnerParty}</TableCell>
-                                                    <TableCell className="text-right font-medium">+{race.margin.toLocaleString()}</TableCell>
-                                                </TableRow>
-                                            )
-                                        })}
-                                    </TableBody>
-                                </Table>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Sparkles className="text-accent" />
-                                    Election Analysis
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                {loadingAnalysis ? (
-                                    <div className="space-y-2">
-                                        <Skeleton className="h-4 w-full" />
-                                        <Skeleton className="h-4 w-full" />
-                                        <Skeleton className="h-4 w-2/3" />
-                                        <Skeleton className="h-4 w-full" />
-                                    </div>
-                                ) : (
-                                    <p className="text-sm text-muted-foreground whitespace-pre-line">{analysis}</p>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </div>
-                    <div className="md:col-span-2">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Results Map</CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-2">
-                                <InteractiveSvgMap 
-                                    constituencies={resultsMapConstituencies}
-                                    selectedConstituencyId={selectedConstituencyId}
-                                    onConstituencyClick={setSelectedConstituencyId}
-                                    election={currentElection}
-                                    electionResults={currentElectionResults}
-                                    previousElectionResults={previousElectionResults}
-                                    previousElection={previousElection}
-                                    partyLogos={partyLogos}
-                                />
-                            </CardContent>
-                        </Card>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 gap-8 mt-8">
-                    <div className="grid grid-cols-1 gap-8">
-                         <Card>
-                            <CardHeader>
-                                <CardTitle>Seat Count by Region</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                {loadingResults ? <p>Loading results...</p> : (
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Region</TableHead>
-                                                <TableHead>SLP Seats</TableHead>
-                                                <TableHead>UWP Seats</TableHead>
-                                                <TableHead>IND Seats</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {regionalSeatResults && regionalSeatResults.length > 0 ? regionalSeatResults.map((region) => (
-                                                <TableRow key={region.id}>
-                                                    <TableCell className="font-medium">{region.name}</TableCell>
-                                                    <TableCell>{region.slpSeats}<SeatChangeIndicator change={region.slpSeatChange} /></TableCell>
-                                                    <TableCell>{region.uwpSeats}<SeatChangeIndicator change={region.uwpSeatChange} /></TableCell>
-                                                    <TableCell>{region.otherSeats}<SeatChangeIndicator change={region.otherSeatChange} /></TableCell>
-                                                </TableRow>
-                                            )) : (
-                                                <TableRow>
-                                                    <TableCell colSpan={4} className="text-center text-muted-foreground h-24">Regional data not available. Please define regions in the admin panel.</TableCell>
-                                                </TableRow>
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                )}
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Vote Count by Region</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                {loadingResults ? <p>Loading results...</p> : (
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Region</TableHead>
-                                                <TableHead>SLP Votes</TableHead>
-                                                <TableHead>SLP %</TableHead>
-                                                <TableHead>UWP Votes</TableHead>
-                                                <TableHead>UWP %</TableHead>
-                                                <TableHead>IND Votes</TableHead>
-                                                <TableHead>IND %</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {regionalVoteResults && regionalVoteResults.length > 0 ? regionalVoteResults.map((region) => (
-                                                <TableRow key={region.id}>
-                                                    <TableCell className="font-medium">{region.name}</TableCell>
-                                                    <TableCell>
-                                                        <div>{region.slpVotes.toLocaleString()}</div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="flex flex-col">
-                                                            <span>{region.slpPercentage.toFixed(1)}%</span>
-                                                            <VotePercentageChangeIndicator change={region.slpPercentageChange} />
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div>{region.uwpVotes.toLocaleString()}</div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                         <div className="flex flex-col">
-                                                           <span>{region.uwpPercentage.toFixed(1)}%</span>
-                                                           <VotePercentageChangeIndicator change={region.uwpPercentageChange} />
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                         <div>{region.otherVotes > 0 ? region.otherVotes.toLocaleString() : '—'}</div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="flex flex-col">
-                                                            <span>{region.otherPercentage > 0 ? `${region.otherPercentage.toFixed(1)}%` : '—'}</span>
-                                                            <VotePercentageChangeIndicator change={region.otherPercentageChange} />
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
-                                            )) : (
-                                                <TableRow>
-                                                    <TableCell colSpan={7} className="text-center text-muted-foreground h-24">Regional data not available. Please define regions in the admin panel.</TableCell>
-                                                </TableRow>
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </div>
-                    <Card>
-                      <CardHeader>
-                          <CardTitle>Constituency Breakdown</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                          {loadingResults ? <p>Loading results...</p> : (
-                              <Table>
-                                  <TableHeader>
-                                      <TableRow>
-                                          <TableHead>Constituency</TableHead>
-                                          <TableHead>Result</TableHead>
-                                          <TableHead>SLP Votes</TableHead>
-                                          <TableHead>SLP %</TableHead>
-                                          <TableHead>UWP Votes</TableHead>
-                                          <TableHead>UWP %</TableHead>
-                                          <TableHead>IND Votes</TableHead>
-                                          <TableHead>IND %</TableHead>
-                                          <TableHead>Total Votes</TableHead>
-                                          <TableHead>Turnout</TableHead>
-                                      </TableRow>
-                                  </TableHeader>
-                                  <TableBody>
-                                      {sortedConstituencyResults && sortedConstituencyResults.length > 0 ? sortedConstituencyResults.map((cr) => {
-                                          const constituency = getConstituencyById(cr.constituencyId);
-                                          const is2021 = currentElection?.year === 2021;
-                                          const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
-                                          
-                                          const indVotes = isSpecialConstituency ? cr.slpVotes : cr.otherVotes;
-                                          const slpVotes = isSpecialConstituency ? 0 : cr.slpVotes;
-                                          let currentWinner = 'TBD';
+                                        {sortedConstituencyResults && sortedConstituencyResults.length > 0 ? sortedConstituencyResults.map((cr) => {
+                                            const constituency = getConstituencyById(cr.constituencyId);
+                                            const is2021 = currentElection?.year === 2021;
+                                            const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+                                            
+                                            const indVotes = isSpecialConstituency ? cr.slpVotes : cr.otherVotes;
+                                            const slpVotes = isSpecialConstituency ? 0 : cr.slpVotes;
+                                            let currentWinner = 'TBD';
 
-                                            if (indVotes > cr.uwpVotes && indVotes > slpVotes) {
-                                                currentWinner = 'IND';
-                                            } else if (slpVotes > cr.uwpVotes) {
-                                                currentWinner = 'SLP';
-                                            } else if (cr.uwpVotes > slpVotes) {
-                                                currentWinner = 'UWP';
+                                                if (indVotes > cr.uwpVotes && indVotes > slpVotes) {
+                                                    currentWinner = 'IND';
+                                                } else if (slpVotes > cr.uwpVotes) {
+                                                    currentWinner = 'SLP';
+                                                } else if (cr.uwpVotes > slpVotes) {
+                                                    currentWinner = 'UWP';
+                                                }
+
+                                            const previousResult = previousElectionResults?.find(r => r.constituencyId === cr.constituencyId);
+                                            const previousWinner = previousResult ? (previousResult.slpVotes > previousResult.uwpVotes ? 'SLP' : 'UWP') : null;
+                                            
+                                            let resultStatus = `${currentWinner} Win`;
+                                            if (previousWinner) {
+                                                if (currentWinner === 'IND') {
+                                                    resultStatus = 'IND Gain';
+                                                } else if (currentWinner === previousWinner) {
+                                                    resultStatus = `${currentWinner} Hold`;
+                                                } else {
+                                                    resultStatus = `${currentWinner} Gain`;
+                                                }
+                                            }
+                                            const slpParty = parties?.find(p => p.acronym === 'SLP');
+                                            const uwpParty = parties?.find(p => p.acronym === 'UWP');
+                                            const winnerColor = currentWinner === 'SLP' ? slpParty?.color : (currentWinner === 'UWP' ? uwpParty?.color : '#8884d8');
+                                            
+                                            let slpVotePercentageChange = null;
+                                            let uwpVotePercentageChange = null;
+                                            let indVotePercentageChange = null;
+                                            let turnoutChange = null;
+
+                                            if (previousResult) {
+                                                const currentSlpPercent = cr.totalVotes > 0 ? (slpVotes / cr.totalVotes) * 100 : 0;
+                                                const currentUwpPercent = cr.totalVotes > 0 ? (cr.uwpVotes / cr.totalVotes) * 100 : 0;
+                                                const currentIndPercent = cr.totalVotes > 0 ? (indVotes / cr.totalVotes) * 100 : 0;
+
+                                                const prevTotalVotes = previousResult.totalVotes;
+                                                    if (prevTotalVotes > 0) {
+                                                    const prevIsSpecial = previousElection?.year === 2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+                                                    const prevSlpVotes = prevIsSpecial ? 0 : previousResult.slpVotes;
+                                                    const prevIndVotes = prevIsSpecial ? previousResult.slpVotes : previousResult.otherVotes;
+                                                    
+                                                    const prevSlpPercent = (prevSlpVotes / prevTotalVotes) * 100;
+                                                    const prevUwpPercent = (previousResult.uwpVotes / prevTotalVotes) * 100;
+                                                    const prevIndPercent = (prevIndVotes / prevTotalVotes) * 100;
+                                                    
+                                                    slpVotePercentageChange = currentSlpPercent - prevSlpPercent;
+                                                    uwpVotePercentageChange = currentUwpPercent - prevUwpPercent;
+                                                    indVotePercentageChange = currentIndPercent - prevIndPercent;
+                                                    }
+                                                    if (cr.turnout && previousResult.turnout) {
+                                                        turnoutChange = cr.turnout - previousResult.turnout;
+                                                    }
                                             }
 
-                                          const previousResult = previousElectionResults?.find(r => r.constituencyId === cr.constituencyId);
-                                          const previousWinner = previousResult ? (previousResult.slpVotes > previousResult.uwpVotes ? 'SLP' : 'UWP') : null;
-                                          
-                                          let resultStatus = `${currentWinner} Win`;
-                                          if (previousWinner) {
-                                              if (currentWinner === 'IND') {
-                                                  resultStatus = 'IND Gain';
-                                              } else if (currentWinner === previousWinner) {
-                                                  resultStatus = `${currentWinner} Hold`;
-                                              } else {
-                                                  resultStatus = `${currentWinner} Gain`;
-                                              }
-                                          }
-                                          const slpParty = parties?.find(p => p.acronym === 'SLP');
-                                          const uwpParty = parties?.find(p => p.acronym === 'UWP');
-                                          const winnerColor = currentWinner === 'SLP' ? slpParty?.color : (currentWinner === 'UWP' ? uwpParty?.color : '#8884d8');
-                                          
-                                           let slpVotePercentageChange = null;
-                                           let uwpVotePercentageChange = null;
-                                           let indVotePercentageChange = null;
-                                           let turnoutChange = null;
-
-                                           if (previousResult) {
-                                               const currentSlpPercent = cr.totalVotes > 0 ? (slpVotes / cr.totalVotes) * 100 : 0;
-                                               const currentUwpPercent = cr.totalVotes > 0 ? (cr.uwpVotes / cr.totalVotes) * 100 : 0;
-                                               const currentIndPercent = cr.totalVotes > 0 ? (indVotes / cr.totalVotes) * 100 : 0;
-
-                                               const prevTotalVotes = previousResult.totalVotes;
-                                                if (prevTotalVotes > 0) {
-                                                  const prevIsSpecial = previousElection?.year === 2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
-                                                  const prevSlpVotes = prevIsSpecial ? 0 : previousResult.slpVotes;
-                                                  const prevIndVotes = prevIsSpecial ? previousResult.slpVotes : previousResult.otherVotes;
-                                                  
-                                                  const prevSlpPercent = (prevSlpVotes / prevTotalVotes) * 100;
-                                                  const prevUwpPercent = (previousResult.uwpVotes / prevTotalVotes) * 100;
-                                                  const prevIndPercent = (prevIndVotes / prevTotalVotes) * 100;
-                                                  
-                                                  slpVotePercentageChange = currentSlpPercent - prevSlpPercent;
-                                                  uwpVotePercentageChange = currentUwpPercent - prevUwpPercent;
-                                                  indVotePercentageChange = currentIndPercent - prevIndPercent;
-                                                }
-                                                if (cr.turnout && previousResult.turnout) {
-                                                    turnoutChange = cr.turnout - previousResult.turnout;
-                                                }
-                                           }
-
-                                          return (
-                                              <TableRow key={cr.id}>
-                                                  <TableCell className="font-medium">{constituency?.name || cr.constituencyId}</TableCell>
-                                                  <TableCell className="font-medium" style={{color: winnerColor}}>{resultStatus}</TableCell>
-                                                  <TableCell>
-                                                    {slpVotes > 0 ? slpVotes.toLocaleString() : '-'}
-                                                  </TableCell>
-                                                  <TableCell>
-                                                    <div className="flex flex-col">
-                                                      <span>{slpVotes > 0 ? (cr.totalVotes > 0 ? `${(slpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%') : '-'}</span>
-                                                      <VotePercentageChangeIndicator change={slpVotePercentageChange} />
-                                                    </div>
-                                                  </TableCell>
-                                                  <TableCell>
-                                                    {cr.uwpVotes.toLocaleString()}
-                                                  </TableCell>
-                                                  <TableCell>
-                                                    <div className="flex flex-col">
-                                                      <span>{cr.totalVotes > 0 ? `${(cr.uwpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%'}</span>
-                                                      <VotePercentageChangeIndicator change={uwpVotePercentageChange} />
-                                                    </div>
-                                                  </TableCell>
-                                                  <TableCell>
-                                                    {indVotes > 0 ? indVotes.toLocaleString() : '-'}
-                                                  </TableCell>
-                                                  <TableCell>
-                                                    <div className="flex flex-col">
-                                                        <span>
-                                                            {indVotes > 0 ? (cr.totalVotes > 0 ? `${(indVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%') : '-'}
-                                                        </span>
-                                                        <VotePercentageChangeIndicator change={indVotePercentageChange} />
-                                                    </div>
-                                                  </TableCell>
-                                                  <TableCell>{cr.totalVotes.toLocaleString()}</TableCell>
-                                                  <TableCell>
-                                                      <div className="flex flex-col">
-                                                          <span>{cr.turnout === 0 ? 'N/A' : `${cr.turnout}%`}</span>
-                                                          <VotePercentageChangeIndicator change={turnoutChange} />
-                                                      </div>
-                                                  </TableCell>
-                                              </TableRow>
-                                          );
-                                      }) : (
-                                          <TableRow>
-                                              <TableCell colSpan={10} className="text-center text-muted-foreground h-24">Detailed constituency data not available for this year.</TableCell>
-                                          </TableRow>
-                                      )}
-                                  </TableBody>
-                              </Table>
-                          )}
-                      </CardContent>
-                  </Card>
-                  </div>
+                                            return (
+                                                <TableRow key={cr.id}>
+                                                    <TableCell className="font-medium">{constituency?.name || cr.constituencyId}</TableCell>
+                                                    <TableCell className="font-medium" style={{color: winnerColor}}>{resultStatus}</TableCell>
+                                                    <TableCell>
+                                                        {slpVotes > 0 ? slpVotes.toLocaleString() : '-'}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex flex-col">
+                                                        <span>{slpVotes > 0 ? (cr.totalVotes > 0 ? `${(slpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%') : '-'}</span>
+                                                        <VotePercentageChangeIndicator change={slpVotePercentageChange} />
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {cr.uwpVotes.toLocaleString()}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex flex-col">
+                                                        <span>{cr.totalVotes > 0 ? `${(cr.uwpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%'}</span>
+                                                        <VotePercentageChangeIndicator change={uwpVotePercentageChange} />
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {indVotes > 0 ? indVotes.toLocaleString() : '-'}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex flex-col">
+                                                            <span>
+                                                                {indVotes > 0 ? (cr.totalVotes > 0 ? `${(indVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%') : '-'}
+                                                            </span>
+                                                            <VotePercentageChangeIndicator change={indVotePercentageChange} />
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>{cr.totalVotes.toLocaleString()}</TableCell>
+                                                    <TableCell>
+                                                        <div className="flex flex-col">
+                                                            <span>{cr.turnout === 0 ? 'N/A' : `${cr.turnout}%`}</span>
+                                                            <VotePercentageChangeIndicator change={turnoutChange} />
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        }) : (
+                                            <TableRow>
+                                                <TableCell colSpan={10} className="text-center text-muted-foreground h-24">Detailed constituency data not available for this year.</TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            )}
+                        </CardContent>
+                    </Card>
+                    </div>
                 </div>
-              )}
-        </CardContent>
-      </Card>
-    </div>
+                )}
+            </CardContent>
+        </Card>
+        </div>
+    </MainLayout>
   );
 }

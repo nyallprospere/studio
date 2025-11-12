@@ -29,6 +29,7 @@ import { uploadFile, deleteFile } from '@/firebase/storage';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
+import { MainLayout } from '@/components/layout/main-layout';
 
 function AdItem({ ad, onEdit, onDelete }: { ad: Ad; onEdit: (ad: Ad) => void; onDelete: (ad: Ad) => void; }) {
   const priorityBadge = (priority: string) => {
@@ -128,9 +129,9 @@ export default function AdminAdsPage() {
     try {
       if (values.imageFile) {
         if (editingAd?.imageUrl) {
-          await deleteFile(editingAd.imageUrl, storage).catch(console.warn);
+          await deleteFile(editingAd.imageUrl).catch(console.warn);
         }
-        imageUrl = await uploadFile(values.imageFile, `ads/${values.imageFile.name}`, storage);
+        imageUrl = await uploadFile(values.imageFile, `ads/${values.imageFile.name}`);
       }
 
       const adData = { 
@@ -187,7 +188,7 @@ export default function AdminAdsPage() {
     if (!firestore) return;
     try {
       if (ad.imageUrl) {
-        await deleteFile(ad.imageUrl, storage);
+        await deleteFile(ad.imageUrl);
       }
       const adDoc = doc(firestore, 'ads', ad.id);
       deleteDoc(adDoc)
@@ -203,89 +204,91 @@ export default function AdminAdsPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-start mb-8">
-        <PageHeader
-          title="Manage Ads"
-          description="Create, edit, and manage ad listings for the website."
-        />
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => { setEditingAd(null); setIsFormOpen(true) }}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add New Ad
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-2xl h-[90vh]">
-            <DialogHeader>
-              <DialogTitle>{editingAd ? 'Edit Ad' : 'Add New Ad'}</DialogTitle>
-            </DialogHeader>
-             <ScrollArea className="h-full pr-6">
-                <AdForm
-                onSubmit={handleFormSubmit}
-                initialData={editingAd}
-                onCancel={() => setIsFormOpen(false)}
-                />
-            </ScrollArea>
-          </DialogContent>
-        </Dialog>
-      </div>
+    <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-start mb-8">
+            <PageHeader
+            title="Manage Ads"
+            description="Create, edit, and manage ad listings for the website."
+            />
+            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogTrigger asChild>
+                <Button onClick={() => { setEditingAd(null); setIsFormOpen(true) }}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add New Ad
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-2xl h-[90vh]">
+                <DialogHeader>
+                <DialogTitle>{editingAd ? 'Edit Ad' : 'Add New Ad'}</DialogTitle>
+                </DialogHeader>
+                <ScrollArea className="h-full pr-6">
+                    <AdForm
+                    onSubmit={handleFormSubmit}
+                    initialData={editingAd}
+                    onCancel={() => setIsFormOpen(false)}
+                    />
+                </ScrollArea>
+            </DialogContent>
+            </Dialog>
+        </div>
 
-      <div className="space-y-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Current Ad Listings</CardTitle>
-            <CardDescription>A list of all ads currently active or scheduled to be active.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <p>Loading ads...</p>
-            ) : error ? (
-              <div className="text-red-600 bg-red-100 p-4 rounded-md">
-                  <h3 className="font-bold">Error loading ads</h3>
-                  <p>{error.message}</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {currentAds.length > 0 ? (
-                  currentAds.map((ad) => (
-                    <AdItem key={ad.id} ad={ad} onEdit={handleEdit} onDelete={handleDelete} />
-                  ))
+        <div className="space-y-8">
+            <Card>
+            <CardHeader>
+                <CardTitle>Current Ad Listings</CardTitle>
+                <CardDescription>A list of all ads currently active or scheduled to be active.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {isLoading ? (
+                <p>Loading ads...</p>
+                ) : error ? (
+                <div className="text-red-600 bg-red-100 p-4 rounded-md">
+                    <h3 className="font-bold">Error loading ads</h3>
+                    <p>{error.message}</p>
+                </div>
                 ) : (
-                  <p className="text-center text-muted-foreground py-8">No current ads have been created yet.</p>
+                <div className="space-y-4">
+                    {currentAds.length > 0 ? (
+                    currentAds.map((ad) => (
+                        <AdItem key={ad.id} ad={ad} onEdit={handleEdit} onDelete={handleDelete} />
+                    ))
+                    ) : (
+                    <p className="text-center text-muted-foreground py-8">No current ads have been created yet.</p>
+                    )}
+                </div>
                 )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Past Ad Listings</CardTitle>
-            <CardDescription>A list of ads that are inactive or have expired.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <p>Loading ads...</p>
-            ) : error ? (
-              <div className="text-red-600 bg-red-100 p-4 rounded-md">
-                  <h3 className="font-bold">Error loading ads</h3>
-                  <p>{error.message}</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {pastAds.length > 0 ? (
-                  pastAds.map((ad) => (
-                     <AdItem key={ad.id} ad={ad} onEdit={handleEdit} onDelete={handleDelete} />
-                  ))
+            </CardContent>
+            </Card>
+            
+            <Card>
+            <CardHeader>
+                <CardTitle>Past Ad Listings</CardTitle>
+                <CardDescription>A list of ads that are inactive or have expired.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {isLoading ? (
+                <p>Loading ads...</p>
+                ) : error ? (
+                <div className="text-red-600 bg-red-100 p-4 rounded-md">
+                    <h3 className="font-bold">Error loading ads</h3>
+                    <p>{error.message}</p>
+                </div>
                 ) : (
-                  <p className="text-center text-muted-foreground py-8">No past ads found.</p>
+                <div className="space-y-4">
+                    {pastAds.length > 0 ? (
+                    pastAds.map((ad) => (
+                        <AdItem key={ad.id} ad={ad} onEdit={handleEdit} onDelete={handleDelete} />
+                    ))
+                    ) : (
+                    <p className="text-center text-muted-foreground py-8">No past ads found.</p>
+                    )}
+                </div>
                 )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+            </CardContent>
+            </Card>
+        </div>
+        </div>
+    </MainLayout>
   );
 }
