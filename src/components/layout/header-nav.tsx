@@ -126,7 +126,7 @@ export function HeaderNav() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel>Admin Pages</DropdownMenuLabel>
-                {adminLinks.map(link => (
+                {adminNavItems.map(link => (
                     <DropdownMenuItem key={link.href} asChild>
                         <Link href={link.href}>{link.label}</Link>
                     </DropdownMenuItem>
@@ -143,25 +143,6 @@ export function HeaderNav() {
     return null;
   };
   
-  const adminLinks = [
-    { href: '/admin/elections', label: 'Manage Elections' },
-    { href: '/admin/parties', label: 'Manage Parties' },
-    { href: '/admin/logos', label: 'Manage Logos' },
-    { href: '/admin/events', label: 'Manage Events' },
-    { href: '/admin/results', label: 'Manage Election Results' },
-    { href: '/admin/constituencies', label: 'Manage Projection Map' },
-    { href: '/admin/regions', label: 'Manage Regions' },
-    { href: '/admin/candidates', label: 'Manage Candidates' },
-    { href: '/admin/news', label: 'Manage News' },
-    { href: '/admin/mailing-list', label: 'Manage Mailing List' },
-    { href: '/admin/ads', label: 'Manage Ads' },
-    { href: '/admin/analytics', label: 'Analytics' },
-    { href: '/admin/map-submissions', label: 'Map Submissions' },
-    { href: '/admin/ai-analyzer', label: 'AI Analyzer' },
-    { href: '/admin/voter-information', label: 'Manage Voter Info' },
-    { href: '/admin/countdown', label: 'Manage Countdown' },
-    { href: '/admin/settings', label: 'Manage Settings' },
-  ];
 
   const NavLink = ({ href, children, className, onClick }: { href: string; children: React.ReactNode; className?: string; onClick?: () => void; }) => (
     <Link href={href} className={cn("text-sm font-medium transition-colors hover:text-white", pathname === href ? "text-white" : "text-primary-foreground/80", className)} onClick={onClick}>
