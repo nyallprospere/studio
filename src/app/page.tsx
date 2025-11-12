@@ -305,10 +305,7 @@ export default function Home() {
             </div>
               <div className="space-y-8">
                   <Card>
-                      <CardHeader>
-                          <CardDescription>Our current projection for the 2025 general election.</CardDescription>
-                      </CardHeader>
-                      <CardContent className="flex flex-col items-center">
+                      <CardContent className="flex flex-col items-center pt-6">
                           <div className="text-center mb-4 text-lg font-medium">
                               Forecasted Results (With Tossups): {' '}
                               <span className="font-bold" style={{color: 'hsl(var(--chart-5))'}}>SLP - {seatCounts.slpTotal}</span> | {' '}
