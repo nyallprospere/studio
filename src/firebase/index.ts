@@ -29,17 +29,21 @@ export function initializeFirebase() {
     
     // Initialize App Check
     if (typeof window !== 'undefined') {
-        const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-        if (siteKey) {
-            initializeAppCheck(firebaseApp, {
-                provider: new ReCaptchaV3Provider(siteKey),
-                isTokenAutoRefreshEnabled: true
-            });
-        } else {
-            console.warn("NEXT_PUBLIC_RECAPTCHA_SITE_KEY is not set. App Check will not be initialized.");
-        }
+      // Use a debug token in development.
+      // In a real app, you would swap this with a reCAPTCHA key for production.
+      if (process.env.NODE_ENV === 'development') {
+        (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+      }
+      const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+      if (siteKey) {
+          initializeAppCheck(firebaseApp, {
+              provider: new ReCaptchaV3Provider(siteKey),
+              isTokenAutoRefreshEnabled: true
+          });
+      } else {
+          console.warn("NEXT_PUBLIC_RECAPTCHA_SITE_KEY is not set. App Check will not be initialized for production.");
+      }
     }
-
 
     return getSdks(firebaseApp);
   }
