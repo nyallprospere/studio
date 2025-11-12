@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
@@ -6,7 +5,7 @@ import type { Constituency, ElectionResult, Election, SiteSettings, UserMap, Par
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirebase, useMemoFirebase, useUser, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, doc, serverTimestamp, query, orderBy, where, getDocs, addDoc } from 'firebase/firestore';
-import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
+import { ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Pie, PieChart, ResponsiveContainer, Cell, Label } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -29,6 +28,7 @@ import Image from 'next/image';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { v4 as uuidv4 } from 'uuid';
 import { Label as UiLabel } from '@/components/ui/label';
+import { uploadFile } from '@/firebase/storage';
 
 
 const politicalLeaningOptions = [

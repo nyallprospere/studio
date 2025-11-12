@@ -1,4 +1,3 @@
-
 'use server';
 
 import { generateElectionPredictions } from '@/ai/flows/generate-election-predictions';
@@ -6,6 +5,8 @@ import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
 import { summarizeArticle as summarizeArticleFlow } from '@/ai/flows/summarize-article';
 import { analyzeConstituencyOutcome as analyzeConstituencyOutcomeFlow, type AnalyzeConstituencyOutcomeInput } from '@/ai/flows/analyze-constituency-outcome';
 import { analyzePastElection as analyzePastElectionFlow, type PastElectionAnalysisInput } from '@/ai/flows/analyze-past-election';
+import { collection, addDoc, serverTimestamp, getFirestore } from "firebase/firestore";
+import { initializeFirebase } from '@/firebase';
 
 
 export async function getPrediction(newsSummary: string) {
@@ -56,8 +57,21 @@ export async function analyzePastElection(input: PastElectionAnalysisInput) {
 }
 
 export async function subscribeToMailingList(data: { firstName: string; email: string }) {
-    console.log('Subscribing:', data);
+  try {
+    const { firestore } = initializeFirebase();
+    const subscribersCollection = collection(firestore, 'mailing_list_subscribers');
+    await addDoc(subscribersCollection, {
+      ...data,
+      subscribedAt: serverTimestamp(),
+    });
     return { success: true };
+  } catch (error: any) {
+    console.error('Mailing list subscription error:', error);
+    if (error.code === 'permission-denied') {
+      return { error: 'You do not have permission to perform this action.' };
+    }
+    return { error: 'An unexpected error occurred. Please try again.' };
+  }
 }
 
 export async function summarizeArticle(content: string): Promise<string> {

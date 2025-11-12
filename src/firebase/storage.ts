@@ -1,15 +1,15 @@
 'use client';
 
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject, FirebaseStorage } from "firebase/storage";
 
 /**
  * Uploads a file to Firebase Storage.
+ * @param storage The Firebase Storage instance.
  * @param file The file to upload.
  * @param path The path where the file should be stored in the bucket.
  * @returns A promise that resolves with the public download URL of the file.
  */
-export const uploadFile = async (file: File, path: string): Promise<string> => {
-  const storage = getStorage();
+export const uploadFile = async (storage: FirebaseStorage, file: File, path: string): Promise<string> => {
   const storageRef = ref(storage, path);
   
   try {
@@ -25,13 +25,13 @@ export const uploadFile = async (file: File, path: string): Promise<string> => {
 
 /**
  * Deletes a file from Firebase Storage using its public URL.
+ * @param storage The Firebase Storage instance.
  * @param fileUrl The public URL of the file to delete.
  * @returns A promise that resolves when the file is deleted.
  */
-export const deleteFile = async (fileUrl: string): Promise<void> => {
+export const deleteFile = async (storage: FirebaseStorage, fileUrl: string): Promise<void> => {
     if (!fileUrl) return;
 
-    const storage = getStorage();
     try {
         const storageRef = ref(storage, fileUrl);
         await getDownloadURL(storageRef); // Check if file exists before trying to delete.
