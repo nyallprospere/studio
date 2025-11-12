@@ -8,8 +8,8 @@ service firebase.storage {
     }
     
     // Allow write access (create, update, delete) only to authenticated users
-    // in specific folders like 'candidates', 'logos', 'events', 'parties', 'maps', 'news', etc.
-    match /(candidates|logos|events|parties|maps|news|SavedMaps)/{allPaths=**} {
+    // in specific folders like 'candidates', 'logos', 'events', 'parties', 'maps', 'news', 'SavedMaps', etc.
+    match /(candidates|logos|events|parties|maps|news|SavedMaps|constituency-logos|leaders)/{allPaths=**} {
         allow write: if request.auth != null;
     }
   }
