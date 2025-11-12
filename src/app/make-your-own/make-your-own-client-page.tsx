@@ -70,7 +70,7 @@ function ConstituenciesPageSkeleton() {
 }
 
 const DEFAULT_LAYOUT = {
-    pageTitle: 'Make Your Own Map',
+    pageTitle: '',
     pageDescription: 'Create and share your 2026 election prediction.',
     seatCountTitle: 'Your Prediction',
     seatCountDescription: 'Assign a winner to each constituency.',
@@ -422,9 +422,9 @@ export default function MakeYourOwnClientPage() {
   return (
     <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight font-headline text-primary md:text-4xl">
+            {pageTitle && <h1 className="text-3xl font-bold tracking-tight font-headline text-primary md:text-4xl">
                 {pageTitle}
-            </h1>
+            </h1>}
             <p className="mt-2 text-lg text-muted-foreground">{pageDescription}</p>
         </div>
 
@@ -538,7 +538,7 @@ export default function MakeYourOwnClientPage() {
       )}
 
       <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
-          <DialogContent>
+          <DialogContent className="md:max-w-2xl">
               <DialogHeader>
                   <DialogTitle>
                         I predict{' '}
@@ -555,7 +555,7 @@ export default function MakeYourOwnClientPage() {
               </DialogHeader>
               <div className="space-y-4">
                   {sharedMapImageUrl && (
-                      <div className="relative h-64 md:h-80 w-full rounded-lg overflow-hidden border">
+                      <div className="relative h-48 md:h-80 w-full rounded-lg overflow-hidden border">
                           <Image src={sharedMapImageUrl} alt="User prediction map" fill className="object-contain" />
                       </div>
                   )}
