@@ -13,7 +13,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
-import { Share2, Twitter, Facebook, Loader2, Instagram, Mail, Whatsapp } from 'lucide-react';
+import { Share2, Twitter, Facebook, Loader2, Instagram, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -30,6 +30,7 @@ import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/comp
 import { v4 as uuidv4 } from 'uuid';
 import { Label as UiLabel } from '@/components/ui/label';
 import { uploadFile } from '@/firebase/storage';
+import { PageHeader } from '@/components/page-header';
 
 
 const politicalLeaningOptions = [
@@ -71,10 +72,10 @@ function ConstituenciesPageSkeleton() {
 }
 
 const DEFAULT_LAYOUT = {
-    pageTitle: '',
-    pageDescription: 'Create and share your 2026 election prediction.',
+    pageTitle: 'Make Your Own Election Map',
+    pageDescription: 'Create and share your 2026 election prediction by assigning a winner to each constituency.',
     seatCountTitle: 'Your Prediction',
-    seatCountDescription: 'Assign a winner to each constituency.',
+    seatCountDescription: 'Assign a winner to each constituency to see your results.',
 };
 
 type LayoutConfiguration = typeof DEFAULT_LAYOUT;
@@ -239,6 +240,11 @@ export default function MakeYourOwnClientPage() {
             setPageDescription(savedConstituenciesLayout.pageDescription || DEFAULT_LAYOUT.pageDescription);
             setSeatCountTitle(savedConstituenciesLayout.seatCountTitle || DEFAULT_LAYOUT.seatCountTitle);
             setSeatCountDescription(savedConstituenciesLayout.seatCountDescription || DEFAULT_LAYOUT.seatCountDescription);
+        } else {
+            setPageTitle(DEFAULT_LAYOUT.pageTitle);
+            setPageDescription(DEFAULT_LAYOUT.pageDescription);
+            setSeatCountTitle(DEFAULT_LAYOUT.seatCountTitle);
+            setSeatCountDescription(DEFAULT_LAYOUT.seatCountDescription);
         }
     }, [savedLayouts]);
     
@@ -275,7 +281,7 @@ export default function MakeYourOwnClientPage() {
       const blob = await (await fetch(dataUrl)).blob();
       const imageFile = new File([blob], `${imageId}.png`, { type: 'image/png' });
       
-      imageUrl = await uploadFile(imageFile, imagePath, storage);
+      imageUrl = await uploadFile(imageFile, imagePath);
     } catch (error) {
       console.error('Image generation or upload failed:', error);
       toast({
@@ -399,9 +405,9 @@ export default function MakeYourOwnClientPage() {
         return acc;
     }, {});
 
+    const whatsappShareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(dynamicShareTitle + " " + shareUrl)}`;
     const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(dynamicShareTitle)}&url=${encodeURIComponent(shareUrl)}`;
     const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
-    const whatsappShareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(dynamicShareTitle + " " + shareUrl)}`;
     const emailShareUrl = `mailto:?subject=${encodeURIComponent(dynamicShareTitle)}&body=${encodeURIComponent(dynamicShareDescription + ' See my prediction: ' + shareUrl)}`;
 
     
@@ -422,17 +428,12 @@ export default function MakeYourOwnClientPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-            {pageTitle && <h1 className="text-3xl font-bold tracking-tight font-headline text-primary md:text-4xl">
-                {pageTitle}
-            </h1>}
-            <p className="mt-2 text-lg text-muted-foreground">{pageDescription}</p>
-        </div>
+        <PageHeader title={pageTitle} description={pageDescription} />
 
       {isLoading || !constituencies ? (
           <ConstituenciesPageSkeleton />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
           <div className="lg:col-span-1">
              <Card>
                 <CardContent className="p-2" ref={mapRef}>
@@ -581,8 +582,8 @@ export default function MakeYourOwnClientPage() {
                           </a>
                       </Button>
                       <Button asChild>
-                          <a href={whatsappShareUrl} target="_blank" rel="noopener noreferrer">
-                            <Whatsapp className="mr-2 h-4 w-4" />
+                          <a href={whatsappShareUrl} data-action="share/whatsapp/share" target="_blank" rel="noopener noreferrer">
+                            <svg className="mr-2" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M16.75 13.96c.25.48.43.9.43 1.03c0 .14-.03.28-.08.41c-.05.14-.12.26-.2.36c-.19.26-.5.5-1.03.73c-.53.23-1.12.35-1.78.35c-.71 0-1.46-.14-2.23-.42c-1.14-.42-2.2-.99-3.14-1.7c-1.1-.83-2-1.8-2.7-2.9c-.53-.83-.89-1.75-1.07-2.71c-.03-.23-.05-.47-.05-.7c0-.7.13-1.35.4-1.91c.26-.56.63-.96 1.1-1.2c.2-.12.43-.2.66-.23c.23-.03.46 0 .68.08c.22.08.43.2.6.36c.2.19.33.43.4.7c.08.27.12.55.12.86c0 .22-.05.43-.14.63c-.1.2-.23.39-.4.54l-.4.43c-.11.11-.19.23-.23.36c-.03.13-.02.28.05.43c.09.2.23.39.4.54c.4.41.85.78 1.34 1.1c.54.35 1.1.62 1.69.8c.13.04.28.05.41.02c.13-.03.26-.09.36-.19l.36-.36c.2-.2.43-.36.69-.47c.26-.11.55-.16.85-.16c.28 0 .55.05.79.14c.24.09.46.23.64.41c.18.18.32.39.41.63c.09.23.14.49.14.77c-.01.2-.06.4-.14.59zM12 2a10 10 0 0 0 -10 10c0 1.93.55 3.75 1.53 5.3l-1.6 4.84l4.94-1.55A10 10 0 0 0 12 22a10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
                             WhatsApp
                           </a>
                       </Button>
