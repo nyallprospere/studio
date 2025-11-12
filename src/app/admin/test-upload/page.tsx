@@ -51,6 +51,7 @@ export default function TestUploadPage() {
             toast({ title: 'Success', description: 'File uploaded successfully.' });
         } catch (err: any) {
             console.error("Original upload error:", err);
+            // This is the critical change to extract and display the specific Firebase error.
             const errorMessage = `Code: ${err.code}\nMessage: ${err.message}`;
             setError(errorMessage);
             toast({ variant: 'destructive', title: 'Upload Failed', description: 'See error details on the page.' });
