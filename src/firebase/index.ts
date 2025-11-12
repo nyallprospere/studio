@@ -27,16 +27,18 @@ export function initializeFirebase() {
 
   // Initialize App Check
   if (typeof window !== 'undefined') {
+    // Make the debug token available globally for the SDK to pick up.
+    // This is the standard mechanism for enabling debug mode.
+    (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+    
     try {
-      // Create a ReCaptchaV3Provider instance with your reCAPTCHA v3 site key
-      // and a debug token for development.
-      // NOTE: The debug token will be logged to the console when the app runs.
-      // You must add this token to the Firebase Console (App Check > Apps > Your App > Manage debug tokens).
+      // Create a ReCaptchaV3Provider instance. The key is a placeholder
+      // because the debug token will override it in development.
       const appCheck = initializeAppCheck(firebaseApp, {
-        provider: new ReCaptchaV3Provider('6Ld-0-UpAAAAABb-p-3-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1'), // Placeholder
+        provider: new ReCaptchaV3Provider('6Ld-0-UpAAAAABb-p-3-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1'), // Placeholder key
         isTokenAutoRefreshEnabled: true,
       });
-      console.log('Firebase App Check initialized.');
+      console.log('Firebase App Check initialized in debug mode.');
     } catch (error) {
       console.error('Error initializing Firebase App Check:', error);
       console.warn(
