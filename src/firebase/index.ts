@@ -1,3 +1,4 @@
+
 'use client';
 
 import { firebaseConfig } from '@/firebase/config';
@@ -22,14 +23,15 @@ export function initializeFirebase() {
     // The SDK will automatically generate a debug token and log it to the console.
     (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
 
-    try {
-      // For local development, we rely on the debug token.
-      // Do not provide a reCAPTCHA key here.
-      initializeAppCheck(firebaseApp, {
-        isTokenAutoRefreshEnabled: true
-      });
-    } catch (error) {
-      console.warn('App Check initialization failed. This may happen in environments where it is not fully configured, but the app will continue to run.', error);
+    // Only initialize App Check in production.
+    if (process.env.NODE_ENV === 'production') {
+      try {
+        initializeAppCheck(firebaseApp, {
+          isTokenAutoRefreshEnabled: true
+        });
+      } catch (error) {
+        console.warn('App Check initialization failed. This may happen in environments where it is not fully configured, but the app will continue to run.', error);
+      }
     }
   }
 
