@@ -5,7 +5,6 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
@@ -24,27 +23,6 @@ export function initializeFirebase() {
   } else {
     firebaseApp = getApp();
   }
-
-  // Initialize App Check
-  if (typeof window !== 'undefined') {
-    try {
-      // Make the debug token available globally for the SDK to pick up.
-      // This is the standard mechanism for enabling debug mode.
-      (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-      
-      const appCheck = initializeAppCheck(firebaseApp, {
-        provider: new ReCaptchaV3Provider('6Ld-0-UpAAAAABb-p-3-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1'), // Placeholder key
-        isTokenAutoRefreshEnabled: true,
-      });
-      console.log('Firebase App Check initialized in debug mode.');
-    } catch (error) {
-      console.error('Error initializing Firebase App Check:', error);
-      console.warn(
-        'App Check initialization failed. This may be due to the "Firebase App Check API" not being enabled in your Google Cloud project. Please check your project settings.'
-      );
-    }
-  }
-
 
   // If already initialized, return the SDKs with the existing App
   return getSdks(firebaseApp);
