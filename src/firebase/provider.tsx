@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
@@ -88,21 +89,9 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
     const unsubscribe = onAuthStateChanged(
       auth,
-      async (firebaseUser) => {
-        if (firebaseUser) {
-          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
-          setServicesReady(true);
-        } else {
-          try {
-            const userCredential = await signInAnonymously(auth);
-            setUserAuthState({ user: userCredential.user, isUserLoading: false, userError: null });
-            setServicesReady(true); 
-          } catch(error: any) {
-            console.error("Anonymous sign-in failed:", error);
-            setUserAuthState({ user: null, isUserLoading: false, userError: error });
-            setServicesReady(false);
-          }
-        }
+      (firebaseUser) => {
+        setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+        setServicesReady(true);
       },
       (error) => {
         console.error("FirebaseProvider: onAuthStateChanged error:", error);
