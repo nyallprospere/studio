@@ -281,7 +281,7 @@ export default function MakeYourOwnClientPage() {
       const blob = await (await fetch(dataUrl)).blob();
       const imageFile = new File([blob], `${imageId}.png`, { type: 'image/png' });
       
-      imageUrl = await uploadFile(imageFile, imagePath);
+      imageUrl = await uploadFile(imageFile, imagePath, storage);
     } catch (error) {
       console.error('Image generation or upload failed:', error);
       toast({
@@ -540,7 +540,7 @@ export default function MakeYourOwnClientPage() {
       )}
 
       <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
-          <DialogContent className="md:max-w-2xl">
+          <DialogContent className="sm:max-w-[425px] md:max-w-4xl">
               <DialogHeader>
                   <DialogTitle>
                         I predict{' '}
@@ -557,7 +557,7 @@ export default function MakeYourOwnClientPage() {
               </DialogHeader>
               <div className="space-y-4">
                   {sharedMapImageUrl && (
-                      <div className="relative aspect-video h-48 md:h-80 w-full rounded-lg overflow-hidden border">
+                      <div className="relative aspect-video h-48 md:h-[400px] w-full rounded-lg overflow-hidden border">
                           <Image src={sharedMapImageUrl} alt="User prediction map" fill className="object-contain" />
                       </div>
                   )}
