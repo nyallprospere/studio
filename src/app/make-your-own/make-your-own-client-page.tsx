@@ -287,15 +287,7 @@ export default function MakeYourOwnClientPage() {
             mapData: mapData,
             createdAt: serverTimestamp(),
             imageUrl: imageUrl,
-        }).catch(error => {
-            errorEmitter.emit('permission-error', new FirestorePermissionError({
-                path: 'user_maps',
-                operation: 'create',
-                requestResourceData: {mapData}
-            }))
-            // Propagate a generic error message to the user
-            throw new Error("Could not save your map. Please try again.");
-        })
+        });
 
         if (docRef) {
             const url = `${window.location.origin}/maps/${docRef.id}`;
@@ -315,11 +307,15 @@ export default function MakeYourOwnClientPage() {
 
     } catch (error: any) {
         console.error('Save and share error:', error);
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: error.message || 'Could not save your map. Please try again.',
-        });
+         if (error instanceof FirestorePermissionError) {
+          errorEmitter.emit('permission-error', error);
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not save your map. Please try again.',
+            });
+        }
     } finally {
         setIsSaving(false);
     }
@@ -595,3 +591,5 @@ export default function MakeYourOwnClientPage() {
     </div>
   );
 }
+
+    
