@@ -10,7 +10,7 @@
  * - Single-document settings: `/settings/pageLayouts`, `/settings/site`.
  *
  * Key Security Decisions:
- * - Public data is readable by anyone using the isPublic() function.
+ * - Public data is readable by anyone.
  * - Most write operations are restricted to authenticated admins using the isAdmin() function.
  * - User-generated content like comments has more open write rules.
  */
@@ -22,100 +22,96 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isPublic() {
-      return true;
-    }
-
     match /mailing_list_subscribers/{subscriberId} {
-      allow get, list: if isPublic();
+      allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
     match /parties/{partyId} {
-      allow get, list: if isPublic();
+      allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
     match /party_logos/{partyLogoId} {
-      allow get, list: if isPublic();
+      allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
     match /events/{eventId} {
-      allow get, list: if isPublic();
+      allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
     match /candidates/{candidateId} {
-      allow get, list: if isPublic();
+      allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
     match /archived_candidates/{archivedCandidateId} {
-      allow get, list: if isPublic();
+      allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
     match /elections/{electionId} {
-      allow get, list: if isPublic();
+      allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
     match /polling_data/{pollingDataId} {
-      allow get, list: if isPublic();
+      allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
     match /constituencies/{constituencyId} {
-      allow get, list: if isPublic();
+      allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
     match /election_results/{electionResultId} {
-      allow get, list: if isPublic();
+      allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
     match /settings/pageLayouts {
-      allow get: if isPublic();
+      allow get: if true;
       allow list: if false;
       allow create, update, delete: if isAdmin();
     }
 
     match /settings/site {
-      allow get: if isPublic();
+      allow get: if true;
       allow list: if false;
       allow create, update, delete: if isAdmin();
     }
 
     match /user_activity/{activityId} {
-        allow create: if isPublic();
+        allow create: if true;
         allow get, list, update, delete: if false;
     }
 
     match /regions/{regionId} {
-      allow get, list: if isPublic();
+      allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
     match /user_maps/{userMapId} {
-      allow create: if isPublic();
-      allow get: if isPublic();
+      allow create: if true;
+      allow get: if true;
       allow list, update, delete: if false;
     }
 
     match /ads/{adId} {
-      allow get, list: if isPublic();
+      allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
     match /news/{newsId} {
-      allow get, list: if isPublic();
+      allow get, list: if true;
       allow create, update, delete: if isAdmin();
 
       match /comments/{commentId} {
-          allow create: if isPublic();
-          allow get, list: if isPublic();
+          allow create: if true;
+          allow get, list: if true;
           allow update: if request.auth != null && request.resource.data.author == request.auth.token.name;
           allow delete: if request.auth != null && resource.data.author == request.auth.token.name;
       }
@@ -123,16 +119,16 @@ service cloud.firestore {
 
     match /reports/{reportId} {
         allow get, list, update, delete: if isAdmin();
-        allow create: if isPublic();
+        allow create: if true;
     }
 
     match /constituency_projections/{projectionId} {
-        allow get, list: if isPublic();
+        allow get, list: if true;
         allow create, update, delete: if isAdmin();
     }
 
     match /voter_information/{infoId} {
-        allow get, list: if isPublic();
+        allow get, list: if true;
         allow create, update, delete: if isAdmin();
     }
   }
