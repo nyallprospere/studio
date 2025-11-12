@@ -11,7 +11,7 @@ import type { NewsArticle } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, Sparkles, Loader2 } from 'lucide-react';
+import { CalendarIcon, Sparkles, Loader2, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
@@ -56,12 +56,14 @@ type NewsFormProps = {
   onSubmit: (data: z.infer<typeof newsArticleSchema>) => void;
   initialData?: NewsArticle | null;
   onCancel: () => void;
+  news?: NewsArticle[];
 };
 
-export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
+export function NewsForm({ onSubmit, initialData, onCancel, news = [] }: NewsFormProps) {
   const { user } = useUser();
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [tagSearch, setTagSearch] = useState('');
+  const [sourcePopoverOpen, setSourcePopoverOpen] = useState(false);
 
   const form = useForm<z.infer<typeof newsArticleSchema>>({
     resolver: zodResolver(newsArticleSchema),
@@ -81,6 +83,12 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
   });
   
   const currentTags = form.watch('tags') || [];
+  const currentSource = form.watch('source');
+
+  const uniqueSources = useMemo(() => {
+    const sources = new Set(news.map(n => n.source));
+    return Array.from(sources).sort();
+  }, [news]);
 
   useEffect(() => {
     if (initialData) {
@@ -209,17 +217,72 @@ export function NewsForm({ onSubmit, initialData, onCancel }: NewsFormProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
-            control={form.control}
-            name="source"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>News Source</FormLabel>
-                <FormControl>
-                    <Input placeholder="e.g., The Voice" {...field} />
-                </FormControl>
-                <FormMessage />
+              control={form.control}
+              name="source"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>News Source</FormLabel>
+                  <Popover open={sourcePopoverOpen} onOpenChange={setSourcePopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value || "Select or create a source..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                      <Command>
+                        <CommandInput
+                          placeholder="Search or add source..."
+                          onValueChange={(value) => field.onChange(value)}
+                          value={field.value}
+                        />
+                        <CommandEmpty>
+                          <CommandItem
+                            onSelect={() => {
+                              form.setValue('source', currentSource);
+                              setSourcePopoverOpen(false);
+                            }}
+                          >
+                            Create "{currentSource}"
+                          </CommandItem>
+                        </CommandEmpty>
+                        <CommandGroup>
+                          <ScrollArea className="h-48">
+                            {uniqueSources.map((source) => (
+                              <CommandItem
+                                value={source}
+                                key={source}
+                                onSelect={() => {
+                                  form.setValue('source', source);
+                                  setSourcePopoverOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    field.value === source ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {source}
+                              </CommandItem>
+                            ))}
+                          </ScrollArea>
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
                 </FormItem>
-            )}
+              )}
             />
             <FormField
                 control={form.control}

@@ -203,6 +203,7 @@ export default function AdminNewsPage() {
                     onSubmit={handleFormSubmit}
                     initialData={editingArticle}
                     onCancel={() => setIsFormOpen(false)}
+                    news={news || []}
                     />
                 </ScrollArea>
             </DialogContent>
