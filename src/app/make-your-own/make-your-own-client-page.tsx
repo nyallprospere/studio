@@ -555,7 +555,7 @@ export default function MakeYourOwnClientPage() {
               </DialogHeader>
               <div className="space-y-4">
                   {sharedMapImageUrl && (
-                      <div className="relative h-64 w-full rounded-lg overflow-hidden border">
+                      <div className="relative h-64 md:h-80 w-full rounded-lg overflow-hidden border">
                           <Image src={sharedMapImageUrl} alt="User prediction map" fill className="object-contain" />
                       </div>
                   )}
