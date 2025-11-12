@@ -30,7 +30,7 @@ service cloud.firestore {
      * @principle Enforces admin-only writes and public reads.
      */
     match /mailing_list_subscribers/{subscriberId} {
-      allow get, list: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isSignedIn();
     }
 
@@ -43,7 +43,7 @@ service cloud.firestore {
      * @principle Enforces admin-only writes and public reads.
      */
     match /parties/{partyId} {
-      allow get, list: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isSignedIn();
     }
 
@@ -56,7 +56,7 @@ service cloud.firestore {
      * @principle Enforces admin-only writes and public reads.
      */
     match /party_logos/{partyLogoId} {
-      allow get, list: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isSignedIn();
     }
 
@@ -69,7 +69,7 @@ service cloud.firestore {
      * @principle Enforces admin-only writes and public reads.
      */
     match /events/{eventId} {
-      allow get, list: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isSignedIn();
     }
 
@@ -82,7 +82,7 @@ service cloud.firestore {
      * @principle Enforces admin-only writes and public reads.
      */
     match /candidates/{candidateId} {
-      allow get, list: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isSignedIn();
     }
 
@@ -95,7 +95,7 @@ service cloud.firestore {
      * @principle Enforces admin-only writes and public reads.
      */
     match /archived_candidates/{archivedCandidateId} {
-      allow get, list: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isSignedIn();
     }
 
@@ -108,7 +108,7 @@ service cloud.firestore {
      * @principle Enforces admin-only writes and public reads.
      */
     match /elections/{electionId} {
-      allow get, list: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isSignedIn();
     }
 
@@ -121,7 +121,7 @@ service cloud.firestore {
      * @principle Enforces admin-only writes and public reads.
      */
     match /polling_data/{pollingDataId} {
-      allow get, list: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isSignedIn();
     }
 
@@ -134,7 +134,7 @@ service cloud.firestore {
      * @principle Enforces admin-only writes and public reads.
      */
     match /constituencies/{constituencyId} {
-      allow get, list: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isSignedIn();
     }
 
@@ -147,7 +147,7 @@ service cloud.firestore {
      * @principle Enforces admin-only writes and public reads.
      */
     match /election_results/{electionResultId} {
-      allow get, list: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isSignedIn();
     }
 
@@ -161,7 +161,7 @@ service cloud.firestore {
      * @principle Enforces admin-only writes and public reads for a single settings document.
      */
     match /settings/pageLayouts {
-      allow get: if true;
+      allow get: if request.auth != null || request.auth == null;
       allow list: if false;
       allow create, update, delete: if isSignedIn();
     }
@@ -176,7 +176,7 @@ service cloud.firestore {
      * @principle Enforces admin-only writes and public reads for a single settings document.
      */
     match /settings/site {
-      allow get: if true;
+      allow get: if request.auth != null || request.auth == null;
       allow list: if false;
       allow create, update, delete: if isSignedIn();
     }
@@ -189,7 +189,7 @@ service cloud.firestore {
      * @principle Allows anyone to create a log entry.
      */
     match /user_activity/{activityId} {
-        allow create: if true;
+        allow create: if request.auth != null || request.auth == null;
         allow get, list, update, delete: if false;
     }
 
@@ -202,7 +202,7 @@ service cloud.firestore {
      * @principle Enforces admin-only writes and public reads.
      */
     match /regions/{regionId} {
-      allow get, list: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isSignedIn();
     }
 
@@ -213,8 +213,8 @@ service cloud.firestore {
      * @allow get, list, update, delete: if false;
      */
     match /user_maps/{userMapId} {
-      allow create: if true;
-      allow get: if true;
+      allow create: if request.auth != null || request.auth == null;
+      allow get: if request.auth != null || request.auth == null;
       allow list, update, delete: if false;
     }
 
@@ -227,7 +227,7 @@ service cloud.firestore {
      * @principle Enforces admin-only writes and public reads.
      */
     match /ads/{adId} {
-      allow get, list: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isSignedIn();
     }
 
@@ -240,7 +240,7 @@ service cloud.firestore {
      * @principle Enforces admin-only writes and public reads.
      */
     match /news/{newsId} {
-      allow get, list: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isSignedIn();
 
       /**
@@ -248,8 +248,8 @@ service cloud.firestore {
        * @path /news/{newsId}/comments/{commentId}
        */
       match /comments/{commentId} {
-          allow create: if true;
-          allow get, list: if true;
+          allow create: if request.auth != null || request.auth == null;
+          allow get, list: if request.auth != null || request.auth == null;
           allow update: if request.auth != null && request.resource.data.author == request.auth.token.name;
           allow delete: if request.auth != null && resource.data.author == request.auth.token.name;
       }
@@ -263,7 +263,7 @@ service cloud.firestore {
      */
     match /reports/{reportId} {
         allow get, list, update, delete: if isSignedIn();
-        allow create: if true;
+        allow create: if request.auth != null || request.auth == null;
     }
 
     /**
@@ -275,7 +275,7 @@ service cloud.firestore {
      * @principle Enforces admin-only writes and public reads.
      */
     match /constituency_projections/{projectionId} {
-        allow get, list: if true;
+        allow get, list: if request.auth != null || request.auth == null;
         allow create, update, delete: if isSignedIn();
     }
 
@@ -288,7 +288,7 @@ service cloud.firestore {
       * @principle Enforces admin-only writes and public reads.
       */
     match /voter_information/{infoId} {
-        allow get, list: if true;
+        allow get, list: if request.auth != null || request.auth == null;
         allow create, update, delete: if isSignedIn();
     }
   }
