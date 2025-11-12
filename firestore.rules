@@ -8,57 +8,57 @@ service cloud.firestore {
     }
 
     match /mailing_list_subscribers/{subscriberId} {
-      allow read: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isAdmin();
     }
 
     match /parties/{partyId} {
-      allow read: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isAdmin();
     }
 
     match /party_logos/{partyLogoId} {
-      allow read: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isAdmin();
     }
 
     match /events/{eventId} {
-      allow read: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isAdmin();
     }
 
     match /candidates/{candidateId} {
-      allow read: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isAdmin();
     }
 
     match /archived_candidates/{archivedCandidateId} {
-      allow read: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isAdmin();
     }
 
     match /elections/{electionId} {
-      allow read: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isAdmin();
     }
 
     match /polling_data/{pollingDataId} {
-      allow read: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isAdmin();
     }
 
     match /constituencies/{constituencyId} {
-      allow read: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isAdmin();
     }
 
     match /election_results/{electionResultId} {
-      allow read: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isAdmin();
     }
 
     match /settings/{document=**} {
-      allow read: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow write: if isAdmin();
     }
 
@@ -68,28 +68,28 @@ service cloud.firestore {
     }
 
     match /regions/{regionId} {
-      allow read: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isAdmin();
     }
 
     match /user_maps/{userMapId} {
       allow create: if true;
-      allow read: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow update, delete: if false;
     }
 
     match /ads/{adId} {
-      allow read: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isAdmin();
     }
 
     match /news/{newsId} {
-      allow read: if true;
+      allow get, list: if request.auth != null || request.auth == null;
       allow create, update, delete: if isAdmin();
 
       match /comments/{commentId} {
           allow create: if true;
-          allow read: if true;
+          allow get, list: if request.auth != null || request.auth == null;
           allow update: if request.auth != null && request.resource.data.author == request.auth.token.name;
           allow delete: if request.auth != null && resource.data.author == request.auth.token.name;
       }
@@ -101,12 +101,12 @@ service cloud.firestore {
     }
 
     match /constituency_projections/{projectionId} {
-        allow read: if true;
+        allow get, list: if request.auth != null || request.auth == null;
         allow create, update, delete: if isAdmin();
     }
 
     match /voter_information/{infoId} {
-        allow read: if true;
+        allow get, list: if request.auth != null || request.auth == null;
         allow create, update, delete: if isAdmin();
     }
   }
