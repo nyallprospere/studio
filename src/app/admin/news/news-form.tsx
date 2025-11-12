@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, KeyboardEvent } from 'react';
 import type { NewsArticle } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -15,7 +15,7 @@ import { CalendarIcon, Sparkles, Loader2, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
-import { summarizeArticle } from '@/lib/actions';
+import { summarizeArticle } from '@/ai/flows/summarize-article';
 import { MultiSelect } from '@/components/multi-select';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -147,6 +147,20 @@ export function NewsForm({ onSubmit, initialData, onCancel, news = [] }: NewsFor
     );
   }, [tagSearch, allTagOptions]);
 
+  const handleTagCreate = () => {
+    const newTag = tagSearch.trim();
+    if (newTag && !currentTags.includes(newTag)) {
+        form.setValue('tags', [...currentTags, newTag]);
+    }
+    setTagSearch('');
+  }
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        handleTagCreate();
+    }
+  };
 
   return (
     <Form {...form}>
@@ -414,18 +428,13 @@ export function NewsForm({ onSubmit, initialData, onCancel, news = [] }: NewsFor
                     placeholder="Search or create tag..."
                     value={tagSearch}
                     onValueChange={setTagSearch}
+                    onKeyDown={handleKeyDown}
                 />
                 <ScrollArea className="h-48">
                     <CommandEmpty>
                     {tagSearch && !filteredTagOptions.some(opt => opt.label.toLowerCase() === tagSearch.toLowerCase()) ? (
                         <CommandItem
-                            onSelect={() => {
-                                const newTag = tagSearch.trim();
-                                if (newTag && !field.value?.includes(newTag)) {
-                                    field.onChange([...(field.value || []), newTag]);
-                                }
-                                setTagSearch('');
-                            }}
+                            onSelect={handleTagCreate}
                         >
                             Create "{tagSearch}"
                         </CommandItem>
