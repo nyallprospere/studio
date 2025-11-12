@@ -30,4 +30,5 @@ export const adminNavItems: NavItem[] = [
   { label: 'Voter Information', href: '/admin/voter-information'},
   { label: 'Countdown', href: '/admin/countdown' },
   { label: 'Settings', href: '/admin/settings' },
+  { label: 'Test Upload', href: '/admin/test-upload' },
 ];
