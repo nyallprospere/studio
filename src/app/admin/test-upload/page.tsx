@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -34,6 +33,10 @@ export default function TestUploadPage() {
             toast({ variant: 'destructive', title: 'Error', description: 'Please select a file to upload.' });
             return;
         }
+        if (!storage) {
+            setError("Firebase Storage service is not available. Check FirebaseProvider initialization.");
+            return;
+        }
 
         setIsLoading(true);
         setUploadResult(null);
@@ -46,8 +49,10 @@ export default function TestUploadPage() {
             setUploadResult({ url: downloadURL, path: filePath });
             toast({ title: 'Success', description: 'File uploaded successfully.' });
         } catch (err: any) {
-            setError(err.message || 'An unknown error occurred during upload.');
-            toast({ variant: 'destructive', title: 'Upload Failed', description: err.message || 'Could not upload the file.' });
+            console.error("Original upload error:", err);
+            const errorMessage = `Code: ${err.code}\nMessage: ${err.message}`;
+            setError(errorMessage);
+            toast({ variant: 'destructive', title: 'Upload Failed', description: 'See error details on the page.' });
         } finally {
             setIsLoading(false);
         }
@@ -103,8 +108,8 @@ export default function TestUploadPage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
-                        <p className="font-semibold">Error Message:</p>
-                        <p className="font-mono bg-muted p-2 rounded-md">{error}</p>
+                        <p className="font-semibold">Firebase Storage Error Details:</p>
+                        <pre className="font-mono bg-muted p-2 rounded-md whitespace-pre-wrap">{error}</pre>
                     </CardContent>
                 </Card>
             )}
