@@ -1,4 +1,3 @@
-
 'use client';
 
 import { firebaseConfig } from '@/firebase/config';
@@ -6,7 +5,6 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
@@ -28,28 +26,6 @@ export function initializeFirebase() {
       firebaseApp = initializeApp(firebaseConfig);
     }
     
-    // Initialize App Check
-    if (typeof window !== 'undefined') {
-      if (process.env.NODE_ENV === 'development') {
-        // Use a debug token in development. This allows App Check to work without a reCAPTCHA key.
-        (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-      }
-      
-      const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-      if (siteKey) {
-          try {
-              initializeAppCheck(firebaseApp, {
-                  provider: new ReCaptchaV3Provider(siteKey),
-                  isTokenAutoRefreshEnabled: true
-              });
-          } catch(e) {
-              console.error("App Check initialization failed. This can happen if the App Check API is not enabled in your Google Cloud project.", e);
-          }
-      } else {
-          console.warn("NEXT_PUBLIC_RECAPTCHA_SITE_KEY is not set. App Check will not be initialized for production. This may result in Firestore connection errors if App Check is enforced on the backend.");
-      }
-    }
-
     return getSdks(firebaseApp);
   }
 
