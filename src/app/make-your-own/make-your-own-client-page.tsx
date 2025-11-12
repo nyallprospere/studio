@@ -40,10 +40,10 @@ const politicalLeaningOptions = [
 ];
 
 const makeYourOwnLeaningOptions = [
-  { value: 'slp', label: 'SLP', color: '#ef4444' }, // red-500
-  { value: 'uwp', label: 'UWP', color: '#F1C40F' }, // Sun Yellow
-  { value: 'ind', label: 'IND', color: '#3b82f6' }, // blue-500
-  { value: 'unselected', label: 'To be selected', color: '#d1d5db' }, // gray-300
+  { value: 'slp', label: 'SLP', color: '#ef4444' },
+  { value: 'uwp', label: 'UWP', color: '#F1C40F' },
+  { value: 'ind', label: 'IND', color: '#3b82f6' },
+  { value: 'unselected', label: 'To be selected', color: '#d1d5db' },
 ];
 
 
@@ -257,69 +257,74 @@ export default function MakeYourOwnClientPage() {
     
    const handleSaveAndShare = async () => {
     if (!mapRef.current || !firestore) {
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'An unexpected error occurred. Please try again.',
-        });
-        return;
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'An unexpected error occurred. Please try again.',
+      });
+      return;
     }
 
     setIsSaving(true);
+    let imageUrl = '';
     try {
-        const dataUrl = await toPng(mapRef.current);
-        const mapData = myMapConstituencies.map(c => ({
-            constituencyId: c.id,
-            politicalLeaning: c.politicalLeaning || 'unselected',
-        }));
+      const dataUrl = await toPng(mapRef.current);
+      const storage = getStorage();
+      const imageId = uuidv4();
+      const imagePath = `SavedMaps/${imageId}.png`;
+      const imageRef = storageRef(storage, imagePath);
 
-        const storage = getStorage();
-        const imageId = uuidv4();
-        const imagePath = `SavedMaps/${imageId}.png`;
-        const imageRef = storageRef(storage, imagePath);
-        
-        await uploadString(imageRef, dataUrl, 'data_url');
-        const imageUrl = await getDownloadURL(imageRef);
+      await uploadString(imageRef, dataUrl, 'data_url');
+      imageUrl = await getDownloadURL(imageRef);
+    } catch (error) {
+      console.error('Image generation or upload failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Image Error',
+        description: 'Could not generate or save the map image. Please try again.',
+      });
+      setIsSaving(false);
+      return;
+    }
 
-        const mapsCollection = collection(firestore, 'user_maps');
-        
-        const docRef = await addDoc(mapsCollection, {
-            mapData: mapData,
-            createdAt: serverTimestamp(),
-            imageUrl: imageUrl,
-        });
+    try {
+      const mapData = myMapConstituencies.map(c => ({
+        constituencyId: c.id,
+        politicalLeaning: c.politicalLeaning || 'unselected',
+      }));
 
-        if (docRef) {
-            const url = `${window.location.origin}/maps/${docRef.id}`;
-            setShareUrl(url);
-            setSharedMapImageUrl(imageUrl);
+      const mapsCollection = collection(firestore, 'user_maps');
+      const docRef = await addDoc(mapsCollection, {
+        mapData: mapData,
+        createdAt: serverTimestamp(),
+        imageUrl: imageUrl,
+      });
 
-            const { slp, uwp, ind } = seatCounts;
-            const title = `I predict SLP ${slp}, UWP ${uwp}, and IND ${ind} for the Election.`;
-            setDynamicShareTitle(title);
-            
-            const victoryStatus = getVictoryStatus(slp, uwp, ind).status;
-            const description = `${victoryStatus}`;
-            setDynamicShareDescription(description);
-            
-            setIsShareDialogOpen(true);
-        }
+      const url = `${window.location.origin}/maps/${docRef.id}`;
+      setShareUrl(url);
+      setSharedMapImageUrl(imageUrl);
+
+      const { slp, uwp, ind } = seatCounts;
+      const title = `I predict SLP ${slp}, UWP ${uwp}, and IND ${ind} for the Election.`;
+      setDynamicShareTitle(title);
+      
+      const victoryStatus = getVictoryStatus(slp, uwp, ind).status;
+      const description = `${victoryStatus}`;
+      setDynamicShareDescription(description);
+      
+      setIsShareDialogOpen(true);
 
     } catch (error: any) {
-        console.error('Save and share error:', error);
-         if (error instanceof FirestorePermissionError) {
-          errorEmitter.emit('permission-error', error);
-        } else {
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Could not save your map. Please try again.',
-            });
-        }
+      console.error('Firestore document creation failed:', error);
+      const permissionError = new FirestorePermissionError({
+        path: 'user_maps',
+        operation: 'create',
+      });
+      errorEmitter.emit('permission-error', permissionError);
     } finally {
-        setIsSaving(false);
+      setIsSaving(false);
     }
-};
+  };
 
 
     const isLoading = loadingConstituencies || loadingLayout || loadingElections || loadingParties;
@@ -591,5 +596,3 @@ export default function MakeYourOwnClientPage() {
     </div>
   );
 }
-
-    
