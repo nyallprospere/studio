@@ -23,8 +23,9 @@ export function initializeFirebase() {
     (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
 
     try {
+      // For local development, we rely on the debug token.
+      // Do not provide a reCAPTCHA key here.
       initializeAppCheck(firebaseApp, {
-        provider: new ReCaptchaV3Provider('6Le-i-wUAAAAAAN-g_lA_s-g_lA_s-g_lA_s-g_lA_s'),
         isTokenAutoRefreshEnabled: true
       });
     } catch (error) {
