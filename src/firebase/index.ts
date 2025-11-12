@@ -19,7 +19,8 @@ export function initializeFirebase() {
   if (typeof window !== 'undefined') {
     // This allows you to use the App Check debug token in development.
     // Set this to true to enable debug mode.
-    (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = process.env.NODE_ENV !== 'production';
+    // The SDK will automatically generate a debug token and log it to the console.
+    (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
 
     try {
       initializeAppCheck(firebaseApp, {
