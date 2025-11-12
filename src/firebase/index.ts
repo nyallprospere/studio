@@ -27,7 +27,6 @@ export function initializeFirebase() {
         provider: new ReCaptchaV3Provider('6Ld-i-wUAAAAAOf-1-g_lA_s-g_lA_s-g_lA_s-g'),
         isTokenAutoRefreshEnabled: true
       });
-      console.log('App Check initialized');
     } catch (error) {
       console.warn('App Check initialization failed. This may happen in environments where it is not fully configured, but the app will continue to run.', error);
     }
