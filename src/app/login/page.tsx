@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -49,9 +50,12 @@ export default function LoginPage() {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof loginSchema>>) => {
+  const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     try {
+      if (!auth) {
+        throw new Error("Authentication service is not available.");
+      }
       await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({
         title: 'Login Successful',
