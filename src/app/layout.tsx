@@ -32,7 +32,7 @@ export default function RootLayout({
         suppressHydrationWarning={true}
       >
         <FirebaseClientProvider>
-            {children}
+          {children}
         </FirebaseClientProvider>
         <Toaster />
       </body>

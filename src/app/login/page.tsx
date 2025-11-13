@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -29,7 +28,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { MainLayout } from '@/components/layout/main-layout';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address.'),
@@ -78,67 +76,59 @@ export default function LoginPage() {
   };
 
   return (
-    <MainLayout>
-        <div className="flex flex-col flex-1 items-center justify-center bg-background px-4">
-        <Card className="w-full max-w-sm">
-            <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
-                <CardHeader>
-                <CardTitle className="font-headline text-2xl">Login</CardTitle>
-                <CardDescription>
-                    Enter your credentials to access the admin dashboard.
-                </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                        <Input
-                            type="email"
-                            placeholder="user@example.com"
-                            {...field}
-                        />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                </CardContent>
-                <CardFooter className="flex flex-col gap-4">
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    Login
-                </Button>
-                <p className="text-center text-sm text-muted-foreground">
-                    Don&apos;t have an account?{' '}
-                    <Button variant="link" asChild className="p-0">
-                    <Link href="/signup">Sign up</Link>
-                    </Button>
-                </p>
-                </CardFooter>
-            </form>
-            </Form>
-        </Card>
-        </div>
-    </MainLayout>
+    <div className="flex flex-col flex-1 items-center justify-center bg-background px-4">
+    <Card className="w-full max-w-sm">
+        <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+            <CardHeader>
+            <CardTitle className="font-headline text-2xl">Login</CardTitle>
+            <CardDescription>
+                Enter your credentials to access the admin dashboard.
+            </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+            <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                    <Input
+                        type="email"
+                        placeholder="user@example.com"
+                        {...field}
+                    />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                    <Input type="password" placeholder="••••••••" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+            </CardContent>
+            <CardFooter className="flex flex-col gap-4">
+            <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                Login
+            </Button>
+            </CardFooter>
+        </form>
+        </Form>
+    </Card>
+    </div>
   );
 }

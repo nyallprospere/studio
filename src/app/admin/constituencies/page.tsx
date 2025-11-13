@@ -24,7 +24,6 @@ import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ConstituencyAnalyzer } from '@/components/predictions/constituency-analyzer';
-import { MainLayout } from '@/components/layout/main-layout';
 
 
 const initialConstituencies = [
@@ -393,303 +392,301 @@ export default function AdminConstituenciesPage() {
 
 
     return (
-        <MainLayout>
-            <div className="container mx-auto px-4 py-8">
-                <div className="flex justify-between items-start mb-8">
-                    <PageHeader
-                    title="Manage Projection Map"
-                    description="Update details for each electoral district to affect the main projection map."
-                    />
-                    <div className="flex items-center gap-2">
-                        {(constituencies === null || constituencies?.length === 0) && (
-                            <Button onClick={handleSeedConstituencies} disabled={isSeeding}>
-                                {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                Seed Constituencies
-                            </Button>
-                        )}
-                        <Button variant="outline" onClick={() => setIsImportOpen(true)}>
-                            <Upload className="mr-2 h-4 w-4" />
-                            Import
-                        </Button>
-                        <Button variant="outline" onClick={handleExport} disabled={!constituencies || constituencies.length === 0}>
-                            <Download className="mr-2 h-4 w-4" />
-                            Export
-                        </Button>
-                        <Button onClick={handleSaveSnapshot} disabled={isSaving}>
-                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                            Save Daily Snapshot
-                        </Button>
-                        <Button onClick={handleSaveAll} disabled={isSaving || !hasUnsavedChanges}>
-                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                            Save Changes
-                        </Button>
-                    </div>
-                </div>
-                
-                <ImportDialog
-                    isOpen={isImportOpen}
-                    onClose={() => setIsImportOpen(false)}
-                    onImport={handleImport}
+        <div className="container mx-auto px-4 py-8">
+            <div className="flex justify-between items-start mb-8">
+                <PageHeader
+                title="Manage Projection Map"
+                description="Update details for each electoral district to affect the main projection map."
                 />
+                <div className="flex items-center gap-2">
+                    {(constituencies === null || constituencies?.length === 0) && (
+                        <Button onClick={handleSeedConstituencies} disabled={isSeeding}>
+                            {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Seed Constituencies
+                        </Button>
+                    )}
+                    <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Import
+                    </Button>
+                    <Button variant="outline" onClick={handleExport} disabled={!constituencies || constituencies.length === 0}>
+                        <Download className="mr-2 h-4 w-4" />
+                        Export
+                    </Button>
+                    <Button onClick={handleSaveSnapshot} disabled={isSaving}>
+                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        Save Daily Snapshot
+                    </Button>
+                    <Button onClick={handleSaveAll} disabled={isSaving || !hasUnsavedChanges}>
+                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        Save Changes
+                    </Button>
+                </div>
+            </div>
+            
+            <ImportDialog
+                isOpen={isImportOpen}
+                onClose={() => setIsImportOpen(false)}
+                onImport={handleImport}
+            />
 
-                <div className="grid grid-cols-1 gap-8">
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Map Preview</CardTitle>
-                                <CardDescription>
-                                    Click a constituency on the map to edit its details in the table below.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <InteractiveSvgMap 
-                                    constituencies={editableConstituencies} 
-                                    selectedConstituencyId={selectedConstituencyId}
-                                    onConstituencyClick={setSelectedConstituencyId}
-                                    onLeaningChange={handleLeaningChange}
-                                    onPredictionChange={handlePredictionChange}
-                                />
-                            </CardContent>
-                        </Card>
-                        <ConstituencyAnalyzer />
-                    </div>
+            <div className="grid grid-cols-1 gap-8">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                     <Card>
                         <CardHeader>
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <CardTitle>{getCardTitle()}</CardTitle>
-                                    <CardDescription>Edit voter numbers, leanings, and predictions.</CardDescription>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                            <Button
-                                                id="date"
-                                                variant={"outline"}
-                                                className={cn(
-                                                "w-[260px] justify-start text-left font-normal",
-                                                !date && "text-muted-foreground"
-                                                )}
-                                            >
-                                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                                {date?.from ? (
-                                                date.to ? (
-                                                    <>
-                                                    {format(date.from, "LLL dd, y")} -{" "}
-                                                    {format(date.to, "LLL dd, y")}
-                                                    </>
-                                                ) : (
-                                                    format(date.from, "LLL dd, y")
-                                                )
-                                                ) : (
-                                                <span>Pick a date</span>
-                                                )}
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0" align="end">
-                                            <Calendar
-                                                initialFocus
-                                                mode="range"
-                                                defaultMonth={date?.from}
-                                                selected={date}
-                                                onSelect={(range) => { setDate(range); setDatePreset('custom'); }}
-                                                numberOfMonths={2}
-                                            />
-                                        </PopoverContent>
-                                    </Popover>
-                                    <Select value={datePreset} onValueChange={handleDatePresetChange}>
-                                        <SelectTrigger className="w-[120px]">
-                                            <SelectValue placeholder="Date Range" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">All Time</SelectItem>
-                                            <SelectItem value="day">Today</SelectItem>
-                                            <SelectItem value="week">This Week</SelectItem>
-                                            <SelectItem value="month">This Month</SelectItem>
-                                            <SelectItem value="year">This Year</SelectItem>
-                                            <SelectItem value="custom" disabled>Custom</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
+                            <CardTitle>Map Preview</CardTitle>
+                            <CardDescription>
+                                Click a constituency on the map to edit its details in the table below.
+                            </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            {loadingConstituencies ? <p>Loading...</p> : 
-                            error ? <p className="text-destructive">Error: {error.message}</p> :
-                            editableConstituencies && editableConstituencies.length > 0 ? (
-                                <ScrollArea className="h-[70vh]">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Name</TableHead>
-                                            <TableHead>Registered Voters</TableHead>
-                                            <TableHead>Political Leaning</TableHead>
-                                            <TableHead>SLP ODDS</TableHead>
-                                            <TableHead>UWP ODDS</TableHead>
-                                            <TableHead>SLP %</TableHead>
-                                            <TableHead>UWP %</TableHead>
-                                            <TableHead>AI Forecast</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {editableConstituencies.sort((a,b) => a.name.localeCompare(b.name)).map(c => {
-                                            const { slp: slpPercent, uwp: uwpPercent } = calculatePercentages(c.aiForecast, c.aiForecastParty);
-                                            return (
-                                            <TableRow key={c.id} className={c.id === selectedConstituencyId ? 'bg-muted' : ''}>
-                                                <TableCell className="font-medium whitespace-nowrap">{c.name}</TableCell>
-                                                <TableCell>
-                                                    <Input
-                                                        type="number"
-                                                        value={c.demographics?.registeredVoters || 0}
-                                                        onChange={(e) => handleFieldChange(c.id, 'registeredVoters', e.target.value)}
-                                                        className="w-28"
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Select 
-                                                        value={c.politicalLeaning} 
-                                                        onValueChange={(value) => handleFieldChange(c.id, 'politicalLeaning', value)}
+                            <InteractiveSvgMap 
+                                constituencies={editableConstituencies} 
+                                selectedConstituencyId={selectedConstituencyId}
+                                onConstituencyClick={setSelectedConstituencyId}
+                                onLeaningChange={handleLeaningChange}
+                                onPredictionChange={handlePredictionChange}
+                            />
+                        </CardContent>
+                    </Card>
+                    <ConstituencyAnalyzer />
+                </div>
+                <Card>
+                    <CardHeader>
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <CardTitle>{getCardTitle()}</CardTitle>
+                                <CardDescription>Edit voter numbers, leanings, and predictions.</CardDescription>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            id="date"
+                                            variant={"outline"}
+                                            className={cn(
+                                            "w-[260px] justify-start text-left font-normal",
+                                            !date && "text-muted-foreground"
+                                            )}
+                                        >
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {date?.from ? (
+                                            date.to ? (
+                                                <>
+                                                {format(date.from, "LLL dd, y")} -{" "}
+                                                {format(date.to, "LLL dd, y")}
+                                                </>
+                                            ) : (
+                                                format(date.from, "LLL dd, y")
+                                            )
+                                            ) : (
+                                            <span>Pick a date</span>
+                                            )}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="end">
+                                        <Calendar
+                                            initialFocus
+                                            mode="range"
+                                            defaultMonth={date?.from}
+                                            selected={date}
+                                            onSelect={(range) => { setDate(range); setDatePreset('custom'); }}
+                                            numberOfMonths={2}
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                                <Select value={datePreset} onValueChange={handleDatePresetChange}>
+                                    <SelectTrigger className="w-[120px]">
+                                        <SelectValue placeholder="Date Range" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All Time</SelectItem>
+                                        <SelectItem value="day">Today</SelectItem>
+                                        <SelectItem value="week">This Week</SelectItem>
+                                        <SelectItem value="month">This Month</SelectItem>
+                                        <SelectItem value="year">This Year</SelectItem>
+                                        <SelectItem value="custom" disabled>Custom</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        {loadingConstituencies ? <p>Loading...</p> : 
+                        error ? <p className="text-destructive">Error: {error.message}</p> :
+                        editableConstituencies && editableConstituencies.length > 0 ? (
+                            <ScrollArea className="h-[70vh]">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Name</TableHead>
+                                        <TableHead>Registered Voters</TableHead>
+                                        <TableHead>Political Leaning</TableHead>
+                                        <TableHead>SLP ODDS</TableHead>
+                                        <TableHead>UWP ODDS</TableHead>
+                                        <TableHead>SLP %</TableHead>
+                                        <TableHead>UWP %</TableHead>
+                                        <TableHead>AI Forecast</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {editableConstituencies.sort((a,b) => a.name.localeCompare(b.name)).map(c => {
+                                        const { slp: slpPercent, uwp: uwpPercent } = calculatePercentages(c.aiForecast, c.aiForecastParty);
+                                        return (
+                                        <TableRow key={c.id} className={c.id === selectedConstituencyId ? 'bg-muted' : ''}>
+                                            <TableCell className="font-medium whitespace-nowrap">{c.name}</TableCell>
+                                            <TableCell>
+                                                <Input
+                                                    type="number"
+                                                    value={c.demographics?.registeredVoters || 0}
+                                                    onChange={(e) => handleFieldChange(c.id, 'registeredVoters', e.target.value)}
+                                                    className="w-28"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Select 
+                                                    value={c.politicalLeaning} 
+                                                    onValueChange={(value) => handleFieldChange(c.id, 'politicalLeaning', value)}
+                                                >
+                                                    <SelectTrigger className="w-40">
+                                                        <SelectValue placeholder="Select leaning" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {politicalLeaningOptions.map(opt => (
+                                                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Input
+                                                    type="number"
+                                                    value={c.predictedSlpPercentage || 0}
+                                                    onChange={(e) => handleFieldChange(c.id, 'predictedSlpPercentage', e.target.value)}
+                                                    className="w-24"
+                                                    min="0"
+                                                    max="100"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Input
+                                                    type="number"
+                                                    value={c.predictedUwpPercentage || 0}
+                                                    onChange={(e) => handleFieldChange(c.id, 'predictedUwpPercentage', e.target.value)}
+                                                    className="w-24"
+                                                    min="0"
+                                                    max="100"
+                                                />
+                                            </TableCell>
+                                            <TableCell>{slpPercent.toFixed(1)}%</TableCell>
+                                            <TableCell>{uwpPercent.toFixed(1)}%</TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <Select
+                                                        value={c.aiForecastParty}
+                                                        onValueChange={(value) => handleFieldChange(c.id, 'aiForecastParty', value)}
                                                     >
-                                                        <SelectTrigger className="w-40">
-                                                            <SelectValue placeholder="Select leaning" />
+                                                        <SelectTrigger className="w-24">
+                                                            <SelectValue placeholder="Party" />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            {politicalLeaningOptions.map(opt => (
+                                                            {aiPartyOptions.map(opt => (
                                                                 <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                                                             ))}
                                                         </SelectContent>
                                                     </Select>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Input
-                                                        type="number"
-                                                        value={c.predictedSlpPercentage || 0}
-                                                        onChange={(e) => handleFieldChange(c.id, 'predictedSlpPercentage', e.target.value)}
-                                                        className="w-24"
-                                                        min="0"
-                                                        max="100"
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Input
-                                                        type="number"
-                                                        value={c.predictedUwpPercentage || 0}
-                                                        onChange={(e) => handleFieldChange(c.id, 'predictedUwpPercentage', e.target.value)}
-                                                        className="w-24"
-                                                        min="0"
-                                                        max="100"
-                                                    />
-                                                </TableCell>
-                                                <TableCell>{slpPercent.toFixed(1)}%</TableCell>
-                                                <TableCell>{uwpPercent.toFixed(1)}%</TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        <Select
-                                                            value={c.aiForecastParty}
-                                                            onValueChange={(value) => handleFieldChange(c.id, 'aiForecastParty', value)}
-                                                        >
-                                                            <SelectTrigger className="w-24">
-                                                                <SelectValue placeholder="Party" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {aiPartyOptions.map(opt => (
-                                                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <div className="relative">
-                                                            <Input
-                                                                type="text"
-                                                                value={`${(c.aiForecast || 0) > 0 ? '+' : ''}${(c.aiForecast || 0).toFixed(1)}%`}
-                                                                onChange={(e) => {
-                                                                    const value = e.target.value;
-                                                                    const numValue = parseFloat(value.replace('%', '').replace('+', ''));
-                                                                    if (!isNaN(numValue)) {
-                                                                        handleFieldChange(c.id, 'aiForecast', numValue);
-                                                                    } else if (value === '') {
-                                                                        handleFieldChange(c.id, 'aiForecast', 0);
-                                                                    }
-                                                                }}
-                                                                className="w-24"
-                                                            />
-                                                        </div>
+                                                    <div className="relative">
+                                                        <Input
+                                                            type="text"
+                                                            value={`${(c.aiForecast || 0) > 0 ? '+' : ''}${(c.aiForecast || 0).toFixed(1)}%`}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                const numValue = parseFloat(value.replace('%', '').replace('+', ''));
+                                                                if (!isNaN(numValue)) {
+                                                                    handleFieldChange(c.id, 'aiForecast', numValue);
+                                                                } else if (value === '') {
+                                                                    handleFieldChange(c.id, 'aiForecast', 0);
+                                                                }
+                                                            }}
+                                                            className="w-24"
+                                                        />
                                                     </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        )})}
-                                    </TableBody>
-                                </Table>
-                                </ScrollArea>
-                            ) : (
-                                <div className="text-center py-12">
-                                    <p className="text-muted-foreground">No constituencies found.</p>
-                                    <p className="text-sm text-muted-foreground">You can seed the initial 17 constituencies.</p>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Daily Snapshots</CardTitle>
-                            <CardDescription>Review and manage saved daily projections.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {loadingProjections ? <p>Loading snapshots...</p> : (
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Date</TableHead>
-                                            <TableHead className="text-right">Actions</TableHead>
+                                                </div>
+                                            </TableCell>
                                         </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {dailyProjections && dailyProjections.length > 0 ? (
-                                            dailyProjections.map(snapshot => (
-                                                <TableRow key={snapshot.id}>
-                                                    <TableCell className="font-medium">{snapshot.date ? format(snapshot.date.toDate(), 'PPP, p') : 'Processing...'}</TableCell>
-                                                    <TableCell className="text-right">
-                                                        <Button variant="outline" size="sm" onClick={() => handleEditSnapshot(snapshot)} className="mr-2">
-                                                            <Edit className="mr-2 h-4 w-4" />
-                                                            Edit
-                                                        </Button>
-                                                        <AlertDialog>
-                                                            <AlertDialogTrigger asChild>
-                                                                <Button variant="destructive" size="sm">
-                                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                                    Delete
-                                                                </Button>
-                                                            </AlertDialogTrigger>
-                                                            <AlertDialogContent>
-                                                                <AlertDialogHeader>
-                                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                                <AlertDialogDescription>
-                                                                    This action will permanently delete the snapshot from {snapshot.date ? format(snapshot.date.toDate(), 'PPP') : 'this date'}. This cannot be undone.
-                                                                </AlertDialogDescription>
-                                                                </AlertDialogHeader>
-                                                                <AlertDialogFooter>
-                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                <AlertDialogAction onClick={() => handleDeleteSnapshot(snapshot.id)}>Delete</AlertDialogAction>
-                                                                </AlertDialogFooter>
-                                                            </AlertDialogContent>
-                                                        </AlertDialog>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
-                                        ) : (
-                                            <TableRow>
-                                                <TableCell colSpan={2} className="h-24 text-center">
-                                                    No daily snapshots have been saved yet.
+                                    )})}
+                                </TableBody>
+                            </Table>
+                            </ScrollArea>
+                        ) : (
+                            <div className="text-center py-12">
+                                <p className="text-muted-foreground">No constituencies found.</p>
+                                <p className="text-sm text-muted-foreground">You can seed the initial 17 constituencies.</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Daily Snapshots</CardTitle>
+                        <CardDescription>Review and manage saved daily projections.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {loadingProjections ? <p>Loading snapshots...</p> : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {dailyProjections && dailyProjections.length > 0 ? (
+                                        dailyProjections.map(snapshot => (
+                                            <TableRow key={snapshot.id}>
+                                                <TableCell className="font-medium">{snapshot.date ? format(snapshot.date.toDate(), 'PPP, p') : 'Processing...'}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="outline" size="sm" onClick={() => handleEditSnapshot(snapshot)} className="mr-2">
+                                                        <Edit className="mr-2 h-4 w-4" />
+                                                        Edit
+                                                    </Button>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="destructive" size="sm">
+                                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                                Delete
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                This action will permanently delete the snapshot from {snapshot.date ? format(snapshot.date.toDate(), 'PPP') : 'this date'}. This cannot be undone.
+                                                            </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleDeleteSnapshot(snapshot.id)}>Delete</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
                                                 </TableCell>
                                             </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={2} className="h-24 text-center">
+                                                No daily snapshots have been saved yet.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
-        </MainLayout>
+        </div>
     );
 }

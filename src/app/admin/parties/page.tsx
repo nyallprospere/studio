@@ -27,7 +27,6 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { IndependentLogoForm } from './independent-logo-form';
-import { MainLayout } from '@/components/layout/main-layout';
 
 export default function AdminPartiesPage() {
   const { firestore, storage } = useFirebase();
@@ -158,109 +157,107 @@ export default function AdminPartiesPage() {
   };
 
   return (
-    <MainLayout>
-        <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-start mb-8">
-            <PageHeader
-            title="Manage Parties"
-            description="Add, edit, or remove political parties."
-            />
-            <div className="flex items-center gap-2">
-            
-            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-                <DialogTrigger asChild>
-                <Button onClick={() => { setEditingParty(null); setIsFormOpen(true)}}>Add New Party</Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-2xl h-[90vh]">
-                <DialogHeader>
-                    <DialogTitle>{editingParty ? 'Edit Party' : 'Add New Party'}</DialogTitle>
-                </DialogHeader>
-                <ScrollArea className="h-full">
-                    <div className="pr-6">
-                    <PartyForm
-                        onSubmit={handleFormSubmit}
-                        initialData={editingParty}
-                        onCancel={() => setIsFormOpen(false)}
-                    />
-                    </div>
-                </ScrollArea>
-                </DialogContent>
-            </Dialog>
-            </div>
-        </div>
-
-        <Card>
-            <CardHeader>
-            <CardTitle>Existing Parties</CardTitle>
-            <CardDescription>A list of all political parties currently in the system.</CardDescription>
-            </CardHeader>
-            <CardContent>
-            {isLoading ? (
-                <p>Loading parties...</p>
-            ) : (
-                <div className="space-y-4">
-                {parties && parties.length > 0 ? (
-                    parties.map((party) => (
-                    <div key={party.id} className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50">
-                        <div className="flex items-center gap-4">
-                        {party.logoUrl ? (
-                            <Image src={party.logoUrl} alt={party.name} width={48} height={48} className="rounded-full object-contain" />
-                        ) : (
-                            <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                                <Shield className="h-6 w-6 text-muted-foreground" />
-                            </div>
-                        )}
-                        <div>
-                            <p className="font-semibold" style={{ color: party.color }}>{party.name} ({party.acronym})</p>
-                            <div className="text-sm text-muted-foreground flex items-center gap-2">
-                            <span>Leader: {party.leader}</span>
-                            {party.website && (
-                                <>
-                                <span>&bull;</span>
-                                <Link href={party.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline">
-                                    <LinkIcon className="h-3 w-3" />
-                                    Website
-                                </Link>
-                                </>
-                            )}
-                            </div>
-                        </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingParty(party); setIsFormOpen(true);}}>
-                            <Pencil className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                <AlertDialogDescriptionComponent>
-                                    This will permanently delete the party "{party.name}" and all associated data. This action cannot be undone.
-                                </AlertDialogDescriptionComponent>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(party)}>Delete</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                            </AlertDialog>
-
-                        </div>
-                    </div>
-                    ))
-                ) : (
-                    <p className="text-center text-muted-foreground py-8">No parties have been added yet.</p>
-                )}
+    <div className="container mx-auto px-4 py-8">
+    <div className="flex justify-between items-start mb-8">
+        <PageHeader
+        title="Manage Parties"
+        description="Add, edit, or remove political parties."
+        />
+        <div className="flex items-center gap-2">
+        
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogTrigger asChild>
+            <Button onClick={() => { setEditingParty(null); setIsFormOpen(true)}}>Add New Party</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-2xl h-[90vh]">
+            <DialogHeader>
+                <DialogTitle>{editingParty ? 'Edit Party' : 'Add New Party'}</DialogTitle>
+            </DialogHeader>
+            <ScrollArea className="h-full">
+                <div className="pr-6">
+                <PartyForm
+                    onSubmit={handleFormSubmit}
+                    initialData={editingParty}
+                    onCancel={() => setIsFormOpen(false)}
+                />
                 </div>
-            )}
-            </CardContent>
-        </Card>
+            </ScrollArea>
+            </DialogContent>
+        </Dialog>
         </div>
-    </MainLayout>
+    </div>
+
+    <Card>
+        <CardHeader>
+        <CardTitle>Existing Parties</CardTitle>
+        <CardDescription>A list of all political parties currently in the system.</CardDescription>
+        </CardHeader>
+        <CardContent>
+        {isLoading ? (
+            <p>Loading parties...</p>
+        ) : (
+            <div className="space-y-4">
+            {parties && parties.length > 0 ? (
+                parties.map((party) => (
+                <div key={party.id} className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50">
+                    <div className="flex items-center gap-4">
+                    {party.logoUrl ? (
+                        <Image src={party.logoUrl} alt={party.name} width={48} height={48} className="rounded-full object-contain" />
+                    ) : (
+                        <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                            <Shield className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                    )}
+                    <div>
+                        <p className="font-semibold" style={{ color: party.color }}>{party.name} ({party.acronym})</p>
+                        <div className="text-sm text-muted-foreground flex items-center gap-2">
+                        <span>Leader: {party.leader}</span>
+                        {party.website && (
+                            <>
+                            <span>&bull;</span>
+                            <Link href={party.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline">
+                                <LinkIcon className="h-3 w-3" />
+                                Website
+                            </Link>
+                            </>
+                        )}
+                        </div>
+                    </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => { setEditingParty(party); setIsFormOpen(true);}}>
+                        <Pencil className="h-4 w-4" />
+                    </Button>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescriptionComponent>
+                                This will permanently delete the party "{party.name}" and all associated data. This action cannot be undone.
+                            </AlertDialogDescriptionComponent>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(party)}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                        </AlertDialog>
+
+                    </div>
+                </div>
+                ))
+            ) : (
+                <p className="text-center text-muted-foreground py-8">No parties have been added yet.</p>
+            )}
+            </div>
+        )}
+        </CardContent>
+    </Card>
+    </div>
   );
 }

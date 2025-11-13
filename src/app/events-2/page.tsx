@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EventCard } from '@/components/event-card';
-import { MainLayout } from '@/components/layout/main-layout';
 
 
 function EventsPageSkeleton() {
@@ -76,43 +75,41 @@ export default function EventsPage() {
 
 
   return (
-    <MainLayout>
-        <div className="container mx-auto px-4 py-8">
-        <PageHeader
-            title="SLP Events"
-            description="Find out about rallies, town halls, and other events from the Saint Lucia Labour Party."
-        />
-        
-        {isLoading ? <EventsPageSkeleton /> : (
-            <div className="grid md:grid-cols-1 gap-8">
-                <Card>
-                    <CardHeader>
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <CardTitle>SLP Events</CardTitle>
-                                <CardDescription>Events hosted by the Saint Lucia Labour Party.</CardDescription>
-                            </div>
-                            <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
-                                <Button size="sm" variant={slpViewMode === 'upcoming' ? 'secondary' : 'ghost'} onClick={() => setSlpViewMode('upcoming')}>Upcoming</Button>
-                                <Button size="sm" variant={slpViewMode === 'past' ? 'secondary' : 'ghost'} onClick={() => setSlpViewMode('past')}>Past</Button>
-                            </div>
+    <div className="container mx-auto px-4 py-8">
+    <PageHeader
+        title="SLP Events"
+        description="Find out about rallies, town halls, and other events from the Saint Lucia Labour Party."
+    />
+    
+    {isLoading ? <EventsPageSkeleton /> : (
+        <div className="grid md:grid-cols-1 gap-8">
+            <Card>
+                <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <CardTitle>SLP Events</CardTitle>
+                            <CardDescription>Events hosted by the Saint Lucia Labour Party.</CardDescription>
                         </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                        {visibleSlpEvents.length > 0 ? (
-                            visibleSlpEvents.map((event) => (
-                            <EventCard key={event.id} event={event} party={slpParty || undefined} />
-                            ))
-                        ) : (
-                            <p className="text-center text-muted-foreground py-8">No {slpViewMode} SLP events found.</p>
-                        )}
+                        <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
+                            <Button size="sm" variant={slpViewMode === 'upcoming' ? 'secondary' : 'ghost'} onClick={() => setSlpViewMode('upcoming')}>Upcoming</Button>
+                            <Button size="sm" variant={slpViewMode === 'past' ? 'secondary' : 'ghost'} onClick={() => setSlpViewMode('past')}>Past</Button>
                         </div>
-                    </CardContent>
-                </Card>
-            </div>
-        )}
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                    {visibleSlpEvents.length > 0 ? (
+                        visibleSlpEvents.map((event) => (
+                        <EventCard key={event.id} event={event} party={slpParty || undefined} />
+                        ))
+                    ) : (
+                        <p className="text-center text-muted-foreground py-8">No {slpViewMode} SLP events found.</p>
+                    )}
+                    </div>
+                </CardContent>
+            </Card>
         </div>
-    </MainLayout>
+    )}
+    </div>
   );
 }

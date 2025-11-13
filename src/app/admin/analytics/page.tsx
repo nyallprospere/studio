@@ -6,7 +6,6 @@ import { collection } from 'firebase/firestore';
 import type { Ad } from '@/lib/types';
 import { DataTable } from './data-table';
 import { columns } from './columns';
-import { MainLayout } from '@/components/layout/main-layout';
 
 export default function AdAnalyticsPage() {
     const { firestore } = useFirebase();
@@ -14,14 +13,12 @@ export default function AdAnalyticsPage() {
     const { data: ads, isLoading } = useCollection<Ad>(adsCollection);
 
     return (
-        <MainLayout>
-            <div className="container mx-auto py-10">
-                <PageHeader
-                    title="Ad Analytics"
-                    description="Review and analyze the performance of your ad campaigns."
-                />
-                {isLoading ? <p>Loading analytics data...</p> : <DataTable columns={columns} data={ads || []} />}
-            </div>
-        </MainLayout>
+        <div className="container mx-auto py-10">
+            <PageHeader
+                title="Ad Analytics"
+                description="Review and analyze the performance of your ad campaigns."
+            />
+            {isLoading ? <p>Loading analytics data...</p> : <DataTable columns={columns} data={ads || []} />}
+        </div>
     );
 }

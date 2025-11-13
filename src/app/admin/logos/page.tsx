@@ -33,7 +33,6 @@ import {
   DialogTitle as VisuallyHiddenTitle,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MainLayout } from '@/components/layout/main-layout';
 
 
 export default function ManageLogosPage() {
@@ -225,192 +224,190 @@ export default function ManageLogosPage() {
   const isLoading = loadingParties || loadingElections || loadingLogos || loadingConstituencies || loadingCandidates;
 
   return (
-    <MainLayout>
-        <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-start mb-8">
-            <PageHeader
-                title="Manage Party Logos"
-                description="Assign specific logos to parties for each election."
-            />
-            <div className="flex items-center gap-2">
-                {activeTab === 'independent' && (
-                    <Select value={electionFilter} onValueChange={setElectionFilter}>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Filter by year" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Years</SelectItem>
-                            {sortedElections.map(e => (
-                                <SelectItem key={e.id} value={e.id}>{e.year}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                )}
-            </div>
+    <div className="container mx-auto px-4 py-8">
+    <div className="flex justify-between items-start mb-8">
+        <PageHeader
+            title="Manage Party Logos"
+            description="Assign specific logos to parties for each election."
+        />
+        <div className="flex items-center gap-2">
+            {activeTab === 'independent' && (
+                <Select value={electionFilter} onValueChange={setElectionFilter}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Filter by year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Years</SelectItem>
+                        {sortedElections.map(e => (
+                            <SelectItem key={e.id} value={e.id}>{e.year}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            )}
         </div>
+    </div>
 
-        {isLoading ? <p>Loading...</p> : 
-        error ? <p className="text-destructive">Error loading logos: {error.message}</p> :
-        (
-            <>
-            <LogoUploadDialog
-                isOpen={isUploadDialogOpen}
-                onClose={() => setIsUploadDialogOpen(false)}
-                party={selectedPartyForUpload}
-                elections={elections || []}
-                constituencies={constituencies || []}
-                partyLogos={partyLogos || []}
-                onSuccess={handleUploadSuccess}
-            />
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList>
-                    {allParties.map(party => (
-                        <TabsTrigger key={party.id} value={party.id} style={{ color: party.color }}>{party.name}</TabsTrigger>
-                    ))}
-                </TabsList>
-                {allParties.map(party => {
-                    if (party.id === 'constituencies') {
-                    return (
-                        <TabsContent key={party.id} value={party.id}>
-                        <Card>
-                            <CardHeader>
-                            <CardTitle>Constituency Logos</CardTitle>
-                            <CardDescription>Manage logos for each individual constituency.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {constituencies?.sort((a,b) => a.name.localeCompare(b.name)).map(c => (
-                                <div key={c.id} className="p-4 border rounded-md flex flex-col gap-4">
-                                <h4 className="font-semibold">{c.name}</h4>
-                                <div className="relative h-24 w-full flex items-center justify-center">
-                                        {c.logoUrl ? (
-                                            <Image src={c.logoUrl} alt={`${c.name} Logo`} fill className="object-contain" />
-                                        ) : (
-                                            <Map className="h-12 w-12 text-muted-foreground" />
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Input 
-                                            type="file" 
-                                            accept="image/png, image/jpeg" 
-                                            className="text-xs"
-                                            onChange={(e) => setConstituencyLogoFile(prev => ({ ...prev, [c.id]: e.target.files?.[0] || null }))}
-                                        />
-                                        <Button onClick={() => handleConstituencyLogoUpload(c.id)} disabled={!constituencyLogoFile[c.id]}>
-                                            <Upload className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </div>
-                            ))}
-                            </CardContent>
-                        </Card>
-                        </TabsContent>
-                    )
-                    }
-
-                    const logoGroups = logoGroupsByParty[party.id] || [];
-                    return (
+    {isLoading ? <p>Loading...</p> : 
+    error ? <p className="text-destructive">Error loading logos: {error.message}</p> :
+    (
+        <>
+        <LogoUploadDialog
+            isOpen={isUploadDialogOpen}
+            onClose={() => setIsUploadDialogOpen(false)}
+            party={selectedPartyForUpload}
+            elections={elections || []}
+            constituencies={constituencies || []}
+            partyLogos={partyLogos || []}
+            onSuccess={handleUploadSuccess}
+        />
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList>
+                {allParties.map(party => (
+                    <TabsTrigger key={party.id} value={party.id} style={{ color: party.color }}>{party.name}</TabsTrigger>
+                ))}
+            </TabsList>
+            {allParties.map(party => {
+                if (party.id === 'constituencies') {
+                return (
                     <TabsContent key={party.id} value={party.id}>
-                        <Card>
-                            <CardHeader className="flex flex-row justify-between items-center">
-                                <div>
-                                    <CardTitle style={{color: party.color}}>{party.name}</CardTitle>
-                                    <CardDescription>Manage logos for the {party.name === 'Independent' ? 'Independent candidates' : party.acronym}.</CardDescription>
+                    <Card>
+                        <CardHeader>
+                        <CardTitle>Constituency Logos</CardTitle>
+                        <CardDescription>Manage logos for each individual constituency.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {constituencies?.sort((a,b) => a.name.localeCompare(b.name)).map(c => (
+                            <div key={c.id} className="p-4 border rounded-md flex flex-col gap-4">
+                            <h4 className="font-semibold">{c.name}</h4>
+                            <div className="relative h-24 w-full flex items-center justify-center">
+                                    {c.logoUrl ? (
+                                        <Image src={c.logoUrl} alt={`${c.name} Logo`} fill className="object-contain" />
+                                    ) : (
+                                        <Map className="h-12 w-12 text-muted-foreground" />
+                                    )}
                                 </div>
-                                <Button
-                                    onClick={() => handleUploadClick(party)}
-                                >
-                                    <Upload className="h-4 w-4" />
-                                    Upload Logos
-                                </Button>
-                            </CardHeader>
-                            <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {logoGroups.length > 0 ? logoGroups.map(group => {
-                                const isLocked = deleteLocks[group.key] !== false;
-                                return (
-                                <div key={group.key} className="p-4 border rounded-md flex flex-col gap-4">
-                                    <div className="text-center">
-                                    <h4 className="font-semibold">{group.dateRange}</h4>
-                                    {party.id !== 'independent' ? null : group.constituencyName ? (
-                                        <p className="text-sm text-muted-foreground">{group.constituencyName}</p>
-                                    ) : null}
+                                <div className="flex items-center gap-2">
+                                    <Input 
+                                        type="file" 
+                                        accept="image/png, image/jpeg" 
+                                        className="text-xs"
+                                        onChange={(e) => setConstituencyLogoFile(prev => ({ ...prev, [c.id]: e.target.files?.[0] || null }))}
+                                    />
+                                    <Button onClick={() => handleConstituencyLogoUpload(c.id)} disabled={!constituencyLogoFile[c.id]}>
+                                        <Upload className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
+                        </CardContent>
+                    </Card>
+                    </TabsContent>
+                )
+                }
+
+                const logoGroups = logoGroupsByParty[party.id] || [];
+                return (
+                <TabsContent key={party.id} value={party.id}>
+                    <Card>
+                        <CardHeader className="flex flex-row justify-between items-center">
+                            <div>
+                                <CardTitle style={{color: party.color}}>{party.name}</CardTitle>
+                                <CardDescription>Manage logos for the {party.name === 'Independent' ? 'Independent candidates' : party.acronym}.</CardDescription>
+                            </div>
+                            <Button
+                                onClick={() => handleUploadClick(party)}
+                            >
+                                <Upload className="h-4 w-4" />
+                                Upload Logos
+                            </Button>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {logoGroups.length > 0 ? logoGroups.map(group => {
+                            const isLocked = deleteLocks[group.key] !== false;
+                            return (
+                            <div key={group.key} className="p-4 border rounded-md flex flex-col gap-4">
+                                <div className="text-center">
+                                <h4 className="font-semibold">{group.dateRange}</h4>
+                                {party.id !== 'independent' ? null : group.constituencyName ? (
+                                    <p className="text-sm text-muted-foreground">{group.constituencyName}</p>
+                                ) : null}
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-4 items-center flex-grow">
+                                <div className="flex flex-col items-center gap-2 text-center">
+                                    <p className="text-sm font-medium">Standard Logo</p>
+                                    <div className="relative h-20 w-20 flex items-center justify-center">
+                                        {group.logoUrl ? (
+                                        <Dialog>
+                                            <DialogTrigger asChild>
+                                                <Image src={group.logoUrl} alt="Standard Logo" fill className="object-contain cursor-pointer" />
+                                            </DialogTrigger>
+                                            <DialogContent className="p-0 border-0 max-w-fit bg-transparent">
+                                                <VisuallyHiddenTitle>Standard Logo Preview</VisuallyHiddenTitle>
+                                                <Image src={group.logoUrl} alt="Standard Logo" width={512} height={512} className="object-contain" />
+                                            </DialogContent>
+                                        </Dialog>
+                                        ) : <Shield className="h-8 w-8 text-muted-foreground" />}
                                     </div>
-                                    
-                                    <div className="grid grid-cols-2 gap-4 items-center flex-grow">
-                                    <div className="flex flex-col items-center gap-2 text-center">
-                                        <p className="text-sm font-medium">Standard Logo</p>
-                                        <div className="relative h-20 w-20 flex items-center justify-center">
-                                            {group.logoUrl ? (
+                                </div>
+                                <div className="flex flex-col items-center gap-2 text-center">
+                                    <p className="text-sm font-medium">Expanded Logo</p>
+                                    <div className="relative h-20 w-32 flex items-center justify-center">
+                                        {group.expandedLogoUrl ? (
                                             <Dialog>
                                                 <DialogTrigger asChild>
-                                                    <Image src={group.logoUrl} alt="Standard Logo" fill className="object-contain cursor-pointer" />
+                                                <Image src={group.expandedLogoUrl} alt="Expanded Logo" fill className="object-contain cursor-pointer"/>
                                                 </DialogTrigger>
                                                 <DialogContent className="p-0 border-0 max-w-fit bg-transparent">
-                                                    <VisuallyHiddenTitle>Standard Logo Preview</VisuallyHiddenTitle>
-                                                    <Image src={group.logoUrl} alt="Standard Logo" width={512} height={512} className="object-contain" />
+                                                    <VisuallyHiddenTitle>Expanded Logo Preview</VisuallyHiddenTitle>
+                                                    <Image src={group.expandedLogoUrl} alt="Expanded Logo" width={800} height={400} className="object-contain" />
                                                 </DialogContent>
                                             </Dialog>
-                                            ) : <Shield className="h-8 w-8 text-muted-foreground" />}
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col items-center gap-2 text-center">
-                                        <p className="text-sm font-medium">Expanded Logo</p>
-                                        <div className="relative h-20 w-32 flex items-center justify-center">
-                                            {group.expandedLogoUrl ? (
-                                                <Dialog>
-                                                    <DialogTrigger asChild>
-                                                    <Image src={group.expandedLogoUrl} alt="Expanded Logo" fill className="object-contain cursor-pointer"/>
-                                                    </DialogTrigger>
-                                                    <DialogContent className="p-0 border-0 max-w-fit bg-transparent">
-                                                        <VisuallyHiddenTitle>Expanded Logo Preview</VisuallyHiddenTitle>
-                                                        <Image src={group.expandedLogoUrl} alt="Expanded Logo" width={800} height={400} className="object-contain" />
-                                                    </DialogContent>
-                                                </Dialog>
-                                            ) : <Shield className="h-8 w-8 text-muted-foreground" />}
-                                        </div>
-                                    </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-1 mt-auto">
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <Button variant="destructive" size="sm" className="w-full" disabled={isLocked}>
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    Delete
-                                                </Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                        This will delete the logo entries for {group.dateRange}. This action cannot be undone.
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleDeleteLogos(party.id, group.logoIds || [], group.electionIds)}>
-                                                        Yes, Delete
-                                                    </AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
-                                        <Button variant="outline" size="icon" onClick={() => setDeleteLocks(prev => ({...prev, [group.key]: !prev[group.key]}))}>
-                                            {isLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
-                                        </Button>
+                                        ) : <Shield className="h-8 w-8 text-muted-foreground" />}
                                     </div>
                                 </div>
-                                )
-                            }) : (
-                                <p className="text-center text-muted-foreground py-8 col-span-full">No logos found for this party.</p>
-                            )}
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                    );
-                })}
-            </Tabs>
-            </>
-        )}
-        </div>
-    </MainLayout>
+                                </div>
+
+                                <div className="flex items-center gap-1 mt-auto">
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="destructive" size="sm" className="w-full" disabled={isLocked}>
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Delete
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will delete the logo entries for {group.dateRange}. This action cannot be undone.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDeleteLogos(party.id, group.logoIds || [], group.electionIds)}>
+                                                    Yes, Delete
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                    <Button variant="outline" size="icon" onClick={() => setDeleteLocks(prev => ({...prev, [group.key]: !prev[group.key]}))}>
+                                        {isLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                                    </Button>
+                                </div>
+                            </div>
+                            )
+                        }) : (
+                            <p className="text-center text-muted-foreground py-8 col-span-full">No logos found for this party.</p>
+                        )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                );
+            })}
+        </Tabs>
+        </>
+    )}
+    </div>
   );
 }

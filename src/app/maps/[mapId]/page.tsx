@@ -10,7 +10,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
-import { MainLayout } from '@/components/layout/main-layout';
 
 function MapPageSkeleton() {
     return (
@@ -49,46 +48,40 @@ export default function SavedMapPage() {
 
     if (loadingMap || loadingConstituencies) {
         return (
-            <MainLayout>
-                <div className="container mx-auto px-4 py-8">
-                    <PageHeader title="User Prediction Map" description="Viewing a user's election prediction." />
-                    <MapPageSkeleton />
-                </div>
-            </MainLayout>
+            <div className="container mx-auto px-4 py-8">
+                <PageHeader title="User Prediction Map" description="Viewing a user's election prediction." />
+                <MapPageSkeleton />
+            </div>
         )
     }
 
     if (!userMap) {
         return (
-            <MainLayout>
-                <div className="container mx-auto px-4 py-8">
-                    <PageHeader title="Map Not Found" description="The prediction map you are looking for does not exist or has been deleted." />
-                </div>
-            </MainLayout>
+            <div className="container mx-auto px-4 py-8">
+                <PageHeader title="Map Not Found" description="The prediction map you are looking for does not exist or has been deleted." />
+            </div>
         )
     }
     
     return (
-        <MainLayout>
-            <div className="container mx-auto px-4 py-8">
-                <PageHeader title="User Prediction Map" description={`A prediction created on ${new Date(userMap.createdAt.toDate()).toLocaleDateString()}`} />
-                <Card>
-                    <CardContent className="p-2">
-                        {userMap.imageUrl ? (
-                            <div className="relative aspect-video">
-                                <Image src={userMap.imageUrl} alt="User Prediction Map" fill className="object-contain" />
-                            </div>
-                        ) : (
-                            <InteractiveSvgMap 
-                                constituencies={mapConstituencies}
-                                selectedConstituencyId={null}
-                                onConstituencyClick={() => {}} // Read-only
-                                isMakeYourOwn={true}
-                            />
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
-        </MainLayout>
+        <div className="container mx-auto px-4 py-8">
+            <PageHeader title="User Prediction Map" description={`A prediction created on ${new Date(userMap.createdAt.toDate()).toLocaleDateString()}`} />
+            <Card>
+                <CardContent className="p-2">
+                    {userMap.imageUrl ? (
+                        <div className="relative aspect-video">
+                            <Image src={userMap.imageUrl} alt="User Prediction Map" fill className="object-contain" />
+                        </div>
+                    ) : (
+                        <InteractiveSvgMap 
+                            constituencies={mapConstituencies}
+                            selectedConstituencyId={null}
+                            onConstituencyClick={() => {}} // Read-only
+                            isMakeYourOwn={true}
+                        />
+                    )}
+                </CardContent>
+            </Card>
+        </div>
     );
 }
