@@ -1,4 +1,3 @@
-
 'use client';
 
 import { firebaseConfig } from '@/firebase/config';
@@ -7,6 +6,17 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { initializeAppCheck } from 'firebase/app-check';
+
+// Internal function to get SDKs, preventing circular dependencies.
+function _getFirebaseServices(firebaseApp: FirebaseApp) {
+  return {
+    firebaseApp,
+    auth: getAuth(firebaseApp),
+    firestore: getFirestore(firebaseApp),
+    storage: getStorage(firebaseApp)
+  };
+}
+
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
@@ -36,17 +46,9 @@ export function initializeFirebase() {
   }
 
   // If already initialized, return the SDKs with the existing App
-  return getSdks(firebaseApp);
+  return _getFirebaseServices(firebaseApp);
 }
 
-export function getSdks(firebaseApp: FirebaseApp) {
-  return {
-    firebaseApp,
-    auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp),
-    storage: getStorage(firebaseApp)
-  };
-}
 
 export * from './provider';
 export * from './client-provider';
