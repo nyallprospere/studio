@@ -5,7 +5,6 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import { initializeAppCheck } from 'firebase/app-check';
 
 // Internal function to get SDKs, preventing circular dependencies.
 function _getFirebaseServices(firebaseApp: FirebaseApp) {
@@ -25,24 +24,6 @@ export function initializeFirebase() {
     firebaseApp = initializeApp(firebaseConfig);
   } else {
     firebaseApp = getApp();
-  }
-
-  if (typeof window !== 'undefined') {
-    // This allows you to use the App Check debug token in development.
-    // Set this to true to enable debug mode.
-    // The SDK will automatically generate a debug token and log it to the console.
-    (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-
-    // Only initialize App Check in production.
-    if (process.env.NODE_ENV === 'production') {
-      try {
-        initializeAppCheck(firebaseApp, {
-          isTokenAutoRefreshEnabled: true
-        });
-      } catch (error) {
-        console.warn('App Check initialization failed. This may happen in environments where it is not fully configured, but the app will continue to run.', error);
-      }
-    }
   }
 
   // If already initialized, return the SDKs with the existing App
