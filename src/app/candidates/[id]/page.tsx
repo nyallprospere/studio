@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useParams } from 'next/navigation';
@@ -135,9 +136,10 @@ export default function CandidateDetailPage() {
                     </div>
                     )}
                     {candidate.facebookUrl && (
-                        <Button asChild variant="ghost" size="icon">
+                        <Button asChild variant="outline" size="sm">
                             <a href={candidate.facebookUrl} target="_blank" rel="noopener noreferrer">
-                                <Facebook className="h-6 w-6 text-[#1877F2]" />
+                                <Facebook className="h-4 w-4 mr-2" style={{color: '#1877F2'}} />
+                                Facebook
                             </a>
                         </Button>
                     )}
