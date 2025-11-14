@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
@@ -415,7 +414,7 @@ export default function MakeYourOwnClientPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-        <PageHeader title={layoutConfig.pageTitle} description={layoutConfig.pageDescription} />
+        <PageHeader title='' description='' />
 
       {isLoading || !constituencies ? (
           <ConstituenciesPageSkeleton />
