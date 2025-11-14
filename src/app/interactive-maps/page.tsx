@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -40,8 +41,8 @@ export default function ConstituenciesPage() {
         return (
             <div className="container mx-auto px-4 py-8">
                 <PageHeader
-                    title=""
-                    description="Click on a district to begin."
+                    title="Constituencies"
+                    description="Click on a Constituency to get started.."
                 />
                 <InteractiveMapPageSkeleton />
             </div>
@@ -51,8 +52,8 @@ export default function ConstituenciesPage() {
     return (
         <div className="container mx-auto px-4 py-8">
             <PageHeader
-                title=""
-                description="Click on a district to begin."
+                title="Constituencies"
+                description="Click on a Constituency to get started.."
             />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="md:col-span-2">
