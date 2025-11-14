@@ -61,6 +61,11 @@
           "type": "string",
           "description": "URL to the candidate's image.",
           "format": "uri"
+        },
+        "facebookUrl": {
+            "type": "string",
+            "description": "URL to the candidate's Facebook page.",
+            "format": "uri"
         }
       },
       "required": [
@@ -104,6 +109,11 @@
           "type": "string",
           "description": "URL to the candidate's image.",
           "format": "uri"
+        },
+        "facebookUrl": {
+            "type": "string",
+            "description": "URL to the candidate's Facebook page.",
+            "format": "uri"
         },
         "archiveDate": {
           "type": "string",

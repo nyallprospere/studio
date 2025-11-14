@@ -35,6 +35,7 @@ export interface Candidate {
   bio: string;
   imageUrl?: string; // URL to photo in storage
   customLogoUrl?: string; // URL to a custom logo for this candidate
+  facebookUrl?: string;
   policyPositions: { title: string; description: string }[];
   isIncumbent?: boolean;
   isPartyLeader?: boolean;
@@ -49,6 +50,7 @@ export interface ArchivedCandidate extends Omit<Candidate, 'id' | 'name'> {
     originalId: string;
     archiveDate: string;
     electionId: string;
+    facebookUrl?: string;
 }
 
 

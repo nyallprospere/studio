@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -89,6 +90,7 @@ export default function AdminCandidatesPage() {
         constituencyId: values.constituencyId,
         bio: values.bio || '',
         imageUrl: imageUrl || '',
+        facebookUrl: values.facebookUrl || '',
         customLogoUrl: customLogoUrl || '',
         isIncumbent: values.isIncumbent,
         isPartyLeader: values.isPartyLeader,

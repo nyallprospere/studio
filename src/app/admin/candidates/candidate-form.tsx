@@ -24,6 +24,7 @@ const candidateSchema = z.object({
   partyId: z.string().min(1, "Party is required"),
   constituencyId: z.string().min(1, "Constituency is required"),
   bio: z.string().optional(),
+  facebookUrl: z.string().url().optional().or(z.literal('')),
   photoFile: z.any().optional(),
   customLogoFile: z.any().optional(),
   imageUrl: z.string().url().optional().or(z.literal('')),
@@ -69,6 +70,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
       partyId: '',
       constituencyId: '',
       bio: '',
+      facebookUrl: '',
       imageUrl: '',
       customLogoUrl: '',
       removePhoto: false,
@@ -87,6 +89,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
     if (initialData) {
       form.reset({
         ...initialData,
+        facebookUrl: initialData.facebookUrl || '',
         isIncumbent: initialData.isIncumbent ?? false,
         isPartyLeader: initialData.isPartyLeader ?? false,
         isDeputyLeader: initialData.isDeputyLeader ?? false,
@@ -103,6 +106,7 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
           partyId: '',
           constituencyId: '',
           bio: '',
+          facebookUrl: '',
           imageUrl: '',
           customLogoUrl: '',
           removePhoto: false,
@@ -280,6 +284,21 @@ export function CandidateForm({ onSubmit, initialData, onCancel, parties, consti
           )}
         />
         
+        <FormField
+          control={form.control}
+          name="facebookUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Facebook Page URL</FormLabel>
+              <FormControl>
+                <Input type="url" placeholder="https://www.facebook.com/..." {...field} />
+              </FormControl>
+              <FormDescription>The candidate's official Facebook page.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
