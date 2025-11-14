@@ -84,8 +84,8 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
     
-    match /ad_clicks/{document=**} {
-      allow list, get: if isAdmin();
+    match /ad_clicks/{adClickId} {
+      allow get: if isAdmin();
       allow create: if true;
       allow update, delete: if false;
     }
