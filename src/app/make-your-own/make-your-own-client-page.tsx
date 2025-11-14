@@ -177,7 +177,7 @@ export default function MakeYourOwnClientPage() {
     const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
     const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
 
-    const userMapsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'user_maps'), orderBy('createdAt', 'desc'), where('imageUrl', '!=', '')) : null, [firestore]);
+    const userMapsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'user_maps'), where('imageUrl', '!=', '')) : null, [firestore]);
     const { data: userMaps, isLoading: loadingUserMaps } = useCollection<UserMap>(userMapsQuery);
     
     const [previousElectionResults, setPreviousElectionResults] = useState<ElectionResult[]>([]);
