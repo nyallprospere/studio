@@ -6,7 +6,6 @@ import { Ad } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 import { format } from 'date-fns'
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
 
 export const columns: ColumnDef<Ad>[] = [
   {
