@@ -471,6 +471,25 @@ export default function MakeYourOwnClientPage() {
         toast({ title: 'Link Copied!', description: 'The shareable link has been copied to your clipboard.' });
     };
 
+    const handleInstagramShare = () => {
+        if (sharedMapImageUrl) {
+            const link = document.createElement('a');
+            link.href = sharedMapImageUrl;
+            link.download = 'lucianvotes-prediction.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            toast({
+                title: 'Image Downloaded',
+                description: 'Your map image has been saved. You can now share it on Instagram!',
+            });
+            setTimeout(() => {
+                window.open('https://www.instagram.com', '_blank');
+            }, 1000);
+        }
+    };
+
+
     const SeatChangeIndicator = ({ change }: { change: number | null }) => {
         if (change === null) return null;
         const color = change > 0 ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-muted-foreground';
@@ -708,6 +727,9 @@ export default function MakeYourOwnClientPage() {
                             <svg className="mr-2" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M16.75 13.96c.25.48.43.9.43 1.03c0 .14-.03.28-.08.41c-.05.14-.12.26-.2.36c-.19.26-.5.5-1.03.73c-.53.23-1.12.35-1.78.35c-.71 0-1.46-.14-2.23-.42c-1.14-.42-2.2-.99-3.14-1.7c-1.1-.83-2-1.8-2.7-2.9c-.53-.83-.89-1.75-1.07-2.71c-.03-.23-.05-.47-.05-.7c0-.7.13-1.35.4-1.91c.26-.56.63-.96 1.1-1.2c.2-.12.43-.2.66-.23c.23-.03.46 0 .68.08c.22.08.43.2.6.36c.2.19.33.43.4.7c.08.27.12.55.12.86c0 .22-.05.43-.14.63c-.1.2-.23.39-.4.54l-.4.43c-.11.11-.19.23-.23.36c-.03.13-.02.28.05.43c.09.2.23.39.4.54c.4.41.85.78 1.34 1.1c.54.35 1.1.62 1.69.8c.13.04.28.05.41.02c.13-.03.26-.09.36-.19l.36-.36c.2-.2.43-.36.69-.47c.26-.11.55-.16.85-.16c.28 0 .55.05.79.14c.24.09.46.23.64.41c.18.18.32.39.41.63c.09.23.14.49.14.77c-.01.2-.06.4-.14.59zM12 2a10 10 0 0 0 -10 10c0 1.93.55 3.75 1.53 5.3l-1.6 4.84l4.94-1.55A10 10 0 0 0 12 22a10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
                             WhatsApp
                           </a>
+                      </Button>
+                      <Button onClick={handleInstagramShare}>
+                        <Instagram className="mr-2 h-4 w-4" /> Instagram
                       </Button>
                       <Button asChild>
                           <a href={emailShareUrl}>
