@@ -3,7 +3,7 @@
 
 import { useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import { useCollection, useDoc, useFirebase, useMemoFirebase } from '@/firebase';
+import { useCollection, useDoc, useFirebase, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, where, orderBy, doc } from 'firebase/firestore';
 import type { AdClick, Ad } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
@@ -17,18 +17,28 @@ import { ArrowLeft } from 'lucide-react';
 export default function AdClickAnalyticsPage() {
     const { adId } = useParams();
     const { firestore } = useFirebase();
+    const { user, isUserLoading } = useUser();
 
-    const adRef = useMemoFirebase(() => firestore ? doc(firestore, 'ads', adId as string) : null, [firestore, adId]);
+    const adRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'ads', adId as string) : null), [firestore, user, adId]);
     const { data: ad, isLoading: loadingAd } = useDoc<Ad>(adRef);
 
     const clicksQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
+        if (!firestore || !user) return null;
         return query(collection(firestore, 'ad_clicks'), where('adId', '==', adId), orderBy('timestamp', 'desc'));
-    }, [firestore, adId]);
+    }, [firestore, user, adId]);
 
     const { data: clicks, isLoading: loadingClicks } = useCollection<AdClick>(clicksQuery);
 
-    const isLoading = loadingAd || loadingClicks;
+    const isLoading = isUserLoading || loadingAd || loadingClicks;
+
+    if (isUserLoading) {
+        return <p>Loading user...</p>
+    }
+
+    if (!user) {
+        return <p>You must be logged in to view this page.</p>
+    }
+
 
     return (
         <div className="container mx-auto py-10">
