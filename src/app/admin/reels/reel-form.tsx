@@ -39,6 +39,7 @@ export function ReelForm({ onSubmit, initialData, onCancel, parties, candidates 
   });
 
   const selectedPartyId = form.watch('partyId');
+  const selectedCandidateId = form.watch('candidateId');
 
   useEffect(() => {
     if (initialData) {
@@ -55,6 +56,15 @@ export function ReelForm({ onSubmit, initialData, onCancel, parties, candidates 
       });
     }
   }, [initialData, form]);
+
+  useEffect(() => {
+    if (selectedCandidateId && selectedCandidateId !== 'none') {
+      const selectedCandidate = candidates.find(c => c.id === selectedCandidateId);
+      if (selectedCandidate && selectedCandidate.facebookUrl) {
+        form.setValue('authorUrl', selectedCandidate.facebookUrl);
+      }
+    }
+  }, [selectedCandidateId, candidates, form]);
 
   const filteredCandidates = useMemo(() => {
     if (!selectedPartyId || !candidates) return [];
