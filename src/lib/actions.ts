@@ -1,3 +1,4 @@
+
 'use server';
 
 import { generateElectionPredictions } from '@/ai/flows/generate-election-predictions';
@@ -5,7 +6,7 @@ import { assessNewsImpact } from '@/ai/flows/assess-news-impact';
 import { summarizeArticle as summarizeArticleFlow } from '@/ai/flows/summarize-article';
 import { analyzeConstituencyOutcome as analyzeConstituencyOutcomeFlow, type AnalyzeConstituencyOutcomeInput } from '@/ai/flows/analyze-constituency-outcome';
 import { analyzePastElection as analyzePastElectionFlow, type PastElectionAnalysisInput } from '@/ai/flows/analyze-past-election';
-import { collection, addDoc, serverTimestamp, getFirestore } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, getFirestore, updateDoc, doc, increment } from "firebase/firestore";
 import { initializeFirebase } from '@/firebase';
 
 
@@ -81,5 +82,40 @@ export async function summarizeArticle(content: string): Promise<string> {
     } catch (e) {
         console.error("Error summarizing article:", e);
         return "Could not generate summary.";
+    }
+}
+
+export async function trackAdClick(adId: string) {
+    let locationData: { ipAddress?: string; city?: string; country?: string } = {};
+    try {
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        locationData = {
+            ipAddress: data.ip,
+            city: data.city,
+            country: data.country_name,
+        };
+    } catch(e) {
+        console.warn("Could not fetch location data", e);
+    }
+
+    try {
+        const { firestore } = initializeFirebase();
+        const adClicksCollection = collection(firestore, 'ad_clicks');
+        await addDoc(adClicksCollection, {
+            adId,
+            timestamp: serverTimestamp(),
+            ...locationData
+        });
+
+        const adRef = doc(firestore, 'ads', adId);
+        await updateDoc(adRef, {
+            clicks: increment(1)
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error('Ad click tracking error:', error);
+        return { success: false, error: 'Failed to track ad click.' };
     }
 }

@@ -183,6 +183,15 @@ export interface Ad {
   impressions?: number;
 }
 
+export interface AdClick {
+  id: string;
+  adId: string;
+  timestamp: any;
+  ipAddress?: string;
+  city?: string;
+  country?: string;
+}
+
 export interface NewsArticle {
     id: string;
     title: string;

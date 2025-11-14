@@ -688,6 +688,20 @@
         "position"
       ]
     },
+    "AdClick": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Ad Click",
+      "type": "object",
+      "description": "Represents a single click on an advertisement.",
+      "properties": {
+        "adId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "ipAddress": { "type": "string" },
+        "city": { "type": "string" },
+        "country": { "type": "string" }
+      },
+      "required": ["adId", "timestamp"]
+    },
     "NewsArticle": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "News Article",
@@ -966,6 +980,12 @@
         "$ref": "#/entities/Ad"
       },
       "description": "Stores ad listings for the website."
+    },
+     "/ad_clicks/{adClickId}": {
+      "schema": {
+        "$ref": "#/entities/AdClick"
+      },
+      "description": "Stores individual ad click events."
     },
     "/news/{newsId}": {
       "schema": {

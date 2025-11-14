@@ -5,6 +5,8 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Ad } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 import { format } from 'date-fns'
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export const columns: ColumnDef<Ad>[] = [
   {
@@ -52,7 +54,16 @@ export const columns: ColumnDef<Ad>[] = [
   {
     accessorKey: "clicks",
     header: "# of Clicks",
-    cell: ({ row }) => row.getValue("clicks") || 0,
+    cell: ({ row }) => {
+        const ad = row.original;
+        return (
+            <Button asChild variant="link" className="p-0 h-auto">
+                <Link href={`/admin/analytics/${ad.id}`}>
+                    {ad.clicks || 0}
+                </Link>
+            </Button>
+        )
+    },
   },
   {
     accessorKey: "impressions",
