@@ -10,18 +10,16 @@ import { getColumns } from './columns';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ChartContainer } from '@/components/ui/chart';
-import { startOfDay, endOfDay } from 'date-fns';
+import { startOfDay } from 'date-fns';
 
 export default function VisitorAnalyticsPage() {
     const { firestore } = useFirebase();
-    const [dateRange, setDateRange] = useState<'day' | 'week' | 'month'>('day');
-
-    const todayStart = startOfDay(new Date());
 
     const pageViewsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
+        const todayStart = startOfDay(new Date());
         return query(collection(firestore, 'page_views'), where('timestamp', '>=', todayStart), orderBy('timestamp', 'desc'));
-    }, [firestore, todayStart]);
+    }, [firestore]);
     
     const { data: pageViews, isLoading } = useCollection<PageView>(pageViewsQuery);
 
