@@ -16,7 +16,28 @@ function InteractiveMapPageSkeleton() {
                 title="Constituencies"
                 description="Click on a Constituency to get started.."
             />
-            <InteractiveMapPageSkeleton />
+            <InteractiveSvgMapSkeleton />
+        </div>
+    )
+}
+
+function InteractiveSvgMapSkeleton() {
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
+            <div className="md:col-span-2">
+                <Skeleton className="h-[70vh] w-full" />
+            </div>
+            <div>
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                    </CardHeader>
+                    <CardContent>
+                        <Skeleton className="h-10 w-full" />
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     )
 }
@@ -35,15 +56,7 @@ export default function ConstituenciesPage() {
     }, [selectedConstituencyId, constituencies]);
 
     if (loadingConstituencies) {
-        return (
-            <div className="container mx-auto px-4 py-8">
-                <PageHeader
-                    title="Constituencies"
-                    description="Click on a Constituency to get started.."
-                />
-                <InteractiveMapPageSkeleton />
-            </div>
-        );
+        return <InteractiveMapPageSkeleton />;
     }
 
     return (
@@ -52,7 +65,7 @@ export default function ConstituenciesPage() {
                 title="Constituencies"
                 description="Click on a Constituency to get started.."
             />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
                 <div className="md:col-span-2">
                     <Card>
                         <CardContent className="p-2">
