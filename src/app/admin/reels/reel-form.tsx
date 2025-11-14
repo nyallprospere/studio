@@ -105,13 +105,14 @@ export function ReelForm({ onSubmit, initialData, onCancel, parties, candidates 
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Associated Candidate</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a candidate..." />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
+                    <SelectItem value="">No Candidate</SelectItem>
                     {filteredCandidates.length > 0 ? (
                       filteredCandidates.map(candidate => (
                         <SelectItem key={candidate.id} value={candidate.id}>
