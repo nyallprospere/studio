@@ -84,10 +84,13 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
     
-    match /ad_clicks/{document=**} {
-      allow read: if isAdmin();
+    match /ad_clicks/{adClickId} {
       allow create: if true;
-      allow update, delete: if isAdmin();
+      allow get, update, delete: if isAdmin();
+    }
+    
+    match /ad_clicks {
+        allow list: if isAdmin();
     }
 
     match /news/{newsId} {
