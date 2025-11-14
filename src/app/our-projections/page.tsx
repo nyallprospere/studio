@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -19,8 +20,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
-import { MainLayout } from '@/components/layout/main-layout';
-
 
 const ProjectionTrendChart = () => {
     const { firestore } = useFirebase();
@@ -318,122 +317,120 @@ export default function OurProjectionsPage() {
   }
 
   return (
-    <MainLayout>
-        <div className="container mx-auto px-4 py-8">
-        <PageHeader
-            title="Our Projections"
-            description="Detailed projections for the upcoming 2026 General Elections."
-        />
-        <div className="space-y-8 mt-8">
-            <ProjectionTrendChart />
-            <Card>
-            <CardHeader>
-                <div className="flex justify-between items-center">
-                    <div>
-                        <CardTitle>Constituency Forecast</CardTitle>
-                        <CardDescription>
-                        Our prediction for the winner of each constituency based on historical data, trends, and volatility.
-                        </CardDescription>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    id="date"
-                                    variant={"outline"}
-                                    className={cn(
-                                    "w-[260px] justify-start text-left font-normal",
-                                    !date && "text-muted-foreground"
-                                    )}
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {date?.from ? (
-                                    date.to ? (
-                                        <>
-                                        {format(date.from, "LLL dd, y")} -{" "}
-                                        {format(date.to, "LLL dd, y")}
-                                        </>
-                                    ) : (
-                                        format(date.from, "LLL dd, y")
-                                    )
-                                    ) : (
-                                    <span>Pick a date</span>
-                                    )}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="end">
-                                <Calendar
-                                    initialFocus
-                                    mode="range"
-                                    defaultMonth={date?.from}
-                                    selected={date}
-                                    onSelect={(range) => { setDate(range); setDatePreset('custom'); }}
-                                    numberOfMonths={2}
-                                />
-                            </PopoverContent>
-                        </Popover>
-                        <Select value={datePreset} onValueChange={handleDatePresetChange}>
-                            <SelectTrigger className="w-[120px]">
-                                <SelectValue placeholder="Date Range" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Time</SelectItem>
-                                <SelectItem value="day">Today</SelectItem>
-                                <SelectItem value="week">This Week</SelectItem>
-                                <SelectItem value="month">This Month</SelectItem>
-                                <SelectItem value="year">This Year</SelectItem>
-                                <SelectItem value="custom" disabled>Custom</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+    <div className="container mx-auto px-4 py-8">
+    <PageHeader
+        title="Our Projections"
+        description="Detailed projections for the upcoming 2026 General Elections."
+    />
+    <div className="space-y-8 mt-8">
+        <ProjectionTrendChart />
+        <Card>
+        <CardHeader>
+            <div className="flex justify-between items-center">
+                <div>
+                    <CardTitle>Constituency Forecast</CardTitle>
+                    <CardDescription>
+                    Our prediction for the winner of each constituency based on historical data, trends, and volatility.
+                    </CardDescription>
                 </div>
-            </CardHeader>
-            <CardContent>
-                {isLoading ? (
-                    <div className="space-y-2">
-                        {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
-                    </div>
-                ) : sortedConstituencies.length === 0 ? (
-                    <div className="text-center py-12">
-                        <p className="text-muted-foreground">No projections found for the selected date range.</p>
-                    </div>
-                ) : (
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                            <TableHead>Constituency</TableHead>
-                            <TableHead>SLP % / IND %</TableHead>
-                            <TableHead>UWP %</TableHead>
-                            <TableHead>Predicted Winner</TableHead>
-                            <TableHead className="text-right">Forecasted Vote Advantage</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {sortedConstituencies.map((c) => {
-                                const { slp, uwp, ind } = calculatePercentages(c.aiForecast, c.aiForecastParty);
-                                const displaySlp = c.aiForecastParty === 'ind' ? ind : slp;
+                <div className="flex items-center gap-2">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                id="date"
+                                variant={"outline"}
+                                className={cn(
+                                "w-[260px] justify-start text-left font-normal",
+                                !date && "text-muted-foreground"
+                                )}
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {date?.from ? (
+                                date.to ? (
+                                    <>
+                                    {format(date.from, "LLL dd, y")} -{" "}
+                                    {format(date.to, "LLL dd, y")}
+                                    </>
+                                ) : (
+                                    format(date.from, "LLL dd, y")
+                                )
+                                ) : (
+                                <span>Pick a date</span>
+                                )}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="end">
+                            <Calendar
+                                initialFocus
+                                mode="range"
+                                defaultMonth={date?.from}
+                                selected={date}
+                                onSelect={(range) => { setDate(range); setDatePreset('custom'); }}
+                                numberOfMonths={2}
+                            />
+                        </PopoverContent>
+                    </Popover>
+                    <Select value={datePreset} onValueChange={handleDatePresetChange}>
+                        <SelectTrigger className="w-[120px]">
+                            <SelectValue placeholder="Date Range" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Time</SelectItem>
+                            <SelectItem value="day">Today</SelectItem>
+                            <SelectItem value="week">This Week</SelectItem>
+                            <SelectItem value="month">This Month</SelectItem>
+                            <SelectItem value="year">This Year</SelectItem>
+                            <SelectItem value="custom" disabled>Custom</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+        </CardHeader>
+        <CardContent>
+            {isLoading ? (
+                <div className="space-y-2">
+                    {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+                </div>
+            ) : sortedConstituencies.length === 0 ? (
+                <div className="text-center py-12">
+                    <p className="text-muted-foreground">No projections found for the selected date range.</p>
+                </div>
+            ) : (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                        <TableHead>Constituency</TableHead>
+                        <TableHead>SLP % / IND %</TableHead>
+                        <TableHead>UWP %</TableHead>
+                        <TableHead>Predicted Winner</TableHead>
+                        <TableHead className="text-right">Forecasted Vote Advantage</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {sortedConstituencies.map((c) => {
+                            const { slp, uwp, ind } = calculatePercentages(c.aiForecast, c.aiForecastParty);
+                            const displaySlp = c.aiForecastParty === 'ind' ? ind : slp;
 
-                                return (
-                                    <TableRow key={c.id}>
-                                        <TableCell className="font-medium">{c.name}</TableCell>
-                                        <TableCell>{displaySlp !== null ? `${displaySlp.toFixed(1)}%` : 'N/A'}</TableCell>
-                                        <TableCell>{uwp !== null ? `${uwp.toFixed(1)}%` : 'N/A'}</TableCell>
-                                        <TableCell className={cn(getPartyColorClass(c.aiForecastParty))}>
-                                            {c.aiForecastParty?.toUpperCase() || 'N/A'}
-                                        </TableCell>
-                                        <TableCell className={cn("text-right", getPartyColorClass(c.aiForecastParty))}>
-                                        {c.aiForecast ? `${c.aiForecast > 0 ? '+' : ''}${c.aiForecast.toFixed(1)}%` : 'N/A'}
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            })}
-                        </TableBody>
-                    </Table>
-                )}
-            </CardContent>
-            </Card>
-        </div>
-        </div>
-    </MainLayout>
+                            return (
+                                <TableRow key={c.id}>
+                                    <TableCell className="font-medium">{c.name}</TableCell>
+                                    <TableCell>{displaySlp !== null ? `${displaySlp.toFixed(1)}%` : 'N/A'}</TableCell>
+                                    <TableCell>{uwp !== null ? `${uwp.toFixed(1)}%` : 'N/A'}</TableCell>
+                                    <TableCell className={cn(getPartyColorClass(c.aiForecastParty))}>
+                                        {c.aiForecastParty?.toUpperCase() || 'N/A'}
+                                    </TableCell>
+                                    <TableCell className={cn("text-right", getPartyColorClass(c.aiForecastParty))}>
+                                    {c.aiForecast ? `${c.aiForecast > 0 ? '+' : ''}${c.aiForecast.toFixed(1)}%` : 'N/A'}
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
+            )}
+        </CardContent>
+        </Card>
+    </div>
+    </div>
   );
 }

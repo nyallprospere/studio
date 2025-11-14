@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -30,7 +31,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { MainLayout } from '@/components/layout/main-layout';
 
 function ContextDialog({ report, isOpen, onClose }: { report: Report; isOpen: boolean; onClose: () => void; }) {
     const { firestore } = useFirebase();
@@ -164,7 +164,6 @@ export default function ManageReportsPage() {
   }
 
   return (
-    <MainLayout>
         <div className="container mx-auto px-4 py-8">
         <PageHeader
             title="Manage Reports"
@@ -280,6 +279,5 @@ export default function ManageReportsPage() {
             />
         )}
         </div>
-    </MainLayout>
   );
 }
