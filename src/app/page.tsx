@@ -23,7 +23,7 @@ import {
 } from '@dnd-kit/sortable';
 import { useUser, useCollection, useFirebase, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, orderBy, Timestamp, where, doc } from 'firebase/firestore';
-import type { Event, Party, Constituency, Election, NewsArticle, VoterInformation, SiteSettings } from '@/lib/types';
+import type { Event, Party, Constituency, Election, NewsArticle, VoterInformation, SiteSettings, Reel } from '@/lib/types';
 import { EventCard } from '@/components/event-card';
 import { SortableFeatureCard } from '@/components/sortable-feature-card';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
@@ -35,6 +35,7 @@ import { subDays } from 'date-fns';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
 const adminSections = [
     { id: 'admin-elections', title: 'Manage Elections', href: '/admin/elections', icon: Vote },
@@ -115,6 +116,8 @@ export default function Home() {
   const newsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'news'), orderBy('articleDate', 'desc')) : null, [firestore]);
   const voterInfoQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'voter_information'), orderBy('title')) : null, [firestore]);
   const siteSettingsRef = useMemoFirebase(() => (firestore ? doc(firestore, 'settings', 'site') : null), [firestore]);
+  const reelsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'reels'), orderBy('order')) : null, [firestore]);
+
   
   const { data: events, isLoading: loadingEvents } = useCollection<Event>(eventsQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
@@ -123,6 +126,7 @@ export default function Home() {
   const { data: news, isLoading: loadingNews } = useCollection<NewsArticle>(newsQuery);
   const { data: voterInfoItems, isLoading: loadingVoterInfo } = useCollection<VoterInformation>(voterInfoQuery);
   const { data: siteSettings } = useDoc<SiteSettings>(siteSettingsRef);
+  const { data: reels, isLoading: loadingReels } = useCollection<Reel>(reelsQuery);
 
   
   const currentElection = useMemo(() => currentElections?.[0], [currentElections]);
@@ -475,6 +479,49 @@ export default function Home() {
               </div>
           </div>
         </div>
+
+        {reels && reels.length > 0 && (
+          <div className="mt-12">
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2">
+                  Social Media Reels
+                </CardTitle>
+                <CardDescription>What people are saying on social media.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Carousel
+                  opts={{
+                    align: "start",
+                    loop: true,
+                  }}
+                  className="w-full"
+                >
+                  <CarouselContent>
+                    {reels.map((reel) => (
+                      <CarouselItem key={reel.id} className="md:basis-1/2 lg:basis-1/3">
+                        <div className="p-1">
+                           <Card>
+                            <CardHeader className="p-4">
+                              <CardTitle className="text-base">
+                                <Link href={reel.authorUrl} target="_blank" className="hover:underline">{reel.authorName}</Link>
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-0 aspect-[9/16] overflow-hidden">
+                              <iframe src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(reel.postUrl)}&show_text=false&width=560`} width="100%" height="100%" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="hidden sm:flex" />
+                  <CarouselNext className="hidden sm:flex" />
+                </Carousel>
+              </CardContent>
+            </Card>
+          </div>
+        )}
         
         <div className="mt-12">
           <Card>

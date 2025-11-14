@@ -253,3 +253,11 @@ export interface PageView {
   city?: string;
   country?: string;
 }
+
+export interface Reel {
+  id: string;
+  authorName: string;
+  authorUrl: string;
+  postUrl: string;
+  order: number;
+}

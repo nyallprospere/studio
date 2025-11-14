@@ -930,6 +930,33 @@
         }
       },
       "required": ["title", "items"]
+    },
+    "Reel": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Reel",
+      "type": "object",
+      "description": "Represents a social media reel to be embedded.",
+      "properties": {
+        "authorName": {
+          "type": "string",
+          "description": "The name of the reel's author."
+        },
+        "authorUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the author's social media profile."
+        },
+        "postUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "The direct URL to the reel post to be embedded."
+        },
+        "order": {
+          "type": "number",
+          "description": "The display order of the reel."
+        }
+      },
+      "required": ["authorName", "postUrl", "order"]
     }
   },
   "auth": {
@@ -1075,6 +1102,12 @@
         "$ref": "#/entities/VoterInformation"
       },
       "description": "Stores sections of voter information for the homepage."
+    },
+    "/reels/{reelId}": {
+      "schema": {
+        "$ref": "#/entities/Reel"
+      },
+      "description": "Stores social media reels to be embedded."
     }
   }
 }

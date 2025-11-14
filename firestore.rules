@@ -92,7 +92,7 @@ service cloud.firestore {
     
     match /ad_clicks/{adClickId} {
         allow create: if true;
-        allow list, get, update, delete: if isAdmin();
+        allow read, list, get, update, delete: if isAdmin();
     }
 
 
@@ -121,6 +121,11 @@ service cloud.firestore {
     match /voter_information/{infoId} {
         allow get, list: if true;
         allow create, update, delete: if isAdmin();
+    }
+
+    match /reels/{reelId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
     }
   }
 }
