@@ -73,20 +73,22 @@ export function HeaderNav() {
     return partyLogos.find(logo => logo.partyId === slpParty.id && logo.electionId === election2026.id);
   }, [partyLogos, slpParty, election2026]);
 
-  const { uwpLeader, uwpOtherCandidates } = React.useMemo(() => {
-    if (!candidates || !uwpParty) return { uwpLeader: null, uwpOtherCandidates: [] };
+  const { uwpLeader, uwpDeputyLeaders, uwpOtherCandidates } = React.useMemo(() => {
+    if (!candidates || !uwpParty) return { uwpLeader: null, uwpDeputyLeaders: [], uwpOtherCandidates: [] };
     const allUwp = candidates.filter(c => c.partyId === uwpParty.id);
     const leader = allUwp.find(c => c.isPartyLeader) || null;
-    const others = allUwp.filter(c => !c.isPartyLeader);
-    return { uwpLeader: leader, uwpOtherCandidates: others };
+    const deputies = allUwp.filter(c => c.isDeputyLeader);
+    const others = allUwp.filter(c => !c.isPartyLeader && !c.isDeputyLeader);
+    return { uwpLeader: leader, uwpDeputyLeaders: deputies, uwpOtherCandidates: others };
   }, [candidates, uwpParty]);
 
-  const { slpLeader, slpOtherCandidates } = React.useMemo(() => {
-    if (!candidates || !slpParty) return { slpLeader: null, slpOtherCandidates: [] };
+  const { slpLeader, slpDeputyLeaders, slpOtherCandidates } = React.useMemo(() => {
+    if (!candidates || !slpParty) return { slpLeader: null, slpDeputyLeaders: [], slpOtherCandidates: [] };
     const allSlp = candidates.filter(c => c.partyId === slpParty.id);
     const leader = allSlp.find(c => c.isPartyLeader) || null;
-    const others = allSlp.filter(c => !c.isPartyLeader);
-    return { slpLeader: leader, slpOtherCandidates: others };
+    const deputies = allSlp.filter(c => c.isDeputyLeader);
+    const others = allSlp.filter(c => !c.isPartyLeader && !c.isDeputyLeader);
+    return { slpLeader: leader, slpDeputyLeaders: deputies, slpOtherCandidates: others };
   }, [candidates, slpParty]);
 
 
@@ -197,6 +199,11 @@ export function HeaderNav() {
                             </Link>
                         </MenubarItem>
                     )}
+                    {uwpDeputyLeaders.map(candidate => (
+                        <MenubarItem key={candidate.id} asChild>
+                            <Link href={`/candidates/${candidate.id}`}>{candidate.firstName} {candidate.lastName} (Deputy)</Link>
+                        </MenubarItem>
+                    ))}
                     {uwpOtherCandidates.map(candidate => (
                         <MenubarItem key={candidate.id} asChild>
                             <Link href={`/candidates/${candidate.id}`}>{candidate.firstName} {candidate.lastName}</Link>
@@ -233,6 +240,11 @@ export function HeaderNav() {
                             </Link>
                         </MenubarItem>
                     )}
+                    {slpDeputyLeaders.map(candidate => (
+                        <MenubarItem key={candidate.id} asChild>
+                            <Link href={`/candidates/${candidate.id}`}>{candidate.firstName} {candidate.lastName} (Deputy)</Link>
+                        </MenubarItem>
+                    ))}
                     {slpOtherCandidates.map(candidate => (
                         <MenubarItem key={candidate.id} asChild>
                             <Link href={`/candidates/${candidate.id}`}>{candidate.firstName} {candidate.lastName}</Link>
@@ -318,6 +330,9 @@ export function HeaderNav() {
                                         <Star className="h-4 w-4 text-accent" />
                                     </Link>
                                 )}
+                                {uwpDeputyLeaders.map(c => (
+                                     <Link key={c.id} href={`/candidates/${c.id}`} onClick={closeMobileMenu} className="text-sm">{c.firstName} {c.lastName} (Deputy)</Link>
+                                ))}
                                 {uwpOtherCandidates.map(c => (
                                      <Link key={c.id} href={`/candidates/${c.id}`} onClick={closeMobileMenu} className="text-sm">{c.firstName} {c.lastName}</Link>
                                 ))}
@@ -336,6 +351,9 @@ export function HeaderNav() {
                                         <Star className="h-4 w-4 text-accent" />
                                     </Link>
                                 )}
+                                {slpDeputyLeaders.map(c => (
+                                    <Link key={c.id} href={`/candidates/${c.id}`} onClick={closeMobileMenu} className="text-sm">{c.firstName} {c.lastName} (Deputy)</Link>
+                                ))}
                                 {slpOtherCandidates.map(c => (
                                      <Link key={c.id} href={`/candidates/${c.id}`} onClick={closeMobileMenu} className="text-sm">{c.firstName} {c.lastName}</Link>
                                 ))}
@@ -368,5 +386,7 @@ export function HeaderNav() {
     </div>
   );
 }
+
+    
 
     
