@@ -75,7 +75,8 @@ service cloud.firestore {
     match /user_maps/{userMapId} {
       allow create: if true;
       allow get, list: if true;
-      allow update, delete: if false;
+      allow update: if true;
+      allow delete: if false;
     }
 
     match /ads/{adId} {

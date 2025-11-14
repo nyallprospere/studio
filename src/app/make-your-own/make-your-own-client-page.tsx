@@ -1,17 +1,18 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import type { Constituency, ElectionResult, Election, SiteSettings, UserMap, Party } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirebase, useMemoFirebase, useUser, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, doc, serverTimestamp, query, orderBy, where, getDocs, addDoc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, orderBy, where, getDocs, addDoc, updateDoc, increment } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Pie, PieChart, ResponsiveContainer, Cell, Label } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
-import { Share2, Twitter, Facebook, Loader2, Instagram, Mail } from 'lucide-react';
+import { Share2, Twitter, Facebook, Loader2, Instagram, Mail, ThumbsUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -143,6 +144,17 @@ const charToLeaning: { [key: string]: string } = {
     'x': 'unselected'
 };
 
+const getSeatCountsFromMapData = (mapData: UserMap['mapData']) => {
+    let slp = 0, uwp = 0, ind = 0;
+    mapData.forEach(item => {
+        if (item.politicalLeaning === 'slp') slp++;
+        else if (item.politicalLeaning === 'uwp') uwp++;
+        else if (item.politicalLeaning === 'ind') ind++;
+    });
+    return { slp, uwp, ind };
+}
+
+
 export default function MakeYourOwnClientPage() {
     const { firestore, storage } = useFirebase();
     const { toast } = useToast();
@@ -164,6 +176,9 @@ export default function MakeYourOwnClientPage() {
 
     const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
     const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
+
+    const userMapsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'user_maps'), orderBy('createdAt', 'desc'), where('imageUrl', '!=', '')) : null, [firestore]);
+    const { data: userMaps, isLoading: loadingUserMaps } = useCollection<UserMap>(userMapsQuery);
     
     const [previousElectionResults, setPreviousElectionResults] = useState<ElectionResult[]>([]);
     
@@ -203,6 +218,12 @@ export default function MakeYourOwnClientPage() {
     const [sharedMapImageUrl, setSharedMapImageUrl] = useState<string | null>(null);
     const [dynamicShareTitle, setDynamicShareTitle] = useState('');
     const [dynamicShareDescription, setDynamicShareDescription] = useState('');
+    const [likedMaps, setLikedMaps] = useState<string[]>([]);
+
+     useEffect(() => {
+        const liked = JSON.parse(localStorage.getItem('likedUserMaps') || '[]');
+        setLikedMaps(liked);
+    }, []);
 
 
     useEffect(() => {
@@ -290,6 +311,7 @@ export default function MakeYourOwnClientPage() {
         mapData: mapData,
         createdAt: serverTimestamp(),
         imageUrl: imageUrl,
+        likeCount: 0,
       });
 
       const url = `${window.location.origin}/maps/${docRef.id}`;
@@ -317,6 +339,19 @@ export default function MakeYourOwnClientPage() {
       setIsSaving(false);
     }
   };
+
+    const handleLikeMap = async (mapId: string) => {
+        if (!firestore || likedMaps.includes(mapId)) return;
+
+        const mapRef = doc(firestore, 'user_maps', mapId);
+        await updateDoc(mapRef, {
+            likeCount: increment(1)
+        });
+
+        const newLikedMaps = [...likedMaps, mapId];
+        setLikedMaps(newLikedMaps);
+        localStorage.setItem('likedUserMaps', JSON.stringify(newLikedMaps));
+    };
 
 
     const isLoading = loadingConstituencies || loadingLayout || loadingElections || loadingParties;
@@ -414,7 +449,7 @@ export default function MakeYourOwnClientPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-        <PageHeader title='' description='' />
+        <PageHeader title={layoutConfig.pageTitle} description={layoutConfig.pageDescription} />
 
       {isLoading || !constituencies ? (
           <ConstituenciesPageSkeleton />
@@ -524,6 +559,54 @@ export default function MakeYourOwnClientPage() {
             </div>
         </div>
       )}
+
+        <div className="mt-12">
+            <h2 className="text-2xl font-bold font-headline mb-4">Recently Created Maps</h2>
+            {loadingUserMaps ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <Skeleton className="h-64 w-full" />
+                    <Skeleton className="h-64 w-full" />
+                    <Skeleton className="h-64 w-full" />
+                </div>
+            ) : userMaps && userMaps.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {userMaps.map(map => {
+                        const { slp, uwp, ind } = getSeatCountsFromMapData(map.mapData);
+                        const isLiked = likedMaps.includes(map.id);
+                        return (
+                            <Card key={map.id} className="overflow-hidden">
+                                <CardContent className="p-0">
+                                    <Link href={`/maps/${map.id}`}>
+                                        <div className="relative aspect-video bg-muted">
+                                            {map.imageUrl && (
+                                                <Image src={map.imageUrl} alt="User created map" fill className="object-contain" />
+                                            )}
+                                        </div>
+                                    </Link>
+                                    <div className="p-4">
+                                        <p className="font-semibold">
+                                            <span style={{color: slpColor}}>SLP {slp}</span> | <span style={{color: uwpColor}}>UWP {uwp}</span> | <span style={{color: '#3b82f6'}}>IND {ind}</span>
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Created on {new Date(map.createdAt?.toDate()).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                </CardContent>
+                                <CardFooter>
+                                    <Button variant="outline" size="sm" onClick={() => handleLikeMap(map.id)} disabled={isLiked}>
+                                        <ThumbsUp className="mr-2 h-4 w-4"/>
+                                        Like ({map.likeCount || 0})
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        )
+                    })}
+                </div>
+            ) : (
+                <p className="text-center text-muted-foreground py-8">No user maps have been created yet.</p>
+            )}
+        </div>
+
 
       <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
           <DialogContent className="sm:max-w-[425px] md:max-w-screen-md">

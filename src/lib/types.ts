@@ -151,6 +151,7 @@ export interface UserMap {
   ipAddress?: string;
   city?: string;
   country?: string;
+  likeCount?: number;
 }
 
 export interface SiteSettings {

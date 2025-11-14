@@ -596,6 +596,10 @@
         },
         "country": {
           "type": "string"
+        },
+        "likeCount": {
+          "type": "number",
+          "description": "The number of times the map has been liked."
         }
       },
       "required": [
