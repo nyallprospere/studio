@@ -19,6 +19,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -125,12 +126,16 @@ export function HeaderNav() {
                     </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel>Admin Pages</DropdownMenuLabel>
-                {adminNavItems.map(link => (
-                    <DropdownMenuItem key={link.href} asChild>
-                        <Link href={link.href}>{link.label}</Link>
-                    </DropdownMenuItem>
-                ))}
+                <DropdownMenuGroup>
+                    <DropdownMenuLabel>Admin Pages</DropdownMenuLabel>
+                    <ScrollArea className="h-[200px]">
+                      {adminNavItems.map(link => (
+                          <DropdownMenuItem key={link.href} asChild>
+                              <Link href={link.href}>{link.label}</Link>
+                          </DropdownMenuItem>
+                      ))}
+                    </ScrollArea>
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -363,3 +368,5 @@ export function HeaderNav() {
     </div>
   );
 }
+
+    
