@@ -242,3 +242,14 @@ export interface VoterInformation {
   }[];
   isVisible?: boolean;
 }
+
+export interface PageView {
+  id: string;
+  sessionId: string;
+  userId?: string;
+  path: string;
+  timestamp: any;
+  ipAddress?: string;
+  city?: string;
+  country?: string;
+}

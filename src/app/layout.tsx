@@ -3,6 +3,7 @@ import { Space_Grotesk, Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { PageViewTracker } from '@/components/page-view-tracker';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -32,6 +33,7 @@ export default function RootLayout({
         suppressHydrationWarning={true}
       >
         <FirebaseClientProvider>
+          <PageViewTracker />
           {children}
         </FirebaseClientProvider>
         <Toaster />

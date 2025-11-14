@@ -530,6 +530,22 @@
         "pageVisited"
       ]
     },
+    "PageView": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Page View",
+      "type": "object",
+      "description": "Represents a single page view by a user.",
+      "properties": {
+        "sessionId": { "type": "string" },
+        "userId": { "type": "string" },
+        "path": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "ipAddress": { "type": "string" },
+        "city": { "type": "string" },
+        "country": { "type": "string" }
+      },
+      "required": ["sessionId", "path", "timestamp"]
+    },
     "Region": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Region",
@@ -962,6 +978,12 @@
         "$ref": "#/entities/UserActivity"
       },
       "description": "Stores user activity events, such as page visits. The `activityId` is used as the document ID."
+    },
+    "/page_views/{viewId}": {
+      "schema": {
+        "$ref": "#/entities/PageView"
+      },
+      "description": "Stores individual page view events."
     },
     "/regions/{regionId}": {
       "schema": {
