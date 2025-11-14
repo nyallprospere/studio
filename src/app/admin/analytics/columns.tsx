@@ -1,12 +1,12 @@
-
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Ad } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 import { format } from 'date-fns'
+import { Button } from "@/components/ui/button";
 
-export const columns: ColumnDef<Ad>[] = [
+export const columns = (onViewClicks: (ad: Ad) => void): ColumnDef<Ad>[] => [
   {
     accessorKey: "name",
     header: "Ad Name",
@@ -52,7 +52,15 @@ export const columns: ColumnDef<Ad>[] = [
   {
     accessorKey: "clicks",
     header: "# of Clicks",
-    cell: ({ row }) => row.original.clicks || 0,
+    cell: ({ row }) => {
+      const ad = row.original;
+      const clicks = ad.clicks || 0;
+      return (
+        <Button variant="link" className="p-0 h-auto" onClick={() => onViewClicks(ad)}>
+          {clicks}
+        </Button>
+      );
+    },
   },
   {
     accessorKey: "impressions",
