@@ -483,7 +483,6 @@ export default function MakeYourOwnClientPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-        <PageHeader title={layoutConfig.pageTitle} description={layoutConfig.pageDescription} />
 
       {isLoading || !constituencies ? (
           <ConstituenciesPageSkeleton />
@@ -722,4 +721,3 @@ export default function MakeYourOwnClientPage() {
     </div>
   );
 }
-
