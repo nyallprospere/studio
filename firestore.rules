@@ -84,14 +84,10 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
     
-    // This rule allows admins to query the collection
-    match /ad_clicks/{document=**} {
-        allow list, get: if isAdmin();
-    }
-    
-    // This rule allows anyone to create a click event
     match /ad_clicks/{adClickId} {
-        allow create: if true;
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+      allow create: if true;
     }
 
     match /news/{newsId} {
