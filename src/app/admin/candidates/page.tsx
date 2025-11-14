@@ -91,6 +91,7 @@ export default function AdminCandidatesPage() {
         bio: values.bio || '',
         imageUrl: imageUrl || '',
         facebookUrl: values.facebookUrl || '',
+        instagramUrl: values.instagramUrl || '',
         customLogoUrl: customLogoUrl || '',
         isIncumbent: values.isIncumbent,
         isPartyLeader: values.isPartyLeader,

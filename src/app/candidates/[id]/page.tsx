@@ -7,7 +7,7 @@ import type { Party, Candidate, Constituency, Election, PartyLogo, Reel } from '
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
-import { UserSquare, Shield, Facebook } from 'lucide-react';
+import { UserSquare, Shield, Facebook, Instagram } from 'lucide-react';
 import { useDoc, useFirebase, useMemoFirebase, useCollection } from '@/firebase';
 import { doc, collection, query, where } from 'firebase/firestore';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -140,6 +140,14 @@ export default function CandidateDetailPage() {
                             <a href={candidate.facebookUrl} target="_blank" rel="noopener noreferrer">
                                 <Facebook className="h-4 w-4 mr-2" style={{color: '#1877F2'}} />
                                 Facebook
+                            </a>
+                        </Button>
+                    )}
+                    {candidate.instagramUrl && (
+                        <Button asChild variant="outline" size="sm">
+                            <a href={candidate.instagramUrl} target="_blank" rel="noopener noreferrer">
+                                <Instagram className="h-4 w-4 mr-2" />
+                                Instagram
                             </a>
                         </Button>
                     )}
