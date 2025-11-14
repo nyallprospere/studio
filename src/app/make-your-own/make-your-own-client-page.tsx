@@ -12,7 +12,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
-import { Share2, Twitter, Facebook, Loader2, Instagram, Mail, ThumbsUp } from 'lucide-react';
+import { Share2, Twitter, Facebook, Loader2, Instagram, Mail, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -223,12 +223,15 @@ export default function MakeYourOwnClientPage() {
     const [dynamicShareTitle, setDynamicShareTitle] = useState('');
     const [dynamicShareDescription, setDynamicShareDescription] = useState('');
     const [likedMaps, setLikedMaps] = useState<string[]>([]);
+    const [dislikedMaps, setDislikedMaps] = useState<string[]>([]);
     const [mapFilter, setMapFilter] = useState('recent');
     const [visibleMapCount, setVisibleMapCount] = useState(isMobile ? 3 : 6);
 
      useEffect(() => {
         const liked = JSON.parse(localStorage.getItem('likedUserMaps') || '[]');
         setLikedMaps(liked);
+        const disliked = JSON.parse(localStorage.getItem('dislikedUserMaps') || '[]');
+        setDislikedMaps(disliked);
     }, []);
 
 
@@ -318,6 +321,7 @@ export default function MakeYourOwnClientPage() {
         createdAt: serverTimestamp(),
         imageUrl: imageUrl,
         likeCount: 0,
+        dislikeCount: 0,
       });
 
       const url = `${window.location.origin}/maps/${docRef.id}`;
@@ -347,16 +351,49 @@ export default function MakeYourOwnClientPage() {
   };
 
     const handleLikeMap = async (mapId: string) => {
-        if (!firestore || likedMaps.includes(mapId)) return;
-
+        if (!firestore) return;
         const mapRef = doc(firestore, 'user_maps', mapId);
-        await updateDoc(mapRef, {
-            likeCount: increment(1)
-        });
+        
+        if (dislikedMaps.includes(mapId)) {
+            await updateDoc(mapRef, { dislikeCount: increment(-1) });
+            setDislikedMaps(dislikedMaps.filter(id => id !== mapId));
+            localStorage.setItem('dislikedUserMaps', JSON.stringify(dislikedMaps.filter(id => id !== mapId)));
+        }
 
-        const newLikedMaps = [...likedMaps, mapId];
-        setLikedMaps(newLikedMaps);
-        localStorage.setItem('likedUserMaps', JSON.stringify(newLikedMaps));
+        if (likedMaps.includes(mapId)) {
+            await updateDoc(mapRef, { likeCount: increment(-1) });
+            const newLikedMaps = likedMaps.filter(id => id !== mapId);
+            setLikedMaps(newLikedMaps);
+            localStorage.setItem('likedUserMaps', JSON.stringify(newLikedMaps));
+        } else {
+            await updateDoc(mapRef, { likeCount: increment(1) });
+            const newLikedMaps = [...likedMaps, mapId];
+            setLikedMaps(newLikedMaps);
+            localStorage.setItem('likedUserMaps', JSON.stringify(newLikedMaps));
+        }
+    };
+    
+    const handleDislikeMap = async (mapId: string) => {
+        if (!firestore) return;
+        const mapRef = doc(firestore, 'user_maps', mapId);
+
+        if (likedMaps.includes(mapId)) {
+            await updateDoc(mapRef, { likeCount: increment(-1) });
+            setLikedMaps(likedMaps.filter(id => id !== mapId));
+            localStorage.setItem('likedUserMaps', JSON.stringify(likedMaps.filter(id => id !== mapId)));
+        }
+
+        if (dislikedMaps.includes(mapId)) {
+            await updateDoc(mapRef, { dislikeCount: increment(-1) });
+            const newDislikedMaps = dislikedMaps.filter(id => id !== mapId);
+            setDislikedMaps(newDislikedMaps);
+            localStorage.setItem('dislikedUserMaps', JSON.stringify(newDislikedMaps));
+        } else {
+            await updateDoc(mapRef, { dislikeCount: increment(1) });
+            const newDislikedMaps = [...dislikedMaps, mapId];
+            setDislikedMaps(newDislikedMaps);
+            localStorage.setItem('dislikedUserMaps', JSON.stringify(newDislikedMaps));
+        }
     };
 
 
@@ -502,7 +539,7 @@ export default function MakeYourOwnClientPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-
+      
       {isLoading || !constituencies ? (
           <ConstituenciesPageSkeleton />
       ) : (
@@ -639,6 +676,7 @@ export default function MakeYourOwnClientPage() {
                     {visibleMaps.map(map => {
                         const { slp, uwp, ind } = getSeatCountsFromMapData(map.mapData);
                         const isLiked = likedMaps.includes(map.id);
+                        const isDisliked = dislikedMaps.includes(map.id);
                         return (
                             <Card key={map.id} className="overflow-hidden">
                                 <CardContent className="p-0">
@@ -658,10 +696,14 @@ export default function MakeYourOwnClientPage() {
                                         </p>
                                     </div>
                                 </CardContent>
-                                <CardFooter>
-                                    <Button variant="outline" size="sm" onClick={() => handleLikeMap(map.id)} disabled={isLiked}>
-                                        <ThumbsUp className="mr-2 h-4 w-4"/>
-                                        Like ({map.likeCount || 0})
+                                <CardFooter className="gap-2">
+                                    <Button variant="outline" size="sm" onClick={() => handleLikeMap(map.id)}>
+                                        <ThumbsUp className={`mr-2 h-4 w-4 ${isLiked ? 'text-primary fill-primary' : ''}`}/>
+                                        {map.likeCount || 0}
+                                    </Button>
+                                    <Button variant="outline" size="sm" onClick={() => handleDislikeMap(map.id)}>
+                                        <ThumbsDown className={`mr-2 h-4 w-4 ${isDisliked ? 'text-destructive fill-destructive' : ''}`} />
+                                        {map.dislikeCount || 0}
                                     </Button>
                                 </CardFooter>
                             </Card>

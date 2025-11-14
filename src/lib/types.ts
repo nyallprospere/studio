@@ -152,6 +152,7 @@ export interface UserMap {
   city?: string;
   country?: string;
   likeCount?: number;
+  dislikeCount?: number;
 }
 
 export interface SiteSettings {

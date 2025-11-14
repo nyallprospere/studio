@@ -600,6 +600,10 @@
         "likeCount": {
           "type": "number",
           "description": "The number of times the map has been liked."
+        },
+        "dislikeCount": {
+          "type": "number",
+          "description": "The number of times the map has been disliked."
         }
       },
       "required": [
