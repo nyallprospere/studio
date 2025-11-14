@@ -85,8 +85,11 @@ service cloud.firestore {
     }
     
     match /ad_clicks/{adClickId} {
-      allow list, get: if isAdmin();
+      // Admins can read individual click documents, everyone can create them.
+      allow get: if isAdmin();
       allow create: if true;
+      // The collection can be listed by admins.
+      allow list: if isAdmin();
     }
 
     match /news/{newsId} {
