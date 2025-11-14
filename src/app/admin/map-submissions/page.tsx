@@ -146,8 +146,11 @@ export default function MapSubmissionsPage() {
                 <TableHeader>
                     <TableRow>
                         <TableHead>Map</TableHead>
-                        <TableHead>Prediction</TableHead>
+                        <TableHead>SLP</TableHead>
+                        <TableHead>UWP</TableHead>
+                        <TableHead>IND</TableHead>
                         <TableHead>Submission Details</TableHead>
+                        <TableHead>IP Address</TableHead>
                         <TableHead>Likes</TableHead>
                         <TableHead>Dislikes</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
@@ -158,10 +161,13 @@ export default function MapSubmissionsPage() {
                     Array.from({ length: 5 }).map((_, i) => (
                         <TableRow key={i}>
                             <TableCell><Skeleton className="h-16 w-32" /></TableCell>
-                            <TableCell><Skeleton className="h-6 w-48" /></TableCell>
-                            <TableCell><Skeleton className="h-6 w-48" /></TableCell>
                             <TableCell><Skeleton className="h-6 w-12" /></TableCell>
-                             <TableCell><Skeleton className="h-6 w-12" /></TableCell>
+                            <TableCell><Skeleton className="h-6 w-12" /></TableCell>
+                            <TableCell><Skeleton className="h-6 w-12" /></TableCell>
+                            <TableCell><Skeleton className="h-6 w-48" /></TableCell>
+                            <TableCell><Skeleton className="h-6 w-32" /></TableCell>
+                            <TableCell><Skeleton className="h-6 w-12" /></TableCell>
+                            <TableCell><Skeleton className="h-6 w-12" /></TableCell>
                             <TableCell className="text-right"><Skeleton className="h-8 w-8 inline-block" /></TableCell>
                         </TableRow>
                     ))
@@ -181,19 +187,18 @@ export default function MapSubmissionsPage() {
                                         </div>
                                     </Link>
                                 </TableCell>
-                                <TableCell>
-                                    <p className="font-semibold">
-                                        SLP {slp} | UWP {uwp} | IND {ind}
-                                    </p>
-                                </TableCell>
+                                <TableCell className="font-semibold">{slp}</TableCell>
+                                <TableCell className="font-semibold">{uwp}</TableCell>
+                                <TableCell className="font-semibold">{ind}</TableCell>
                                  <TableCell>
                                     <p className="text-sm text-muted-foreground">
                                         {map.createdAt ? new Date(map.createdAt?.toDate()).toLocaleString() : 'N/A'}
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                        {map.city && map.country ? `${map.city}, ${map.country}`: (map.ipAddress || 'Unknown Location')}
+                                        {map.city && map.country ? `${map.city}, ${map.country}`: 'Unknown Location'}
                                     </p>
                                 </TableCell>
+                                <TableCell className="font-mono text-xs">{map.ipAddress || 'N/A'}</TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-2">
                                         <ThumbsUp className="h-4 w-4 text-green-500" />
@@ -234,7 +239,7 @@ export default function MapSubmissionsPage() {
                     })
                 ) : (
                     <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center">
+                        <TableCell colSpan={9} className="h-24 text-center">
                             No user maps found.
                         </TableCell>
                     </TableRow>
