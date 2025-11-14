@@ -13,7 +13,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const reelSchema = z.object({
-  authorName: z.string().min(1, "Author name is required"),
   authorUrl: z.string().url("A valid URL is required"),
   postUrl: z.string().url("A valid URL is required"),
   partyId: z.string().optional(),
@@ -32,7 +31,6 @@ export function ReelForm({ onSubmit, initialData, onCancel, parties, candidates 
   const form = useForm<z.infer<typeof reelSchema>>({
     resolver: zodResolver(reelSchema),
     defaultValues: {
-      authorName: '',
       authorUrl: '',
       postUrl: '',
       partyId: '',
@@ -47,7 +45,6 @@ export function ReelForm({ onSubmit, initialData, onCancel, parties, candidates 
       form.reset(initialData);
     } else {
       form.reset({
-        authorName: '',
         authorUrl: '',
         postUrl: '',
         partyId: '',
@@ -74,46 +71,6 @@ export function ReelForm({ onSubmit, initialData, onCancel, parties, candidates 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="authorName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Author Name</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., Lucian reken" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="authorUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Author Profile URL</FormLabel>
-              <FormControl>
-                <Input type="url" placeholder="https://www.facebook.com/username" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="postUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Reel Post URL</FormLabel>
-              <FormControl>
-                <Input type="url" placeholder="https://www.facebook.com/reel/12345" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         <FormField
           control={form.control}
           name="partyId"
@@ -171,6 +128,32 @@ export function ReelForm({ onSubmit, initialData, onCancel, parties, candidates 
             )}
           />
         )}
+        <FormField
+          control={form.control}
+          name="authorUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Author Profile URL</FormLabel>
+              <FormControl>
+                <Input type="url" placeholder="https://www.facebook.com/username" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="postUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Reel Post URL</FormLabel>
+              <FormControl>
+                <Input type="url" placeholder="https://www.facebook.com/reel/12345" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
         <div className="flex justify-end gap-4 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>

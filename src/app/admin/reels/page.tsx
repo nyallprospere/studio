@@ -28,7 +28,7 @@ import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } 
 import { CSS } from '@dnd-kit/utilities';
 import Link from 'next/link';
 
-function SortableReelItem({ reel, onEdit, onDelete }: { reel: Reel, onEdit: (reel: Reel) => void, onDelete: (reel: Reel) => void }) {
+function SortableReelItem({ reel, onEdit, onDelete, authorName }: { reel: Reel, onEdit: (reel: Reel) => void, onDelete: (reel: Reel) => void, authorName: string }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: reel.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -42,7 +42,7 @@ function SortableReelItem({ reel, onEdit, onDelete }: { reel: Reel, onEdit: (ree
           <GripVertical className="h-5 w-5 text-muted-foreground" />
         </div>
         <div>
-          <p className="font-semibold">{reel.authorName}</p>
+          <p className="font-semibold">{authorName}</p>
           <Link href={reel.postUrl} target="_blank" className="text-sm text-blue-500 hover:underline truncate max-w-xs block">{reel.postUrl}</Link>
         </div>
       </div>
@@ -60,7 +60,7 @@ function SortableReelItem({ reel, onEdit, onDelete }: { reel: Reel, onEdit: (ree
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete the reel from "{reel.authorName}". This action cannot be undone.
+                This will permanently delete the reel from "{authorName}". This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -92,6 +92,19 @@ export default function AdminReelsPage() {
   const sensors = useSensors(useSensor(PointerSensor));
   
   const isLoading = loadingReels || loadingParties || loadingCandidates;
+  
+  const getAuthorName = (reel: Reel) => {
+    if (reel.candidateId) {
+      const candidate = candidates?.find(c => c.id === reel.candidateId);
+      if (candidate) return candidate.name;
+    }
+    if (reel.partyId) {
+      const party = parties?.find(p => p.id === reel.partyId);
+      if (party) return party.name;
+    }
+    return reel.authorUrl;
+  }
+
 
   const handleDragEnd = async (event: any) => {
     const { active, over } = event;
@@ -119,14 +132,25 @@ export default function AdminReelsPage() {
   const handleFormSubmit = async (values: any) => {
     if (!firestore) return;
     
+    let authorName = '';
+    if (values.candidateId) {
+        const candidate = candidates?.find(c => c.id === values.candidateId);
+        authorName = candidate?.name || '';
+    } else if (values.partyId) {
+        const party = parties?.find(p => p.id === values.partyId);
+        authorName = party?.name || '';
+    }
+    
+    const dataToSave = { ...values, authorName };
+
     if (editingReel) {
       const reelDoc = doc(firestore, 'reels', editingReel.id);
-      await updateDoc(reelDoc, values);
+      await updateDoc(reelDoc, dataToSave);
       toast({ title: "Reel Updated", description: "The reel has been successfully updated." });
     } else {
       const reelsCollection = collection(firestore, 'reels');
       const newOrder = (reels?.length || 0);
-      await addDoc(reelsCollection, { ...values, order: newOrder });
+      await addDoc(reelsCollection, { ...dataToSave, order: newOrder });
       toast({ title: "Reel Added", description: "The new reel has been added." });
     }
     
@@ -182,7 +206,7 @@ export default function AdminReelsPage() {
               <SortableContext items={reels} strategy={verticalListSortingStrategy}>
                 <div className="space-y-4">
                   {reels.map((reel) => (
-                    <SortableReelItem key={reel.id} reel={reel} onEdit={setEditingReel} onDelete={handleDelete} />
+                    <SortableReelItem key={reel.id} reel={reel} onEdit={setEditingReel} onDelete={handleDelete} authorName={getAuthorName(reel)} />
                   ))}
                 </div>
               </SortableContext>

@@ -964,7 +964,11 @@
             "description": "The ID of the candidate associated with the reel."
         }
       },
-      "required": ["authorName", "postUrl", "order"]
+      "required": [
+        "authorUrl",
+        "postUrl",
+        "order"
+      ]
     }
   },
   "auth": {
