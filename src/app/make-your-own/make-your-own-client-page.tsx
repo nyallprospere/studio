@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
@@ -31,6 +32,7 @@ import { uploadFile } from '@/firebase/storage';
 import { PageHeader } from '@/components/page-header';
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 
 const politicalLeaningOptions = [
@@ -162,6 +164,7 @@ export default function MakeYourOwnClientPage() {
     const { user } = useUser();
     const searchParams = useSearchParams();
     const mapRef = useRef<HTMLDivElement>(null);
+    const isMobile = useIsMobile();
 
     const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
     const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
@@ -221,7 +224,7 @@ export default function MakeYourOwnClientPage() {
     const [dynamicShareDescription, setDynamicShareDescription] = useState('');
     const [likedMaps, setLikedMaps] = useState<string[]>([]);
     const [mapFilter, setMapFilter] = useState('recent');
-    const [visibleMapCount, setVisibleMapCount] = useState(6);
+    const [visibleMapCount, setVisibleMapCount] = useState(isMobile ? 3 : 6);
 
      useEffect(() => {
         const liked = JSON.parse(localStorage.getItem('likedUserMaps') || '[]');
@@ -446,6 +449,7 @@ export default function MakeYourOwnClientPage() {
         return filteredAndSortedMaps.slice(0, visibleMapCount);
     }, [filteredAndSortedMaps, visibleMapCount]);
 
+    const mapsIncrement = isMobile ? 3 : 6;
 
     const chartConfig = politicalLeaningOptions.reduce((acc, option) => {
         // @ts-ignore
@@ -648,7 +652,7 @@ export default function MakeYourOwnClientPage() {
                 </div>
                 {visibleMapCount < filteredAndSortedMaps.length && (
                     <div className="flex justify-center mt-8">
-                        <Button onClick={() => setVisibleMapCount(prev => prev + 6)}>Load More</Button>
+                        <Button onClick={() => setVisibleMapCount(prev => prev + mapsIncrement)}>Load More</Button>
                     </div>
                 )}
                 </>
@@ -718,3 +722,4 @@ export default function MakeYourOwnClientPage() {
     </div>
   );
 }
+
