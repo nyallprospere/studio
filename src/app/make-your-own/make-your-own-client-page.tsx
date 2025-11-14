@@ -6,7 +6,7 @@ import type { Constituency, ElectionResult, Election, SiteSettings, UserMap, Par
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirebase, useMemoFirebase, useUser, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, doc, serverTimestamp, query, orderBy, where, getDocs, addDoc, updateDoc, increment } from 'firebase/firestore';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Pie, PieChart, ResponsiveContainer, Cell, Label } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Input } from '@/components/ui/input';
@@ -30,6 +30,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Label as UiLabel } from '@/components/ui/label';
 import { uploadFile } from '@/firebase/storage';
 import { PageHeader } from '@/components/page-header';
+import Link from 'next/link';
 
 
 const politicalLeaningOptions = [
@@ -177,7 +178,7 @@ export default function MakeYourOwnClientPage() {
     const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
     const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
 
-    const userMapsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'user_maps'), where('imageUrl', '!=', '')) : null, [firestore]);
+    const userMapsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'user_maps'), where('imageUrl', '!=', ''), orderBy('imageUrl')) : null, [firestore]);
     const { data: userMaps, isLoading: loadingUserMaps } = useCollection<UserMap>(userMapsQuery);
     
     const [previousElectionResults, setPreviousElectionResults] = useState<ElectionResult[]>([]);
