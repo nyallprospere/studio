@@ -1,0 +1,1015 @@
+'use client';
+
+import React, { useState, useEffect, useMemo } from 'react';
+import type { Election, ElectionResult, Party, Constituency, PartyLogo, Region, Candidate } from '@/lib/types';
+import { PageHeader } from '@/components/page-header';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
+import { collection, orderBy, query, getDocs, where, limit } from 'firebase/firestore';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Bar, BarChart, ResponsiveContainer, XAxis, Tooltip, CartesianGrid, LabelList, Cell, YAxis } from "recharts"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import type { ChartConfig } from '@/components/ui/chart';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Image from 'next/image';
+import { InteractiveSvgMap } from '@/components/interactive-svg-map';
+import { ArrowUp, ArrowDown, Minus, Sparkles, UserSquare, CheckCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { analyzePastElection, type PastElectionAnalysisInput } from '@/ai/flows/analyze-past-election';
+import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
+
+const constituencyMapOrder = [
+    "Gros Islet",
+    "Babonneau",
+    "Castries North",
+    "Castries East",
+    "Castries Central",
+    "Castries South",
+    "Castries South East",
+    "Anse-la-Raye/Canaries",
+    "Soufriere",
+    "Choiseul",
+    "Laborie",
+    "Vieux-Fort South",
+    "Vieux-Fort North",
+    "Micoud South",
+    "Micoud North",
+    "Dennery North",
+    "Dennery South",
+];
+
+
+export default function ResultsClientPage() {
+  const { firestore } = useFirebase();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const yearFromQuery = searchParams.get('year');
+
+  const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
+  const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
+  const constituenciesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]);
+  const partyLogosQuery = useMemoFirebase(() => firestore ? collection(firestore, 'party_logos') : null, [firestore]);
+  const regionsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'regions') : null, [firestore]);
+  const candidatesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'archived_candidates')) : null, [firestore]);
+
+  const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
+  const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
+  const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
+  const { data: partyLogos, isLoading: loadingLogos } = useCollection<PartyLogo>(partyLogosQuery);
+  const { data: regions, isLoading: loadingRegions } = useCollection<Region>(regionsQuery);
+  const { data: archivedCandidates, isLoading: loadingArchivedCandidates } = useCollection<ArchivedCandidate>(candidatesQuery);
+  
+  const [selectedElectionId, setSelectedElectionId] = useState<string | undefined>(undefined);
+  const [resultsByYear, setResultsByYear] = useState<Record<string, ElectionResult[]>>({});
+  const [loadingResults, setLoadingResults] = useState(true);
+  const [selectedConstituencyId, setSelectedConstituencyId] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState('');
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
+
+  const sortedElections = useMemo(() => {
+    if (!elections) return [];
+    
+    const now = new Date();
+    // Filter out elections that are in the future, unless they are marked as the current one to work on
+    const pastElections = elections.filter(election => {
+        const electionYear = election.year;
+        return election.isCurrent ? true : electionYear <= now.getFullYear();
+    });
+
+    return [...pastElections].sort((a, b) => {
+        if (a.year !== b.year) {
+            return b.year - a.year;
+        }
+        return b.name.localeCompare(a.name);
+    });
+  }, [elections]);
+
+  useEffect(() => {
+    if (yearFromQuery && sortedElections.find(e => e.id === yearFromQuery)) {
+      setSelectedElectionId(yearFromQuery);
+    } else if (sortedElections && sortedElections.length > 0 && !selectedElectionId) {
+      setSelectedElectionId(sortedElections[0].id);
+    }
+  }, [yearFromQuery, sortedElections, selectedElectionId]);
+
+  useEffect(() => {
+    async function fetchAllResults() {
+      if (!firestore) return;
+      setLoadingResults(true);
+      const resultsRef = collection(firestore, 'election_results');
+      getDocs(resultsRef).then(resultsSnap => {
+        const allResults = resultsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as ElectionResult));
+        
+        const groupedResults = allResults.reduce((acc, result) => {
+          const electionId = result.electionId;
+          if (!acc[electionId]) {
+            acc[electionId] = [];
+          }
+          acc[electionId].push(result);
+          return acc;
+        }, {} as Record<string, ElectionResult[]>);
+
+        setResultsByYear(groupedResults);
+      }).catch(error => {
+          const contextualError = new FirestorePermissionError({
+              path: 'election_results',
+              operation: 'list',
+          });
+          errorEmitter.emit('permission-error', contextualError);
+      }).finally(() => {
+          setLoadingResults(false);
+      });
+    }
+    fetchAllResults();
+  }, [firestore]);
+
+
+  const getPartyById = (id: string) => parties?.find(p => p.id === id);
+  const getConstituencyById = (id: string) => constituencies?.find(c => c.id === id);
+  
+  const loading = loadingElections || loadingParties || loadingConstituencies || loadingLogos || loadingRegions || loadingArchivedCandidates;
+
+  const currentElectionResults = selectedElectionId ? resultsByYear[selectedElectionId] : [];
+  const currentElection = useMemo(() => sortedElections.find(e => e.id === selectedElectionId), [selectedElectionId, sortedElections]);
+
+  const previousElection = useMemo(() => {
+    if (!currentElection || !sortedElections) return null;
+    const currentIndex = sortedElections.findIndex(e => e.id === currentElection.id);
+    return sortedElections[currentIndex + 1] || null;
+  }, [currentElection, sortedElections]);
+
+  const previousElectionResults = previousElection ? resultsByYear[previousElection.id] : [];
+
+
+  const summaryData = useMemo(() => {
+    if (!currentElectionResults || !parties || !constituencies || !partyLogos) return [];
+  
+    const slp = parties.find(p => p.acronym === 'SLP');
+    const uwp = parties.find(p => p.acronym === 'UWP');
+  
+    if (!slp || !uwp) return [];
+  
+    let slpSeats = 0;
+    let uwpSeats = 0;
+    let otherSeats = 0;
+  
+    let slpVotes = 0;
+    let uwpVotes = 0;
+    let otherVotes = 0;
+
+    const is2021 = currentElection?.year === 2021;
+  
+    currentElectionResults.forEach(result => {
+      const constituency = getConstituencyById(result.constituencyId);
+      const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+
+      if (isSpecialConstituency) {
+        otherVotes += result.slpVotes;
+        uwpVotes += result.uwpVotes;
+        otherVotes += result.otherVotes;
+        otherSeats++;
+      } else {
+        slpVotes += result.slpVotes;
+        uwpVotes += result.uwpVotes;
+        otherVotes += result.otherVotes;
+
+        if (result.slpVotes > result.uwpVotes) {
+            slpSeats++;
+        } else if (result.uwpVotes > result.slpVotes) {
+            uwpSeats++;
+        }
+      }
+    });
+    
+    const grandTotalVotes = slpVotes + uwpVotes + otherVotes;
+
+    const getElectionLogo = (partyId: string) => {
+        const electionLogo = partyLogos.find(logo => logo.partyId === partyId && logo.electionId === currentElection?.id);
+        const party = getPartyById(partyId);
+
+        let logoUrl = electionLogo?.expandedLogoUrl || electionLogo?.logoUrl || party?.expandedLogoUrl || party?.logoUrl;
+
+        if (currentElection && currentElection.year < 1997) {
+            logoUrl = electionLogo?.logoUrl || party?.oldLogoUrl || party?.logoUrl;
+        }
+
+        return logoUrl;
+    }
+
+    const calculatePreviousSeats = (partyId: string) => {
+        if (!previousElectionResults || !parties) return 0;
+
+        if (partyId === 'other') {
+             const prevOtherSeats = previousElectionResults.reduce((acc, result) => {
+                const constituency = getConstituencyById(result.constituencyId);
+                const prevIs2021 = previousElection?.year === 2021;
+                 const prevIsSpecial = prevIs2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+                if (prevIsSpecial) {
+                    if (result.slpVotes > result.uwpVotes) return acc + 1;
+                }
+                return acc;
+            }, 0);
+            return prevOtherSeats;
+        }
+        
+        const party = getPartyById(partyId);
+        if (!party) return 0;
+
+        return previousElectionResults.reduce((acc, result) => {
+            if (party.acronym === 'SLP' && result.slpVotes > result.uwpVotes) return acc + 1;
+            if (party.acronym === 'UWP' && result.uwpVotes > result.slpVotes) return acc + 1;
+            return acc;
+        }, 0);
+    }
+    
+    const getVotePercentage = (partyId: string, totalVotes: number) => {
+        if (grandTotalVotes === 0) return 0;
+        return (totalVotes / grandTotalVotes) * 100;
+    }
+
+    const getPreviousVotePercentage = (partyId: string) => {
+        if (!previousElectionResults || !parties) return 0;
+        
+        let prevVotes = 0;
+        let prevTotalVotes = 0;
+
+        previousElectionResults.forEach(r => {
+            prevTotalVotes += r.totalVotes;
+        });
+
+        if (partyId === 'other') {
+             previousElectionResults.forEach(r => {
+                 const constituency = getConstituencyById(r.constituencyId);
+                 const prevIs2021 = previousElection?.year === 2021;
+                 const prevIsSpecial = prevIs2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+                if (prevIsSpecial) {
+                    prevVotes += r.slpVotes + r.otherVotes;
+                } else {
+                    prevVotes += r.otherVotes;
+                }
+            });
+
+        } else {
+            const party = getPartyById(partyId);
+            if (!party) return 0;
+            previousElectionResults.forEach(r => {
+                 const constituency = getConstituencyById(r.constituencyId);
+                 const prevIs2021 = previousElection?.year === 2021;
+                 const prevIsSpecial = prevIs2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+                if (party.acronym === 'SLP' && !prevIsSpecial) prevVotes += r.slpVotes;
+                if (party.acronym === 'UWP') prevVotes += r.uwpVotes;
+            });
+        }
+
+        if (prevTotalVotes === 0) return 0;
+        return (prevVotes / prevTotalVotes) * 100;
+    }
+
+    const getSeatChange = (partyId: string, currentSeats: number) => {
+        if (!previousElection) return null;
+        const prevSeats = calculatePreviousSeats(partyId);
+        return currentSeats - prevSeats;
+    }
+    
+    const getVotePercentageChange = (partyId: string, currentPercentage: number) => {
+        if (!previousElection) return null;
+        const prevPercentage = getPreviousVotePercentage(partyId);
+        return currentPercentage - prevPercentage;
+    }
+  
+    const summary = [
+        { partyId: slp.id, name: slp.name, acronym: slp.acronym, seats: slpSeats, totalVotes: slpVotes, color: slp.color, logoUrl: getElectionLogo(slp.id) },
+        { partyId: uwp.id, name: uwp.name, acronym: uwp.acronym, seats: uwpSeats, totalVotes: uwpVotes, color: uwp.color, logoUrl: getElectionLogo(uwp.id) },
+    ];
+    
+    if(otherVotes > 0 || otherSeats > 0) {
+        const independentLogo = partyLogos.find(logo => logo.partyId === 'independent' && logo.electionId === currentElection?.id);
+        summary.push({ partyId: 'other', name: 'Independents', acronym: 'IND', seats: otherSeats, totalVotes: otherVotes, color: '#8884d8', logoUrl: independentLogo?.expandedLogoUrl || independentLogo?.logoUrl || currentElection?.independentExpandedLogoUrl || currentElection?.independentLogoUrl });
+    }
+
+    return summary
+      .filter(p => p.seats > 0 || p.totalVotes > 0)
+      .map(p => {
+          const votePercentage = getVotePercentage(p.partyId, p.totalVotes);
+          return {
+            ...p,
+            seatChange: getSeatChange(p.partyId, p.seats),
+            votePercentage: votePercentage.toFixed(1),
+            votePercentageChange: getVotePercentageChange(p.partyId, votePercentage)
+          }
+      })
+      .sort((a,b) => b.seats - a.seats || b.totalVotes - a.totalVotes);
+  }, [currentElectionResults, parties, constituencies, currentElection, partyLogos, previousElectionResults, previousElection]);
+
+    const sortedConstituencyResults = useMemo(() => {
+        if (!currentElectionResults || !constituencies) return [];
+
+        return [...currentElectionResults].sort((a, b) => {
+            const nameA = getConstituencyById(a.constituencyId)?.name || '';
+            const nameB = getConstituencyById(b.constituencyId)?.name || '';
+            const indexA = constituencyMapOrder.indexOf(nameA);
+            const indexB = constituencyMapOrder.indexOf(nameB);
+
+            if (indexA === -1 && indexB === -1) return nameA.localeCompare(nameB);
+            if (indexA === -1) return 1;
+            if (indexB === -1) return -1;
+            return indexA - indexB;
+        });
+    }, [currentElectionResults, constituencies]);
+
+  useEffect(() => {
+    if (selectedElectionId && summaryData.length > 0) {
+        const generateAnalysis = async () => {
+            setLoadingAnalysis(true);
+            setAnalysis('');
+
+            const input: PastElectionAnalysisInput = {
+                electionYear: currentElection?.year.toString() || '',
+                electionName: currentElection?.name || '',
+                results: JSON.stringify(summaryData.map(({ logoUrl, ...rest }) => rest)),
+                constituencyResults: JSON.stringify(currentElectionResults.map(r => {
+                    const constituency = getConstituencyById(r.constituencyId);
+                    return {...r, constituencyName: constituency?.name}
+                }))
+            };
+
+            const result = await analyzePastElection(input);
+            if (typeof result === 'string') {
+                setAnalysis(result);
+            }
+            setLoadingAnalysis(false);
+        };
+        generateAnalysis();
+    }
+  }, [selectedElectionId, summaryData, currentElection, currentElectionResults]);
+
+  const chartConfig = useMemo(() => {
+    const config: ChartConfig = {};
+    if (summaryData) {
+        summaryData.forEach(item => {
+            config[item.acronym] = {
+                label: item.acronym,
+                color: item.color,
+            }
+        });
+    }
+    return config;
+  }, [summaryData]);
+  
+  const regionalSeatResults = useMemo(() => {
+    if (!regions || !currentElectionResults || !constituencies || !previousElectionResults || !parties) return [];
+
+    return regions.map(region => {
+      let slpSeats = 0;
+      let uwpSeats = 0;
+      let otherSeats = 0;
+      let prevSlpSeats = 0;
+      let prevUwpSeats = 0;
+      let prevOtherSeats = 0;
+
+      const regionConstituencyIds = new Set(region.constituencyIds);
+      const isCurrent2021 = currentElection?.year === 2021;
+      const isPrev2021 = previousElection?.year === 2021;
+
+      currentElectionResults.forEach(result => {
+        if (regionConstituencyIds.has(result.constituencyId)) {
+          const constituency = getConstituencyById(result.constituencyId);
+          const isSpecial = isCurrent2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+          if (isSpecial) otherSeats++;
+          else if (result.slpVotes > result.uwpVotes) slpSeats++;
+          else if (result.uwpVotes > result.slpVotes) uwpSeats++;
+        }
+      });
+      
+      previousElectionResults.forEach(result => {
+        if (regionConstituencyIds.has(result.constituencyId)) {
+            const constituency = getConstituencyById(result.constituencyId);
+            const isSpecial = isPrev2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+            if (isSpecial) prevOtherSeats++;
+            else if (result.slpVotes > result.uwpVotes) prevSlpSeats++;
+            else if (result.uwpVotes > result.slpVotes) prevUwpSeats++;
+        }
+      });
+      
+      return {
+        id: region.id,
+        name: region.name,
+        slpSeats,
+        uwpSeats,
+        otherSeats,
+        slpSeatChange: slpSeats - prevSlpSeats,
+        uwpSeatChange: uwpSeats - prevUwpSeats,
+        otherSeatChange: otherSeats - prevOtherSeats
+      };
+    }).sort((a, b) => a.name.localeCompare(b.name));
+
+  }, [regions, currentElectionResults, previousElectionResults, constituencies, currentElection, previousElection, parties]);
+
+  const regionalVoteResults = useMemo(() => {
+    if (!regions || !currentElectionResults || !constituencies || !previousElectionResults || !parties) return [];
+
+    return regions.map(region => {
+        let slpVotes = 0, uwpVotes = 0, otherVotes = 0, totalVotes = 0;
+        let prevSlpVotes = 0, prevUwpVotes = 0, prevOtherVotes = 0, prevTotalVotes = 0;
+        
+        const regionConstituencyIds = new Set(region.constituencyIds);
+        const isCurrent2021 = currentElection?.year === 2021;
+        const isPrev2021 = previousElection?.year === 2021;
+
+        currentElectionResults.forEach(result => {
+            if (regionConstituencyIds.has(result.constituencyId)) {
+                const constituency = getConstituencyById(result.constituencyId);
+                const isSpecial = isCurrent2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+                totalVotes += result.totalVotes;
+                if(isSpecial) {
+                    otherVotes += result.slpVotes + result.otherVotes;
+                    uwpVotes += result.uwpVotes;
+                } else {
+                    slpVotes += result.slpVotes;
+                    uwpVotes += result.uwpVotes;
+                    otherVotes += result.otherVotes;
+                }
+            }
+        });
+        
+        previousElectionResults.forEach(result => {
+            if (regionConstituencyIds.has(result.constituencyId)) {
+                const constituency = getConstituencyById(result.constituencyId);
+                const isSpecial = isPrev2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+                prevTotalVotes += result.totalVotes;
+                if(isSpecial) {
+                    prevOtherVotes += result.slpVotes + result.otherVotes;
+                    prevUwpVotes += result.uwpVotes;
+                } else {
+                    prevSlpVotes += result.slpVotes;
+                    prevUwpVotes += result.uwpVotes;
+                    prevOtherVotes += result.otherVotes;
+                }
+            }
+        });
+        
+        const slpPercentage = totalVotes > 0 ? (slpVotes / totalVotes) * 100 : 0;
+        const uwpPercentage = totalVotes > 0 ? (uwpVotes / totalVotes) * 100 : 0;
+        const otherPercentage = totalVotes > 0 ? (otherVotes / totalVotes) * 100 : 0;
+
+        const prevSlpPercentage = prevTotalVotes > 0 ? (prevSlpVotes / prevTotalVotes) * 100 : 0;
+        const prevUwpPercentage = prevTotalVotes > 0 ? (prevUwpVotes / prevTotalVotes) * 100 : 0;
+        const prevOtherPercentage = prevTotalVotes > 0 ? (prevOtherVotes / prevTotalVotes) * 100 : 0;
+        
+        return {
+            id: region.id,
+            name: region.name,
+            slpVotes,
+            uwpVotes,
+            otherVotes,
+            slpPercentage,
+            uwpPercentage,
+            otherPercentage,
+            slpVoteChange: slpVotes - prevSlpVotes,
+            uwpVoteChange: uwpVotes - prevUwpVotes,
+            otherVoteChange: otherVotes - prevOtherVotes,
+            slpPercentageChange: slpPercentage - prevSlpPercentage,
+            uwpPercentageChange: uwpPercentage - prevUwpPercentage,
+            otherPercentageChange: otherPercentage - prevOtherPercentage,
+        };
+    }).sort((a, b) => a.name.localeCompare(b.name));
+  }, [regions, currentElectionResults, previousElectionResults, constituencies, currentElection, previousElection, parties]);
+
+  const { slpLeaderCandidate, uwpLeaderCandidate } = useMemo(() => {
+    if (!archivedCandidates || !currentElection) {
+      return { slpLeaderCandidate: null, uwpLeaderCandidate: null };
+    }
+    const electionCandidates = archivedCandidates.filter(c => c.electionId === currentElection.id);
+    const slpLeader = electionCandidates.find(c => c.isPartyLeader && getPartyById(c.partyId)?.acronym === 'SLP');
+    const uwpLeader = electionCandidates.find(c => c.isPartyLeader && getPartyById(c.partyId)?.acronym === 'UWP');
+
+    return { slpLeaderCandidate: slpLeader, uwpLeaderCandidate: uwpLeader };
+  }, [archivedCandidates, currentElection, getPartyById]);
+
+  const closestRaces = useMemo(() => {
+    if (!currentElectionResults || !constituencies || !parties) return [];
+
+    return currentElectionResults
+      .map(result => {
+        const constituency = getConstituencyById(result.constituencyId);
+        if (!constituency) return null;
+        
+        const is2021 = currentElection?.year === 2021;
+        const isSpecialConstituency = is2021 && (constituency.name === 'Castries North' || constituency.name === 'Castries Central');
+        
+        let votesArray: {party: string, count: number}[] = [];
+        if (isSpecialConstituency) {
+            votesArray.push({party: 'IND', count: result.slpVotes});
+            votesArray.push({party: 'UWP', count: result.uwpVotes});
+            if(result.otherVotes > 0) votesArray.push({party: 'OTHER', count: result.otherVotes});
+        } else {
+            votesArray.push({party: 'SLP', count: result.slpVotes});
+            votesArray.push({party: 'UWP', count: result.uwpVotes});
+            if(result.otherVotes > 0) votesArray.push({party: 'IND', count: result.otherVotes});
+        }
+        
+        votesArray.sort((a, b) => b.count - a.count);
+
+        const winner = votesArray[0];
+        const runnerUp = votesArray[1];
+        const margin = winner.count - runnerUp.count;
+
+        return {
+          constituencyName: constituency.name,
+          winnerParty: winner.party,
+          margin: margin,
+          winnerVotes: winner.count,
+          runnerUpVotes: runnerUp.count,
+          runnerUpParty: runnerUp.party
+        };
+      })
+      .filter(item => item !== null)
+      .sort((a, b) => a!.margin - b!.margin)
+      .slice(0, 5) as NonNullable<typeof result>[];
+  }, [currentElectionResults, constituencies, parties, currentElection]);
+
+
+  const handleYearChange = (electionId: string) => {
+    setSelectedElectionId(electionId);
+    router.push(`/results?year=${electionId}`);
+  };
+
+  const resultsMapConstituencies = useMemo(() => {
+    if (!constituencies || !currentElectionResults) return [];
+
+    return constituencies.map(con => {
+        const result = currentElectionResults.find(r => r.constituencyId === con.id);
+        if (result) {
+            let winner = 'tossup';
+             const is2021 = currentElection?.year === 2021;
+             if (is2021 && (con.name === 'Castries North' || con.name === 'Castries Central')) {
+                winner = 'solid-slp';
+             } else {
+                winner = result.slpVotes > result.uwpVotes ? 'solid-slp' : 'solid-uwp';
+             }
+
+            return { ...con, politicalLeaning: winner as Constituency['politicalLeaning'] };
+        }
+        return { ...con, politicalLeaning: 'tossup' };
+    });
+  }, [constituencies, currentElectionResults, currentElection]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <PageHeader
+          title="Past Election Results"
+        />
+        <p>Loading...</p>
+      </div>
+    );
+  }
+  
+  const winningPartyId = summaryData.length > 0 ? summaryData[0].partyId : null;
+
+  const SeatChangeIndicator = ({ change }: { change: number | null }) => {
+    if (change === null || !previousElection) return null;
+    const color = change > 0 ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-muted-foreground';
+    const sign = change > 0 ? '+' : '';
+    return <span className={cn('text-xs font-semibold ml-1', color)}>({sign}{change})</span>;
+  };
+  
+  const VoteChangeIndicator = ({ change }: { change: number | null }) => {
+    if (change === null || !previousElection) return null;
+    const color = change > 0 ? 'text-green-700' : change < 0 ? 'text-red-700' : 'text-muted-foreground';
+    const sign = change > 0 ? '+' : change < 0 ? '-' : '';
+    if (change === 0) return <span className={cn('text-xs font-semibold flex items-center', color)}>(0)</span>;
+    return <span className={cn('text-xs font-semibold flex items-center', color)}>({sign}{Math.abs(change).toLocaleString()})</span>;
+  };
+
+  const VotePercentageChangeIndicator = ({ change }: { change: number | null }) => {
+    if (change === null || !previousElection || Math.abs(change) < 0.01) return null;
+    const color = change > 0 ? 'text-green-700' : 'text-red-700';
+    return (
+        <span className={cn('text-xs font-semibold flex items-center', color)}>
+            {change > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+            {Math.abs(change).toFixed(1)}%
+        </span>
+    );
+};
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+    <PageHeader
+        title="Past Election Results"
+    />
+    <div className="mb-6 flex justify-end">
+        <Select value={selectedElectionId} onValueChange={handleYearChange}>
+            <SelectTrigger className="w-[280px]">
+                <SelectValue placeholder="Select an election year" />
+            </SelectTrigger>
+            <SelectContent>
+                {sortedElections.map(election => (
+                    <SelectItem key={election.id} value={election.id}>
+                        {election.name}
+                    </SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
+    </div>
+    <Card>
+        <CardContent className="p-6">
+            {!selectedElectionId || !currentElection ? (
+                <div className="text-center py-12 text-muted-foreground">Please select an election to view results.</div>
+            ) : (
+                <div>
+                <h3 className="text-2xl font-headline mb-4">
+                    {currentElection.name} Election Summary
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                        {summaryData.map((summaryItem) => (
+                        <Card key={summaryItem.partyId} style={{ borderLeftColor: summaryItem.color, borderLeftWidth: '4px' }}>
+                            <CardHeader className="flex flex-col items-center p-4">
+                                <p className="text-xs font-semibold text-muted-foreground">
+                                    {summaryItem.acronym === 'SLP' ? currentElection.slpLeader : currentElection.uwpLeader}
+                                </p>
+                                <CardTitle className="text-base mb-2">{summaryItem.name}</CardTitle>
+                                {summaryItem.logoUrl && (
+                                    <div className="relative h-12 w-24">
+                                        <Image src={summaryItem.logoUrl} alt={`${summaryItem.name} logo`} fill className="object-contain" />
+                                    </div>
+                                )}
+                            </CardHeader>
+                            <CardContent className="text-center p-4 pt-0">
+                                <div className="text-2xl font-bold">
+                                    {summaryItem.seats}
+                                    {summaryItem.seatChange !== null && (
+                                        <sup className={cn("text-xs font-semibold ml-1", summaryItem.seatChange > 0 ? 'text-green-600' : summaryItem.seatChange < 0 ? 'text-red-600' : 'text-muted-foreground')}>
+                                        {summaryItem.seatChange > 0 ? `+${summaryItem.seatChange}` : summaryItem.seatChange} Seats
+                                        </sup>
+                                    )}
+                                </div>
+                                <div className="mt-2">
+                                <div className="font-bold">{summaryItem.votePercentage}%</div>
+                                {summaryItem.votePercentageChange !== null && (
+                                        <div className={cn("text-xs font-semibold flex items-center justify-center", summaryItem.votePercentageChange > 0 ? 'text-green-600' : summaryItem.votePercentageChange < 0 ? 'text-red-600' : 'text-muted-foreground')}>
+                                            {summaryItem.votePercentageChange > 0 ? <ArrowUp className="h-3 w-3" /> : summaryItem.votePercentageChange < 0 ? <ArrowDown className="h-3 w-3" /> : null}
+                                            {Math.abs(summaryItem.votePercentageChange).toFixed(1)}%
+                                        </div>
+                                    )}
+                                <div className="text-sm text-muted-foreground">{summaryItem.totalVotes.toLocaleString()} votes</div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        ))}
+                    </div>
+                    <Card className="mb-8">
+                        <CardHeader>
+                            <CardTitle>Party Leaders</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid md:grid-cols-2 gap-4">
+                            {[slpLeaderCandidate, uwpLeaderCandidate].map(leader => {
+                                if (!leader) return null;
+                                const party = getPartyById(leader.partyId);
+                                if (!party) return null;
+                                const isWinner = winningPartyId === party.id;
+                                return (
+                                    <Link key={leader.id} href={`/candidates/${leader.originalId}?archive=true`}>
+                                        <Card className="hover:bg-muted/50 transition-colors flex items-center gap-4 p-4 relative">
+                                            {isWinner && (
+                                                <Badge className="absolute top-2 right-2 bg-green-100 text-green-800 border-green-300">
+                                                    <CheckCircle className="mr-1 h-3 w-3" />
+                                                    Winner
+                                                </Badge>
+                                            )}
+                                            <div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">
+                                                {leader.imageUrl ? (
+                                                <Image src={leader.imageUrl} alt={`${leader.firstName} ${leader.lastName}`} fill className="object-cover" />
+                                                ) : (
+                                                <UserSquare className="h-full w-full text-muted-foreground" />
+                                                )}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold">{leader.firstName} {leader.lastName}</p>
+                                                <p className="text-sm" style={{color: party.color}}>{party.name}</p>
+                                                <p className="text-sm text-muted-foreground">{getConstituencyById(leader.constituencyId)?.name}</p>
+                                            </div>
+                                        </Card>
+                                    </Link>
+                                )
+                            })}
+                        </CardContent>
+                    </Card>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="md:col-span-1 space-y-8">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Closest Races</CardTitle>
+                                <CardDescription>Top 5 closest constituency results by vote margin.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Constituency</TableHead>
+                                            <TableHead>Winner</TableHead>
+                                            <TableHead className="text-right">Margin</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {closestRaces.map((race, index) => {
+                                            const winnerParty = parties?.find(p => p.acronym === race.winnerParty);
+                                            return (
+                                                <TableRow key={index}>
+                                                    <TableCell>{race.constituencyName}</TableCell>
+                                                    <TableCell style={{color: winnerParty?.color}}>{race.winnerParty}</TableCell>
+                                                    <TableCell className="text-right font-medium">+{race.margin.toLocaleString()}</TableCell>
+                                                </TableRow>
+                                            )
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Sparkles className="text-accent" />
+                                    Election Analysis
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {loadingAnalysis ? (
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-full" />
+                                        <Skeleton className="h-4 w-full" />
+                                        <Skeleton className="h-4 w-2/3" />
+                                        <Skeleton className="h-4 w-full" />
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground whitespace-pre-line">{analysis}</p>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+                    <div className="md:col-span-2">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Results Map</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-2">
+                                <InteractiveSvgMap 
+                                    constituencies={resultsMapConstituencies}
+                                    selectedConstituencyId={selectedConstituencyId}
+                                    onConstituencyClick={setSelectedConstituencyId}
+                                    election={currentElection}
+                                    electionResults={currentElectionResults}
+                                    previousElectionResults={previousElectionResults}
+                                    previousElection={previousElection}
+                                    partyLogos={partyLogos}
+                                />
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 gap-8 mt-8">
+                    <div className="grid grid-cols-1 gap-8">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Seat Count by Region</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {loadingResults ? <p>Loading results...</p> : (
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Region</TableHead>
+                                                <TableHead>SLP Seats</TableHead>
+                                                <TableHead>UWP Seats</TableHead>
+                                                <TableHead>IND Seats</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {regionalSeatResults && regionalSeatResults.length > 0 ? regionalSeatResults.map((region) => (
+                                                <TableRow key={region.id}>
+                                                    <TableCell className="font-medium">{region.name}</TableCell>
+                                                    <TableCell>{region.slpSeats}<SeatChangeIndicator change={region.slpSeatChange} /></TableCell>
+                                                    <TableCell>{region.uwpSeats}<SeatChangeIndicator change={region.uwpSeatChange} /></TableCell>
+                                                    <TableCell>{region.otherSeats}<SeatChangeIndicator change={region.otherSeatChange} /></TableCell>
+                                                </TableRow>
+                                            )) : (
+                                                <TableRow>
+                                                    <TableCell colSpan={4} className="text-center text-muted-foreground h-24">Regional data not available. Please define regions in the admin panel.</TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                )}
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Vote Count by Region</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {loadingResults ? <p>Loading results...</p> : (
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Region</TableHead>
+                                                <TableHead>SLP Votes</TableHead>
+                                                <TableHead>SLP %</TableHead>
+                                                <TableHead>UWP Votes</TableHead>
+                                                <TableHead>UWP %</TableHead>
+                                                <TableHead>IND Votes</TableHead>
+                                                <TableHead>IND %</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {regionalVoteResults && regionalVoteResults.length > 0 ? regionalVoteResults.map((region) => (
+                                                <TableRow key={region.id}>
+                                                    <TableCell className="font-medium">{region.name}</TableCell>
+                                                    <TableCell>
+                                                        <div>{region.slpVotes.toLocaleString()}</div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex flex-col">
+                                                            <span>{region.slpPercentage.toFixed(1)}%</span>
+                                                            <VotePercentageChangeIndicator change={region.slpPercentageChange} />
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div>{region.uwpVotes.toLocaleString()}</div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex flex-col">
+                                                        <span>{region.uwpPercentage.toFixed(1)}%</span>
+                                                        <VotePercentageChangeIndicator change={region.uwpPercentageChange} />
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div>{region.otherVotes > 0 ? region.otherVotes.toLocaleString() : '—'}</div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex flex-col">
+                                                            <span>
+                                                                {region.otherPercentage > 0 ? `${region.otherPercentage.toFixed(1)}%` : '—'}
+                                                            </span>
+                                                            <VotePercentageChangeIndicator change={region.otherPercentageChange} />
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )) : (
+                                                <TableRow>
+                                                    <TableCell colSpan={7} className="text-center text-muted-foreground h-24">Regional data not available. Please define regions in the admin panel.</TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+                    <Card>
+                    <CardHeader>
+                        <CardTitle>Constituency Breakdown</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {loadingResults ? <p>Loading results...</p> : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Constituency</TableHead>
+                                        <TableHead>Result</TableHead>
+                                        <TableHead>SLP Votes</TableHead>
+                                        <TableHead>SLP %</TableHead>
+                                        <TableHead>UWP Votes</TableHead>
+                                        <TableHead>UWP %</TableHead>
+                                        <TableHead>IND Votes</TableHead>
+                                        <TableHead>IND %</TableHead>
+                                        <TableHead>Total Votes</TableHead>
+                                        <TableHead>Turnout</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {sortedConstituencyResults && sortedConstituencyResults.length > 0 ? sortedConstituencyResults.map((cr) => {
+                                        const constituency = getConstituencyById(cr.constituencyId);
+                                        const is2021 = currentElection?.year === 2021;
+                                        const isSpecialConstituency = is2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+                                        
+                                        const indVotes = isSpecialConstituency ? cr.slpVotes : cr.otherVotes;
+                                        const slpVotes = isSpecialConstituency ? 0 : cr.slpVotes;
+                                        let currentWinner = 'TBD';
+
+                                            if (indVotes > cr.uwpVotes && indVotes > slpVotes) {
+                                                currentWinner = 'IND';
+                                            } else if (slpVotes > cr.uwpVotes) {
+                                                currentWinner = 'SLP';
+                                            } else if (cr.uwpVotes > slpVotes) {
+                                                currentWinner = 'UWP';
+                                            }
+
+                                        const previousResult = previousElectionResults?.find(r => r.constituencyId === cr.constituencyId);
+                                        const previousWinner = previousResult ? (previousResult.slpVotes > previousResult.uwpVotes ? 'SLP' : 'UWP') : null;
+                                        
+                                        let resultStatus = `${currentWinner} Win`;
+                                        if (previousWinner) {
+                                            if (currentWinner === 'IND') {
+                                                resultStatus = 'IND Gain';
+                                            } else if (currentWinner === previousWinner) {
+                                                resultStatus = `${currentWinner} Hold`;
+                                            } else {
+                                                resultStatus = `${currentWinner} Gain`;
+                                            }
+                                        }
+                                        const slpParty = parties?.find(p => p.acronym === 'SLP');
+                                        const uwpParty = parties?.find(p => p.acronym === 'UWP');
+                                        const winnerColor = currentWinner === 'SLP' ? slpParty?.color : (currentWinner === 'UWP' ? uwpParty?.color : '#8884d8');
+                                        
+                                        let slpVotePercentageChange = null;
+                                        let uwpVotePercentageChange = null;
+                                        let indVotePercentageChange = null;
+                                        let turnoutChange = null;
+
+                                        if (previousResult) {
+                                            const currentSlpPercent = cr.totalVotes > 0 ? (slpVotes / cr.totalVotes) * 100 : 0;
+                                            const currentUwpPercent = cr.totalVotes > 0 ? (cr.uwpVotes / cr.totalVotes) * 100 : 0;
+                                            const currentIndPercent = cr.totalVotes > 0 ? (indVotes / cr.totalVotes) * 100 : 0;
+
+                                            const prevTotalVotes = previousResult.totalVotes;
+                                                if (prevTotalVotes > 0) {
+                                                const prevIsSpecial = previousElection?.year === 2021 && (constituency?.name === 'Castries North' || constituency?.name === 'Castries Central');
+                                                const prevSlpVotes = prevIsSpecial ? 0 : previousResult.slpVotes;
+                                                const prevIndVotes = prevIsSpecial ? previousResult.slpVotes : previousResult.otherVotes;
+                                                
+                                                const prevSlpPercent = (prevSlpVotes / prevTotalVotes) * 100;
+                                                const prevUwpPercent = (previousResult.uwpVotes / prevTotalVotes) * 100;
+                                                const prevIndPercent = (prevIndVotes / prevTotalVotes) * 100;
+                                                
+                                                slpVotePercentageChange = currentSlpPercent - prevSlpPercent;
+                                                uwpVotePercentageChange = currentUwpPercent - prevUwpPercent;
+                                                indVotePercentageChange = currentIndPercent - prevIndPercent;
+                                                }
+                                                if (cr.turnout && previousResult.turnout) {
+                                                    turnoutChange = cr.turnout - previousResult.turnout;
+                                                }
+                                        }
+
+                                        return (
+                                            <TableRow key={cr.id}>
+                                                <TableCell className="font-medium">{constituency?.name || cr.constituencyId}</TableCell>
+                                                <TableCell className="font-medium" style={{color: winnerColor}}>{resultStatus}</TableCell>
+                                                <TableCell>
+                                                    {slpVotes > 0 ? slpVotes.toLocaleString() : '-'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col">
+                                                    <span>{slpVotes > 0 ? (cr.totalVotes > 0 ? `${(slpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%') : '-'}</span>
+                                                    <VotePercentageChangeIndicator change={slpVotePercentageChange} />
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {cr.uwpVotes.toLocaleString()}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col">
+                                                    <span>{cr.totalVotes > 0 ? `${(cr.uwpVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%'}</span>
+                                                    <VotePercentageChangeIndicator change={uwpVotePercentageChange} />
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {indVotes > 0 ? indVotes.toLocaleString() : '-'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col">
+                                                        <span>
+                                                            {indVotes > 0 ? (cr.totalVotes > 0 ? `${(indVotes / cr.totalVotes * 100).toFixed(1)}%` : '0.0%') : '-'}
+                                                        </span>
+                                                        <VotePercentageChangeIndicator change={indVotePercentageChange} />
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>{cr.totalVotes.toLocaleString()}</TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col">
+                                                        <span>{cr.turnout === 0 ? 'N/A' : `${cr.turnout}%`}</span>
+                                                        <VotePercentageChangeIndicator change={turnoutChange} />
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    }) : (
+                                        <TableRow>
+                                            <TableCell colSpan={10} className="text-center text-muted-foreground h-24">Detailed constituency data not available for this year.</TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </CardContent>
+                </Card>
+                </div>
+            </div>
+            )}
+        </CardContent>
+    </Card>
+    </div>
+  );
+}
