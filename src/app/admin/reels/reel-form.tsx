@@ -42,13 +42,16 @@ export function ReelForm({ onSubmit, initialData, onCancel, parties, candidates 
 
   useEffect(() => {
     if (initialData) {
-      form.reset(initialData);
+      form.reset({
+        ...initialData,
+        candidateId: initialData.candidateId || 'none'
+      });
     } else {
       form.reset({
         authorUrl: '',
         postUrl: '',
         partyId: '',
-        candidateId: '',
+        candidateId: 'none',
       });
     }
   }, [initialData, form]);
@@ -112,7 +115,7 @@ export function ReelForm({ onSubmit, initialData, onCancel, parties, candidates 
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">No Candidate</SelectItem>
+                    <SelectItem value="none">No Candidate</SelectItem>
                     {filteredCandidates.length > 0 ? (
                       filteredCandidates.map(candidate => (
                         <SelectItem key={candidate.id} value={candidate.id}>
@@ -120,7 +123,7 @@ export function ReelForm({ onSubmit, initialData, onCancel, parties, candidates 
                         </SelectItem>
                       ))
                     ) : (
-                      <SelectItem value="none" disabled>No candidates found</SelectItem>
+                      <SelectItem value="nocandidates" disabled>No candidates found</SelectItem>
                     )}
                   </SelectContent>
                 </Select>
