@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { PageViewTracker } from '@/components/page-view-tracker';
+import { MainLayout } from '@/components/layout/main-layout';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -34,7 +35,7 @@ export default function RootLayout({
       >
         <FirebaseClientProvider>
           <PageViewTracker />
-          {children}
+          <MainLayout>{children}</MainLayout>
         </FirebaseClientProvider>
         <Toaster />
       </body>

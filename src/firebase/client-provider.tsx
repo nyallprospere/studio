@@ -3,7 +3,6 @@
 import { useMemo, type ReactNode, useEffect } from 'react';
 import { FirebaseProvider } from '@/firebase/provider';
 import { initializeFirebase } from '@/firebase';
-import { MainLayout } from '@/components/layout/main-layout';
 
 interface FirebaseClientProviderProps {
   children: ReactNode;
@@ -22,7 +21,7 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
       firestore={firebaseServices.firestore}
       storage={firebaseServices.storage}
     >
-      <MainLayout>{children}</MainLayout>
+      {children}
     </FirebaseProvider>
   );
 }
