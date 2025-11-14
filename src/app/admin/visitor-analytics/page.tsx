@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useMemo, useState, useEffect } from 'react';
@@ -14,6 +15,11 @@ import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DateRange } from 'react-day-picker';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
 
 function VisitorAnalyticsPageSkeleton() {
     return (
@@ -34,12 +40,7 @@ function VisitorAnalyticsPageSkeleton() {
 function VisitorAnalyticsPageContent() {
     const { firestore } = useFirebase();
     const [date, setDate] = useState<DateRange | undefined>();
-    const [datePreset, setDatePreset] = useState('day');
-
-    useEffect(() => {
-        // Set initial date to "Today"
-        handleDatePresetChange('day');
-    }, []);
+    const [datePreset, setDatePreset] = useState('all');
 
     const pageViewsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -50,10 +51,12 @@ function VisitorAnalyticsPageContent() {
             q = query(q, where('timestamp', '>=', Timestamp.fromDate(date.from)));
         }
         if (date?.to) {
-            q = query(q, where('timestamp', '<=', Timestamp.fromDate(date.to)));
+            const toDate = new Date(date.to);
+            toDate.setHours(23, 59, 59, 999);
+            q = query(q, where('timestamp', '<=', Timestamp.fromDate(toDate)));
         }
         
-        q = query(q, limit(100)); // Limit to the most recent 100 entries for performance
+        q = query(q, limit(100));
 
         return q;
     }, [firestore, date]);
@@ -96,6 +99,60 @@ function VisitorAnalyticsPageContent() {
               setDate(undefined);
       }
     }
+    
+    const DateFilter = () => (
+        <div className="flex flex-wrap items-center gap-2">
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button
+                        id="date"
+                        variant={"outline"}
+                        className={cn(
+                        "w-full sm:w-[260px] justify-start text-left font-normal",
+                        !date && "text-muted-foreground"
+                        )}
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {date?.from ? (
+                        date.to ? (
+                            <>
+                            {format(date.from, "LLL dd, y")} -{" "}
+                            {format(date.to, "LLL dd, y")}
+                            </>
+                        ) : (
+                            format(date.from, "LLL dd, y")
+                        )
+                        ) : (
+                        <span>Pick a date range</span>
+                        )}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={date?.from}
+                        selected={date}
+                        onSelect={(range) => { setDate(range); setDatePreset('custom'); }}
+                        numberOfMonths={2}
+                    />
+                </PopoverContent>
+            </Popover>
+            <Select value={datePreset} onValueChange={handleDatePresetChange}>
+                <SelectTrigger className="w-full sm:w-[120px]">
+                    <SelectValue placeholder="Date Range" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="day">Day</SelectItem>
+                    <SelectItem value="week">Week</SelectItem>
+                    <SelectItem value="month">Month</SelectItem>
+                    <SelectItem value="year">Year</SelectItem>
+                    <SelectItem value="custom" disabled>Custom</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
+    );
 
     return (
         <div className="container mx-auto py-10">
@@ -105,9 +162,12 @@ function VisitorAnalyticsPageContent() {
             />
             <div className="mt-8 grid gap-8">
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Top 10 Most Visited Pages ({datePreset.charAt(0).toUpperCase() + datePreset.slice(1)})</CardTitle>
-                        <CardDescription>A look at the most popular pages on your site for the selected period.</CardDescription>
+                    <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div>
+                           <CardTitle>Top 10 Most Visited Pages</CardTitle>
+                           <CardDescription>A look at the most popular pages on your site for the selected period.</CardDescription>
+                        </div>
+                        <DateFilter />
                     </CardHeader>
                     <CardContent>
                         {isLoading ? <p>Loading chart data...</p> : (
@@ -126,23 +186,12 @@ function VisitorAnalyticsPageContent() {
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
+                    <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div>
                             <CardTitle>Page View Log</CardTitle>
                             <CardDescription>A detailed log of the 100 most recent page views for the selected period.</CardDescription>
                         </div>
-                        <Select value={datePreset} onValueChange={handleDatePresetChange}>
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Filter by date" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Time</SelectItem>
-                                <SelectItem value="day">Today</SelectItem>
-                                <SelectItem value="week">This Week</SelectItem>
-                                <SelectItem value="month">This Month</SelectItem>
-                                <SelectItem value="year">This Year</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <DateFilter />
                     </CardHeader>
                     <CardContent>
                         {isLoading ? (
