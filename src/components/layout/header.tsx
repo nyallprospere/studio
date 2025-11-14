@@ -1,3 +1,6 @@
+
+'use client';
+
 import { HeaderNav } from './header-nav';
 
 export function Header() {
