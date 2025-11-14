@@ -39,8 +39,8 @@ function VisitorAnalyticsPageSkeleton() {
 
 function VisitorAnalyticsPageContent() {
     const { firestore } = useFirebase();
-    const [date, setDate] = useState<DateRange | undefined>();
-    const [datePreset, setDatePreset] = useState('all');
+    const [date, setDate] = useState<DateRange | undefined>({ from: startOfDay(new Date()), to: endOfDay(new Date()) });
+    const [datePreset, setDatePreset] = useState('day');
 
     const pageViewsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -144,10 +144,10 @@ function VisitorAnalyticsPageContent() {
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="all">All Time</SelectItem>
-                    <SelectItem value="day">Day</SelectItem>
-                    <SelectItem value="week">Week</SelectItem>
-                    <SelectItem value="month">Month</SelectItem>
-                    <SelectItem value="year">Year</SelectItem>
+                    <SelectItem value="day">Today</SelectItem>
+                    <SelectItem value="week">This Week</SelectItem>
+                    <SelectItem value="month">This Month</SelectItem>
+                    <SelectItem value="year">This Year</SelectItem>
                     <SelectItem value="custom" disabled>Custom</SelectItem>
                 </SelectContent>
             </Select>
@@ -191,7 +191,6 @@ function VisitorAnalyticsPageContent() {
                             <CardTitle>Page View Log</CardTitle>
                             <CardDescription>A detailed log of the 100 most recent page views for the selected period.</CardDescription>
                         </div>
-                        <DateFilter />
                     </CardHeader>
                     <CardContent>
                         {isLoading ? (
