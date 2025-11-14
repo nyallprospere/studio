@@ -25,6 +25,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Download } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -96,7 +97,7 @@ export function DataTable<TData, TValue>({
           </Button>
         </div>
       </div>
-      <div className="rounded-md border">
+      <ScrollArea className="h-[500px] rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -145,7 +146,7 @@ export function DataTable<TData, TValue>({
             )}
           </TableBody>
         </Table>
-      </div>
+      </ScrollArea>
       <div className="flex items-center justify-end space-x-2 py-4">
         <Button
           variant="outline"
