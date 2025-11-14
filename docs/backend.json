@@ -536,15 +536,34 @@
       "type": "object",
       "description": "Represents a single page view by a user.",
       "properties": {
-        "sessionId": { "type": "string" },
-        "userId": { "type": "string" },
-        "path": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" },
-        "ipAddress": { "type": "string" },
-        "city": { "type": "string" },
-        "country": { "type": "string" }
+        "sessionId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        }
       },
-      "required": ["sessionId", "path", "timestamp"]
+      "required": [
+        "sessionId",
+        "path",
+        "timestamp"
+      ]
     },
     "Region": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -710,13 +729,27 @@
       "type": "object",
       "description": "Represents a single click on an advertisement.",
       "properties": {
-        "adId": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" },
-        "ipAddress": { "type": "string" },
-        "city": { "type": "string" },
-        "country": { "type": "string" }
+        "adId": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        }
       },
-      "required": ["adId", "timestamp"]
+      "required": [
+        "adId",
+        "timestamp"
+      ]
     },
     "NewsArticle": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -815,7 +848,11 @@
           "description": "The ID of the comment this is a reply to."
         }
       },
-      "required": ["text", "author", "createdAt"]
+      "required": [
+        "text",
+        "author",
+        "createdAt"
+      ]
     },
     "Report": {
       "$schema": "http://json-schema.org/draft-07/schema#",
