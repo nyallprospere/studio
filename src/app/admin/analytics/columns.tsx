@@ -68,7 +68,7 @@ export const columns: ColumnDef<Ad>[] = [
     header: "Estimated Revenue ($)",
     cell: ({ row }) => {
       const rpc = parseFloat(row.getValue("revenuePerClick") || "0");
-      const clicks = parseInt(row.getValue("clicks") || "0");
+      const clicks = row.original.clicks || 0;
       const estimatedRevenue = rpc * clicks;
       return `$${estimatedRevenue.toFixed(2)}`;
     }
