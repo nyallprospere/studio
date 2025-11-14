@@ -86,9 +86,13 @@ service cloud.firestore {
     
     // This rule allows collection-level reads (list) for admins.
     match /ad_clicks/{adClickId} {
-        allow list, get: if isAdmin();
+        allow get: if isAdmin();
         allow create: if true;
         allow update, delete: if false;
+    }
+    
+    match /ad_clicks {
+      allow list: if isAdmin();
     }
 
     match /news/{newsId} {
