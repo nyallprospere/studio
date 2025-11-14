@@ -124,8 +124,8 @@ service cloud.firestore {
     }
 
     match /reels/{reelId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }
