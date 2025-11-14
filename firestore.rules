@@ -125,7 +125,9 @@ service cloud.firestore {
 
     match /reels/{reelId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if request.auth != null && isAdmin() || 
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount', 'dislikeCount']);
     }
   }
 }

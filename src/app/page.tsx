@@ -1,11 +1,11 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Users, BarChart3, TrendingUp, Landmark, Shield, Vote, Map, GripVertical, FilePlus, Settings, Calendar, Pencil, Rss } from 'lucide-react';
+import { Users, BarChart3, TrendingUp, Landmark, Shield, Vote, Map, GripVertical, FilePlus, Settings, Calendar, Pencil, Rss, ThumbsUp, ThumbsDown } from 'lucide-react';
 import Countdown from '@/components/countdown';
 import { PageHeader } from '@/components/page-header';
 import {
@@ -22,7 +22,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { useUser, useCollection, useFirebase, useMemoFirebase, useDoc } from '@/firebase';
-import { collection, query, orderBy, Timestamp, where, doc } from 'firebase/firestore';
+import { collection, query, orderBy, Timestamp, where, doc, updateDoc, increment } from 'firebase/firestore';
 import type { Event, Party, Constituency, Election, NewsArticle, VoterInformation, SiteSettings, Reel } from '@/lib/types';
 import { EventCard } from '@/components/event-card';
 import { SortableFeatureCard } from '@/components/sortable-feature-card';
@@ -36,6 +36,9 @@ import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import Autoplay from "embla-carousel-autoplay";
+import { useToast } from '@/hooks/use-toast';
+
 
 const adminSections = [
     { id: 'admin-elections', title: 'Manage Elections', href: '/admin/elections', icon: Vote },
@@ -104,6 +107,7 @@ const VictoryStatusBar = ({ slpSeats, uwpSeats, indSeats }: { slpSeats: number, 
 
 export default function Home() {
   const { user } = useUser();
+  const { toast } = useToast();
   
   const { firestore } = useFirebase();
   const [allEventsViewMode, setAllEventsViewMode] = useState<'upcoming' | 'past'>('upcoming');
@@ -127,6 +131,41 @@ export default function Home() {
   const { data: voterInfoItems, isLoading: loadingVoterInfo } = useCollection<VoterInformation>(voterInfoQuery);
   const { data: siteSettings } = useDoc<SiteSettings>(siteSettingsRef);
   const { data: reels, isLoading: loadingReels } = useCollection<Reel>(reelsQuery);
+
+  const [likedReels, setLikedReels] = useState<string[]>([]);
+  const [dislikedReels, setDislikedReels] = useState<string[]>([]);
+
+  useEffect(() => {
+    const liked = JSON.parse(localStorage.getItem('likedReels') || '[]');
+    setLikedReels(liked);
+    const disliked = JSON.parse(localStorage.getItem('dislikedReels') || '[]');
+    setDislikedReels(disliked);
+  }, []);
+
+  const handleLikeReel = async (e: React.MouseEvent, reelId: string) => {
+    e.stopPropagation();
+    if (!firestore || likedReels.includes(reelId)) return;
+
+    const reelRef = doc(firestore, 'reels', reelId);
+    await updateDoc(reelRef, { likeCount: increment(1) });
+    const newLiked = [...likedReels, reelId];
+    setLikedReels(newLiked);
+    localStorage.setItem('likedReels', JSON.stringify(newLiked));
+    toast({ title: 'Reel Liked!' });
+  };
+
+  const handleDislikeReel = async (e: React.MouseEvent, reelId: string) => {
+    e.stopPropagation();
+    if (!firestore || dislikedReels.includes(reelId)) return;
+
+    const reelRef = doc(firestore, 'reels', reelId);
+    await updateDoc(reelRef, { dislikeCount: increment(1) });
+    const newDisliked = [...dislikedReels, reelId];
+    setDislikedReels(newDisliked);
+    localStorage.setItem('dislikedReels', JSON.stringify(newDisliked));
+    toast({ title: 'Reel Disliked' });
+  };
+
 
   
   const currentElection = useMemo(() => currentElections?.[0], [currentElections]);
@@ -491,25 +530,33 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <Carousel
-                  opts={{
-                    align: "start",
-                    loop: true,
-                  }}
+                  opts={{ align: "start", loop: true }}
+                  plugins={[Autoplay({ delay: 5000, stopOnInteraction: true })]}
                   className="w-full"
                 >
                   <CarouselContent>
                     {reels.map((reel) => (
                       <CarouselItem key={reel.id} className="md:basis-1/2 lg:basis-1/3">
-                        <div className="p-1">
-                           <Card>
+                        <div className="p-1 h-full">
+                           <Card className="h-full flex flex-col">
                             <CardHeader className="p-4">
                               <CardTitle className="text-base">
                                 <Link href={reel.authorUrl} target="_blank" className="hover:underline">{reel.authorName}</Link>
                               </CardTitle>
                             </CardHeader>
-                            <CardContent className="p-0 aspect-[9/16] overflow-hidden">
+                            <CardContent className="p-0 aspect-[9/16] overflow-hidden flex-grow">
                               <iframe src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(reel.postUrl)}&show_text=false&width=560`} width="100%" height="100%" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                             </CardContent>
+                             <CardFooter className="p-2 justify-end gap-2">
+                                <Button variant={likedReels.includes(reel.id) ? "default" : "outline"} size="sm" onClick={(e) => handleLikeReel(e, reel.id)} disabled={likedReels.includes(reel.id)}>
+                                    <ThumbsUp className="mr-2 h-4 w-4" />
+                                    {reel.likeCount || 0}
+                                </Button>
+                                <Button variant={dislikedReels.includes(reel.id) ? "destructive" : "outline"} size="sm" onClick={(e) => handleDislikeReel(e, reel.id)} disabled={dislikedReels.includes(reel.id)}>
+                                    <ThumbsDown className="mr-2 h-4 w-4" />
+                                    {reel.dislikeCount || 0}
+                                </Button>
+                            </CardFooter>
                           </Card>
                         </div>
                       </CarouselItem>

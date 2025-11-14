@@ -260,10 +260,11 @@ export interface PageView {
 
 export interface Reel {
   id: string;
-  authorName?: string;
   authorUrl: string;
   postUrl: string;
   order: number;
   partyId?: string;
   candidateId?: string;
+  likeCount?: number;
+  dislikeCount?: number;
 }
