@@ -4,7 +4,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function isAdmin() {
-      return request.auth != null && request.auth.token.email == 'admin@revolucianize.com';
+      return request.auth != null && (request.auth.token.email == 'admin@revolucianize.com' || request.auth.token.email == 'nyall2006@gmail.com');
     }
 
     match /mailing_list_subscribers/{subscriberId} {
@@ -84,15 +84,10 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
     
-    // This rule allows admins to list the entire collection of ad clicks
     match /ad_clicks/{document=**} {
       allow list, get: if isAdmin();
-    }
-
-    // This rule allows any user to create a new ad click document
-    match /ad_clicks/{adClickId} {
-        allow create: if true;
-        allow update, delete: if false;
+      allow create: if true;
+      allow update, delete: if false;
     }
 
     match /news/{newsId} {
