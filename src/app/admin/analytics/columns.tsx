@@ -55,14 +55,7 @@ export const columns: ColumnDef<Ad>[] = [
     accessorKey: "clicks",
     header: "# of Clicks",
     cell: ({ row }) => {
-        const ad = row.original;
-        return (
-            <Button asChild variant="link" className="p-0 h-auto">
-                <Link href={`/admin/analytics/${ad.id}`}>
-                    {ad.clicks || 0}
-                </Link>
-            </Button>
-        )
+        return row.original.clicks || 0;
     },
   },
   {
