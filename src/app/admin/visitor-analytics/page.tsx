@@ -191,6 +191,7 @@ function VisitorAnalyticsPageContent() {
                             <CardTitle>Page View Log</CardTitle>
                             <CardDescription>A detailed log of the 100 most recent page views for the selected period.</CardDescription>
                         </div>
+                        <DateFilter />
                     </CardHeader>
                     <CardContent>
                         {isLoading ? (
