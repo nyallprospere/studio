@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ReelForm } from './reel-form';
-import type { Reel } from '@/lib/types';
+import type { Reel, Party, Candidate } from '@/lib/types';
 import { Pencil, Trash2, PlusCircle, GripVertical } from 'lucide-react';
 import {
   AlertDialog,
@@ -79,15 +79,23 @@ export default function AdminReelsPage() {
   const { toast } = useToast();
 
   const reelsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'reels'), orderBy('order')) : null, [firestore]);
-  const { data: reels, isLoading } = useCollection<Reel>(reelsQuery);
+  const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
+  const candidatesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'candidates') : null, [firestore]);
+  
+  const { data: reels, isLoading: loadingReels } = useCollection<Reel>(reelsQuery);
+  const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
+  const { data: candidates, isLoading: loadingCandidates } = useCollection<Candidate>(candidatesQuery);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingReel, setEditingReel] = useState<Reel | null>(null);
 
   const sensors = useSensors(useSensor(PointerSensor));
+  
+  const isLoading = loadingReels || loadingParties || loadingCandidates;
 
   const handleDragEnd = async (event: any) => {
     const { active, over } = event;
+    if (!firestore) return;
     if (active.id !== over.id && reels) {
       const oldIndex = reels.findIndex((r) => r.id === active.id);
       const newIndex = reels.findIndex((r) => r.id === over.id);
@@ -154,6 +162,8 @@ export default function AdminReelsPage() {
               onSubmit={handleFormSubmit}
               initialData={editingReel}
               onCancel={() => setIsFormOpen(false)}
+              parties={parties || []}
+              candidates={candidates || []}
             />
           </DialogContent>
         </Dialog>

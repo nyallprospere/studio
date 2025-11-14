@@ -954,6 +954,14 @@
         "order": {
           "type": "number",
           "description": "The display order of the reel."
+        },
+        "partyId": {
+          "type": "string",
+          "description": "The ID of the political party associated with the reel."
+        },
+        "candidateId": {
+            "type": "string",
+            "description": "The ID of the candidate associated with the reel."
         }
       },
       "required": ["authorName", "postUrl", "order"]

@@ -260,4 +260,6 @@ export interface Reel {
   authorUrl: string;
   postUrl: string;
   order: number;
+  partyId?: string;
+  candidateId?: string;
 }
