@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
@@ -31,6 +30,7 @@ import { Label as UiLabel } from '@/components/ui/label';
 import { uploadFile } from '@/firebase/storage';
 import { PageHeader } from '@/components/page-header';
 import Link from 'next/link';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 const politicalLeaningOptions = [
@@ -178,8 +178,8 @@ export default function MakeYourOwnClientPage() {
     const electionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), orderBy('year', 'desc')) : null, [firestore]);
     const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
 
-    const userMapsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'user_maps'), where('imageUrl', '!=', ''), orderBy('imageUrl')) : null, [firestore]);
-    const { data: userMaps, isLoading: loadingUserMaps } = useCollection<UserMap>(userMapsQuery);
+    const userMapsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'user_maps'), where('imageUrl', '!=', '')) : null, [firestore]);
+    const { data: allUserMaps, isLoading: loadingUserMaps } = useCollection<UserMap>(userMapsQuery);
     
     const [previousElectionResults, setPreviousElectionResults] = useState<ElectionResult[]>([]);
     
@@ -220,6 +220,8 @@ export default function MakeYourOwnClientPage() {
     const [dynamicShareTitle, setDynamicShareTitle] = useState('');
     const [dynamicShareDescription, setDynamicShareDescription] = useState('');
     const [likedMaps, setLikedMaps] = useState<string[]>([]);
+    const [mapFilter, setMapFilter] = useState('recent');
+    const [visibleMapCount, setVisibleMapCount] = useState(6);
 
      useEffect(() => {
         const liked = JSON.parse(localStorage.getItem('likedUserMaps') || '[]');
@@ -416,6 +418,33 @@ export default function MakeYourOwnClientPage() {
 
         return { myMapChartData: chartData, seatCounts, allSelected, seatChanges };
     }, [myMapConstituencies, previousElectionResults]);
+    
+    const filteredAndSortedMaps = useMemo(() => {
+        if (!allUserMaps) return [];
+
+        const sorted = [...allUserMaps].sort((a, b) => {
+            if (mapFilter === 'likes') {
+                return (b.likeCount || 0) - (a.likeCount || 0);
+            }
+            // Default to most recent
+            return (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0);
+        });
+
+        if (mapFilter === 'slp' || mapFilter === 'uwp') {
+            return sorted.filter(map => {
+                const { slp, uwp } = getSeatCountsFromMapData(map.mapData);
+                if (mapFilter === 'slp') return slp >= 9;
+                if (mapFilter === 'uwp') return uwp >= 9;
+                return false;
+            });
+        }
+        
+        return sorted;
+    }, [allUserMaps, mapFilter]);
+
+    const visibleMaps = useMemo(() => {
+        return filteredAndSortedMaps.slice(0, visibleMapCount);
+    }, [filteredAndSortedMaps, visibleMapCount]);
 
 
     const chartConfig = politicalLeaningOptions.reduce((acc, option) => {
@@ -562,16 +591,30 @@ export default function MakeYourOwnClientPage() {
       )}
 
         <div className="mt-12">
-            <h2 className="text-2xl font-bold font-headline mb-4">Recently Created Maps</h2>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                <h2 className="text-2xl font-bold font-headline">Recently Created Maps</h2>
+                <Select value={mapFilter} onValueChange={setMapFilter}>
+                    <SelectTrigger className="w-full sm:w-[180px]">
+                        <SelectValue placeholder="Filter maps..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="recent">Most Recent</SelectItem>
+                        <SelectItem value="likes">Most Likes</SelectItem>
+                        <SelectItem value="slp">SLP Wins</SelectItem>
+                        <SelectItem value="uwp">UWP Wins</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
             {loadingUserMaps ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <Skeleton className="h-64 w-full" />
                     <Skeleton className="h-64 w-full" />
                     <Skeleton className="h-64 w-full" />
                 </div>
-            ) : userMaps && userMaps.length > 0 ? (
+            ) : visibleMaps && visibleMaps.length > 0 ? (
+                <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {userMaps.map(map => {
+                    {visibleMaps.map(map => {
                         const { slp, uwp, ind } = getSeatCountsFromMapData(map.mapData);
                         const isLiked = likedMaps.includes(map.id);
                         return (
@@ -603,6 +646,12 @@ export default function MakeYourOwnClientPage() {
                         )
                     })}
                 </div>
+                {visibleMapCount < filteredAndSortedMaps.length && (
+                    <div className="flex justify-center mt-8">
+                        <Button onClick={() => setVisibleMapCount(prev => prev + 6)}>Load More</Button>
+                    </div>
+                )}
+                </>
             ) : (
                 <p className="text-center text-muted-foreground py-8">No user maps have been created yet.</p>
             )}
