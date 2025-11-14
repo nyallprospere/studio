@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import * as React from 'react';
+import { useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, doc, deleteDoc, where, Timestamp } from 'firebase/firestore';
 import type { UserMap } from '@/lib/types';
@@ -16,8 +17,8 @@ import { getColumns } from './columns';
 export default function MapSubmissionsPage() {
   const { firestore } = useFirebase();
   const { toast } = useToast();
-  const [date, setDate] = useState<DateRange | undefined>();
-  const [datePreset, setDatePreset] = useState('all');
+  const [date, setDate] = React.useState<DateRange | undefined>();
+  const [datePreset, setDatePreset] = React.useState('all');
 
   const userMapsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
