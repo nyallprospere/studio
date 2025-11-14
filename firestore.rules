@@ -84,8 +84,13 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
     
+    // This rule allows admins to list the entire collection of ad clicks
+    match /ad_clicks/{document=**} {
+      allow list, get: if isAdmin();
+    }
+
+    // This rule allows any user to create a new ad click document
     match /ad_clicks/{adClickId} {
-        allow list, get: if isAdmin();
         allow create: if true;
         allow update, delete: if false;
     }
