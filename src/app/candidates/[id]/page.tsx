@@ -6,12 +6,13 @@ import type { Party, Candidate, Constituency, Election, PartyLogo, Reel } from '
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
-import { UserSquare, Shield } from 'lucide-react';
+import { UserSquare, Shield, Facebook } from 'lucide-react';
 import { useDoc, useFirebase, useMemoFirebase, useCollection } from '@/firebase';
 import { doc, collection, query, where } from 'firebase/firestore';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { Button } from '@/components/ui/button';
 
 function CandidatePageSkeleton() {
     return (
@@ -118,20 +119,29 @@ export default function CandidateDetailPage() {
                 <CardDescription className="text-lg">
                 Candidate for <span className="font-semibold text-foreground">{constituency?.name}</span>
                 </CardDescription>
-                {displayParty && (
-                <div className="flex items-center gap-2 pt-2">
-                    <div className="relative h-8 w-8 flex-shrink-0">
-                        {displayLogoUrl ? (
-                            <Image src={displayLogoUrl} alt={`${displayParty.name} logo`} fill className="object-contain" />
-                        ) : (
-                            <Shield className="w-8 h-8 text-muted-foreground" />
-                        )}
+                <div className="flex items-center gap-4 pt-2">
+                    {displayParty && (
+                    <div className="flex items-center gap-2">
+                        <div className="relative h-8 w-8 flex-shrink-0">
+                            {displayLogoUrl ? (
+                                <Image src={displayLogoUrl} alt={`${displayParty.name} logo`} fill className="object-contain" />
+                            ) : (
+                                <Shield className="w-8 h-8 text-muted-foreground" />
+                            )}
+                        </div>
+                        <span className="font-semibold" style={{ color: displayParty.color }}>
+                        {displayParty.name} {displayParty.acronym && `(${displayParty.acronym})`}
+                        </span>
                     </div>
-                    <span className="font-semibold" style={{ color: displayParty.color }}>
-                    {displayParty.name} {displayParty.acronym && `(${displayParty.acronym})`}
-                    </span>
+                    )}
+                    {candidate.facebookUrl && (
+                        <Button asChild variant="ghost" size="icon">
+                            <a href={candidate.facebookUrl} target="_blank" rel="noopener noreferrer">
+                                <Facebook className="h-6 w-6 text-[#1877F2]" />
+                            </a>
+                        </Button>
+                    )}
                 </div>
-                )}
             </div>
             </div>
         </CardHeader>
