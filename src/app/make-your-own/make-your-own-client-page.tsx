@@ -290,6 +290,20 @@ export default function MakeYourOwnClientPage() {
 
     setIsSaving(true);
     let imageUrl = '';
+    let locationData: { ipAddress?: string; city?: string; country?: string } = {};
+
+    try {
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        locationData = {
+            ipAddress: data.ip,
+            city: data.city,
+            country: data.country_name,
+        };
+    } catch(e) {
+        console.warn("Could not fetch location data", e);
+    }
+    
     try {
       const dataUrl = await toPng(mapRef.current);
       const imageId = uuidv4();
@@ -322,6 +336,7 @@ export default function MakeYourOwnClientPage() {
         imageUrl: imageUrl,
         likeCount: 0,
         dislikeCount: 0,
+        ...locationData
       });
 
       const url = `${window.location.origin}/maps/${docRef.id}`;
