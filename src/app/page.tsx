@@ -450,28 +450,54 @@ export default function Home() {
                       </CardContent>
                   </Card>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-8">
-                    <Card>
+                     {reels && reels.length > 0 && (
+                      <Card>
                         <CardHeader>
-                            <div>
-                                <CardTitle>Events</CardTitle>
-                            </div>
-                            <div className="flex w-full items-center gap-1 p-1 bg-muted rounded-md mt-4">
-                                <Button size="sm" variant={allEventsViewMode === 'upcoming' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('upcoming')} className="flex-1">Upcoming</Button>
-                                <Button size="sm" variant={allEventsViewMode === 'past' ? 'default' : 'ghost'} onClick={() => setAllEventsViewMode('past')} className="flex-1">Past</Button>
-                            </div>
+                          <CardTitle className="font-headline flex items-center gap-2">
+                            Social Media Reels
+                          </CardTitle>
+                          <CardDescription>What people are saying on social media.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-4">
-                            {loadingEvents || loadingParties ? <p>Loading events...</p> : visibleAllEvents.length > 0 ? (
-                                visibleAllEvents.map((event) => (
-                                <EventCard key={event.id} event={event} party={getParty(event.partyId)} />
-                                ))
-                            ) : (
-                                <p className="text-center text-muted-foreground py-8">No {allEventsViewMode} events found.</p>
-                            )}
-                            </div>
+                          <Carousel
+                            opts={{ align: "start", loop: true }}
+                            plugins={[Autoplay({ delay: 5000, stopOnInteraction: true })]}
+                            className="w-full"
+                          >
+                            <CarouselContent>
+                              {reels.map((reel) => (
+                                <CarouselItem key={reel.id} className="md:basis-1/2 lg:basis-full">
+                                  <div className="p-1 h-full">
+                                    <Card className="h-full flex flex-col">
+                                      <CardHeader className="p-4">
+                                        <CardTitle className="text-base">
+                                          <Link href={reel.authorUrl} target="_blank" className="hover:underline">{reel.authorName}</Link>
+                                        </CardTitle>
+                                      </CardHeader>
+                                      <CardContent className="p-0 aspect-[9/16] overflow-hidden flex-grow">
+                                        <iframe src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(reel.postUrl)}&show_text=false&width=560`} width="100%" height="100%" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                                      </CardContent>
+                                      <CardFooter className="p-2 justify-end gap-2">
+                                          <Button variant={likedReels.includes(reel.id) ? "default" : "outline"} size="sm" onClick={(e) => handleLikeReel(e, reel.id)} disabled={likedReels.includes(reel.id)}>
+                                              <ThumbsUp className="mr-2 h-4 w-4" />
+                                              {reel.likeCount || 0}
+                                          </Button>
+                                          <Button variant={dislikedReels.includes(reel.id) ? "destructive" : "outline"} size="sm" onClick={(e) => handleDislikeReel(e, reel.id)} disabled={dislikedReels.includes(reel.id)}>
+                                              <ThumbsDown className="mr-2 h-4 w-4" />
+                                              {reel.dislikeCount || 0}
+                                          </Button>
+                                      </CardFooter>
+                                    </Card>
+                                  </div>
+                                </CarouselItem>
+                              ))}
+                            </CarouselContent>
+                            <CarouselPrevious className="hidden sm:flex" />
+                            <CarouselNext className="hidden sm:flex" />
+                          </Carousel>
                         </CardContent>
-                    </Card>
+                      </Card>
+                    )}
                     <Card>
                         <CardHeader>
                             <CardTitle className="font-headline flex items-center gap-2">
@@ -518,57 +544,6 @@ export default function Home() {
               </div>
           </div>
         </div>
-
-        {reels && reels.length > 0 && (
-          <div className="mt-12">
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2">
-                  Social Media Reels
-                </CardTitle>
-                <CardDescription>What people are saying on social media.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Carousel
-                  opts={{ align: "start", loop: true }}
-                  plugins={[Autoplay({ delay: 5000, stopOnInteraction: true })]}
-                  className="w-full"
-                >
-                  <CarouselContent>
-                    {reels.map((reel) => (
-                      <CarouselItem key={reel.id} className="md:basis-1/2 lg:basis-1/3">
-                        <div className="p-1 h-full">
-                           <Card className="h-full flex flex-col">
-                            <CardHeader className="p-4">
-                              <CardTitle className="text-base">
-                                <Link href={reel.authorUrl} target="_blank" className="hover:underline">{reel.authorName}</Link>
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-0 aspect-[9/16] overflow-hidden flex-grow">
-                              <iframe src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(reel.postUrl)}&show_text=false&width=560`} width="100%" height="100%" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
-                            </CardContent>
-                             <CardFooter className="p-2 justify-end gap-2">
-                                <Button variant={likedReels.includes(reel.id) ? "default" : "outline"} size="sm" onClick={(e) => handleLikeReel(e, reel.id)} disabled={likedReels.includes(reel.id)}>
-                                    <ThumbsUp className="mr-2 h-4 w-4" />
-                                    {reel.likeCount || 0}
-                                </Button>
-                                <Button variant={dislikedReels.includes(reel.id) ? "destructive" : "outline"} size="sm" onClick={(e) => handleDislikeReel(e, reel.id)} disabled={dislikedReels.includes(reel.id)}>
-                                    <ThumbsDown className="mr-2 h-4 w-4" />
-                                    {reel.dislikeCount || 0}
-                                </Button>
-                            </CardFooter>
-                          </Card>
-                        </div>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious className="hidden sm:flex" />
-                  <CarouselNext className="hidden sm:flex" />
-                </Carousel>
-              </CardContent>
-            </Card>
-          </div>
-        )}
         
         <div className="mt-12">
           <Card>
