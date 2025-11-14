@@ -86,7 +86,8 @@ service cloud.firestore {
     
     match /ad_clicks/{adClickId} {
       allow create: if true;
-      allow read: if isAdmin();
+      allow get: if isAdmin(); 
+      allow list: if isAdmin();
       allow write: if false;
     }
 
