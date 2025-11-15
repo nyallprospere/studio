@@ -23,7 +23,7 @@ import {
 } from '@dnd-kit/sortable';
 import { useUser, useCollection, useFirebase, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, orderBy, Timestamp, where, doc, updateDoc, increment } from 'firebase/firestore';
-import type { Event, Party, Constituency, Election, NewsArticle, VoterInformation, SiteSettings, Reel } from '@/lib/types';
+import type { Event, Party, Constituency, Election, NewsArticle, VoterInformation, SiteSettings, Reel, Candidate } from '@/lib/types';
 import { EventCard } from '@/components/event-card';
 import { SortableFeatureCard } from '@/components/sortable-feature-card';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
@@ -38,6 +38,7 @@ import Image from 'next/image';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import Autoplay from "embla-carousel-autoplay";
 import { useToast } from '@/hooks/use-toast';
+import { CandidateProfileDialog } from '@/components/candidate-profile-dialog';
 
 
 const adminSections = [
@@ -121,11 +122,13 @@ export default function Home() {
   const voterInfoQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'voter_information'), orderBy('title')) : null, [firestore]);
   const siteSettingsRef = useMemoFirebase(() => (firestore ? doc(firestore, 'settings', 'site') : null), [firestore]);
   const reelsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'reels'), orderBy('order')) : null, [firestore]);
+  const candidatesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'candidates') : null, [firestore]);
 
   
   const { data: events, isLoading: loadingEvents } = useCollection<Event>(eventsQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
+  const { data: candidates, isLoading: loadingCandidates } = useCollection<Candidate>(candidatesQuery);
   const { data: currentElections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
   const { data: news, isLoading: loadingNews } = useCollection<NewsArticle>(newsQuery);
   const { data: voterInfoItems, isLoading: loadingVoterInfo } = useCollection<VoterInformation>(voterInfoQuery);
@@ -134,6 +137,8 @@ export default function Home() {
 
   const [likedReels, setLikedReels] = useState<string[]>([]);
   const [dislikedReels, setDislikedReels] = useState<string[]>([]);
+  const [isProfileOpen, setProfileOpen] = useState(false);
+  const [profileCandidate, setProfileCandidate] = useState<Candidate | null>(null);
 
   useEffect(() => {
     const liked = JSON.parse(localStorage.getItem('likedReels') || '[]');
@@ -280,6 +285,11 @@ export default function Home() {
     if (party === 'uwp') return 'text-yellow-500';
     if (party === 'ind') return 'text-blue-500';
     return 'text-muted-foreground';
+  };
+  
+  const openProfile = (candidate: Candidate) => {
+    setProfileCandidate(candidate);
+    setProfileOpen(true);
   };
 
 
@@ -544,6 +554,38 @@ export default function Home() {
               </div>
           </div>
         </div>
+
+        <div className="mt-12">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline">Meet the Candidates</CardTitle>
+                    <CardDescription>A gallery of all candidates for the upcoming election.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {loadingCandidates ? (
+                        Array.from({ length: 12 }).map((_, i) => (
+                            <div key={i} className="flex flex-col items-center gap-2">
+                                <Skeleton className="h-24 w-24 rounded-full" />
+                                <Skeleton className="h-4 w-20" />
+                                <Skeleton className="h-3 w-16" />
+                            </div>
+                        ))
+                    ) : (
+                        candidates?.map(candidate => (
+                            <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
+                                <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
+                                    {candidate.imageUrl ? (
+                                        <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" />
+                                    ) : null}
+                                </div>
+                                <p className="font-semibold text-sm leading-tight">{candidate.name}</p>
+                                <p className="text-xs text-muted-foreground">{getParty(candidate.partyId)?.name}</p>
+                            </div>
+                        ))
+                    )}
+                </CardContent>
+            </Card>
+        </div>
         
         <div className="mt-12">
           <Card>
@@ -596,6 +638,7 @@ export default function Home() {
               </div>
             </div>
         )}
+        {profileCandidate && <CandidateProfileDialog candidate={profileCandidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />}
       </div>
     </>
   );
