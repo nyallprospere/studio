@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -42,6 +41,7 @@ import { CandidateProfileDialog } from '@/components/candidate-profile-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { UserSquare } from 'lucide-react';
+import { ProjectionTrendChart } from '@/components/predictions/projection-trend-chart';
 
 
 const adminSections = [
@@ -367,6 +367,8 @@ export default function Home() {
         <div className="mb-8">
           <Card>
             <CardHeader>
+              <CardTitle className="font-headline text-center text-2xl">Meet the Candidates</CardTitle>
+              <CardDescription className="text-center">A gallery of all candidates for the upcoming election.</CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
               {loadingCandidates ? (
@@ -545,6 +547,9 @@ export default function Home() {
                       />
                   </CardContent>
               </Card>
+               <div className="mt-12">
+                <ProjectionTrendChart />
+              </div>
             </div>
               <div className="space-y-8">
                   <Card>
@@ -657,18 +662,18 @@ export default function Home() {
                             Social Media Posts
                           </CardTitle>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="h-96">
                           <Carousel
                             setApi={setCarouselApi}
                             opts={{ align: "start", loop: true }}
                             plugins={[autoplay.current]}
                             onMouseEnter={autoplay.current.stop}
                             onMouseLeave={autoplay.current.play}
-                            className="w-full"
+                            className="w-full h-full"
                           >
-                            <CarouselContent>
+                            <CarouselContent className="h-full">
                               {posts.map((post) => (
-                                <CarouselItem key={post.id} className="md:basis-1/2 lg:basis-full">
+                                <CarouselItem key={post.id} className="md:basis-1/2 lg:basis-full h-full">
                                   <div className="p-1 h-full">
                                     <Card className="h-full flex flex-col">
                                       <CardHeader className="p-4">
@@ -676,13 +681,13 @@ export default function Home() {
                                           <Link href={post.authorUrl} target="_blank" className="hover:underline">{post.authorName}</Link>
                                         </CardTitle>
                                       </CardHeader>
-                                      <CardContent className="p-0 aspect-[9/16] overflow-hidden flex-grow">
+                                      <CardContent className="p-0 flex-grow relative">
                                             {post.videoUrl ? (
                                                 <iframe data-src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(post.videoUrl)}&show_text=false&width=560`} className="absolute top-0 left-0 w-full h-full" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                                             ) : post.postUrl ? (
                                                 <iframe 
                                                 data-src={`https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(post.postUrl)}&show_text=true&width=500`} 
-                                                className="w-full h-full"
+                                                className="absolute top-0 left-0 w-full h-full"
                                                 style={{border:'none', overflow:'hidden'}} 
                                                 scrolling="no" 
                                                 frameBorder="0" 
@@ -773,5 +778,3 @@ export default function Home() {
     </>
   );
 }
-
-    
