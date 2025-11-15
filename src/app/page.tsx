@@ -356,7 +356,7 @@ export default function Home() {
   };
   
   const autoplay = React.useRef(
-    Autoplay({ delay: 9000, stopOnInteraction: true, stopOnMouseEnter: true })
+    Autoplay({ delay: 9000, stopOnInteraction: false, stopOnMouseEnter: true })
   );
 
   return (
@@ -367,7 +367,7 @@ export default function Home() {
         <div className="mb-8">
           <Card>
             <CardHeader>
-              <CardTitle className="font-headline text-center text-2xl">Meet the Candidates</CardTitle>
+              <CardTitle className="font-headline text-center text-2xl"></CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               {loadingCandidates ? (
@@ -635,14 +635,13 @@ export default function Home() {
                                           <Link href={post.authorUrl} target="_blank" className="hover:underline">{post.authorName}</Link>
                                         </CardTitle>
                                       </CardHeader>
-                                      <CardContent className="p-0 relative aspect-video flex-grow overflow-hidden">
-                                        <div className="relative w-full" style={{paddingBottom: '56.25%'}}>
+                                      <CardContent className="p-0 relative flex-grow overflow-hidden flex items-center justify-center max-h-[500px]">
                                             {post.videoUrl ? (
-                                                <iframe data-src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(post.videoUrl)}&show_text=false&width=560`} className="absolute top-0 left-0 w-full h-full" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                                                <iframe data-src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(post.videoUrl)}&show_text=false&width=560`} className="w-full h-full" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                                             ) : post.postUrl ? (
                                                 <iframe 
                                                 data-src={`https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(post.postUrl)}&show_text=true&width=500`} 
-                                                className="absolute top-0 left-0 w-full h-full"
+                                                className="w-full h-full"
                                                 style={{border:'none', overflow:'hidden'}} 
                                                 scrolling="no" 
                                                 frameBorder="0" 
@@ -650,7 +649,6 @@ export default function Home() {
                                                 allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share">
                                                 </iframe>
                                             ) : null}
-                                        </div>
                                       </CardContent>
                                       <CardFooter className="p-2 justify-end gap-2">
                                           <Button variant={likedPosts.includes(post.id) ? "default" : "outline"} size="sm" onClick={(e) => handleLikePost(e, post.id)} disabled={likedPosts.includes(post.id)}>
