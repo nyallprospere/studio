@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -5,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { useEffect, useMemo } from 'react';
 import type { Post, Party, Candidate } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -13,10 +14,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 const postSchema = z.object({
   authorUrl: z.string().url("A valid URL is required"),
-  postUrl: z.string().url("A valid public post/video URL is required"),
+  postUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
+  videoUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
   partyId: z.string().optional(),
   candidateId: z.string().optional(),
+}).refine(data => data.postUrl || data.videoUrl, {
+  message: "Either a Post URL or a Video URL must be provided.",
+  path: ["postUrl"],
 });
+
 
 type PostFormProps = {
   onSubmit: (data: z.infer<typeof postSchema>) => void;
@@ -32,6 +38,7 @@ export function PostForm({ onSubmit, initialData, onCancel, parties, candidates 
     defaultValues: {
       authorUrl: '',
       postUrl: '',
+      videoUrl: '',
       partyId: '',
       candidateId: '',
     },
@@ -50,6 +57,7 @@ export function PostForm({ onSubmit, initialData, onCancel, parties, candidates 
       form.reset({
         authorUrl: '',
         postUrl: '',
+        videoUrl: '',
         partyId: '',
         candidateId: 'none',
       });
@@ -159,10 +167,25 @@ export function PostForm({ onSubmit, initialData, onCancel, parties, candidates 
           name="postUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Facebook Post/Video URL</FormLabel>
+              <FormLabel>Facebook Post URL</FormLabel>
               <FormControl>
-                <Input type="url" placeholder="https://www.facebook.com/watch/?v=12345" {...field} />
+                <Input type="url" placeholder="https://www.facebook.com/username/posts/..." {...field} />
               </FormControl>
+               <FormDescription>For standard text/image posts.</FormDescription>
+               <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="videoUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Facebook Video URL</FormLabel>
+              <FormControl>
+                <Input type="url" placeholder="https://www.facebook.com/watch/?v=..." {...field} />
+              </FormControl>
+              <FormDescription>For videos, reels, or stories.</FormDescription>
                <FormMessage />
             </FormItem>
           )}

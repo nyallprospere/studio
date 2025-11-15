@@ -589,10 +589,7 @@ export default function Home() {
                           <Carousel
                             opts={{ align: "start", loop: true }}
                             plugins={[autoplay.current]}
-                            onMouseEnter={() => {
-                                autoplay.current.stop();
-                                setTimeout(() => autoplay.current.play(), 30000);
-                            }}
+                            onMouseEnter={autoplay.current.stop}
                             onMouseLeave={autoplay.current.play}
                             className="w-full"
                           >
@@ -606,16 +603,20 @@ export default function Home() {
                                           <Link href={post.authorUrl} target="_blank" className="hover:underline">{post.authorName}</Link>
                                         </CardTitle>
                                       </CardHeader>
-                                      <CardContent className="p-0 relative" style={{ paddingBottom: '100%' }}>
-                                        <iframe 
-                                          src={`https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(post.postUrl)}&show_text=true&width=500&height=500`} 
-                                          className="absolute top-0 left-0 w-full h-full"
-                                          style={{border:'none', overflow:'hidden'}} 
-                                          scrolling="no" 
-                                          frameBorder="0" 
-                                          allowFullScreen={true} 
-                                          allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share">
-                                        </iframe>
+                                      <CardContent className="p-0 relative aspect-video flex-grow">
+                                        {post.videoUrl ? (
+                                            <iframe src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(post.videoUrl)}&show_text=false&width=560`} width="100%" height="100%" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                                        ) : post.postUrl ? (
+                                            <iframe 
+                                            src={`https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(post.postUrl)}&show_text=true&width=500`} 
+                                            className="absolute top-0 left-0 w-full h-full"
+                                            style={{border:'none', overflow:'hidden'}} 
+                                            scrolling="no" 
+                                            frameBorder="0" 
+                                            allowFullScreen={true} 
+                                            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share">
+                                            </iframe>
+                                        ) : null}
                                       </CardContent>
                                       <CardFooter className="p-2 justify-end gap-2">
                                           <Button variant={likedPosts.includes(post.id) ? "default" : "outline"} size="sm" onClick={(e) => handleLikePost(e, post.id)} disabled={likedPosts.includes(post.id)}>

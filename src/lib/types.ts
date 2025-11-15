@@ -262,7 +262,8 @@ export interface Post {
   id: string;
   authorName: string;
   authorUrl: string;
-  postUrl: string;
+  postUrl?: string;
+  videoUrl?: string;
   order: number;
   partyId?: string;
   candidateId?: string;
