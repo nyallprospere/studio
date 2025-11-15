@@ -594,8 +594,8 @@ export default function Home() {
                                           <Link href={post.authorUrl} target="_blank" className="hover:underline">{post.authorName}</Link>
                                         </CardTitle>
                                       </CardHeader>
-                                      <CardContent className="p-0 aspect-[9/16] overflow-hidden flex-grow">
-                                        <iframe src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(post.postUrl)}&show_text=false&width=560`} width="100%" height="100%" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                                      <CardContent className="p-0 overflow-hidden">
+                                        <iframe src={`https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(post.postUrl)}&show_text=true&width=500`} width="100%" height="500" style={{border:'none', overflow:'hidden'}} scrolling="no" frameBorder="0" allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                                       </CardContent>
                                       <CardFooter className="p-2 justify-end gap-2">
                                           <Button variant={likedPosts.includes(post.id) ? "default" : "outline"} size="sm" onClick={(e) => handleLikePost(e, post.id)} disabled={likedPosts.includes(post.id)}>
