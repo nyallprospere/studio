@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -42,7 +41,6 @@ import { CandidateProfileDialog } from '@/components/candidate-profile-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { UserSquare } from 'lucide-react';
-import { ProjectionTrendChart } from '@/components/predictions/projection-trend-chart';
 import { OddsOfWinningTrendChart } from '@/components/predictions/odds-of-winning-chart';
 
 
@@ -546,7 +544,6 @@ export default function Home() {
                   </CardContent>
               </Card>
               <div className="grid grid-cols-1 gap-8">
-                <ProjectionTrendChart />
                 <OddsOfWinningTrendChart />
               </div>
             </div>
