@@ -19,6 +19,31 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Lege
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 
+const calculatePercentages = (forecast: number | undefined, party: 'slp' | 'uwp' | 'ind' | undefined) => {
+    if (typeof forecast === 'undefined' || !party) {
+        return { slp: null, uwp: null, ind: null };
+    }
+
+    const baseline = 50;
+    let slpPercent: number | null = baseline;
+    let uwpPercent: number | null = baseline;
+    let indPercent: number | null = null;
+
+    if (party === 'slp') {
+        slpPercent = baseline + forecast / 2;
+        uwpPercent = 100 - slpPercent;
+    } else if (party === 'uwp') {
+        uwpPercent = baseline + forecast / 2;
+        slpPercent = 100 - uwpPercent;
+    } else if (party === 'ind') {
+        indPercent = baseline + forecast / 2;
+        uwpPercent = 100 - indPercent;
+        slpPercent = 0; // Set SLP to 0 when IND is the winner
+    }
+
+    return { slp: slpPercent, uwp: uwpPercent, ind: indPercent };
+};
+
 export function OddsOfWinningTrendChart() {
     const { firestore } = useFirebase();
     const [selectedConstituencyId, setSelectedConstituencyId] = useState('national');
@@ -73,29 +98,31 @@ export function OddsOfWinningTrendChart() {
             let totalVoters = 0;
     
             targetConstituencies.forEach(c => {
-                const isSpecial = c.name === 'Castries North' || c.name === 'Castries Central';
                 const voters = c.demographics?.registeredVoters || 0;
-
                 if (voters > 0) {
-                    const slp = c.predictedSlpPercentage || 50;
-                    const uwp = c.predictedUwpPercentage || 50;
-                    
-                    if (isSpecial) {
-                         weightedIndTotal += slp * voters;
-                    } else {
-                         weightedSlpTotal += slp * voters;
+                    const { slp, uwp, ind } = calculatePercentages(c.aiForecast, c.aiForecastParty);
+                    if (slp !== null && uwp !== null) {
+                        weightedSlpTotal += slp * voters;
+                        weightedUwpTotal += uwp * voters;
+                         if (ind !== null) {
+                            weightedIndTotal += ind * voters;
+                        }
+                        totalVoters += voters;
                     }
-                    
-                    weightedUwpTotal += uwp * voters;
-                    totalVoters += voters;
                 }
             });
-    
+
+            const slpAvg = totalVoters > 0 ? (weightedSlpTotal / totalVoters) : 0;
+            const uwpAvg = totalVoters > 0 ? (weightedUwpTotal / totalVoters) : 0;
+            const indAvg = totalVoters > 0 ? (weightedIndTotal / totalVoters) : 0;
+
+            const finalSlp = selectedConstituencyId === 'national' ? slpAvg + indAvg : slpAvg;
+
             return {
                 date: proj.date ? format(proj.date.toDate(), 'MMM d') : '',
-                SLP: totalVoters > 0 ? parseFloat((weightedSlpTotal / totalVoters).toFixed(1)) : 0,
-                UWP: totalVoters > 0 ? parseFloat((weightedUwpTotal / totalVoters).toFixed(1)) : 0,
-                IND: totalVoters > 0 ? parseFloat((weightedIndTotal / totalVoters).toFixed(1)) : 0,
+                SLP: parseFloat(finalSlp.toFixed(1)),
+                UWP: parseFloat(uwpAvg.toFixed(1)),
+                IND: parseFloat(indAvg.toFixed(1)),
             };
         });
     }, [projections, selectedConstituencyId, constituencies]);
@@ -119,6 +146,8 @@ export function OddsOfWinningTrendChart() {
 
 
     if (loadingProjections || loadingConstituencies || loadingParties) return <Skeleton className="h-[500px] w-full" />;
+
+    const showIndLine = selectedConstituencyId !== 'national';
 
     return (
         <Card>
@@ -200,9 +229,9 @@ export function OddsOfWinningTrendChart() {
                             <YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
                             <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
                             <Legend />
-                             {Object.keys(chartConfig).map(key => (
-                                <Line key={key} dataKey={key} type="monotone" stroke={chartConfig[key].color} strokeWidth={2} dot={false} />
-                            ))}
+                            <Line dataKey="SLP" type="monotone" stroke={chartConfig.SLP.color} strokeWidth={2} dot={false} />
+                            <Line dataKey="UWP" type="monotone" stroke={chartConfig.UWP.color} strokeWidth={2} dot={false} />
+                            {showIndLine && <Line dataKey="IND" type="monotone" stroke={chartConfig.IND.color} strokeWidth={2} dot={false} />}
                         </LineChart>
                     </ResponsiveContainer>
                 </ChartContainer>
