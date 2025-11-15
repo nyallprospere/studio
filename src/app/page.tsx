@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -653,38 +654,32 @@ export default function Home() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-8">
                      {posts && posts.length > 0 && (
                       <Card>
-                        <CardHeader>
-                          <CardTitle className="font-headline flex items-center gap-2">
-                            Social Media Posts
-                          </CardTitle>
-                        </CardHeader>
                         <CardContent className="h-[600px] p-0">
-                          <Carousel
-                            setApi={setCarouselApi}
-                            opts={{ align: "start", loop: true }}
-                            plugins={[autoplay.current]}
-                            onMouseEnter={autoplay.current.stop}
-                            onMouseLeave={autoplay.current.play}
-                            className="w-full h-full"
-                          >
-                            <CarouselContent className="h-full">
-                              {posts.map((post) => (
-                                <CarouselItem key={post.id} className="h-full">
-                                  <div className="p-1 h-full">
-                                    <Card className="h-full flex flex-col">
-                                      <CardHeader className="p-4">
-                                        <CardTitle className="text-base">
-                                          <Link href={post.authorUrl} target="_blank" className="hover:underline">{post.authorName}</Link>
-                                        </CardTitle>
-                                      </CardHeader>
-                                      <CardContent className="p-0 overflow-hidden relative flex-grow">
-                                          <div className="absolute inset-0 w-full h-full transform scale-75 origin-top-left">
+                           <Carousel
+                                setApi={setCarouselApi}
+                                opts={{ align: "start", loop: true }}
+                                plugins={[autoplay.current]}
+                                onMouseEnter={autoplay.current.stop}
+                                onMouseLeave={autoplay.current.play}
+                                className="w-full h-full"
+                            >
+                                <CarouselContent className="h-full">
+                                {posts.map((post) => (
+                                    <CarouselItem key={post.id} className="h-full">
+                                    <div className="p-1 h-full">
+                                        <Card className="h-full flex flex-col">
+                                        <CardHeader className="p-4">
+                                            <CardTitle className="text-base">
+                                            <Link href={post.authorUrl} target="_blank" className="hover:underline">{post.authorName}</Link>
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="p-0 flex-grow">
                                             {post.videoUrl ? (
-                                                <iframe data-src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(post.videoUrl)}&show_text=false&width=560`} className="absolute top-0 left-0 w-full h-full" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                                                <iframe data-src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(post.videoUrl)}&show_text=false&width=560`} className="w-full h-full" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                                             ) : post.postUrl ? (
                                                 <iframe 
                                                 data-src={`https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(post.postUrl)}&show_text=true&width=500`} 
-                                                className="absolute top-0 left-0 w-full h-full"
+                                                className="w-full h-full"
                                                 style={{border:'none', overflow:'hidden'}} 
                                                 scrolling="no" 
                                                 frameBorder="0" 
@@ -692,26 +687,25 @@ export default function Home() {
                                                 allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share">
                                                 </iframe>
                                             ) : null}
-                                          </div>
-                                      </CardContent>
-                                      <CardFooter className="p-2 justify-end gap-2">
-                                          <Button variant={likedPosts.includes(post.id) ? "default" : "outline"} size="sm" onClick={(e) => handleLikePost(e, post.id)} disabled={likedPosts.includes(post.id)}>
-                                              <ThumbsUp className="mr-2 h-4 w-4" />
-                                              {post.likeCount || 0}
-                                          </Button>
-                                          <Button variant={dislikedPosts.includes(post.id) ? "destructive" : "outline"} size="sm" onClick={(e) => handleDislikePost(e, post.id)} disabled={dislikedPosts.includes(post.id)}>
-                                              <ThumbsDown className="mr-2 h-4 w-4" />
-                                              {post.dislikeCount || 0}
-                                          </Button>
-                                      </CardFooter>
-                                    </Card>
-                                  </div>
-                                </CarouselItem>
-                              ))}
-                            </CarouselContent>
-                           <CarouselPrevious className="absolute left-[-12px] top-1/2 -translate-y-1/2 z-10 bg-background/80 text-foreground border-border hover:bg-muted" />
-                           <CarouselNext className="absolute right-[-12px] top-1/2 -translate-y-1/2 z-10 bg-background/80 text-foreground border-border hover:bg-muted" />
-                          </Carousel>
+                                        </CardContent>
+                                        <CardFooter className="p-2 justify-end gap-2">
+                                            <Button variant={likedPosts.includes(post.id) ? "default" : "outline"} size="sm" onClick={(e) => handleLikePost(e, post.id)} disabled={likedPosts.includes(post.id)}>
+                                                <ThumbsUp className="mr-2 h-4 w-4" />
+                                                {post.likeCount || 0}
+                                            </Button>
+                                            <Button variant={dislikedPosts.includes(post.id) ? "destructive" : "outline"} size="sm" onClick={(e) => handleDislikePost(e, post.id)} disabled={dislikedPosts.includes(post.id)}>
+                                                <ThumbsDown className="mr-2 h-4 w-4" />
+                                                {post.dislikeCount || 0}
+                                            </Button>
+                                        </CardFooter>
+                                        </Card>
+                                    </div>
+                                    </CarouselItem>
+                                ))}
+                                </CarouselContent>
+                                <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-background/80 text-foreground border-border hover:bg-muted h-10 w-10" />
+                                <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-background/80 text-foreground border-border hover:bg-muted h-10 w-10" />
+                            </Carousel>
                         </CardContent>
                       </Card>
                     )}

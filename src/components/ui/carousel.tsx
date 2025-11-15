@@ -199,7 +199,16 @@ const CarouselPrevious = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<typeof Button>
 >(({ className, variant = "outline", size = "icon", ...props }, ref) => {
-  const { orientation, scrollPrev, canScrollPrev } = useCarousel()
+  const { orientation, scrollPrev, canScrollPrev, api } = useCarousel()
+  const autoplay = (api?.plugins()?.autoplay as any)
+  
+  const handleClick = React.useCallback(() => {
+    scrollPrev();
+    if(autoplay) {
+      autoplay.reset();
+    }
+  }, [scrollPrev, autoplay]);
+
 
   return (
     <Button
@@ -214,7 +223,7 @@ const CarouselPrevious = React.forwardRef<
         className
       )}
       disabled={!canScrollPrev}
-      onClick={scrollPrev}
+      onClick={handleClick}
       {...props}
     >
       <ArrowLeft className="h-5 w-5" />
@@ -228,7 +237,15 @@ const CarouselNext = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<typeof Button>
 >(({ className, variant = "outline", size = "icon", ...props }, ref) => {
-  const { orientation, scrollNext, canScrollNext } = useCarousel()
+  const { orientation, scrollNext, canScrollNext, api } = useCarousel()
+  const autoplay = (api?.plugins()?.autoplay as any)
+
+  const handleClick = React.useCallback(() => {
+    scrollNext();
+    if (autoplay) {
+      autoplay.reset();
+    }
+  }, [scrollNext, autoplay]);
 
   return (
     <Button
@@ -243,7 +260,7 @@ const CarouselNext = React.forwardRef<
         className
       )}
       disabled={!canScrollNext}
-      onClick={scrollNext}
+      onClick={handleClick}
       {...props}
     >
       <ArrowRight className="h-5 w-5" />
