@@ -43,6 +43,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { UserSquare } from 'lucide-react';
 import { ProjectionTrendChart } from '@/components/predictions/projection-trend-chart';
+import { OddsOfWinningTrendChart } from '@/components/predictions/odds-of-winning-chart';
 
 
 const adminSections = [
@@ -544,8 +545,9 @@ export default function Home() {
                       />
                   </CardContent>
               </Card>
-               <div className="mt-12">
+              <div className="grid grid-cols-1 gap-8">
                 <ProjectionTrendChart />
+                <OddsOfWinningTrendChart />
               </div>
             </div>
               <div className="space-y-8">
@@ -654,7 +656,12 @@ export default function Home() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-8">
                      {posts && posts.length > 0 && (
                       <Card>
-                        <CardContent className="pt-6">
+                        <CardHeader>
+                          <CardTitle className="font-headline flex items-center gap-2">
+                            Social Media Posts
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="h-[600px] p-0">
                           <Carousel
                             setApi={setCarouselApi}
                             opts={{ align: "start", loop: true }}
@@ -663,9 +670,9 @@ export default function Home() {
                             onMouseLeave={autoplay.current.play}
                             className="w-full h-full"
                           >
-                            <CarouselContent>
+                            <CarouselContent className="h-full">
                               {posts.map((post) => (
-                                <CarouselItem key={post.id} className="md:basis-1/2 lg:basis-full h-full">
+                                <CarouselItem key={post.id} className="h-full">
                                   <div className="p-1 h-full">
                                     <Card className="h-full flex flex-col">
                                       <CardHeader className="p-4">
@@ -673,7 +680,8 @@ export default function Home() {
                                           <Link href={post.authorUrl} target="_blank" className="hover:underline">{post.authorName}</Link>
                                         </CardTitle>
                                       </CardHeader>
-                                      <CardContent className="p-0 aspect-[9/16] overflow-hidden relative flex-grow">
+                                      <CardContent className="p-0 overflow-hidden relative flex-grow">
+                                          <div className="absolute inset-0 w-full h-full transform scale-75 origin-top-left">
                                             {post.videoUrl ? (
                                                 <iframe data-src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(post.videoUrl)}&show_text=false&width=560`} className="absolute top-0 left-0 w-full h-full" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                                             ) : post.postUrl ? (
@@ -687,6 +695,7 @@ export default function Home() {
                                                 allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share">
                                                 </iframe>
                                             ) : null}
+                                          </div>
                                       </CardContent>
                                       <CardFooter className="p-2 justify-end gap-2">
                                           <Button variant={likedPosts.includes(post.id) ? "default" : "outline"} size="sm" onClick={(e) => handleLikePost(e, post.id)} disabled={likedPosts.includes(post.id)}>
@@ -703,8 +712,8 @@ export default function Home() {
                                 </CarouselItem>
                               ))}
                             </CarouselContent>
-                           <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white border-none hover:bg-black/75" />
-                           <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white border-none hover:bg-black/75" />
+                           <CarouselPrevious className="absolute left-[-12px] top-1/2 -translate-y-1/2 z-10 bg-background/80 text-foreground border-border hover:bg-muted" />
+                           <CarouselNext className="absolute right-[-12px] top-1/2 -translate-y-1/2 z-10 bg-background/80 text-foreground border-border hover:bg-muted" />
                           </Carousel>
                         </CardContent>
                       </Card>
