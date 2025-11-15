@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -39,6 +38,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import Autoplay from "embla-carousel-autoplay";
 import { useToast } from '@/hooks/use-toast';
 import { CandidateProfileDialog } from '@/components/candidate-profile-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 const adminSections = [
