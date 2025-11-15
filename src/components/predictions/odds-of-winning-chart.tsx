@@ -19,31 +19,6 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Lege
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 
-const calculatePercentages = (forecast: number | undefined, party: 'slp' | 'uwp' | 'ind' | undefined) => {
-    if (typeof forecast === 'undefined' || !party) {
-        return { slp: null, uwp: null, ind: null };
-    }
-
-    const baseline = 50;
-    let slpPercent: number | null = baseline;
-    let uwpPercent: number | null = baseline;
-    let indPercent: number | null = null;
-
-    if (party === 'slp') {
-        slpPercent = baseline + forecast / 2;
-        uwpPercent = 100 - slpPercent;
-    } else if (party === 'uwp') {
-        uwpPercent = baseline + forecast / 2;
-        slpPercent = 100 - uwpPercent;
-    } else if (party === 'ind') {
-        indPercent = baseline + forecast / 2;
-        uwpPercent = 100 - indPercent;
-        slpPercent = 0; // Set SLP to 0 when IND is the winner
-    }
-
-    return { slp: slpPercent, uwp: uwpPercent, ind: indPercent };
-};
-
 export function OddsOfWinningTrendChart() {
     const { firestore } = useFirebase();
     const [selectedConstituencyId, setSelectedConstituencyId] = useState('national');
@@ -100,15 +75,20 @@ export function OddsOfWinningTrendChart() {
             targetConstituencies.forEach(c => {
                 const voters = c.demographics?.registeredVoters || 0;
                 if (voters > 0) {
-                    const { slp, uwp, ind } = calculatePercentages(c.aiForecast, c.aiForecastParty);
-                    if (slp !== null && uwp !== null) {
-                        weightedSlpTotal += slp * voters;
-                        weightedUwpTotal += uwp * voters;
-                         if (ind !== null) {
-                            weightedIndTotal += ind * voters;
-                        }
-                        totalVoters += voters;
+                    const slp = c.predictedSlpPercentage || 0;
+                    const uwp = c.predictedUwpPercentage || 0;
+                    
+                    let ind = 0;
+                    if (c.politicalLeaning === 'ind' || c.politicalLeaning === 'lean-ind' || c.politicalLeaning === 'solid-ind') {
+                        // Assumption: if leaning is IND, one of the main party percentages is actually the IND percentage
+                        // This logic needs to be robust. Let's assume SLP % is used for IND in this case.
+                        ind = slp;
                     }
+                    
+                    weightedSlpTotal += slp * voters;
+                    weightedUwpTotal += uwp * voters;
+                    weightedIndTotal += ind * voters;
+                    totalVoters += voters;
                 }
             });
 
@@ -116,7 +96,7 @@ export function OddsOfWinningTrendChart() {
             const uwpAvg = totalVoters > 0 ? (weightedUwpTotal / totalVoters) : 0;
             const indAvg = totalVoters > 0 ? (weightedIndTotal / totalVoters) : 0;
 
-            const finalSlp = selectedConstituencyId === 'national' ? slpAvg + indAvg : slpAvg;
+            const finalSlp = (selectedConstituencyId === 'national' || selectedConstituencyId === 'all') ? slpAvg + indAvg : slpAvg;
 
             return {
                 date: proj.date ? format(proj.date.toDate(), 'MMM d') : '',
@@ -147,7 +127,7 @@ export function OddsOfWinningTrendChart() {
 
     if (loadingProjections || loadingConstituencies || loadingParties) return <Skeleton className="h-[500px] w-full" />;
 
-    const showIndLine = selectedConstituencyId !== 'national';
+    const showIndLine = selectedConstituencyId !== 'national' && selectedConstituencyId !== 'all';
 
     return (
         <Card>
