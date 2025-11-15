@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -581,7 +580,6 @@ export default function Home() {
                           <CardTitle className="font-headline flex items-center gap-2">
                             Social Media Posts
                           </CardTitle>
-                          <CardDescription>What people are saying on social media.</CardDescription>
                         </CardHeader>
                         <CardContent>
                           <Carousel
