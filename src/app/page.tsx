@@ -141,6 +141,7 @@ export default function Home() {
   const [dislikedPosts, setDislikedPosts] = useState<string[]>([]);
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [profileCandidate, setProfileCandidate] = useState<Candidate | null>(null);
+  const [carouselApi, setCarouselApi] = React.useState<CarouselApi>();
 
   const slpParty = useMemo(() => parties?.find(p => p.acronym === 'SLP'), [parties]);
   const uwpParty = useMemo(() => parties?.find(p => p.acronym === 'UWP'), [parties]);
@@ -151,6 +152,31 @@ export default function Home() {
     const disliked = JSON.parse(localStorage.getItem('dislikedPosts') || '[]');
     setDislikedPosts(disliked);
   }, []);
+  
+  useEffect(() => {
+    if (!carouselApi) {
+      return;
+    }
+
+    const handleSelect = () => {
+      carouselApi.slideNodes().forEach((node, index) => {
+        const iframe = node.querySelector('iframe');
+        if (iframe && index !== carouselApi.selectedScrollSnap()) {
+          const originalSrc = iframe.getAttribute('data-src');
+          if (originalSrc && iframe.src !== 'about:blank') {
+            iframe.src = 'about:blank'; // Stop video
+            setTimeout(() => { iframe.src = originalSrc; }, 100);
+          }
+        }
+      });
+    };
+
+    carouselApi.on('select', handleSelect);
+    
+    return () => {
+      carouselApi.off('select', handleSelect);
+    };
+  }, [carouselApi]);
 
   const { slpLeader, slpDeputies, slpOtherCandidates, uwpLeader, uwpDeputies, uwpOtherCandidates, indCandidates } = useMemo(() => {
     if (!candidates || !parties) return { slpLeader: null, slpDeputies: [], slpOtherCandidates: [], uwpLeader: null, uwpDeputies: [], uwpOtherCandidates: [], indCandidates: [] };
@@ -583,6 +609,7 @@ export default function Home() {
                         </CardHeader>
                         <CardContent>
                           <Carousel
+                            setApi={setCarouselApi}
                             opts={{ align: "start", loop: true }}
                             plugins={[autoplay.current]}
                             onMouseEnter={autoplay.current.stop}
@@ -602,12 +629,12 @@ export default function Home() {
                                       <CardContent className="p-0 relative aspect-video flex-grow overflow-hidden">
                                         {post.videoUrl ? (
                                             <div className="w-full h-full">
-                                                <iframe src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(post.videoUrl)}&show_text=false&width=560`} width="100%" height="100%" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                                                <iframe data-src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(post.videoUrl)}&show_text=false&width=560`} width="100%" height="100%" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                                             </div>
                                         ) : post.postUrl ? (
                                             <div className="w-full h-full">
                                                 <iframe 
-                                                src={`https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(post.postUrl)}&show_text=true&width=500`} 
+                                                data-src={`https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(post.postUrl)}&show_text=true&width=500`} 
                                                 className="w-full h-full"
                                                 style={{border:'none', overflow:'hidden'}} 
                                                 scrolling="no" 
@@ -693,7 +720,6 @@ export default function Home() {
               <CardTitle className="font-headline flex items-center gap-2">
                 <Rss /> Recent News
               </CardTitle>
-              <CardDescription>The latest headlines shaping the election.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {loadingNews ? (
