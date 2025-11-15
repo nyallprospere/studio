@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 const storySchema = z.object({
   authorUrl: z.string().url("A valid URL is required"),
-  postUrl: z.string().url("A valid URL is required"),
+  postUrl: z.string().url("A valid public video/story URL is required"),
   partyId: z.string().optional(),
   candidateId: z.string().optional(),
 });
@@ -160,11 +160,11 @@ export function StoryForm({ onSubmit, initialData, onCancel, parties, candidates
           name="postUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Story Post URL</FormLabel>
+              <FormLabel>Facebook Story/Video Post URL</FormLabel>
               <FormControl>
-                <Input type="url" placeholder="https://www.facebook.com/story/12345" {...field} />
+                <Input type="url" placeholder="https://www.facebook.com/watch/?v=12345" {...field} />
               </FormControl>
-              <FormMessage />
+               <FormMessage />
             </FormItem>
           )}
         />
