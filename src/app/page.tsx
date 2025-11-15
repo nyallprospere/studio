@@ -367,7 +367,7 @@ export default function Home() {
         <div className="mb-8">
           <Card>
             <CardHeader>
-              <CardTitle className="font-headline text-center text-2xl"></CardTitle>
+              <CardTitle className="font-headline text-center text-2xl">Meet the Candidates</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               {loadingCandidates ? (
@@ -452,26 +452,68 @@ export default function Home() {
             </CardContent>
           </Card>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 mb-8">
-          <Card className="lg:col-span-1 bg-card shadow-lg border-primary/20">
-            <CardHeader>
-              <CardTitle className="text-center text-2xl font-headline md:text-3xl text-primary">
-                Countdown to Election Day {electionDate.getFullYear()}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Countdown date={electionDate} />
-            </CardContent>
-            <CardFooter className="flex justify-center">
-              <Button asChild className="whitespace-normal h-auto text-center px-4">
-                <a href="https://www.sluelectoral.com/electoral/voter-record-search/"
-                  target="_blank"
-                  rel="noopener noreferrer">
-                    Check Your Voter Registration
-                </a>
-              </Button>
-            </CardFooter>
-          </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <Card className="lg:col-span-1 bg-card shadow-lg border-primary/20">
+              <CardHeader>
+                <CardTitle className="text-center text-xl font-headline md:text-2xl text-primary">
+                  Countdown to Election Day {electionDate.getFullYear()}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Countdown date={electionDate} />
+              </CardContent>
+              <CardFooter className="flex justify-center">
+                <Button asChild className="whitespace-normal h-auto text-center px-4">
+                  <a href="https://www.sluelectoral.com/electoral/voter-record-search/"
+                    target="_blank"
+                    rel="noopener noreferrer">
+                      Check Your Voter Registration
+                  </a>
+                </Button>
+              </CardFooter>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2">
+                        <Vote /> Voter Information
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {loadingVoterInfo ? <p>Loading information...</p> : voterInfoItems?.filter(item => item.isVisible !== false).map(item => (
+                        <div key={item.id}>
+                              <h3 className="font-semibold">
+                                {item.title === 'Confirm Your Registration & Polling Station' ? (
+                                    <a href="https://www.sluelectoral.com/electoral/voter-record-search/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                                        {item.title}
+                                    </a>
+                                ) : item.title === 'Register to Vote' ? (
+                                      <Button asChild className="w-full">
+                                        <a href="https://www.sluelectoral.com/electoral/registration/" target="_blank" rel="noopener noreferrer">
+                                            {item.title}
+                                        </a>
+                                    </Button>
+                                ) : (
+                                    item.title
+                                )}
+                            </h3>
+                            <ul className="list-disc list-inside text-muted-foreground">
+                            {item.items.filter(i => i.isVisible).map((textItem, index) => {
+                                const isUrl = textItem.text.startsWith('http');
+                                return (
+                                <li key={index}>
+                                    {isUrl ? (
+                                    <a href={textItem.text} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{textItem.text}</a>
+                                    ) : (
+                                    textItem.text
+                                    )}
+                                </li>
+                                );
+                            })}
+                            </ul>
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
         </div>
         
         <div className="mt-12">
@@ -671,48 +713,6 @@ export default function Home() {
                         </CardContent>
                       </Card>
                     )}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="font-headline flex items-center gap-2">
-                                <Vote /> Voter Information
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {loadingVoterInfo ? <p>Loading information...</p> : voterInfoItems?.filter(item => item.isVisible !== false).map(item => (
-                                <div key={item.id}>
-                                     <h3 className="font-semibold">
-                                        {item.title === 'Confirm Your Registration & Polling Station' ? (
-                                            <a href="https://www.sluelectoral.com/electoral/voter-record-search/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                                                {item.title}
-                                            </a>
-                                        ) : item.title === 'Register to Vote' ? (
-                                             <Button asChild className="w-full">
-                                                <a href="https://www.sluelectoral.com/electoral/registration/" target="_blank" rel="noopener noreferrer">
-                                                    {item.title}
-                                                </a>
-                                            </Button>
-                                        ) : (
-                                            item.title
-                                        )}
-                                    </h3>
-                                    <ul className="list-disc list-inside text-muted-foreground">
-                                    {item.items.filter(i => i.isVisible).map((textItem, index) => {
-                                        const isUrl = textItem.text.startsWith('http');
-                                        return (
-                                        <li key={index}>
-                                            {isUrl ? (
-                                            <a href={textItem.text} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{textItem.text}</a>
-                                            ) : (
-                                            textItem.text
-                                            )}
-                                        </li>
-                                        );
-                                    })}
-                                    </ul>
-                                </div>
-                            ))}
-                        </CardContent>
-                    </Card>
                   </div>
               </div>
           </div>

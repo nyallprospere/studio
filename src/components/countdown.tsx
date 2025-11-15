@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -62,13 +63,13 @@ export default function Countdown({ date }: CountdownProps) {
 
   if (!isClient) {
     return (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
             {timeParts.map(({ label }) => (
-                <div key={label} className="bg-primary/10 p-4 rounded-lg">
-                <div className="text-4xl md:text-6xl font-bold text-primary font-headline">
+                <div key={label} className="bg-primary/10 p-2 rounded-lg">
+                <div className="text-3xl md:text-4xl font-bold text-primary font-headline">
                     00
                 </div>
-                <div className="text-sm md:text-base text-muted-foreground uppercase tracking-wider">{label}</div>
+                <div className="text-xs md:text-sm text-muted-foreground uppercase tracking-wider">{label}</div>
                 </div>
             ))}
         </div>
@@ -76,13 +77,13 @@ export default function Countdown({ date }: CountdownProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
       {timeParts.map(({ label, value }) => (
-        <div key={label} className="bg-primary/10 p-4 rounded-lg">
-          <div className="text-4xl md:text-6xl font-bold text-primary font-headline">
+        <div key={label} className="bg-primary/10 p-2 rounded-lg">
+          <div className="text-3xl md:text-4xl font-bold text-primary font-headline">
             {value !== undefined ? String(value).padStart(2, '0') : '00'}
           </div>
-          <div className="text-sm md:text-base text-muted-foreground uppercase tracking-wider">{label}</div>
+          <div className="text-xs md:text-sm text-muted-foreground uppercase tracking-wider">{label}</div>
         </div>
       ))}
     </div>
