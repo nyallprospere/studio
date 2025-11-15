@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -36,7 +36,7 @@ import { subDays } from 'date-fns';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from '@/components/ui/carousel';
 import Autoplay from "embla-carousel-autoplay";
 import { useToast } from '@/hooks/use-toast';
 import { CandidateProfileDialog } from '@/components/candidate-profile-dialog';
@@ -223,7 +223,7 @@ export default function Home() {
           const dateB = (b.date as unknown as Timestamp)?.toDate ? (b.date as unknown as Timestamp).toDate() : new Date(b.date);
           return mode === 'upcoming' 
             ? dateA.getTime() - dateB.getTime() 
-            : dateB.getTime() - a.getTime();
+            : dateB.getTime() - dateA.getTime();
       });
       
       return sorted;
@@ -321,7 +321,10 @@ export default function Home() {
     setProfileCandidate(candidate);
     setProfileOpen(true);
   };
-
+  
+  const autoplay = React.useRef(
+    Autoplay({ delay: 9000, stopOnInteraction: true, stopOnMouseEnter: true })
+  );
 
   return (
     <>
@@ -330,6 +333,9 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <Card>
+            <CardHeader>
+              <CardTitle className="font-headline text-center text-2xl">Meet the Candidates</CardTitle>
+            </CardHeader>
             <CardContent className="pt-6">
               {loadingCandidates ? (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -581,7 +587,12 @@ export default function Home() {
                         <CardContent>
                           <Carousel
                             opts={{ align: "start", loop: true }}
-                            plugins={[Autoplay({ delay: 5000, stopOnInteraction: true })]}
+                            plugins={[autoplay.current]}
+                            onMouseEnter={() => {
+                                autoplay.current.stop();
+                                setTimeout(() => autoplay.current.play(), 30000);
+                            }}
+                            onMouseLeave={autoplay.current.play}
                             className="w-full"
                           >
                             <CarouselContent>
