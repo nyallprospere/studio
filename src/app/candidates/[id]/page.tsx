@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import { useParams } from 'next/navigation';
 import { useMemo } from 'react';
-import type { Party, Candidate, Constituency, Election, PartyLogo, Reel } from '@/lib/types';
+import type { Party, Candidate, Constituency, Election, PartyLogo, Story } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
@@ -77,14 +78,14 @@ export default function CandidateDetailPage() {
   const { data: independentLogos, isLoading: loadingLogos } = useCollection<PartyLogo>(independentLogoQuery);
   const independentLogo = useMemo(() => independentLogos?.[0], [independentLogos]);
 
-  const reelsQuery = useMemoFirebase(() => {
+  const storiesQuery = useMemoFirebase(() => {
     if (!firestore || !candidateId) return null;
-    return query(collection(firestore, 'reels'), where('candidateId', '==', candidateId));
+    return query(collection(firestore, 'stories'), where('candidateId', '==', candidateId));
   }, [firestore, candidateId]);
-  const { data: reels, isLoading: loadingReels } = useCollection<Reel>(reelsQuery);
+  const { data: stories, isLoading: loadingStories } = useCollection<Story>(storiesQuery);
 
 
-  const isLoading = loadingCandidate || loadingParty || loadingConstituency || loadingElections || loadingLogos || loadingReels;
+  const isLoading = loadingCandidate || loadingParty || loadingConstituency || loadingElections || loadingLogos || loadingStories;
 
   if (isLoading || !candidate) {
     return (
@@ -176,9 +177,9 @@ export default function CandidateDetailPage() {
                 </div>
             )}
 
-            {reels && reels.length > 0 && (
+            {stories && stories.length > 0 && (
                 <div className="pt-6">
-                    <h4 className="font-semibold text-base mb-2 uppercase tracking-wider text-muted-foreground">Social Media Reels</h4>
+                    <h4 className="font-semibold text-base mb-2 uppercase tracking-wider text-muted-foreground">Social Media Stories</h4>
                      <Carousel
                         opts={{
                             align: "start",
@@ -186,17 +187,17 @@ export default function CandidateDetailPage() {
                         className="w-full"
                         >
                         <CarouselContent>
-                            {reels.map((reel) => (
-                            <CarouselItem key={reel.id} className="md:basis-1/2 lg:basis-1/3">
+                            {stories.map((story) => (
+                            <CarouselItem key={story.id} className="md:basis-1/2 lg:basis-1/3">
                                 <div className="p-1">
                                 <Card>
                                     <CardHeader className="p-4">
                                     <CardTitle className="text-base">
-                                        <Link href={reel.authorUrl} target="_blank" className="hover:underline">{reel.authorName}</Link>
+                                        <Link href={story.authorUrl} target="_blank" className="hover:underline">{story.authorName}</Link>
                                     </CardTitle>
                                     </CardHeader>
                                     <CardContent className="p-0 aspect-[9/16] overflow-hidden">
-                                    <iframe src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(reel.postUrl)}&show_text=false&width=560`} width="100%" height="100%" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                                    <iframe src={`https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(story.postUrl)}&show_text=true&width=500`} width="100%" height="100%" style={{border:'none', overflow:'hidden'}} scrolling="no" frameBorder="0" allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                                     </CardContent>
                                 </Card>
                                 </div>

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -331,7 +332,6 @@ export default function Home() {
           <Card>
             <CardHeader>
               <CardTitle className="font-headline text-center text-2xl">Meet the Candidates</CardTitle>
-              <CardDescription className="text-center">A gallery of all candidates for the upcoming election.</CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
               {loadingCandidates ? (
@@ -344,8 +344,15 @@ export default function Home() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="space-y-4">
                         <div className="flex flex-wrap gap-4 justify-center">
-                            {slpLeader && <div className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(slpLeader)}><div className="relative h-20 w-20 rounded-full overflow-hidden bg-muted">{slpLeader.imageUrl ? <Image src={slpLeader.imageUrl} alt={slpLeader.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}</div></div>}
-                            {slpDeputies.map(candidate => (
+                            {slpDeputies.slice(0, 1).map(candidate => (
+                                <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
+                                    <div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">
+                                        {candidate.imageUrl ? <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
+                                    </div>
+                                </div>
+                            ))}
+                             {slpLeader && <div className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(slpLeader)}><div className="relative h-20 w-20 rounded-full overflow-hidden bg-muted">{slpLeader.imageUrl ? <Image src={slpLeader.imageUrl} alt={slpLeader.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}</div></div>}
+                            {slpDeputies.slice(1).map(candidate => (
                                 <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
                                 <div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">
                                     {candidate.imageUrl ? <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
@@ -377,8 +384,15 @@ export default function Home() {
                     </div>
                     <div className="space-y-4">
                         <div className="flex flex-wrap gap-4 justify-center">
+                             {uwpDeputies.slice(0, 1).map(candidate => (
+                                <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
+                                    <div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">
+                                        {candidate.imageUrl ? <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
+                                    </div>
+                                </div>
+                            ))}
                             {uwpLeader && <div className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(uwpLeader)}><div className="relative h-20 w-20 rounded-full overflow-hidden bg-muted">{uwpLeader.imageUrl ? <Image src={uwpLeader.imageUrl} alt={uwpLeader.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}</div></div>}
-                            {uwpDeputies.map(candidate => (
+                            {uwpDeputies.slice(1).map(candidate => (
                                 <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
                                 <div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">
                                     {candidate.imageUrl ? <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
@@ -584,7 +598,7 @@ export default function Home() {
                                         </CardTitle>
                                       </CardHeader>
                                       <CardContent className="p-0 aspect-[9/16] overflow-hidden flex-grow">
-                                        <iframe src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(story.postUrl)}&show_text=false&width=560`} width="100%" height="100%" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                                        <iframe src={`https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(story.postUrl)}&show_text=true&width=500`} width="100%" height="100%" style={{border:'none', overflow:'hidden'}} scrolling="no" frameBorder="0" allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                                       </CardContent>
                                       <CardFooter className="p-2 justify-end gap-2">
                                           <Button variant={likedStories.includes(story.id) ? "default" : "outline"} size="sm" onClick={(e) => handleLikeStory(e, story.id)} disabled={likedStories.includes(story.id)}>
@@ -711,3 +725,4 @@ export default function Home() {
     </>
   );
 }
+

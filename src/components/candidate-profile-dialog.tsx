@@ -1,14 +1,17 @@
 
+
 'use client';
 
-import type { Candidate, Party, Constituency } from '@/lib/types';
+import type { Candidate, Party, Constituency, Reel } from '@/lib/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { UserSquare, Shield, Facebook, Instagram } from 'lucide-react';
-import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useDoc, useFirebase, useMemoFirebase, useCollection } from '@/firebase';
+import { doc, collection, query, where } from 'firebase/firestore';
 import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import Link from 'next/link';
 
 interface CandidateProfileDialogProps {
   candidate: Candidate | null;
@@ -24,6 +27,13 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
 
   const constituencyRef = useMemoFirebase(() => (firestore && candidate && candidate.constituencyId ? doc(firestore, 'constituencies', candidate.constituencyId) : null), [firestore, candidate]);
   const { data: constituency } = useDoc<Constituency>(constituencyRef);
+
+  const storiesQuery = useMemoFirebase(() => {
+    if (!firestore || !candidate) return null;
+    return query(collection(firestore, 'stories'), where('candidateId', '==', candidate.id));
+  }, [firestore, candidate]);
+  const { data: stories } = useCollection<Reel>(storiesQuery);
+
 
   if (!candidate) {
     return null;
@@ -101,7 +111,7 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
                     <p className="whitespace-pre-line text-foreground">{candidate.bio}</p>
                 </div>
             )}
-             {candidate.policyPositions && candidate.policyPositions.length > 0 && (
+            {candidate.policyPositions && candidate.policyPositions.length > 0 && (
                 <div>
                     <h4 className="font-semibold text-base mb-1 uppercase tracking-wider text-muted-foreground">Policy Positions</h4>
                     <ul className="space-y-2 list-disc pl-5">
@@ -111,6 +121,39 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
                            </li>
                        ))}
                     </ul>
+                </div>
+            )}
+
+            {stories && stories.length > 0 && (
+                <div className="pt-6">
+                    <h4 className="font-semibold text-base mb-2 uppercase tracking-wider text-muted-foreground">Social Media Stories</h4>
+                     <Carousel
+                        opts={{
+                            align: "start",
+                        }}
+                        className="w-full"
+                        >
+                        <CarouselContent>
+                            {stories.map((story) => (
+                            <CarouselItem key={story.id} className="md:basis-1/2 lg:basis-1/3">
+                                <div className="p-1">
+                                <Card>
+                                    <CardHeader className="p-4">
+                                    <CardTitle className="text-base">
+                                        <Link href={story.authorUrl} target="_blank" className="hover:underline">{story.authorName}</Link>
+                                    </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="p-0 aspect-[9/16] overflow-hidden">
+                                    <iframe src={`https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(story.postUrl)}&show_text=true&width=500`} width="100%" height="100%" style={{border:'none', overflow:'hidden'}} scrolling="no" frameBorder="0" allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                                    </CardContent>
+                                </Card>
+                                </div>
+                            </CarouselItem>
+                            ))}
+                        </CarouselContent>
+                        <CarouselPrevious className="hidden sm:flex" />
+                        <CarouselNext className="hidden sm:flex" />
+                        </Carousel>
                 </div>
             )}
           </div>

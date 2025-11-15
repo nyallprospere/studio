@@ -1,5 +1,6 @@
 
 
+
 export interface Party {
   id: string;
   name: string;
@@ -269,3 +270,5 @@ export interface Story {
   likeCount?: number;
   dislikeCount?: number;
 }
+
+export interface Reel extends Story {}
