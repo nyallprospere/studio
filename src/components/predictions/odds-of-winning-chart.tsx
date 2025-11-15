@@ -115,7 +115,6 @@ export function OddsOfWinningTrendChart() {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <CardTitle>Odds of Winning</CardTitle>
-                        <CardDescription>Vote percentage trends for {displayTitle}.</CardDescription>
                     </div>
                      <div className="flex items-center gap-2 flex-wrap">
                         <Select value={selectedConstituencyId} onValueChange={setSelectedConstituencyId}>
