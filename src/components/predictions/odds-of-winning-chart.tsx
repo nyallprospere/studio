@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -20,7 +21,6 @@ import type { ChartConfig } from '@/components/ui/chart';
 
 export function OddsOfWinningTrendChart() {
     const { firestore } = useFirebase();
-    const [selectedRegionId, setSelectedRegionId] = useState('all');
     const [selectedConstituencyId, setSelectedConstituencyId] = useState('national');
     const [date, setDate] = useState<DateRange | undefined>();
     const [datePreset, setDatePreset] = useState('all');
@@ -42,8 +42,7 @@ export function OddsOfWinningTrendChart() {
     const { data: projections, isLoading: loadingProjections } = useCollection<ConstituencyProjection>(projectionsQuery);
     const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(useMemoFirebase(() => firestore ? collection(firestore, 'constituencies') : null, [firestore]));
     const { data: parties, isLoading: loadingParties } = useCollection<Party>(useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]));
-    const { data: regions, isLoading: loadingRegions } = useCollection<Region>(useMemoFirebase(() => firestore ? collection(firestore, 'regions') : null, [firestore]));
-
+    
 
     const handleDatePresetChange = (preset: string) => {
         setDatePreset(preset);
@@ -59,16 +58,10 @@ export function OddsOfWinningTrendChart() {
     };
     
     const chartData = useMemo(() => {
-        if (!projections || !regions) return [];
+        if (!projections) return [];
 
         return projections.map(proj => {
             let targetConstituencies = proj.constituencies;
-
-            if (selectedRegionId !== 'all') {
-                const region = regions.find(r => r.id === selectedRegionId);
-                const regionConstituencyIds = new Set(region?.constituencyIds);
-                targetConstituencies = targetConstituencies.filter(c => regionConstituencyIds.has(c.id));
-            }
 
             if (selectedConstituencyId !== 'national') {
                 targetConstituencies = targetConstituencies.filter(c => c.id === selectedConstituencyId);
@@ -95,7 +88,7 @@ export function OddsOfWinningTrendChart() {
                 UWP: totalVoters > 0 ? parseFloat((weightedUwpTotal / totalVoters).toFixed(1)) : 0,
             };
         });
-    }, [projections, selectedConstituencyId, selectedRegionId, regions]);
+    }, [projections, selectedConstituencyId]);
 
     const chartConfig = useMemo(() => {
         const slp = parties?.find(p => p.acronym === 'SLP');
@@ -110,14 +103,11 @@ export function OddsOfWinningTrendChart() {
         if (selectedConstituencyId !== 'national') {
             return constituencies?.find(c => c.id === selectedConstituencyId)?.name || 'Constituency';
         }
-        if (selectedRegionId !== 'all') {
-            return regions?.find(r => r.id === selectedRegionId)?.name || 'Region';
-        }
         return 'Average';
-    }, [selectedConstituencyId, selectedRegionId, constituencies, regions]);
+    }, [selectedConstituencyId, constituencies]);
 
 
-    if (loadingProjections || loadingConstituencies || loadingParties || loadingRegions) return <Skeleton className="h-[500px] w-full" />;
+    if (loadingProjections || loadingConstituencies || loadingParties) return <Skeleton className="h-[500px] w-full" />;
 
     return (
         <Card>
@@ -128,17 +118,6 @@ export function OddsOfWinningTrendChart() {
                         <CardDescription>Vote percentage trends for {displayTitle}.</CardDescription>
                     </div>
                      <div className="flex items-center gap-2 flex-wrap">
-                        <Select value={selectedRegionId} onValueChange={setSelectedRegionId} disabled={selectedConstituencyId !== 'national'}>
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Select Region" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Regions</SelectItem>
-                                {regions?.sort((a,b) => a.name.localeCompare(b.name)).map(r => (
-                                    <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
                         <Select value={selectedConstituencyId} onValueChange={setSelectedConstituencyId}>
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="Select Constituency" />
