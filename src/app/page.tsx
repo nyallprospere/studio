@@ -156,8 +156,18 @@ export default function Home() {
   const { slpCandidates, uwpCandidates, indCandidates } = useMemo(() => {
     if (!candidates || !parties) return { slpCandidates: [], uwpCandidates: [], indCandidates: [] };
 
-    const slpCandidates = candidates.filter(c => c.partyId === slpParty?.id && !c.isIndependentCastriesCentral && !c.isIndependentCastriesNorth);
-    const uwpCandidates = candidates.filter(c => c.partyId === uwpParty?.id);
+    const sortCandidates = (a: Candidate, b: Candidate) => {
+        if (a.isPartyLeader && !b.isPartyLeader) return -1;
+        if (!a.isPartyLeader && b.isPartyLeader) return 1;
+        if (a.isDeputyLeader && !b.isDeputyLeader) return -1;
+        if (!a.isDeputyLeader && b.isDeputyLeader) return 1;
+        if (a.partyLevel === 'higher' && b.partyLevel !== 'higher') return -1;
+        if (a.partyLevel !== 'higher' && b.partyLevel === 'higher') return 1;
+        return a.lastName.localeCompare(b.lastName);
+    };
+
+    const slpCandidates = candidates.filter(c => c.partyId === slpParty?.id && !c.isIndependentCastriesCentral && !c.isIndependentCastriesNorth).sort(sortCandidates);
+    const uwpCandidates = candidates.filter(c => c.partyId === uwpParty?.id).sort(sortCandidates);
     const indCandidates = candidates.filter(c => c.isIndependentCastriesCentral || c.isIndependentCastriesNorth || (c.partyId !== slpParty?.id && c.partyId !== uwpParty?.id));
 
     return { slpCandidates, uwpCandidates, indCandidates };
@@ -582,10 +592,10 @@ export default function Home() {
                             ))}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div className="space-y-8">
                             <div>
                                 <h3 className="text-xl font-bold text-center mb-4" style={{ color: slpParty ? slpParty.color : '' }}>Saint Lucia Labour Party</h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 gap-4">
                                     {slpCandidates.map(candidate => (
                                         <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
                                             <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
@@ -597,9 +607,10 @@ export default function Home() {
                                     ))}
                                 </div>
                             </div>
+                            <Separator />
                             <div>
                                 <h3 className="text-xl font-bold text-center mb-4">Independents</h3>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-2 lg:grid-cols-8 gap-4 justify-center">
                                     {indCandidates.map(candidate => (
                                         <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
                                             <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
@@ -611,9 +622,10 @@ export default function Home() {
                                     ))}
                                 </div>
                             </div>
+                            <Separator />
                              <div>
                                 <h3 className="text-xl font-bold text-center mb-4" style={{ color: uwpParty ? uwpParty.color : '' }}>United Workers Party</h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 gap-4">
                                     {uwpCandidates.map(candidate => (
                                         <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
                                             <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
