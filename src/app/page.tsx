@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -675,13 +676,13 @@ export default function Home() {
                                           <Link href={post.authorUrl} target="_blank" className="hover:underline">{post.authorName}</Link>
                                         </CardTitle>
                                       </CardHeader>
-                                      <CardContent className="relative flex-grow overflow-hidden flex items-center justify-center max-h-[500px]">
+                                      <CardContent className="p-0 aspect-[9/16] overflow-hidden flex-grow">
                                             {post.videoUrl ? (
                                                 <iframe data-src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(post.videoUrl)}&show_text=false&width=560`} className="absolute top-0 left-0 w-full h-full" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                                             ) : post.postUrl ? (
                                                 <iframe 
                                                 data-src={`https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(post.postUrl)}&show_text=true&width=500`} 
-                                                className="absolute top-0 left-0 w-full h-full"
+                                                className="w-full h-full"
                                                 style={{border:'none', overflow:'hidden'}} 
                                                 scrolling="no" 
                                                 frameBorder="0" 
@@ -772,3 +773,5 @@ export default function Home() {
     </>
   );
 }
+
+    
