@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy, writeBatch, getDocs } from 'firebase/firestore';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -164,6 +164,26 @@ export default function AdminReelsPage() {
     await deleteDoc(reelDoc);
     toast({ title: "Story Deleted", description: "The story has been removed." });
   };
+  
+  const handleDeleteAll = async () => {
+    if (!firestore || !reels || reels.length === 0) {
+      toast({ variant: 'destructive', title: 'Error', description: 'No stories to delete.' });
+      return;
+    }
+    try {
+      const batch = writeBatch(firestore);
+      const reelsCollection = collection(firestore, 'reels');
+      const snapshot = await getDocs(reelsCollection);
+      snapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+      toast({ title: 'All Stories Deleted', description: 'All Facebook stories have been removed.' });
+    } catch (error) {
+      console.error('Error deleting all stories:', error);
+      toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not delete all stories.' });
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -172,25 +192,47 @@ export default function AdminReelsPage() {
           title="Manage Facebook Stories"
           description="Add, edit, and reorder the Facebook Stories displayed on the homepage."
         />
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => { setEditingReel(null); setIsFormOpen(true) }}>
-              <PlusCircle className="mr-2 h-4 w-4" /> Add New Story
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{editingReel ? 'Edit Story' : 'Add New Story'}</DialogTitle>
-            </DialogHeader>
-            <ReelForm
-              onSubmit={handleFormSubmit}
-              initialData={editingReel}
-              onCancel={() => setIsFormOpen(false)}
-              parties={parties || []}
-              candidates={candidates || []}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" disabled={!reels || reels.length === 0}>
+                  <Trash2 className="mr-2 h-4 w-4" /> Delete All
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete all Facebook stories. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteAll}>Delete All</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogTrigger asChild>
+                <Button onClick={() => { setEditingReel(null); setIsFormOpen(true) }}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add New Story
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                <DialogTitle>{editingReel ? 'Edit Story' : 'Add New Story'}</DialogTitle>
+                </DialogHeader>
+                <ReelForm
+                onSubmit={handleFormSubmit}
+                initialData={editingReel}
+                onCancel={() => setIsFormOpen(false)}
+                parties={parties || []}
+                candidates={candidates || []}
+                />
+            </DialogContent>
+            </Dialog>
+        </div>
       </div>
 
       <Card>
