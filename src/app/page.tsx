@@ -329,6 +329,10 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <Card>
+            <CardHeader>
+              <CardTitle className="font-headline text-center text-2xl">Meet the Candidates</CardTitle>
+              <CardDescription className="text-center">A gallery of all candidates for the upcoming election.</CardDescription>
+            </CardHeader>
             <CardContent className="pt-6">
               {loadingCandidates ? (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -339,10 +343,16 @@ export default function Home() {
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="space-y-4">
+                        <CardTitle className="font-headline text-center text-xl" style={{color: slpParty?.color}}>{slpParty?.name}</CardTitle>
                         <div className="flex flex-wrap gap-4 justify-center">
-                            {slpDeputies[0] && <div className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(slpDeputies[0])}><div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">{slpDeputies[0].imageUrl ? <Image src={slpDeputies[0].imageUrl} alt={slpDeputies[0].name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}</div></div>}
                             {slpLeader && <div className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(slpLeader)}><div className="relative h-20 w-20 rounded-full overflow-hidden bg-muted">{slpLeader.imageUrl ? <Image src={slpLeader.imageUrl} alt={slpLeader.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}</div></div>}
-                            {slpDeputies[1] && <div className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(slpDeputies[1])}><div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">{slpDeputies[1].imageUrl ? <Image src={slpDeputies[1].imageUrl} alt={slpDeputies[1].name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}</div></div>}
+                            {slpDeputies.map(candidate => (
+                                <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
+                                <div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">
+                                    {candidate.imageUrl ? <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
+                                </div>
+                                </div>
+                            ))}
                         </div>
                         <Separator />
                         <div className="flex flex-wrap gap-2 justify-center">
@@ -356,6 +366,7 @@ export default function Home() {
                         </div>
                     </div>
                     <div className="space-y-4">
+                        <CardTitle className="font-headline text-center text-xl">Independents</CardTitle>
                         <div className="flex flex-wrap gap-4 justify-center">
                             {indCandidates.map(candidate => (
                                 <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
@@ -367,10 +378,16 @@ export default function Home() {
                         </div>
                     </div>
                     <div className="space-y-4">
+                        <CardTitle className="font-headline text-center text-xl" style={{color: uwpParty?.color}}>{uwpParty?.name}</CardTitle>
                         <div className="flex flex-wrap gap-4 justify-center">
-                            {uwpDeputies[0] && <div className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(uwpDeputies[0])}><div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">{uwpDeputies[0].imageUrl ? <Image src={uwpDeputies[0].imageUrl} alt={uwpDeputies[0].name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}</div></div>}
                             {uwpLeader && <div className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(uwpLeader)}><div className="relative h-20 w-20 rounded-full overflow-hidden bg-muted">{uwpLeader.imageUrl ? <Image src={uwpLeader.imageUrl} alt={uwpLeader.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}</div></div>}
-                            {uwpDeputies[1] && <div className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(uwpDeputies[1])}><div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">{uwpDeputies[1].imageUrl ? <Image src={uwpDeputies[1].imageUrl} alt={uwpDeputies[1].name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}</div></div>}
+                            {uwpDeputies.map(candidate => (
+                                <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
+                                <div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">
+                                    {candidate.imageUrl ? <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
+                                </div>
+                                </div>
+                            ))}
                         </div>
                          <Separator />
                         <div className="flex flex-wrap gap-2 justify-center">
@@ -549,7 +566,7 @@ export default function Home() {
                       <Card>
                         <CardHeader>
                           <CardTitle className="font-headline flex items-center gap-2">
-                            Social Media Reels
+                            Social Media Stories
                           </CardTitle>
                           <CardDescription>What people are saying on social media.</CardDescription>
                         </CardHeader>
