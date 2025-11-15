@@ -313,11 +313,6 @@ export default function Home() {
     <>
       <MailingListPopup />
       
-      {siteSettings?.siteBannerUrl && (
-        <div className="relative w-full aspect-[21/9]">
-            <Image src={siteSettings.siteBannerUrl} alt="Site Banner" fill className="object-cover" />
-        </div>
-      )}
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 mb-8">
           <Card className="lg:col-span-1 bg-card shadow-lg border-primary/20">
