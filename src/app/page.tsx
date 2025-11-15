@@ -153,24 +153,24 @@ export default function Home() {
     setDislikedReels(disliked);
   }, []);
 
-  const { slpCandidates, uwpCandidates, indCandidates } = useMemo(() => {
-    if (!candidates || !parties) return { slpCandidates: [], uwpCandidates: [], indCandidates: [] };
+  const { slpLeader, slpDeputies, slpOtherCandidates, uwpLeader, uwpDeputies, uwpOtherCandidates, indCandidates } = useMemo(() => {
+    if (!candidates || !parties) return { slpLeader: null, slpDeputies: [], slpOtherCandidates: [], uwpLeader: null, uwpDeputies: [], uwpOtherCandidates: [], indCandidates: [] };
+    
+    const allUwp = candidates.filter(c => c.partyId === uwpParty?.id);
+    const allSlp = candidates.filter(c => c.partyId === slpParty?.id && !c.isIndependentCastriesCentral && !c.isIndependentCastriesNorth);
+    const allInd = candidates.filter(c => c.isIndependentCastriesCentral || c.isIndependentCastriesNorth || (c.partyId !== slpParty?.id && c.partyId !== uwpParty?.id));
+    
+    const sortFn = (a: Candidate, b: Candidate) => (a.partyLevel === 'higher' && b.partyLevel !== 'higher') ? -1 : (a.partyLevel !== 'higher' && b.partyLevel === 'higher') ? 1 : a.lastName.localeCompare(b.lastName);
 
-    const sortCandidates = (a: Candidate, b: Candidate) => {
-        if (a.isPartyLeader && !b.isPartyLeader) return -1;
-        if (!a.isPartyLeader && b.isPartyLeader) return 1;
-        if (a.isDeputyLeader && !b.isDeputyLeader) return -1;
-        if (!a.isDeputyLeader && b.isDeputyLeader) return 1;
-        if (a.partyLevel === 'higher' && b.partyLevel !== 'higher') return -1;
-        if (a.partyLevel !== 'higher' && b.partyLevel === 'higher') return 1;
-        return a.lastName.localeCompare(b.lastName);
-    };
-
-    const slpCandidates = candidates.filter(c => c.partyId === slpParty?.id && !c.isIndependentCastriesCentral && !c.isIndependentCastriesNorth).sort(sortCandidates);
-    const uwpCandidates = candidates.filter(c => c.partyId === uwpParty?.id).sort(sortCandidates);
-    const indCandidates = candidates.filter(c => c.isIndependentCastriesCentral || c.isIndependentCastriesNorth || (c.partyId !== slpParty?.id && c.partyId !== uwpParty?.id));
-
-    return { slpCandidates, uwpCandidates, indCandidates };
+    return {
+        slpLeader: allSlp.find(c => c.isPartyLeader) || null,
+        slpDeputies: allSlp.filter(c => c.isDeputyLeader).sort(sortFn),
+        slpOtherCandidates: allSlp.filter(c => !c.isPartyLeader && !c.isDeputyLeader).sort(sortFn),
+        uwpLeader: allUwp.find(c => c.isPartyLeader) || null,
+        uwpDeputies: allUwp.filter(c => c.isDeputyLeader).sort(sortFn),
+        uwpOtherCandidates: allUwp.filter(c => !c.isPartyLeader && !c.isDeputyLeader).sort(sortFn),
+        indCandidates: allInd.sort(sortFn)
+    }
   }, [candidates, parties, slpParty, uwpParty]);
 
   const handleLikeReel = async (e: React.MouseEvent, reelId: string) => {
@@ -326,6 +326,10 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <Card>
+            <CardHeader>
+                <CardTitle className="font-headline text-2xl text-center">Meet the Candidates</CardTitle>
+                <CardDescription className="text-center">A gallery of all candidates for the upcoming election.</CardDescription>
+            </CardHeader>
             <CardContent className="pt-6">
               {loadingCandidates ? (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -334,16 +338,33 @@ export default function Home() {
                   <Skeleton className="h-40 w-full" />
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="space-y-4">
                         <h3 className="text-xl font-bold text-center" style={{ color: slpParty ? slpParty.color : '' }}>Saint Lucia Labour Party</h3>
-                        <div className="flex flex-wrap gap-2 justify-center">
-                            {slpCandidates.map(candidate => (
+                        <div className="flex flex-wrap gap-4 justify-center">
+                            {slpLeader && (
+                                <div key={slpLeader.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(slpLeader)}>
+                                    <div className="relative h-20 w-20 rounded-full overflow-hidden bg-muted">
+                                        {slpLeader.imageUrl ? <Image src={slpLeader.imageUrl} alt={slpLeader.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
+                                    </div>
+                                    <p className="text-xs font-semibold">{slpLeader.name}</p>
+                                </div>
+                            )}
+                            {slpDeputies.map(candidate => (
                                 <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
                                     <div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">
-                                        {candidate.imageUrl ? (
-                                            <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" />
-                                        ) : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
+                                        {candidate.imageUrl ? <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
+                                    </div>
+                                    <p className="text-xs font-semibold">{candidate.name}</p>
+                                </div>
+                            ))}
+                        </div>
+                        <Separator />
+                        <div className="flex flex-wrap gap-2 justify-center">
+                            {slpOtherCandidates.map(candidate => (
+                                <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
+                                    <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
+                                        {candidate.imageUrl ? <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
                                     </div>
                                 </div>
                             ))}
@@ -351,27 +372,43 @@ export default function Home() {
                     </div>
                     <div className="space-y-4">
                         <h3 className="text-xl font-bold text-center">Independents</h3>
-                        <div className="flex flex-wrap gap-2 justify-center">
+                        <div className="flex flex-wrap gap-4 justify-center">
                             {indCandidates.map(candidate => (
-                                <div key={candidate.id} className="flex flex-col items-center text-center cursor-pointer" onClick={() => openProfile(candidate)}>
-                                    <div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">
-                                        {candidate.imageUrl ? (
-                                            <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" />
-                                        ) : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
+                                <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
+                                    <div className="relative h-20 w-20 rounded-full overflow-hidden bg-muted">
+                                        {candidate.imageUrl ? <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
                                     </div>
+                                    <p className="text-xs font-semibold">{candidate.name}</p>
                                 </div>
                             ))}
                         </div>
                     </div>
                     <div className="space-y-4">
                         <h3 className="text-xl font-bold text-center" style={{ color: uwpParty ? uwpParty.color : '' }}>United Workers Party</h3>
-                        <div className="flex flex-wrap gap-2 justify-center">
-                            {uwpCandidates.map(candidate => (
+                        <div className="flex flex-wrap gap-4 justify-center">
+                            {uwpLeader && (
+                                <div key={uwpLeader.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(uwpLeader)}>
+                                    <div className="relative h-20 w-20 rounded-full overflow-hidden bg-muted">
+                                        {uwpLeader.imageUrl ? <Image src={uwpLeader.imageUrl} alt={uwpLeader.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
+                                    </div>
+                                    <p className="text-xs font-semibold">{uwpLeader.name}</p>
+                                </div>
+                            )}
+                            {uwpDeputies.map(candidate => (
                                 <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
                                     <div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">
-                                        {candidate.imageUrl ? (
-                                            <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" />
-                                        ) : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
+                                        {candidate.imageUrl ? <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
+                                    </div>
+                                     <p className="text-xs font-semibold">{candidate.name}</p>
+                                </div>
+                            ))}
+                        </div>
+                         <Separator />
+                        <div className="flex flex-wrap gap-2 justify-center">
+                            {uwpOtherCandidates.map(candidate => (
+                                <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
+                                    <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted">
+                                        {candidate.imageUrl ? <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
                                     </div>
                                 </div>
                             ))}
