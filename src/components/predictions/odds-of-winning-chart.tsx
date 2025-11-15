@@ -58,37 +58,47 @@ export function OddsOfWinningTrendChart() {
     };
     
     const chartData = useMemo(() => {
-        if (!projections) return [];
-
+        if (!projections || !constituencies) return [];
+    
         return projections.map(proj => {
             let targetConstituencies = proj.constituencies;
-
+    
             if (selectedConstituencyId !== 'national') {
                 targetConstituencies = targetConstituencies.filter(c => c.id === selectedConstituencyId);
             }
-
+    
             let weightedSlpTotal = 0;
             let weightedUwpTotal = 0;
+            let weightedIndTotal = 0;
             let totalVoters = 0;
-
+    
             targetConstituencies.forEach(c => {
+                const isSpecial = c.name === 'Castries North' || c.name === 'Castries Central';
                 const voters = c.demographics?.registeredVoters || 0;
+
                 if (voters > 0) {
                     const slp = c.predictedSlpPercentage || 50;
                     const uwp = c.predictedUwpPercentage || 50;
-                    weightedSlpTotal += slp * voters;
+                    
+                    if (isSpecial) {
+                         weightedIndTotal += slp * voters;
+                    } else {
+                         weightedSlpTotal += slp * voters;
+                    }
+                    
                     weightedUwpTotal += uwp * voters;
                     totalVoters += voters;
                 }
             });
-
+    
             return {
                 date: proj.date ? format(proj.date.toDate(), 'MMM d') : '',
                 SLP: totalVoters > 0 ? parseFloat((weightedSlpTotal / totalVoters).toFixed(1)) : 0,
                 UWP: totalVoters > 0 ? parseFloat((weightedUwpTotal / totalVoters).toFixed(1)) : 0,
+                IND: totalVoters > 0 ? parseFloat((weightedIndTotal / totalVoters).toFixed(1)) : 0,
             };
         });
-    }, [projections, selectedConstituencyId]);
+    }, [projections, selectedConstituencyId, constituencies]);
 
     const chartConfig = useMemo(() => {
         const slp = parties?.find(p => p.acronym === 'SLP');
@@ -96,6 +106,7 @@ export function OddsOfWinningTrendChart() {
         return {
             SLP: { label: 'SLP', color: slp?.color || 'hsl(var(--chart-3))' },
             UWP: { label: 'UWP', color: uwp?.color || 'hsl(var(--chart-2))' },
+            IND: { label: 'IND', color: '#3b82f6' },
         } as ChartConfig;
     }, [parties]);
     
