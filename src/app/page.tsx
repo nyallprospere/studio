@@ -654,12 +654,6 @@ export default function Home() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-8">
                      {posts && posts.length > 0 && (
                       <Card>
-                        <CardHeader>
-                          <CardTitle className="font-headline flex items-center gap-2">
-                            Social Media Posts
-                          </CardTitle>
-                          <CardDescription>What people are saying on social media.</CardDescription>
-                        </CardHeader>
                         <CardContent className="h-[600px] p-0">
                            <Carousel
                                 setApi={setCarouselApi}
@@ -679,13 +673,13 @@ export default function Home() {
                                             <Link href={post.authorUrl} target="_blank" className="hover:underline">{post.authorName}</Link>
                                             </CardTitle>
                                         </CardHeader>
-                                        <CardContent className="p-0 flex-grow">
+                                        <CardContent className="p-0 flex-grow relative aspect-[9/16]">
                                             {post.videoUrl ? (
-                                                <iframe data-src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(post.videoUrl)}&show_text=false&width=560`} className="w-full h-full" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                                                <iframe data-src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(post.videoUrl)}&show_text=false&width=560`} className="absolute top-0 left-0 w-full h-full" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                                             ) : post.postUrl ? (
                                                 <iframe 
                                                 data-src={`https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(post.postUrl)}&show_text=true&width=500`} 
-                                                className="w-full h-full"
+                                                className="absolute top-0 left-0 w-full h-full"
                                                 style={{border:'none', overflow:'hidden'}} 
                                                 scrolling="no" 
                                                 frameBorder="0" 
