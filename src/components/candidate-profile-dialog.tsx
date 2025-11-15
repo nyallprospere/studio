@@ -4,10 +4,11 @@
 import type { Candidate, Party, Constituency } from '@/lib/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import Image from 'next/image';
-import { UserSquare, Shield } from 'lucide-react';
+import { UserSquare, Shield, Facebook, Instagram } from 'lucide-react';
 import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { ScrollArea } from './ui/scroll-area';
+import { Button } from './ui/button';
 
 interface CandidateProfileDialogProps {
   candidate: Candidate | null;
@@ -54,25 +55,41 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
                     {candidate.isIncumbent && <span className="font-normal text-primary text-sm ml-2">(Incumbent)</span>}
                     </DialogDescription>
                 )}
-                {isIndependent ? (
-                    <div className="flex items-center gap-2 pt-2">
-                        <Shield className="w-8 h-8 text-muted-foreground" />
-                        <span className="font-semibold">Independent</span>
+                <div className="flex items-center gap-4 pt-2">
+                    {isIndependent ? (
+                        <div className="flex items-center gap-2">
+                            <Shield className="w-8 h-8 text-muted-foreground" />
+                            <span className="font-semibold">Independent</span>
+                        </div>
+                    ) : party && (
+                    <div className="flex items-center gap-2">
+                        <div className="relative h-8 w-8 flex-shrink-0">
+                            {party.logoUrl ? (
+                                <Image src={party.logoUrl} alt={`${party.name} logo`} fill className="rounded-full object-contain" />
+                            ) : (
+                                <Shield className="w-8 h-8 text-muted-foreground" />
+                            )}
+                        </div>
+                        <span className="font-semibold" style={{ color: party.color }}>
+                        {party.name} ({party.acronym})
+                        </span>
                     </div>
-                ) : party && (
-                  <div className="flex items-center gap-2 pt-2">
-                     <div className="relative h-8 w-8 flex-shrink-0">
-                        {party.logoUrl ? (
-                            <Image src={party.logoUrl} alt={`${party.name} logo`} fill className="rounded-full object-contain" />
-                        ) : (
-                             <Shield className="w-8 h-8 text-muted-foreground" />
-                        )}
-                    </div>
-                    <span className="font-semibold" style={{ color: party.color }}>
-                      {party.name} ({party.acronym})
-                    </span>
-                  </div>
-                )}
+                    )}
+                    {candidate.facebookUrl && (
+                        <Button asChild variant="outline" size="icon">
+                            <a href={candidate.facebookUrl} target="_blank" rel="noopener noreferrer">
+                                <Facebook className="h-4 w-4" />
+                            </a>
+                        </Button>
+                    )}
+                    {candidate.instagramUrl && (
+                        <Button asChild variant="outline" size="icon">
+                            <a href={candidate.instagramUrl} target="_blank" rel="noopener noreferrer">
+                                <Instagram className="h-4 w-4" />
+                            </a>
+                        </Button>
+                    )}
+                </div>
               </div>
             </div>
           </DialogHeader>
