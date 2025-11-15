@@ -10,7 +10,7 @@ import { Loader2, Sparkles } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import type { Constituency, Election, Candidate, ElectionResult, Party } from '@/lib/types';
+import type { Constituency, Election, Candidate, ElectionResult, Party, Region, NewsArticle } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
 
 export function ConstituencyAnalyzer() {
@@ -27,6 +27,8 @@ export function ConstituencyAnalyzer() {
   const allResultsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'election_results') : null, [firestore]);
   const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const regionsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'regions') : null, [firestore]);
+  const newsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'news') : null, [firestore]);
+
 
   const { data: constituencies, isLoading: loadingConstituencies } = useCollection<Constituency>(constituenciesQuery);
   const { data: elections, isLoading: loadingElections } = useCollection<Election>(electionsQuery);
@@ -34,6 +36,7 @@ export function ConstituencyAnalyzer() {
   const { data: allResults, isLoading: loadingResults } = useCollection<ElectionResult>(allResultsQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
   const { data: regions, isLoading: loadingRegions } = useCollection<Region>(regionsQuery);
+  const { data: newsArticles, isLoading: loadingNews } = useCollection<NewsArticle>(newsQuery);
   
   const selectedElection = useMemo(() => elections?.find(e => e.id === selectedElectionId), [elections, selectedElectionId]);
   const selectedConstituency = useMemo(() => constituencies?.find(c => c.id === selectedConstituencyId), [constituencies, selectedConstituencyId]);
@@ -85,6 +88,8 @@ export function ConstituencyAnalyzer() {
         }) || [];
     }
 
+    const newsData = newsArticles?.map(article => ({ title: article.title, summary: article.summary, source: article.source, publishedAt: article.publishedAt }));
+
 
     const response = await analyzeConstituencyOutcome({
         constituencyName: selectedConstituency.name,
@@ -94,6 +99,7 @@ export function ConstituencyAnalyzer() {
         candidateInfo: JSON.stringify(candidates),
         nationalSwingData: JSON.stringify(nationalSwingData),
         regionalConstituencyData: JSON.stringify(regionalConstituencyData),
+        newsArticles: JSON.stringify(newsData),
     });
 
     if (response.error) {
@@ -111,7 +117,7 @@ export function ConstituencyAnalyzer() {
   }), [parties]);
 
 
-  const isFormDisabled = isLoading || loadingConstituencies || loadingElections;
+  const isFormDisabled = isLoading || loadingConstituencies || loadingElections || loadingNews;
 
   return (
     <div className="space-y-8">

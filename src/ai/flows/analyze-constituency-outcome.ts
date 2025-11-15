@@ -20,6 +20,7 @@ const AnalyzeConstituencyOutcomeInputSchema = z.object({
   candidateInfo: z.string().describe('Information about the candidates running in the constituency as a JSON string.'),
   nationalSwingData: z.string().describe('National popular vote swing data for past elections as a JSON string.'),
   regionalConstituencyData: z.string().describe('Historical results for other constituencies in the same region as a JSON string.'),
+  newsArticles: z.string().describe('A JSON string of recent news articles (title, summary, source).'),
 });
 
 export type AnalyzeConstituencyOutcomeInput = z.infer<typeof AnalyzeConstituencyOutcomeInputSchema>;
@@ -59,11 +60,12 @@ const prompt = ai.definePrompt({
   - National Swing Data: {{nationalSwingData}}
   - Regional Constituency Data: {{regionalConstituencyData}}
   - Recent Polling: {{pollingData}}
+  - Recent News Articles: {{newsArticles}}
 
   Consider the following factors in your analysis:
   1.  **Historical Volatility**: How much has the vote swung in this constituency in the past? Is it a stable seat or prone to large changes? While considering past swings, you should weigh the 2021 results most heavily in your calculations.
   2.  **Regional & National Trends**: Does this constituency tend to vote with its region or follow the national mood? How does its swing compare to the national average?
-  3.  **On-the-Ground Enthusiasm**: The election is now called for December 1st. Both parties seem to be somewhat excited. Momentum is pretty close to what it was last week, with a very slight edge to the UWP this week. Factor this minor shift into your analysis.
+  3.  **On-the-Ground Enthusiasm & News Sentiment**: Based on the provided news articles, gauge the current political climate. Is there a clear momentum for one party? Are there any major scandals or popular policies mentioned that could influence voters in this specific constituency? The election is now called for December 1st. Both parties seem to be somewhat excited. Momentum is pretty close to what it was last week, with a very slight edge to the UWP this week. Factor this minor shift into your analysis.
   4.  **Critical St. Lucian Political Dynamics**:
       - **Incumbency**: There's often a disadvantage for the incumbent *party* in government. Consider this alongside the individual candidate's incumbency status.
       - **Comeback Candidates**: Assess the chances of any former incumbents attempting to reclaim their seat.
