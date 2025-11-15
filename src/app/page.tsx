@@ -356,7 +356,7 @@ export default function Home() {
   };
   
   const autoplay = React.useRef(
-    Autoplay({ delay: 9000, stopOnInteraction: false, stopOnMouseEnter: true })
+    Autoplay({ delay: 9000, stopOnInteraction: true, stopOnMouseEnter: true })
   );
 
   return (
@@ -706,8 +706,8 @@ export default function Home() {
                                 </CarouselItem>
                               ))}
                             </CarouselContent>
-                            <CarouselPrevious className="hidden sm:flex" />
-                            <CarouselNext className="hidden sm:flex" />
+                           <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white border-none hover:bg-black/75" />
+                           <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white border-none hover:bg-black/75" />
                           </Carousel>
                         </CardContent>
                       </Card>
