@@ -343,7 +343,7 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="md:col-span-1">
                         <h3 className="text-xl font-bold text-center mb-4" style={{ color: slpParty ? slpParty.color : '' }}>Saint Lucia Labour Party</h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 justify-center">
+                        <div className="grid grid-cols-5 gap-2 justify-center">
                             {slpCandidates.map(candidate => (
                                 <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
                                     <div className="relative h-20 w-20 rounded-full overflow-hidden bg-muted">
@@ -351,7 +351,6 @@ export default function Home() {
                                             <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" />
                                         ) : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
                                     </div>
-                                    <p className="text-xs font-semibold">{candidate.name}</p>
                                 </div>
                             ))}
                         </div>
@@ -372,7 +371,7 @@ export default function Home() {
                     </div>
                     <div className="md:col-span-1">
                         <h3 className="text-xl font-bold text-center mb-4" style={{ color: uwpParty ? uwpParty.color : '' }}>United Workers Party</h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 justify-center">
+                        <div className="grid grid-cols-5 gap-2 justify-center">
                             {uwpCandidates.map(candidate => (
                                 <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
                                     <div className="relative h-20 w-20 rounded-full overflow-hidden bg-muted">
@@ -380,7 +379,6 @@ export default function Home() {
                                             <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" />
                                         ) : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
                                     </div>
-                                    <p className="text-xs font-semibold">{candidate.name}</p>
                                 </div>
                             ))}
                         </div>
