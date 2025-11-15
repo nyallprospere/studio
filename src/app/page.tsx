@@ -587,10 +587,10 @@ export default function Home() {
                             ))}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <div className="space-y-4">
-                                <h3 className="text-xl font-bold text-center mb-4" style={{ color: slpCandidates.length > 0 && slpParty ? slpParty.color : '' }}>Saint Lucia Labour Party</h3>
-                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
+                        <div className="space-y-8">
+                            <div>
+                                <h3 className="text-xl font-bold text-center mb-4" style={{ color: slpParty ? slpParty.color : '' }}>Saint Lucia Labour Party</h3>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
                                     {slpCandidates.map(candidate => (
                                         <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
                                             <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
@@ -602,9 +602,10 @@ export default function Home() {
                                     ))}
                                 </div>
                             </div>
-                            <div className="space-y-4">
+                            <Separator className="my-6" />
+                            <div>
                                 <h3 className="text-xl font-bold text-center mb-4">Independents</h3>
-                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-2 gap-4">
                                     {indCandidates.map(candidate => (
                                         <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
                                             <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
@@ -616,10 +617,11 @@ export default function Home() {
                                     ))}
                                 </div>
                             </div>
-                            <div className="space-y-4">
-                                <h3 className="text-xl font-bold text-center mb-4" style={{ color: uwpCandidates.length > 0 && uwpParty ? uwpParty.color : '' }}>United Workers Party</h3>
-                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
-                                     {uwpCandidates.map(candidate => (
+                            <Separator className="my-6" />
+                            <div>
+                                <h3 className="text-xl font-bold text-center mb-4" style={{ color: uwpParty ? uwpParty.color : '' }}>United Workers Party</h3>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                                    {uwpCandidates.map(candidate => (
                                         <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
                                             <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
                                                 {candidate.imageUrl ? (
