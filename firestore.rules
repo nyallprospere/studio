@@ -123,7 +123,7 @@ service cloud.firestore {
         allow create, update, delete: if isAdmin();
     }
 
-    match /stories/{storyId} {
+    match /posts/{postId} {
       allow read: if true;
       allow create, delete: if isAdmin();
       allow update: if request.auth != null && isAdmin() || 

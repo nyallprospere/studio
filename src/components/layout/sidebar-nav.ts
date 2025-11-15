@@ -1,4 +1,3 @@
-
 export type NavItem = {
   label: string;
   href: string;
@@ -21,7 +20,7 @@ export const adminNavItems: NavItem[] = [
   { label: 'Election Results', href: '/admin/results' },
   { label: 'Events', href: '/admin/events' },
   { label: 'News', href: '/admin/news' },
-  { label: 'Stories', href: '/admin/stories' },
+  { label: 'Facebook Posts', href: '/admin/posts' },
   { label: 'Logos', href: '/admin/logos' },
   { label: 'Map Submissions', href: '/admin/map-submissions'},
   { label: 'Ads', href: '/admin/ads' },

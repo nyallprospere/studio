@@ -1,6 +1,5 @@
 
 
-
 export interface Party {
   id: string;
   name: string;
@@ -259,7 +258,7 @@ export interface PageView {
   country?: string;
 }
 
-export interface Story {
+export interface Post {
   id: string;
   authorName: string;
   authorUrl: string;
@@ -271,4 +270,5 @@ export interface Story {
   dislikeCount?: number;
 }
 
-export interface Reel extends Story {}
+export interface Reel extends Post {}
+export interface Story extends Post {}
