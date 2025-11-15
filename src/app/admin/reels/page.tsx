@@ -60,7 +60,7 @@ function SortableReelItem({ reel, onEdit, onDelete, authorName }: { reel: Reel, 
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete the reel from "{authorName}". This action cannot be undone.
+                This will permanently delete the story from "{authorName}". This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -122,7 +122,7 @@ export default function AdminReelsPage() {
       
       try {
         await batch.commit();
-        toast({ title: "Order Updated", description: "The order of the reels has been updated." });
+        toast({ title: "Order Updated", description: "The order of the stories has been updated." });
       } catch (error) {
          errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'reels', operation: 'write'}));
       }
@@ -146,12 +146,12 @@ export default function AdminReelsPage() {
     if (editingReel) {
       const reelDoc = doc(firestore, 'reels', editingReel.id);
       await updateDoc(reelDoc, dataToSave);
-      toast({ title: "Reel Updated", description: "The reel has been successfully updated." });
+      toast({ title: "Story Updated", description: "The story has been successfully updated." });
     } else {
       const reelsCollection = collection(firestore, 'reels');
       const newOrder = (reels?.length || 0);
       await addDoc(reelsCollection, { ...dataToSave, order: newOrder });
-      toast({ title: "Reel Added", description: "The new reel has been added." });
+      toast({ title: "Story Added", description: "The new story has been added." });
     }
     
     setIsFormOpen(false);
@@ -162,25 +162,25 @@ export default function AdminReelsPage() {
     if (!firestore) return;
     const reelDoc = doc(firestore, 'reels', reel.id);
     await deleteDoc(reelDoc);
-    toast({ title: "Reel Deleted", description: "The reel has been removed." });
+    toast({ title: "Story Deleted", description: "The story has been removed." });
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-start mb-8">
         <PageHeader
-          title="Manage Reels"
-          description="Add, edit, and reorder the Facebook Reels displayed on the homepage."
+          title="Manage Facebook Stories"
+          description="Add, edit, and reorder the Facebook Stories displayed on the homepage."
         />
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => { setEditingReel(null); setIsFormOpen(true) }}>
-              <PlusCircle className="mr-2 h-4 w-4" /> Add New Reel
+              <PlusCircle className="mr-2 h-4 w-4" /> Add New Story
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingReel ? 'Edit Reel' : 'Add New Reel'}</DialogTitle>
+              <DialogTitle>{editingReel ? 'Edit Story' : 'Add New Story'}</DialogTitle>
             </DialogHeader>
             <ReelForm
               onSubmit={handleFormSubmit}
@@ -195,12 +195,12 @@ export default function AdminReelsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Reel Order</CardTitle>
-          <CardDescription>Drag and drop the reels to reorder them on the homepage.</CardDescription>
+          <CardTitle>Story Order</CardTitle>
+          <CardDescription>Drag and drop the stories to reorder them on the homepage.</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <p>Loading reels...</p>
+            <p>Loading stories...</p>
           ) : reels && reels.length > 0 ? (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={reels} strategy={verticalListSortingStrategy}>
@@ -212,7 +212,7 @@ export default function AdminReelsPage() {
               </SortableContext>
             </DndContext>
           ) : (
-            <p className="text-center text-muted-foreground py-8">No reels have been added yet.</p>
+            <p className="text-center text-muted-foreground py-8">No stories have been added yet.</p>
           )}
         </CardContent>
       </Card>

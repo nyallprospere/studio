@@ -160,9 +160,9 @@ export function ReelForm({ onSubmit, initialData, onCancel, parties, candidates 
           name="postUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Reel Post URL</FormLabel>
+              <FormLabel>Story Post URL</FormLabel>
               <FormControl>
-                <Input type="url" placeholder="https://www.facebook.com/reel/12345" {...field} />
+                <Input type="url" placeholder="https://www.facebook.com/story/12345" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -173,7 +173,7 @@ export function ReelForm({ onSubmit, initialData, onCancel, parties, candidates 
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit">{initialData ? 'Update Reel' : 'Add Reel'}</Button>
+          <Button type="submit">{initialData ? 'Update Story' : 'Add Story'}</Button>
         </div>
       </form>
     </Form>
