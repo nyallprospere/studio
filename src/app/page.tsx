@@ -143,15 +143,15 @@ export default function Home() {
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [profileCandidate, setProfileCandidate] = useState<Candidate | null>(null);
 
+  const slpParty = useMemo(() => parties?.find(p => p.acronym === 'SLP'), [parties]);
+  const uwpParty = useMemo(() => parties?.find(p => p.acronym === 'UWP'), [parties]);
+  
   useEffect(() => {
     const liked = JSON.parse(localStorage.getItem('likedReels') || '[]');
     setLikedReels(liked);
     const disliked = JSON.parse(localStorage.getItem('dislikedReels') || '[]');
     setDislikedReels(disliked);
   }, []);
-
-  const slpParty = useMemo(() => parties?.find(p => p.acronym === 'SLP'), [parties]);
-  const uwpParty = useMemo(() => parties?.find(p => p.acronym === 'UWP'), [parties]);
 
   const { slpCandidates, uwpCandidates, indCandidates } = useMemo(() => {
     if (!candidates || !parties) return { slpCandidates: [], uwpCandidates: [], indCandidates: [] };
@@ -579,7 +579,7 @@ export default function Home() {
                 </CardHeader>
                 <CardContent>
                     {loadingCandidates ? (
-                        <div className="grid grid-cols-4 md:grid-cols-8 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 gap-4">
                             {Array.from({ length: 16 }).map((_, i) => (
                                 <div key={i} className="flex flex-col items-center gap-2">
                                     <Skeleton className="h-24 w-24 rounded-full" />
@@ -587,10 +587,10 @@ export default function Home() {
                             ))}
                         </div>
                     ) : (
-                        <div className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                             <div>
                                 <h3 className="text-xl font-bold text-center mb-4" style={{ color: slpParty ? slpParty.color : '' }}>Saint Lucia Labour Party</h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-2 lg:grid-cols-5 gap-4">
                                     {slpCandidates.map(candidate => (
                                         <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
                                             <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
@@ -602,7 +602,6 @@ export default function Home() {
                                     ))}
                                 </div>
                             </div>
-                            <Separator className="my-6" />
                             <div>
                                 <h3 className="text-xl font-bold text-center mb-4">Independents</h3>
                                 <div className="grid grid-cols-2 gap-4">
@@ -617,10 +616,9 @@ export default function Home() {
                                     ))}
                                 </div>
                             </div>
-                            <Separator className="my-6" />
-                            <div>
+                             <div>
                                 <h3 className="text-xl font-bold text-center mb-4" style={{ color: uwpParty ? uwpParty.color : '' }}>United Workers Party</h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-2 lg:grid-cols-5 gap-4">
                                     {uwpCandidates.map(candidate => (
                                         <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
                                             <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
