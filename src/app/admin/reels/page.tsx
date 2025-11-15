@@ -8,8 +8,8 @@ import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ReelForm } from './reel-form';
-import type { Reel, Party, Candidate } from '@/lib/types';
+import { StoryForm } from './story-form';
+import type { Story, Party, Candidate } from '@/lib/types';
 import { Pencil, Trash2, PlusCircle, GripVertical } from 'lucide-react';
 import {
   AlertDialog,
@@ -28,8 +28,8 @@ import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } 
 import { CSS } from '@dnd-kit/utilities';
 import Link from 'next/link';
 
-function SortableReelItem({ reel, onEdit, onDelete }: { reel: Reel, onEdit: (reel: Reel) => void, onDelete: (reel: Reel) => void }) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: reel.id });
+function SortableStoryItem({ story, onEdit, onDelete }: { story: Story, onEdit: (story: Story) => void, onDelete: (story: Story) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: story.id });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -42,12 +42,12 @@ function SortableReelItem({ reel, onEdit, onDelete }: { reel: Reel, onEdit: (ree
           <GripVertical className="h-5 w-5 text-muted-foreground" />
         </div>
         <div>
-          <p className="font-semibold">{reel.authorName}</p>
-          <Link href={reel.postUrl} target="_blank" className="text-sm text-blue-500 hover:underline truncate max-w-xs block">{reel.postUrl}</Link>
+          <p className="font-semibold">{story.authorName}</p>
+          <Link href={story.postUrl} target="_blank" className="text-sm text-blue-500 hover:underline truncate max-w-xs block">{story.postUrl}</Link>
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" onClick={() => onEdit(reel)}>
+        <Button variant="ghost" size="icon" onClick={() => onEdit(story)}>
           <Pencil className="h-4 w-4" />
         </Button>
         <AlertDialog>
@@ -60,12 +60,12 @@ function SortableReelItem({ reel, onEdit, onDelete }: { reel: Reel, onEdit: (ree
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete the story from "{reel.authorName}". This action cannot be undone.
+                This will permanently delete the story from "{story.authorName}". This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => onDelete(reel)}>Delete</AlertDialogAction>
+              <AlertDialogAction onClick={() => onDelete(story)}>Delete</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -74,36 +74,36 @@ function SortableReelItem({ reel, onEdit, onDelete }: { reel: Reel, onEdit: (ree
   );
 }
 
-export default function AdminReelsPage() {
+export default function AdminStoriesPage() {
   const { firestore } = useFirebase();
   const { toast } = useToast();
 
-  const reelsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'reels'), orderBy('order')) : null, [firestore]);
+  const storiesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'stories'), orderBy('order')) : null, [firestore]);
   const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const candidatesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'candidates') : null, [firestore]);
   
-  const { data: reels, isLoading: loadingReels } = useCollection<Reel>(reelsQuery);
+  const { data: stories, isLoading: loadingStories } = useCollection<Story>(storiesQuery);
   const { data: parties, isLoading: loadingParties } = useCollection<Party>(partiesQuery);
   const { data: candidates, isLoading: loadingCandidates } = useCollection<Candidate>(candidatesQuery);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingReel, setEditingReel] = useState<Reel | null>(null);
+  const [editingStory, setEditingStory] = useState<Story | null>(null);
 
   const sensors = useSensors(useSensor(PointerSensor));
   
-  const isLoading = loadingReels || loadingParties || loadingCandidates;
+  const isLoading = loadingStories || loadingParties || loadingCandidates;
   
   const handleDragEnd = async (event: any) => {
     const { active, over } = event;
     if (!firestore) return;
-    if (active.id !== over.id && reels) {
-      const oldIndex = reels.findIndex((r) => r.id === active.id);
-      const newIndex = reels.findIndex((r) => r.id === over.id);
-      const newOrder = arrayMove(reels, oldIndex, newIndex);
+    if (active.id !== over.id && stories) {
+      const oldIndex = stories.findIndex((r) => r.id === active.id);
+      const newIndex = stories.findIndex((r) => r.id === over.id);
+      const newOrder = arrayMove(stories, oldIndex, newIndex);
       
       const batch = writeBatch(firestore);
-      newOrder.forEach((reel, index) => {
-        const docRef = doc(firestore, 'reels', reel.id);
+      newOrder.forEach((story, index) => {
+        const docRef = doc(firestore, 'stories', story.id);
         batch.update(docRef, { order: index });
       });
       
@@ -111,7 +111,7 @@ export default function AdminReelsPage() {
         await batch.commit();
         toast({ title: "Order Updated", description: "The order of the stories has been updated." });
       } catch (error) {
-         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'reels', operation: 'write'}));
+         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'stories', operation: 'write'}));
       }
     }
   };
@@ -130,37 +130,37 @@ export default function AdminReelsPage() {
     
     const dataToSave = { ...values, authorName };
 
-    if (editingReel) {
-      const reelDoc = doc(firestore, 'reels', editingReel.id);
-      await updateDoc(reelDoc, dataToSave);
+    if (editingStory) {
+      const storyDoc = doc(firestore, 'stories', editingStory.id);
+      await updateDoc(storyDoc, dataToSave);
       toast({ title: "Story Updated", description: "The story has been successfully updated." });
     } else {
-      const reelsCollection = collection(firestore, 'reels');
-      const newOrder = (reels?.length || 0);
-      await addDoc(reelsCollection, { ...dataToSave, order: newOrder });
+      const storiesCollection = collection(firestore, 'stories');
+      const newOrder = (stories?.length || 0);
+      await addDoc(storiesCollection, { ...dataToSave, order: newOrder });
       toast({ title: "Story Added", description: "The new story has been added." });
     }
     
     setIsFormOpen(false);
-    setEditingReel(null);
+    setEditingStory(null);
   };
 
-  const handleDelete = async (reel: Reel) => {
+  const handleDelete = async (story: Story) => {
     if (!firestore) return;
-    const reelDoc = doc(firestore, 'reels', reel.id);
-    await deleteDoc(reelDoc);
+    const storyDoc = doc(firestore, 'stories', story.id);
+    await deleteDoc(storyDoc);
     toast({ title: "Story Deleted", description: "The story has been removed." });
   };
   
   const handleDeleteAll = async () => {
-    if (!firestore || !reels || reels.length === 0) {
+    if (!firestore || !stories || stories.length === 0) {
       toast({ variant: 'destructive', title: 'Error', description: 'No stories to delete.' });
       return;
     }
     try {
       const batch = writeBatch(firestore);
-      const reelsCollection = collection(firestore, 'reels');
-      const snapshot = await getDocs(reelsCollection);
+      const storiesCollection = collection(firestore, 'stories');
+      const snapshot = await getDocs(storiesCollection);
       snapshot.docs.forEach(doc => {
         batch.delete(doc.ref);
       });
@@ -182,7 +182,7 @@ export default function AdminReelsPage() {
         <div className="flex items-center gap-2">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" disabled={!reels || reels.length === 0}>
+                <Button variant="destructive" disabled={!stories || stories.length === 0}>
                   <Trash2 className="mr-2 h-4 w-4" /> Delete All
                 </Button>
               </AlertDialogTrigger>
@@ -202,17 +202,17 @@ export default function AdminReelsPage() {
 
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
             <DialogTrigger asChild>
-                <Button onClick={() => { setEditingReel(null); setIsFormOpen(true) }}>
+                <Button onClick={() => { setEditingStory(null); setIsFormOpen(true) }}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add New Story
                 </Button>
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                <DialogTitle>{editingReel ? 'Edit Story' : 'Add New Story'}</DialogTitle>
+                <DialogTitle>{editingStory ? 'Edit Story' : 'Add New Story'}</DialogTitle>
                 </DialogHeader>
-                <ReelForm
+                <StoryForm
                 onSubmit={handleFormSubmit}
-                initialData={editingReel}
+                initialData={editingStory}
                 onCancel={() => setIsFormOpen(false)}
                 parties={parties || []}
                 candidates={candidates || []}
@@ -230,12 +230,12 @@ export default function AdminReelsPage() {
         <CardContent>
           {isLoading ? (
             <p>Loading stories...</p>
-          ) : reels && reels.length > 0 ? (
+          ) : stories && stories.length > 0 ? (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={reels} strategy={verticalListSortingStrategy}>
+              <SortableContext items={stories} strategy={verticalListSortingStrategy}>
                 <div className="space-y-4">
-                  {reels.map((reel) => (
-                    <SortableReelItem key={reel.id} reel={reel} onEdit={setEditingReel} onDelete={handleDelete} />
+                  {stories.map((story) => (
+                    <SortableStoryItem key={story.id} story={story} onEdit={setEditingStory} onDelete={handleDelete} />
                   ))}
                 </div>
               </SortableContext>

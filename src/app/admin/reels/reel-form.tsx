@@ -8,28 +8,28 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useEffect, useMemo } from 'react';
-import type { Reel, Party, Candidate } from '@/lib/types';
+import type { Story, Party, Candidate } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const reelSchema = z.object({
+const storySchema = z.object({
   authorUrl: z.string().url("A valid URL is required"),
   postUrl: z.string().url("A valid URL is required"),
   partyId: z.string().optional(),
   candidateId: z.string().optional(),
 });
 
-type ReelFormProps = {
-  onSubmit: (data: z.infer<typeof reelSchema>) => void;
-  initialData?: Reel | null;
+type StoryFormProps = {
+  onSubmit: (data: z.infer<typeof storySchema>) => void;
+  initialData?: Story | null;
   onCancel: () => void;
   parties: Party[];
   candidates: Candidate[];
 };
 
-export function ReelForm({ onSubmit, initialData, onCancel, parties, candidates }: ReelFormProps) {
-  const form = useForm<z.infer<typeof reelSchema>>({
-    resolver: zodResolver(reelSchema),
+export function StoryForm({ onSubmit, initialData, onCancel, parties, candidates }: StoryFormProps) {
+  const form = useForm<z.infer<typeof storySchema>>({
+    resolver: zodResolver(storySchema),
     defaultValues: {
       authorUrl: '',
       postUrl: '',

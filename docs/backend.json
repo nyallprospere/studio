@@ -950,11 +950,11 @@
       },
       "required": ["title", "items"]
     },
-    "Reel": {
+    "Story": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Reel",
+      "title": "Story",
       "type": "object",
-      "description": "Represents a social media reel to be embedded.",
+      "description": "Represents a social media story to be embedded.",
       "properties": {
         "authorUrl": {
           "type": "string",
@@ -964,27 +964,27 @@
         "postUrl": {
           "type": "string",
           "format": "uri",
-          "description": "The direct URL to the reel post to be embedded."
+          "description": "The direct URL to the story post to be embedded."
         },
         "order": {
           "type": "number",
-          "description": "The display order of the reel."
+          "description": "The display order of the story."
         },
         "partyId": {
           "type": "string",
-          "description": "The ID of the political party associated with the reel."
+          "description": "The ID of the political party associated with the story."
         },
         "candidateId": {
             "type": "string",
-            "description": "The ID of the candidate associated with the reel."
+            "description": "The ID of the candidate associated with the story."
         },
         "likeCount": {
           "type": "number",
-          "description": "The number of times the reel has been liked."
+          "description": "The number of times the story has been liked."
         },
         "dislikeCount": {
           "type": "number",
-          "description": "The number of times the reel has been disliked."
+          "description": "The number of times the story has been disliked."
         }
       },
       "required": [
@@ -1138,11 +1138,11 @@
       },
       "description": "Stores sections of voter information for the homepage."
     },
-    "/reels/{reelId}": {
+    "/stories/{storyId}": {
       "schema": {
-        "$ref": "#/entities/Reel"
+        "$ref": "#/entities/Story"
       },
-      "description": "Stores social media reels to be embedded."
+      "description": "Stores social media stories to be embedded."
     }
   }
 }

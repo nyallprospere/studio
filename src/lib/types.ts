@@ -258,7 +258,7 @@ export interface PageView {
   country?: string;
 }
 
-export interface Reel {
+export interface Story {
   id: string;
   authorName: string;
   authorUrl: string;
