@@ -149,18 +149,18 @@ export default function Home() {
     setDislikedReels(disliked);
   }, []);
 
+  const slpParty = useMemo(() => parties?.find(p => p.acronym === 'SLP'), [parties]);
+  const uwpParty = useMemo(() => parties?.find(p => p.acronym === 'UWP'), [parties]);
+
   const { slpCandidates, uwpCandidates, indCandidates } = useMemo(() => {
     if (!candidates || !parties) return { slpCandidates: [], uwpCandidates: [], indCandidates: [] };
-
-    const slpParty = parties.find(p => p.acronym === 'SLP');
-    const uwpParty = parties.find(p => p.acronym === 'UWP');
 
     const slpCandidates = candidates.filter(c => c.partyId === slpParty?.id && !c.isIndependentCastriesCentral && !c.isIndependentCastriesNorth);
     const uwpCandidates = candidates.filter(c => c.partyId === uwpParty?.id);
     const indCandidates = candidates.filter(c => c.isIndependentCastriesCentral || c.isIndependentCastriesNorth || (c.partyId !== slpParty?.id && c.partyId !== uwpParty?.id));
 
     return { slpCandidates, uwpCandidates, indCandidates };
-  }, [candidates, parties]);
+  }, [candidates, parties, slpParty, uwpParty]);
 
   const handleLikeReel = async (e: React.MouseEvent, reelId: string) => {
     e.stopPropagation();
@@ -589,7 +589,7 @@ export default function Home() {
                         <div className="space-y-6">
                             <div>
                                 <h3 className="text-xl font-bold text-center mb-4" style={{ color: slpCandidates.length > 0 && slpParty ? slpParty.color : '' }}>Saint Lucia Labour Party</h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-4">
                                     {slpCandidates.map(candidate => (
                                         <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
                                             <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
@@ -619,7 +619,7 @@ export default function Home() {
                             <Separator />
                             <div>
                                 <h3 className="text-xl font-bold text-center mb-4" style={{ color: uwpCandidates.length > 0 && uwpParty ? uwpParty.color : '' }}>United Workers Party</h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-4">
                                      {uwpCandidates.map(candidate => (
                                         <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
                                             <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
