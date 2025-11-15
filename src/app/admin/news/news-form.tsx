@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -23,14 +24,6 @@ import { Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
 import { useUser } from '@/firebase';
-
-const PREDEFINED_TAGS = [
-  'SLP',
-  'UWP',
-  'Allen Chastanet',
-  'Philip J Pierre',
-  'Ernest Hilaire',
-];
 
 const newsArticleSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -62,7 +55,6 @@ type NewsFormProps = {
 export function NewsForm({ onSubmit, initialData, onCancel, news = [] }: NewsFormProps) {
   const { user } = useUser();
   const [isSummarizing, setIsSummarizing] = useState(false);
-  const [tagSearch, setTagSearch] = useState('');
   const [sourcePopoverOpen, setSourcePopoverOpen] = useState(false);
   const [tagInput, setTagInput] = useState('');
 
@@ -89,6 +81,14 @@ export function NewsForm({ onSubmit, initialData, onCancel, news = [] }: NewsFor
   const uniqueSources = useMemo(() => {
     const sources = new Set(news.map(n => n.source));
     return Array.from(sources).sort();
+  }, [news]);
+
+  const allAvailableTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    news.forEach(article => {
+        article.tags?.forEach(tag => tagSet.add(tag));
+    });
+    return Array.from(tagSet).sort();
   }, [news]);
 
   useEffect(() => {
@@ -137,9 +137,9 @@ export function NewsForm({ onSubmit, initialData, onCancel, news = [] }: NewsFor
   }
   
   const allTagOptions = useMemo(() => {
-    const combined = new Set([...PREDEFINED_TAGS, ...currentTags]);
-    return Array.from(combined).map(tag => ({ value: tag, label: tag }));
-  }, [currentTags]);
+    const combined = new Set([...allAvailableTags, ...currentTags]);
+    return Array.from(combined).sort().map(tag => ({ value: tag, label: tag }));
+  }, [allAvailableTags, currentTags]);
 
   const filteredTagOptions = useMemo(() => {
     if (!tagInput) return allTagOptions;

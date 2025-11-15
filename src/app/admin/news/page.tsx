@@ -1,8 +1,9 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
 import { useCollection, useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, Timestamp, query, orderBy, where } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, Timestamp, query, orderBy, where, writeBatch, getDocs } from 'firebase/firestore';
 import type { NewsArticle } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewsForm } from './news-form';
 import Image from 'next/image';
-import { Pencil, Trash2, PlusCircle, Rss, Tag, User, Calendar as CalendarIcon } from 'lucide-react';
+import { Pencil, Trash2, PlusCircle, Rss, Tag, User, Calendar as CalendarIcon, Edit } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,13 +34,128 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import type { DateRange } from 'react-day-picker';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 
+
+function ManageTagsDialog({ allTags, onClose }: { allTags: string[], onClose: () => void }) {
+    const { firestore } = useFirebase();
+    const { toast } = useToast();
+    const [tagToEdit, setTagToEdit] = useState<string | null>(null);
+    const [newTagName, setNewTagName] = useState('');
+
+    const handleRenameTag = async (oldTag: string, newTag: string) => {
+        if (!firestore || !newTag || oldTag === newTag) {
+            setTagToEdit(null);
+            return;
+        }
+
+        try {
+            const newsCollection = collection(firestore, 'news');
+            const q = query(newsCollection, where('tags', 'array-contains', oldTag));
+            const snapshot = await getDocs(q);
+
+            const batch = writeBatch(firestore);
+            snapshot.forEach(docSnap => {
+                const existingTags: string[] = docSnap.data().tags || [];
+                const updatedTags = existingTags.map(t => t === oldTag ? newTag : t);
+                batch.update(docSnap.ref, { tags: updatedTags });
+            });
+
+            await batch.commit();
+            toast({ title: 'Tag Renamed', description: `Tag "${oldTag}" was renamed to "${newTag}" across all articles.` });
+            setTagToEdit(null);
+            onClose(); // This will trigger a re-fetch in the parent component
+        } catch (error) {
+            console.error("Error renaming tag:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to rename tag.' });
+        }
+    };
+    
+    const handleDeleteTag = async (tagToDelete: string) => {
+        if (!firestore) return;
+        try {
+            const newsCollection = collection(firestore, 'news');
+            const q = query(newsCollection, where('tags', 'array-contains', tagToDelete));
+            const snapshot = await getDocs(q);
+
+            const batch = writeBatch(firestore);
+            snapshot.forEach(docSnap => {
+                const existingTags: string[] = docSnap.data().tags || [];
+                const updatedTags = existingTags.filter(t => t !== tagToDelete);
+                batch.update(docSnap.ref, { tags: updatedTags });
+            });
+            
+            await batch.commit();
+            toast({ title: 'Tag Deleted', description: `Tag "${tagToDelete}" was removed from all articles.` });
+            onClose();
+        } catch (error) {
+            console.error("Error deleting tag:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete tag.' });
+        }
+    };
+
+
+    return (
+        <Dialog open={true} onOpenChange={onClose}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Manage All Tags</DialogTitle>
+                    <DialogDescription>Rename or delete tags. Changes will apply to all articles using the tag.</DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="h-72">
+                    <div className="space-y-2">
+                        {allTags.sort().map(tag => (
+                            <div key={tag} className="flex items-center justify-between p-2 rounded-md border">
+                                {tagToEdit === tag ? (
+                                    <Input 
+                                        value={newTagName} 
+                                        onChange={(e) => setNewTagName(e.target.value)} 
+                                        onBlur={() => handleRenameTag(tag, newTagName)}
+                                        onKeyDown={(e) => { if(e.key === 'Enter') handleRenameTag(tag, newTagName) }}
+                                        autoFocus
+                                    />
+                                ) : (
+                                    <span className="text-sm">{tag}</span>
+                                )}
+                                <div className="flex items-center gap-1">
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setTagToEdit(tag); setNewTagName(tag); }}>
+                                        <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive">
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will permanently remove the tag "{tag}" from all articles. This action cannot be undone.
+                                            </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDeleteTag(tag)}>Delete</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </ScrollArea>
+            </DialogContent>
+        </Dialog>
+    )
+}
 
 export default function AdminNewsPage() {
   const { firestore, storage } = useFirebase();
   const { toast } = useToast();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isTagsDialogOpen, setIsTagsDialogOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<NewsArticle | null>(null);
   const [date, setDate] = useState<DateRange | undefined>();
   const [datePreset, setDatePreset] = useState('all');
@@ -60,6 +176,15 @@ export default function AdminNewsPage() {
   
   const { data: news, isLoading, error } = useCollection<NewsArticle>(newsCollection);
   
+  const allTags = useMemo(() => {
+    if (!news) return [];
+    const tagSet = new Set<string>();
+    news.forEach(article => {
+        article.tags?.forEach(tag => tagSet.add(tag));
+    });
+    return Array.from(tagSet);
+  }, [news]);
+
   const handleDatePresetChange = (preset: string) => {
       setDatePreset(preset);
       const now = new Date();
@@ -187,6 +312,9 @@ export default function AdminNewsPage() {
         description="Create, edit, and manage news articles."
         />
         <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setIsTagsDialogOpen(true)}>
+                <Tag className="mr-2 h-4 w-4" /> Manage Tags
+            </Button>
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
             <DialogTrigger asChild>
                 <Button onClick={() => { setEditingArticle(null); setIsFormOpen(true) }}>
@@ -210,6 +338,10 @@ export default function AdminNewsPage() {
             </Dialog>
         </div>
     </div>
+    
+    {isTagsDialogOpen && (
+        <ManageTagsDialog allTags={allTags} onClose={() => setIsTagsDialogOpen(false)} />
+    )}
 
     <Card>
         <CardHeader>
