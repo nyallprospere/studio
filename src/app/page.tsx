@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -658,18 +659,18 @@ export default function Home() {
                             Social Media Posts
                           </CardTitle>
                         </CardHeader>
-                        <CardContent className="h-96">
+                        <CardContent>
                           <Carousel
                             setApi={setCarouselApi}
                             opts={{ align: "start", loop: true }}
                             plugins={[autoplay.current]}
                             onMouseEnter={autoplay.current.stop}
                             onMouseLeave={autoplay.current.play}
-                            className="w-full h-full"
+                            className="w-full"
                           >
-                            <CarouselContent className="h-full">
+                            <CarouselContent>
                               {posts.map((post) => (
-                                <CarouselItem key={post.id} className="md:basis-1/2 lg:basis-full h-full">
+                                <CarouselItem key={post.id} className="md:basis-1/2 lg:basis-full">
                                   <div className="p-1 h-full">
                                     <Card className="h-full flex flex-col">
                                       <CardHeader className="p-4">
@@ -677,7 +678,7 @@ export default function Home() {
                                           <Link href={post.authorUrl} target="_blank" className="hover:underline">{post.authorName}</Link>
                                         </CardTitle>
                                       </CardHeader>
-                                      <CardContent className="p-0 flex-grow relative">
+                                      <CardContent className="p-0 aspect-[9/16] overflow-hidden relative">
                                             {post.videoUrl ? (
                                                 <iframe data-src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(post.videoUrl)}&show_text=false&width=560`} className="absolute top-0 left-0 w-full h-full" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                                             ) : post.postUrl ? (
