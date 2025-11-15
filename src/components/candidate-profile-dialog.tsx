@@ -2,7 +2,7 @@
 
 'use client';
 
-import type { Candidate, Party, Constituency, Reel } from '@/lib/types';
+import type { Candidate, Party, Constituency, Post } from '@/lib/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { UserSquare, Shield, Facebook, Instagram } from 'lucide-react';
@@ -28,11 +28,11 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
   const constituencyRef = useMemoFirebase(() => (firestore && candidate && candidate.constituencyId ? doc(firestore, 'constituencies', candidate.constituencyId) : null), [firestore, candidate]);
   const { data: constituency } = useDoc<Constituency>(constituencyRef);
 
-  const storiesQuery = useMemoFirebase(() => {
+  const postsQuery = useMemoFirebase(() => {
     if (!firestore || !candidate) return null;
-    return query(collection(firestore, 'stories'), where('candidateId', '==', candidate.id));
+    return query(collection(firestore, 'posts'), where('candidateId', '==', candidate.id));
   }, [firestore, candidate]);
-  const { data: stories } = useCollection<Reel>(storiesQuery);
+  const { data: posts } = useCollection<Post>(postsQuery);
 
 
   if (!candidate) {
@@ -124,9 +124,9 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
                 </div>
             )}
 
-            {stories && stories.length > 0 && (
+            {posts && posts.length > 0 && (
                 <div className="pt-6">
-                    <h4 className="font-semibold text-base mb-2 uppercase tracking-wider text-muted-foreground">Social Media Stories</h4>
+                    <h4 className="font-semibold text-base mb-2 uppercase tracking-wider text-muted-foreground">Social Media Posts</h4>
                      <Carousel
                         opts={{
                             align: "start",
@@ -134,17 +134,17 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
                         className="w-full"
                         >
                         <CarouselContent>
-                            {stories.map((story) => (
-                            <CarouselItem key={story.id} className="md:basis-1/2 lg:basis-1/3">
+                            {posts.map((post) => (
+                            <CarouselItem key={post.id} className="md:basis-1/2 lg:basis-1/3">
                                 <div className="p-1">
                                 <Card>
                                     <CardHeader className="p-4">
                                     <CardTitle className="text-base">
-                                        <Link href={story.authorUrl} target="_blank" className="hover:underline">{story.authorName}</Link>
+                                        <Link href={post.authorUrl} target="_blank" className="hover:underline">{post.authorName}</Link>
                                     </CardTitle>
                                     </CardHeader>
                                     <CardContent className="p-0 aspect-[9/16] overflow-hidden">
-                                    <iframe src={`https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(story.postUrl)}&show_text=true&width=500`} width="100%" height="100%" style={{border:'none', overflow:'hidden'}} scrolling="no" frameBorder="0" allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                                    <iframe src={`https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(post.postUrl)}&show_text=true&width=500`} width="100%" height="100%" style={{border:'none', overflow:'hidden'}} scrolling="no" frameBorder="0" allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                                     </CardContent>
                                 </Card>
                                 </div>

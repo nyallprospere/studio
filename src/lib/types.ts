@@ -269,6 +269,3 @@ export interface Post {
   likeCount?: number;
   dislikeCount?: number;
 }
-
-export interface Reel extends Post {}
-export interface Story extends Post {}
