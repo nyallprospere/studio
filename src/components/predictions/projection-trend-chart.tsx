@@ -40,7 +40,7 @@ const calculatePercentages = (forecast: number | undefined, party: 'slp' | 'uwp'
     } else if (party === 'ind') {
         indPercent = baseline + forecast / 2;
         uwpPercent = 100 - indPercent;
-        slpPercent = indPercent; // Display IND % in SLP column for UI
+        slpPercent = 0; // Set SLP to 0 when IND is the winner
     }
 
     return { slp: slpPercent, uwp: uwpPercent, ind: indPercent };
@@ -104,15 +104,19 @@ export function ProjectionTrendChart() {
 
             let weightedSlpTotal = 0;
             let weightedUwpTotal = 0;
+            let weightedIndTotal = 0;
             let totalVoters = 0;
 
             targetConstituencies.forEach(c => {
                 const voters = c.demographics?.registeredVoters || 0;
                 if (voters > 0) {
-                    const { slp, uwp } = calculatePercentages(c.aiForecast, c.aiForecastParty);
+                    const { slp, uwp, ind } = calculatePercentages(c.aiForecast, c.aiForecastParty);
                     if (slp !== null && uwp !== null) {
                         weightedSlpTotal += slp * voters;
                         weightedUwpTotal += uwp * voters;
+                        if (ind !== null) {
+                            weightedIndTotal += ind * voters;
+                        }
                         totalVoters += voters;
                     }
                 }
@@ -122,6 +126,7 @@ export function ProjectionTrendChart() {
                 date: proj.date ? format(proj.date.toDate(), 'MMM d') : '',
                 SLP: totalVoters > 0 ? parseFloat((weightedSlpTotal / totalVoters).toFixed(1)) : 0,
                 UWP: totalVoters > 0 ? parseFloat((weightedUwpTotal / totalVoters).toFixed(1)) : 0,
+                IND: totalVoters > 0 ? parseFloat((weightedIndTotal / totalVoters).toFixed(1)) : 0,
             };
         });
     }, [projections, selectedConstituencyId, selectedRegionId, regions]);
@@ -132,6 +137,7 @@ export function ProjectionTrendChart() {
         return {
             SLP: { label: 'SLP', color: slp?.color || 'hsl(var(--chart-3))' },
             UWP: { label: 'UWP', color: uwp?.color || 'hsl(var(--chart-2))' },
+            IND: { label: 'IND', color: '#3b82f6' }, // blue-500
         } as ChartConfig;
     }, [parties]);
     
