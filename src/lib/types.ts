@@ -260,6 +260,7 @@ export interface PageView {
 
 export interface Reel {
   id: string;
+  authorName: string;
   authorUrl: string;
   postUrl: string;
   order: number;

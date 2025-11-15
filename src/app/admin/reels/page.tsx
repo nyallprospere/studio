@@ -28,7 +28,7 @@ import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } 
 import { CSS } from '@dnd-kit/utilities';
 import Link from 'next/link';
 
-function SortableReelItem({ reel, onEdit, onDelete, authorName }: { reel: Reel, onEdit: (reel: Reel) => void, onDelete: (reel: Reel) => void, authorName: string }) {
+function SortableReelItem({ reel, onEdit, onDelete }: { reel: Reel, onEdit: (reel: Reel) => void, onDelete: (reel: Reel) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: reel.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -42,7 +42,7 @@ function SortableReelItem({ reel, onEdit, onDelete, authorName }: { reel: Reel, 
           <GripVertical className="h-5 w-5 text-muted-foreground" />
         </div>
         <div>
-          <p className="font-semibold">{authorName}</p>
+          <p className="font-semibold">{reel.authorName}</p>
           <Link href={reel.postUrl} target="_blank" className="text-sm text-blue-500 hover:underline truncate max-w-xs block">{reel.postUrl}</Link>
         </div>
       </div>
@@ -60,7 +60,7 @@ function SortableReelItem({ reel, onEdit, onDelete, authorName }: { reel: Reel, 
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete the story from "{authorName}". This action cannot be undone.
+                This will permanently delete the story from "{reel.authorName}". This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -93,19 +93,6 @@ export default function AdminReelsPage() {
   
   const isLoading = loadingReels || loadingParties || loadingCandidates;
   
-  const getAuthorName = (reel: Reel) => {
-    if (reel.candidateId) {
-      const candidate = candidates?.find(c => c.id === reel.candidateId);
-      if (candidate) return candidate.name;
-    }
-    if (reel.partyId) {
-      const party = parties?.find(p => p.id === reel.partyId);
-      if (party) return party.name;
-    }
-    return reel.authorUrl;
-  }
-
-
   const handleDragEnd = async (event: any) => {
     const { active, over } = event;
     if (!firestore) return;
@@ -248,7 +235,7 @@ export default function AdminReelsPage() {
               <SortableContext items={reels} strategy={verticalListSortingStrategy}>
                 <div className="space-y-4">
                   {reels.map((reel) => (
-                    <SortableReelItem key={reel.id} reel={reel} onEdit={setEditingReel} onDelete={handleDelete} authorName={getAuthorName(reel)} />
+                    <SortableReelItem key={reel.id} reel={reel} onEdit={setEditingReel} onDelete={handleDelete} />
                   ))}
                 </div>
               </SortableContext>

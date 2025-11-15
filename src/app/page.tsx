@@ -23,7 +23,7 @@ import {
 } from '@dnd-kit/sortable';
 import { useUser, useCollection, useFirebase, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, orderBy, Timestamp, where, doc, updateDoc, increment } from 'firebase/firestore';
-import type { Event, Party, Constituency, Election, NewsArticle, VoterInformation, SiteSettings, Reel, Candidate } from '@/lib/types';
+import type { Event, Party, Constituency, Election, NewsArticle, VoterInformation, SiteSettings, Reel as Story, Candidate } from '@/lib/types';
 import { EventCard } from '@/components/event-card';
 import { SortableFeatureCard } from '@/components/sortable-feature-card';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
@@ -124,7 +124,7 @@ export default function Home() {
   const newsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'news'), orderBy('articleDate', 'desc')) : null, [firestore]);
   const voterInfoQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'voter_information'), orderBy('title')) : null, [firestore]);
   const siteSettingsRef = useMemoFirebase(() => (firestore ? doc(firestore, 'settings', 'site') : null), [firestore]);
-  const reelsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'reels'), orderBy('order')) : null, [firestore]);
+  const storiesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'reels'), orderBy('order')) : null, [firestore]);
   const candidatesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'candidates') : null, [firestore]);
 
   
@@ -136,10 +136,10 @@ export default function Home() {
   const { data: news, isLoading: loadingNews } = useCollection<NewsArticle>(newsQuery);
   const { data: voterInfoItems, isLoading: loadingVoterInfo } = useCollection<VoterInformation>(voterInfoQuery);
   const { data: siteSettings } = useDoc<SiteSettings>(siteSettingsRef);
-  const { data: reels, isLoading: loadingReels } = useCollection<Reel>(reelsQuery);
+  const { data: stories, isLoading: loadingStories } = useCollection<Story>(storiesQuery);
 
-  const [likedReels, setLikedReels] = useState<string[]>([]);
-  const [dislikedReels, setDislikedReels] = useState<string[]>([]);
+  const [likedStories, setLikedStories] = useState<string[]>([]);
+  const [dislikedStories, setDislikedStories] = useState<string[]>([]);
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [profileCandidate, setProfileCandidate] = useState<Candidate | null>(null);
 
@@ -147,10 +147,10 @@ export default function Home() {
   const uwpParty = useMemo(() => parties?.find(p => p.acronym === 'UWP'), [parties]);
   
   useEffect(() => {
-    const liked = JSON.parse(localStorage.getItem('likedReels') || '[]');
-    setLikedReels(liked);
-    const disliked = JSON.parse(localStorage.getItem('dislikedReels') || '[]');
-    setDislikedReels(disliked);
+    const liked = JSON.parse(localStorage.getItem('likedStories') || '[]');
+    setLikedStories(liked);
+    const disliked = JSON.parse(localStorage.getItem('dislikedStories') || '[]');
+    setDislikedStories(disliked);
   }, []);
 
   const { slpLeader, slpDeputies, slpOtherCandidates, uwpLeader, uwpDeputies, uwpOtherCandidates, indCandidates } = useMemo(() => {
@@ -176,28 +176,28 @@ export default function Home() {
     }
   }, [candidates, parties, slpParty, uwpParty]);
 
-  const handleLikeReel = async (e: React.MouseEvent, reelId: string) => {
+  const handleLikeStory = async (e: React.MouseEvent, storyId: string) => {
     e.stopPropagation();
-    if (!firestore || likedReels.includes(reelId)) return;
+    if (!firestore || likedStories.includes(storyId)) return;
 
-    const reelRef = doc(firestore, 'reels', reelId);
-    await updateDoc(reelRef, { likeCount: increment(1) });
-    const newLiked = [...likedReels, reelId];
-    setLikedReels(newLiked);
-    localStorage.setItem('likedReels', JSON.stringify(newLiked));
-    toast({ title: 'Reel Liked!' });
+    const storyRef = doc(firestore, 'reels', storyId);
+    await updateDoc(storyRef, { likeCount: increment(1) });
+    const newLiked = [...likedStories, storyId];
+    setLikedStories(newLiked);
+    localStorage.setItem('likedStories', JSON.stringify(newLiked));
+    toast({ title: 'Story Liked!' });
   };
 
-  const handleDislikeReel = async (e: React.MouseEvent, reelId: string) => {
+  const handleDislikeStory = async (e: React.MouseEvent, storyId: string) => {
     e.stopPropagation();
-    if (!firestore || dislikedReels.includes(reelId)) return;
+    if (!firestore || dislikedStories.includes(storyId)) return;
 
-    const reelRef = doc(firestore, 'reels', reelId);
-    await updateDoc(reelRef, { dislikeCount: increment(1) });
-    const newDisliked = [...dislikedReels, reelId];
-    setDislikedReels(newDisliked);
-    localStorage.setItem('dislikedReels', JSON.stringify(newDisliked));
-    toast({ title: 'Reel Disliked' });
+    const storyRef = doc(firestore, 'reels', storyId);
+    await updateDoc(storyRef, { dislikeCount: increment(1) });
+    const newDisliked = [...dislikedStories, storyId];
+    setDislikedStories(newDisliked);
+    localStorage.setItem('dislikedStories', JSON.stringify(newDisliked));
+    toast({ title: 'Story Disliked' });
   };
 
 
@@ -343,7 +343,6 @@ export default function Home() {
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="space-y-4">
-                        <CardTitle className="font-headline text-center text-xl" style={{color: slpParty?.color}}>{slpParty?.name}</CardTitle>
                         <div className="flex flex-wrap gap-4 justify-center">
                             {slpLeader && <div className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(slpLeader)}><div className="relative h-20 w-20 rounded-full overflow-hidden bg-muted">{slpLeader.imageUrl ? <Image src={slpLeader.imageUrl} alt={slpLeader.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}</div></div>}
                             {slpDeputies.map(candidate => (
@@ -366,7 +365,6 @@ export default function Home() {
                         </div>
                     </div>
                     <div className="space-y-4">
-                        <CardTitle className="font-headline text-center text-xl">Independents</CardTitle>
                         <div className="flex flex-wrap gap-4 justify-center">
                             {indCandidates.map(candidate => (
                                 <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
@@ -378,7 +376,6 @@ export default function Home() {
                         </div>
                     </div>
                     <div className="space-y-4">
-                        <CardTitle className="font-headline text-center text-xl" style={{color: uwpParty?.color}}>{uwpParty?.name}</CardTitle>
                         <div className="flex flex-wrap gap-4 justify-center">
                             {uwpLeader && <div className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(uwpLeader)}><div className="relative h-20 w-20 rounded-full overflow-hidden bg-muted">{uwpLeader.imageUrl ? <Image src={uwpLeader.imageUrl} alt={uwpLeader.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}</div></div>}
                             {uwpDeputies.map(candidate => (
@@ -562,7 +559,7 @@ export default function Home() {
                       </CardContent>
                   </Card>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-8">
-                     {reels && reels.length > 0 && (
+                     {stories && stories.length > 0 && (
                       <Card>
                         <CardHeader>
                           <CardTitle className="font-headline flex items-center gap-2">
@@ -577,26 +574,26 @@ export default function Home() {
                             className="w-full"
                           >
                             <CarouselContent>
-                              {reels.map((reel) => (
-                                <CarouselItem key={reel.id} className="md:basis-1/2 lg:basis-full">
+                              {stories.map((story) => (
+                                <CarouselItem key={story.id} className="md:basis-1/2 lg:basis-full">
                                   <div className="p-1 h-full">
                                     <Card className="h-full flex flex-col">
                                       <CardHeader className="p-4">
                                         <CardTitle className="text-base">
-                                          <Link href={reel.authorUrl} target="_blank" className="hover:underline">{reel.authorName}</Link>
+                                          <Link href={story.authorUrl} target="_blank" className="hover:underline">{story.authorName}</Link>
                                         </CardTitle>
                                       </CardHeader>
                                       <CardContent className="p-0 aspect-[9/16] overflow-hidden flex-grow">
-                                        <iframe src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(reel.postUrl)}&show_text=false&width=560`} width="100%" height="100%" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                                        <iframe src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(story.postUrl)}&show_text=false&width=560`} width="100%" height="100%" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                                       </CardContent>
                                       <CardFooter className="p-2 justify-end gap-2">
-                                          <Button variant={likedReels.includes(reel.id) ? "default" : "outline"} size="sm" onClick={(e) => handleLikeReel(e, reel.id)} disabled={likedReels.includes(reel.id)}>
+                                          <Button variant={likedStories.includes(story.id) ? "default" : "outline"} size="sm" onClick={(e) => handleLikeStory(e, story.id)} disabled={likedStories.includes(story.id)}>
                                               <ThumbsUp className="mr-2 h-4 w-4" />
-                                              {reel.likeCount || 0}
+                                              {story.likeCount || 0}
                                           </Button>
-                                          <Button variant={dislikedReels.includes(reel.id) ? "destructive" : "outline"} size="sm" onClick={(e) => handleDislikeReel(e, reel.id)} disabled={dislikedReels.includes(reel.id)}>
+                                          <Button variant={dislikedStories.includes(story.id) ? "destructive" : "outline"} size="sm" onClick={(e) => handleDislikeStory(e, story.id)} disabled={dislikedStories.includes(story.id)}>
                                               <ThumbsDown className="mr-2 h-4 w-4" />
-                                              {reel.dislikeCount || 0}
+                                              {story.dislikeCount || 0}
                                           </Button>
                                       </CardFooter>
                                     </Card>
