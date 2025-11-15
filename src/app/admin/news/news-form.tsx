@@ -64,6 +64,7 @@ export function NewsForm({ onSubmit, initialData, onCancel, news = [] }: NewsFor
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [tagSearch, setTagSearch] = useState('');
   const [sourcePopoverOpen, setSourcePopoverOpen] = useState(false);
+  const [tagInput, setTagInput] = useState('');
 
   const form = useForm<z.infer<typeof newsArticleSchema>>({
     resolver: zodResolver(newsArticleSchema),
@@ -141,18 +142,18 @@ export function NewsForm({ onSubmit, initialData, onCancel, news = [] }: NewsFor
   }, [currentTags]);
 
   const filteredTagOptions = useMemo(() => {
-    if (!tagSearch) return allTagOptions;
+    if (!tagInput) return allTagOptions;
     return allTagOptions.filter(option =>
-      option.label.toLowerCase().includes(tagSearch.toLowerCase())
+      option.label.toLowerCase().includes(tagInput.toLowerCase())
     );
-  }, [tagSearch, allTagOptions]);
+  }, [tagInput, allTagOptions]);
 
   const handleTagCreate = () => {
-    const newTag = tagSearch.trim();
+    const newTag = tagInput.trim();
     if (newTag && !currentTags.includes(newTag)) {
         form.setValue('tags', [...currentTags, newTag]);
     }
-    setTagSearch('');
+    setTagInput('');
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -426,17 +427,17 @@ export function NewsForm({ onSubmit, initialData, onCancel, news = [] }: NewsFor
               >
                 <CommandInput 
                     placeholder="Search or create tag..."
-                    value={tagSearch}
-                    onValueChange={setTagSearch}
+                    value={tagInput}
+                    onValueChange={setTagInput}
                     onKeyDown={handleKeyDown}
                 />
                 <ScrollArea className="h-48">
                     <CommandEmpty>
-                    {tagSearch && !filteredTagOptions.some(opt => opt.label.toLowerCase() === tagSearch.toLowerCase()) ? (
+                    {tagInput && !filteredTagOptions.some(opt => opt.label.toLowerCase() === tagInput.toLowerCase()) ? (
                         <CommandItem
                             onSelect={handleTagCreate}
                         >
-                            Create "{tagSearch}"
+                            Create "{tagInput}"
                         </CommandItem>
                         ) : 'No results found.'}
                     </CommandEmpty>
