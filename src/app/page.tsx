@@ -162,12 +162,15 @@ export default function Home() {
     
     const sortFn = (a: Candidate, b: Candidate) => (a.partyLevel === 'higher' && b.partyLevel !== 'higher') ? -1 : (a.partyLevel !== 'higher' && b.partyLevel === 'higher') ? 1 : a.lastName.localeCompare(b.lastName);
 
+    const slpDeputiesSorted = allSlp.filter(c => c.isDeputyLeader).sort(sortFn);
+    const uwpDeputiesSorted = allUwp.filter(c => c.isDeputyLeader).sort(sortFn);
+
     return {
         slpLeader: allSlp.find(c => c.isPartyLeader) || null,
-        slpDeputies: allSlp.filter(c => c.isDeputyLeader).sort(sortFn),
+        slpDeputies: slpDeputiesSorted,
         slpOtherCandidates: allSlp.filter(c => !c.isPartyLeader && !c.isDeputyLeader).sort(sortFn),
         uwpLeader: allUwp.find(c => c.isPartyLeader) || null,
-        uwpDeputies: allUwp.filter(c => c.isDeputyLeader).sort(sortFn),
+        uwpDeputies: uwpDeputiesSorted,
         uwpOtherCandidates: allUwp.filter(c => !c.isPartyLeader && !c.isDeputyLeader).sort(sortFn),
         indCandidates: allInd.sort(sortFn)
     }
@@ -326,10 +329,6 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <Card>
-            <CardHeader>
-                <CardTitle className="font-headline text-2xl text-center">Meet the Candidates</CardTitle>
-                <CardDescription className="text-center">A gallery of all candidates for the upcoming election.</CardDescription>
-            </CardHeader>
             <CardContent className="pt-6">
               {loadingCandidates ? (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -340,24 +339,10 @@ export default function Home() {
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="space-y-4">
-                        <h3 className="text-xl font-bold text-center" style={{ color: slpParty ? slpParty.color : '' }}>Saint Lucia Labour Party</h3>
                         <div className="flex flex-wrap gap-4 justify-center">
-                            {slpLeader && (
-                                <div key={slpLeader.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(slpLeader)}>
-                                    <div className="relative h-20 w-20 rounded-full overflow-hidden bg-muted">
-                                        {slpLeader.imageUrl ? <Image src={slpLeader.imageUrl} alt={slpLeader.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
-                                    </div>
-                                    <p className="text-xs font-semibold">{slpLeader.name}</p>
-                                </div>
-                            )}
-                            {slpDeputies.map(candidate => (
-                                <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
-                                    <div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">
-                                        {candidate.imageUrl ? <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
-                                    </div>
-                                    <p className="text-xs font-semibold">{candidate.name}</p>
-                                </div>
-                            ))}
+                            {slpDeputies[0] && <div className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(slpDeputies[0])}><div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">{slpDeputies[0].imageUrl ? <Image src={slpDeputies[0].imageUrl} alt={slpDeputies[0].name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}</div></div>}
+                            {slpLeader && <div className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(slpLeader)}><div className="relative h-20 w-20 rounded-full overflow-hidden bg-muted">{slpLeader.imageUrl ? <Image src={slpLeader.imageUrl} alt={slpLeader.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}</div></div>}
+                            {slpDeputies[1] && <div className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(slpDeputies[1])}><div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">{slpDeputies[1].imageUrl ? <Image src={slpDeputies[1].imageUrl} alt={slpDeputies[1].name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}</div></div>}
                         </div>
                         <Separator />
                         <div className="flex flex-wrap gap-2 justify-center">
@@ -371,37 +356,21 @@ export default function Home() {
                         </div>
                     </div>
                     <div className="space-y-4">
-                        <h3 className="text-xl font-bold text-center">Independents</h3>
                         <div className="flex flex-wrap gap-4 justify-center">
                             {indCandidates.map(candidate => (
                                 <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
                                     <div className="relative h-20 w-20 rounded-full overflow-hidden bg-muted">
                                         {candidate.imageUrl ? <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
                                     </div>
-                                    <p className="text-xs font-semibold">{candidate.name}</p>
                                 </div>
                             ))}
                         </div>
                     </div>
                     <div className="space-y-4">
-                        <h3 className="text-xl font-bold text-center" style={{ color: uwpParty ? uwpParty.color : '' }}>United Workers Party</h3>
                         <div className="flex flex-wrap gap-4 justify-center">
-                            {uwpLeader && (
-                                <div key={uwpLeader.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(uwpLeader)}>
-                                    <div className="relative h-20 w-20 rounded-full overflow-hidden bg-muted">
-                                        {uwpLeader.imageUrl ? <Image src={uwpLeader.imageUrl} alt={uwpLeader.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
-                                    </div>
-                                    <p className="text-xs font-semibold">{uwpLeader.name}</p>
-                                </div>
-                            )}
-                            {uwpDeputies.map(candidate => (
-                                <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
-                                    <div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">
-                                        {candidate.imageUrl ? <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
-                                    </div>
-                                     <p className="text-xs font-semibold">{candidate.name}</p>
-                                </div>
-                            ))}
+                            {uwpDeputies[0] && <div className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(uwpDeputies[0])}><div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">{uwpDeputies[0].imageUrl ? <Image src={uwpDeputies[0].imageUrl} alt={uwpDeputies[0].name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}</div></div>}
+                            {uwpLeader && <div className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(uwpLeader)}><div className="relative h-20 w-20 rounded-full overflow-hidden bg-muted">{uwpLeader.imageUrl ? <Image src={uwpLeader.imageUrl} alt={uwpLeader.name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}</div></div>}
+                            {uwpDeputies[1] && <div className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(uwpDeputies[1])}><div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted">{uwpDeputies[1].imageUrl ? <Image src={uwpDeputies[1].imageUrl} alt={uwpDeputies[1].name} fill className="object-cover" /> : <UserSquare className="h-full w-full text-muted-foreground p-2" />}</div></div>}
                         </div>
                          <Separator />
                         <div className="flex flex-wrap gap-2 justify-center">
