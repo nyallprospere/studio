@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -367,7 +366,6 @@ export default function Home() {
         <div className="mb-8">
           <Card>
             <CardHeader>
-              <CardTitle className="font-headline text-center text-2xl">Meet the Candidates</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               {loadingCandidates ? (
