@@ -675,7 +675,7 @@ export default function Home() {
                                           <Link href={post.authorUrl} target="_blank" className="hover:underline">{post.authorName}</Link>
                                         </CardTitle>
                                       </CardHeader>
-                                      <CardContent className="p-0 relative flex-grow overflow-hidden flex items-center justify-center aspect-[9/16] max-h-[500px]">
+                                      <CardContent className="relative flex-grow overflow-hidden flex items-center justify-center max-h-[500px]">
                                             {post.videoUrl ? (
                                                 <iframe data-src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(post.videoUrl)}&show_text=false&width=560`} className="absolute top-0 left-0 w-full h-full" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                                             ) : post.postUrl ? (
