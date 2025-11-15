@@ -654,6 +654,12 @@ export default function Home() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-8">
                      {posts && posts.length > 0 && (
                       <Card>
+                        <CardHeader>
+                          <CardTitle className="font-headline flex items-center gap-2">
+                            Social Media Posts
+                          </CardTitle>
+                          <CardDescription>What people are saying on social media.</CardDescription>
+                        </CardHeader>
                         <CardContent className="h-[600px] p-0">
                            <Carousel
                                 setApi={setCarouselApi}
