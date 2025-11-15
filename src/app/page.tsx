@@ -324,6 +324,74 @@ export default function Home() {
       <MailingListPopup />
       
       <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline">Meet the Candidates</CardTitle>
+                    <CardDescription>A gallery of all candidates for the upcoming election.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {loadingCandidates ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 gap-4">
+                            {Array.from({ length: 16 }).map((_, i) => (
+                                <div key={i} className="flex flex-col items-center gap-2">
+                                    <Skeleton className="h-24 w-24 rounded-full" />
+                                    <Skeleton className="h-4 w-20" />
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div>
+                                <h3 className="text-xl font-bold text-center mb-4" style={{ color: slpParty ? slpParty.color : '' }}>Saint Lucia Labour Party</h3>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {slpCandidates.map(candidate => (
+                                        <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
+                                            <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
+                                                {candidate.imageUrl ? (
+                                                    <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" />
+                                                ) : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
+                                            </div>
+                                            <p className="text-sm font-semibold">{candidate.name}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-center mb-4">Independents</h3>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3 gap-4 justify-center">
+                                    {indCandidates.map(candidate => (
+                                        <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
+                                            <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
+                                                {candidate.imageUrl ? (
+                                                    <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" />
+                                                ) : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
+                                            </div>
+                                            <p className="text-sm font-semibold">{candidate.name}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                             <div>
+                                <h3 className="text-xl font-bold text-center mb-4" style={{ color: uwpParty ? uwpParty.color : '' }}>United Workers Party</h3>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {uwpCandidates.map(candidate => (
+                                        <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
+                                            <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
+                                                {candidate.imageUrl ? (
+                                                    <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" />
+                                                ) : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
+                                            </div>
+                                            <p className="text-sm font-semibold">{candidate.name}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 mb-8">
           <Card className="lg:col-span-1 bg-card shadow-lg border-primary/20">
             <CardHeader>
@@ -576,72 +644,6 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="mt-12">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline">Meet the Candidates</CardTitle>
-                    <CardDescription>A gallery of all candidates for the upcoming election.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {loadingCandidates ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 gap-4">
-                            {Array.from({ length: 16 }).map((_, i) => (
-                                <div key={i} className="flex flex-col items-center gap-2">
-                                    <Skeleton className="h-24 w-24 rounded-full" />
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="space-y-8">
-                            <div>
-                                <h3 className="text-xl font-bold text-center mb-4" style={{ color: slpParty ? slpParty.color : '' }}>Saint Lucia Labour Party</h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 gap-4">
-                                    {slpCandidates.map(candidate => (
-                                        <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
-                                            <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
-                                                {candidate.imageUrl ? (
-                                                    <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" />
-                                                ) : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <Separator />
-                            <div>
-                                <h3 className="text-xl font-bold text-center mb-4">Independents</h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-2 lg:grid-cols-8 gap-4 justify-center">
-                                    {indCandidates.map(candidate => (
-                                        <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
-                                            <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
-                                                {candidate.imageUrl ? (
-                                                    <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" />
-                                                ) : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <Separator />
-                             <div>
-                                <h3 className="text-xl font-bold text-center mb-4" style={{ color: uwpParty ? uwpParty.color : '' }}>United Workers Party</h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 gap-4">
-                                    {uwpCandidates.map(candidate => (
-                                        <div key={candidate.id} className="flex flex-col items-center text-center gap-2 cursor-pointer" onClick={() => openProfile(candidate)}>
-                                            <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
-                                                {candidate.imageUrl ? (
-                                                    <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" />
-                                                ) : <UserSquare className="h-full w-full text-muted-foreground p-2" />}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-        </div>
         
         <div className="mt-12">
           <Card>
