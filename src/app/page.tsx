@@ -654,23 +654,18 @@ export default function Home() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-8">
                      {posts && posts.length > 0 && (
                       <Card>
-                        <CardHeader>
-                          <CardTitle className="font-headline flex items-center gap-2">
-                            Social Media Posts
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
+                        <CardContent className="pt-6">
                           <Carousel
                             setApi={setCarouselApi}
                             opts={{ align: "start", loop: true }}
                             plugins={[autoplay.current]}
                             onMouseEnter={autoplay.current.stop}
                             onMouseLeave={autoplay.current.play}
-                            className="w-full"
+                            className="w-full h-full"
                           >
                             <CarouselContent>
                               {posts.map((post) => (
-                                <CarouselItem key={post.id} className="md:basis-1/2 lg:basis-full">
+                                <CarouselItem key={post.id} className="md:basis-1/2 lg:basis-full h-full">
                                   <div className="p-1 h-full">
                                     <Card className="h-full flex flex-col">
                                       <CardHeader className="p-4">
@@ -678,7 +673,7 @@ export default function Home() {
                                           <Link href={post.authorUrl} target="_blank" className="hover:underline">{post.authorName}</Link>
                                         </CardTitle>
                                       </CardHeader>
-                                      <CardContent className="p-0 aspect-[9/16] overflow-hidden relative">
+                                      <CardContent className="p-0 aspect-[9/16] overflow-hidden relative flex-grow">
                                             {post.videoUrl ? (
                                                 <iframe data-src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(post.videoUrl)}&show_text=false&width=560`} className="absolute top-0 left-0 w-full h-full" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                                             ) : post.postUrl ? (
