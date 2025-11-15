@@ -23,7 +23,7 @@ import {
 } from '@dnd-kit/sortable';
 import { useUser, useCollection, useFirebase, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, orderBy, Timestamp, where, doc, updateDoc, increment } from 'firebase/firestore';
-import type { Event, Party, Constituency, Election, NewsArticle, VoterInformation, SiteSettings, Reel as Story, Candidate } from '@/lib/types';
+import type { Event, Party, Constituency, Election, NewsArticle, VoterInformation, SiteSettings, Story, Candidate } from '@/lib/types';
 import { EventCard } from '@/components/event-card';
 import { SortableFeatureCard } from '@/components/sortable-feature-card';
 import { InteractiveSvgMap } from '@/components/interactive-svg-map';
@@ -124,7 +124,7 @@ export default function Home() {
   const newsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'news'), orderBy('articleDate', 'desc')) : null, [firestore]);
   const voterInfoQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'voter_information'), orderBy('title')) : null, [firestore]);
   const siteSettingsRef = useMemoFirebase(() => (firestore ? doc(firestore, 'settings', 'site') : null), [firestore]);
-  const storiesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'reels'), orderBy('order')) : null, [firestore]);
+  const storiesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'stories'), orderBy('order')) : null, [firestore]);
   const candidatesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'candidates') : null, [firestore]);
 
   
@@ -180,7 +180,7 @@ export default function Home() {
     e.stopPropagation();
     if (!firestore || likedStories.includes(storyId)) return;
 
-    const storyRef = doc(firestore, 'reels', storyId);
+    const storyRef = doc(firestore, 'stories', storyId);
     await updateDoc(storyRef, { likeCount: increment(1) });
     const newLiked = [...likedStories, storyId];
     setLikedStories(newLiked);
@@ -192,7 +192,7 @@ export default function Home() {
     e.stopPropagation();
     if (!firestore || dislikedStories.includes(storyId)) return;
 
-    const storyRef = doc(firestore, 'reels', storyId);
+    const storyRef = doc(firestore, 'stories', storyId);
     await updateDoc(storyRef, { dislikeCount: increment(1) });
     const newDisliked = [...dislikedStories, storyId];
     setDislikedStories(newDisliked);
@@ -706,7 +706,7 @@ export default function Home() {
               </div>
             </div>
         )}
-        {profileCandidate && <CandidateProfileDialog candidate={profileCandidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />}
+        {profileCandidate && <CandidateProfileDialog candidate={profileCandidate as Candidate} isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />}
       </div>
     </>
   );
