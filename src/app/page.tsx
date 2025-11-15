@@ -330,10 +330,6 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <Card>
-            <CardHeader>
-              <CardTitle className="font-headline text-center text-2xl">Meet the Candidates</CardTitle>
-              <CardDescription className="text-center">A gallery of all candidates for the upcoming election.</CardDescription>
-            </CardHeader>
             <CardContent className="pt-6">
               {loadingCandidates ? (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
