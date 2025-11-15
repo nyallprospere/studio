@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { StoryForm } from './story-form';
+import { StoryForm } from './reel-form';
 import type { Story, Party, Candidate } from '@/lib/types';
 import { Pencil, Trash2, PlusCircle, GripVertical } from 'lucide-react';
 import {
