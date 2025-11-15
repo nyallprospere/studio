@@ -17,6 +17,7 @@ import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, end
 import { DateRange } from 'react-day-picker';
 import { Calendar } from '@/components/ui/calendar';
 import { ProjectionTrendChart } from '@/components/predictions/projection-trend-chart';
+import { OddsOfWinningTrendChart } from '@/components/predictions/odds-of-winning-chart';
 
 const calculatePercentages = (forecast: number | undefined, party: 'slp' | 'uwp' | 'ind' | undefined) => {
     if (typeof forecast === 'undefined' || !party) {
@@ -116,6 +117,7 @@ export default function OurProjectionsPage() {
     />
     <div className="space-y-8 mt-8">
         <ProjectionTrendChart />
+        <OddsOfWinningTrendChart />
         <Card>
         <CardHeader>
             <div className="flex justify-between items-center">
