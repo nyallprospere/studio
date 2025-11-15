@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -561,13 +562,11 @@ export default function Home() {
                     <CardTitle className="font-headline">Meet the Candidates</CardTitle>
                     <CardDescription>A gallery of all candidates for the upcoming election.</CardDescription>
                 </CardHeader>
-                <CardContent className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <CardContent className="grid grid-cols-4 md:grid-cols-8 gap-4">
                     {loadingCandidates ? (
-                        Array.from({ length: 12 }).map((_, i) => (
+                        Array.from({ length: 16 }).map((_, i) => (
                             <div key={i} className="flex flex-col items-center gap-2">
                                 <Skeleton className="h-24 w-24 rounded-full" />
-                                <Skeleton className="h-4 w-20" />
-                                <Skeleton className="h-3 w-16" />
                             </div>
                         ))
                     ) : (
@@ -578,8 +577,6 @@ export default function Home() {
                                         <Image src={candidate.imageUrl} alt={candidate.name} fill className="object-cover" />
                                     ) : null}
                                 </div>
-                                <p className="font-semibold text-sm leading-tight">{candidate.name}</p>
-                                <p className="text-xs text-muted-foreground">{getParty(candidate.partyId)?.name}</p>
                             </div>
                         ))
                     )}
