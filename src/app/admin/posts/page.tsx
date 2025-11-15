@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -42,7 +43,7 @@ function SortablePostItem({ post, onEdit, onDelete }: { post: Post, onEdit: (pos
         </div>
         <div>
           <p className="font-semibold">{post.authorName}</p>
-          <Link href={post.postUrl} target="_blank" className="text-sm text-blue-500 hover:underline truncate max-w-xs block">{post.postUrl}</Link>
+          <Link href={post.postUrl || post.videoUrl || ''} target="_blank" className="text-sm text-blue-500 hover:underline truncate max-w-xs block">{post.postUrl || post.videoUrl}</Link>
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -171,6 +172,11 @@ export default function AdminPostsPage() {
     }
   };
 
+  const handleEdit = (post: Post) => {
+    setEditingPost(post);
+    setIsFormOpen(true);
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-start mb-8">
@@ -234,7 +240,7 @@ export default function AdminPostsPage() {
               <SortableContext items={posts} strategy={verticalListSortingStrategy}>
                 <div className="space-y-4">
                   {posts.map((post) => (
-                    <SortablePostItem key={post.id} post={post} onEdit={setEditingPost} onDelete={handleDelete} />
+                    <SortablePostItem key={post.id} post={post} onEdit={handleEdit} onDelete={handleDelete} />
                   ))}
                 </div>
               </SortableContext>
