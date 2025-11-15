@@ -2,7 +2,7 @@
 
 'use client';
 
-import type { Candidate, Party, Constituency, Post } from '@/lib/types';
+import type { Candidate, Party, Constituency, Post, PartyLogo, Election } from '@/lib/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { UserSquare, Shield, Facebook, Instagram } from 'lucide-react';
@@ -12,6 +12,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import Link from 'next/link';
+import { useMemo } from 'react';
 
 interface CandidateProfileDialogProps {
   candidate: Candidate | null;
@@ -33,6 +34,13 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
     return query(collection(firestore, 'posts'), where('candidateId', '==', candidate.id));
   }, [firestore, candidate]);
   const { data: posts } = useCollection<Post>(postsQuery);
+  
+  const currentElectionQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'elections'), where('isCurrent', '==', true)) : null, [firestore]);
+  const { data: currentElections, isLoading: loadingElections } = useCollection<Election>(currentElectionQuery);
+  const currentElection = useMemo(() => currentElections?.[0], [currentElections]);
+
+  const partyLogosQuery = useMemoFirebase(() => (firestore ? collection(firestore, 'party_logos') : null), [firestore]);
+  const { data: partyLogos } = useCollection<PartyLogo>(partyLogosQuery);
 
 
   if (!candidate) {
@@ -42,6 +50,20 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
   const candidateName = `${candidate.firstName} ${candidate.lastName}`;
   const displayName = `${candidateName}`;
   const isIndependent = candidate.isIndependentCastriesCentral || candidate.isIndependentCastriesNorth || !candidate.partyId;
+
+  const displayParty = isIndependent ? { name: 'Independent', acronym: 'IND', color: '#3b82f6' } : party;
+  
+  const displayLogoUrl = useMemo(() => {
+    if (isIndependent) {
+        if (candidate.isIndependentCastriesCentral || candidate.isIndependentCastriesNorth) {
+            const indLogo = partyLogos?.find(logo => logo.electionId === currentElection?.id && logo.constituencyId === candidate.constituencyId);
+            if (indLogo?.logoUrl) return indLogo.logoUrl;
+        }
+        return currentElection?.independentLogoUrl || party?.logoUrl;
+    }
+    const electionLogo = partyLogos?.find(logo => logo.partyId === party?.id && logo.electionId === currentElection?.id);
+    return electionLogo?.logoUrl || party?.logoUrl;
+  }, [candidate, party, partyLogos, currentElection, isIndependent]);
 
 
   return (
@@ -66,22 +88,17 @@ export function CandidateProfileDialog({ candidate, isOpen, onClose }: Candidate
                     </DialogDescription>
                 )}
                 <div className="flex items-center gap-4 pt-2">
-                    {isIndependent ? (
-                        <div className="flex items-center gap-2">
-                            <Shield className="w-8 h-8 text-muted-foreground" />
-                            <span className="font-semibold">Independent</span>
-                        </div>
-                    ) : party && (
+                    {displayParty && (
                     <div className="flex items-center gap-2">
                         <div className="relative h-8 w-8 flex-shrink-0">
-                            {party.logoUrl ? (
-                                <Image src={party.logoUrl} alt={`${party.name} logo`} fill className="rounded-full object-contain" />
+                            {displayLogoUrl ? (
+                                <Image src={displayLogoUrl} alt={`${displayParty.name} logo`} fill className="object-contain" />
                             ) : (
                                 <Shield className="w-8 h-8 text-muted-foreground" />
                             )}
                         </div>
-                        <span className="font-semibold" style={{ color: party.color }}>
-                        {party.name} ({party.acronym})
+                        <span className="font-semibold" style={{ color: displayParty.color }}>
+                        {displayParty.name} {displayParty.acronym && `(${displayParty.acronym})`}
                         </span>
                     </div>
                     )}
