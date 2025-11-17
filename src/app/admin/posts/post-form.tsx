@@ -14,8 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 const postSchema = z.object({
   authorUrl: z.string().url("A valid URL is required"),
-  postUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
-  videoUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
+  postUrl: z.string().optional(),
+  videoUrl: z.string().optional(),
   partyId: z.string().optional(),
   candidateId: z.string().optional(),
 }).refine(data => data.postUrl || data.videoUrl, {
@@ -169,7 +169,7 @@ export function PostForm({ onSubmit, initialData, onCancel, parties, candidates 
             <FormItem>
               <FormLabel>Facebook Post URL</FormLabel>
               <FormControl>
-                <Input type="url" placeholder="https://www.facebook.com/username/posts/..." {...field} />
+                <Input type="text" placeholder="https://www.facebook.com/username/posts/..." {...field} />
               </FormControl>
                <FormDescription>For standard text/image posts.</FormDescription>
                <FormMessage />
@@ -183,7 +183,7 @@ export function PostForm({ onSubmit, initialData, onCancel, parties, candidates 
             <FormItem>
               <FormLabel>Facebook Video URL</FormLabel>
               <FormControl>
-                <Input type="url" placeholder="https://www.facebook.com/watch/?v=..." {...field} />
+                <Input type="text" placeholder="https://www.facebook.com/watch/?v=..." {...field} />
               </FormControl>
               <FormDescription>For videos, reels, or stories.</FormDescription>
                <FormMessage />
