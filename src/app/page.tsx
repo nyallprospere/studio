@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -359,7 +360,7 @@ export default function Home() {
     Autoplay({ delay: 9000, stopOnInteraction: true, stopOnMouseEnter: true })
   );
   
-  const getFacebookEmbedUrl = (url?: string): { type: 'post' | 'video' | null, url: string } => {
+ const getFacebookEmbedUrl = (url?: string): { type: 'post' | 'video' | null, url: string } => {
     if (!url) return { type: null, url: '' };
 
     try {
@@ -369,14 +370,14 @@ export default function Home() {
             return { type: 'video', url: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=560` };
         }
         // Post URLs: facebook.com/someuser/posts/..., facebook.com/someuser/photos/...
-        if (urlObj.pathname.includes('/posts/') || urlObj.pathname.includes('/photos/')) {
+        if (urlObj.pathname.includes('/posts/') || urlObj.pathname.includes('/photos/') || urlObj.pathname.includes('/share/p/')) {
              return { type: 'post', url: `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&show_text=true&width=500` };
         }
     } catch(e) {
         console.error("Invalid URL for post", e);
     }
 
-    // Fallback for simple URLs or other formats
+    // Fallback for simple URLs or other formats, assuming it's a post.
     return { type: 'post', url: `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&show_text=true&width=500` };
   };
 

@@ -58,55 +58,54 @@ export function OddsOfWinningTrendChart() {
     };
     
     const chartData = useMemo(() => {
-    if (!projections || !constituencies) return [];
-
-    return projections.map(proj => {
-        let targetConstituencies = proj.constituencies;
-
-        if (selectedConstituencyId !== 'national') {
-            targetConstituencies = targetConstituencies.filter(c => c.id === selectedConstituencyId);
-        }
-
-        let weightedSlpTotal = 0;
-        let weightedUwpTotal = 0;
-        let weightedIndTotal = 0;
-        let totalVoters = 0;
-
-        targetConstituencies.forEach(c => {
-            const voters = c.demographics?.registeredVoters || 0;
-            if (voters > 0) {
-                const isSpecialConstituency = c.name === 'Castries North' || c.name === 'Castries Central';
-
-                let slp = c.predictedSlpPercentage || 0;
-                let uwp = c.predictedUwpPercentage || 0;
-                let ind = 0;
-
-                if (isSpecialConstituency) {
-                    ind = slp; // SLP odds are used for IND in these cases
-                    slp = 0;   // No SLP candidate, so odds are 0
-                }
-                
-                weightedSlpTotal += slp * voters;
-                weightedUwpTotal += uwp * voters;
-                weightedIndTotal += ind * voters;
-                totalVoters += voters;
+        if (!projections || !constituencies) return [];
+    
+        return projections.map(proj => {
+            let targetConstituencies = proj.constituencies;
+    
+            if (selectedConstituencyId !== 'national') {
+                targetConstituencies = targetConstituencies.filter(c => c.id === selectedConstituencyId);
             }
+    
+            let weightedSlpTotal = 0;
+            let weightedUwpTotal = 0;
+            let weightedIndTotal = 0;
+            let totalVoters = 0;
+    
+            targetConstituencies.forEach(c => {
+                const voters = c.demographics?.registeredVoters || 0;
+                if (voters > 0) {
+                    const isSpecialConstituency = c.name === 'Castries North' || c.name === 'Castries Central';
+    
+                    let slp = c.predictedSlpPercentage || 0;
+                    let uwp = c.predictedUwpPercentage || 0;
+                    let ind = 0;
+    
+                    if (isSpecialConstituency) {
+                        ind = slp; // SLP odds are used for IND in these cases
+                        slp = 0;   // No SLP candidate, so odds are 0
+                    }
+                    
+                    weightedSlpTotal += slp * voters;
+                    weightedUwpTotal += uwp * voters;
+                    weightedIndTotal += ind * voters;
+                    totalVoters += voters;
+                }
+            });
+    
+            const slpAvg = totalVoters > 0 ? (weightedSlpTotal / totalVoters) : 0;
+            const uwpAvg = totalVoters > 0 ? (weightedUwpTotal / totalVoters) : 0;
+            const indAvg = totalVoters > 0 ? (weightedIndTotal / totalVoters) : 0;
+    
+            const finalSlp = (selectedConstituencyId === 'national' || selectedConstituencyId === 'all') ? slpAvg + indAvg : slpAvg;
+    
+            return {
+                date: proj.date ? format(proj.date.toDate(), 'MMM d') : '',
+                SLP: parseFloat(finalSlp.toFixed(1)),
+                UWP: parseFloat(uwpAvg.toFixed(1)),
+                IND: parseFloat(indAvg.toFixed(1)),
+            };
         });
-
-        const slpAvg = totalVoters > 0 ? (weightedSlpTotal / totalVoters) : 0;
-        const uwpAvg = totalVoters > 0 ? (weightedUwpTotal / totalVoters) : 0;
-        const indAvg = totalVoters > 0 ? (weightedIndTotal / totalVoters) : 0;
-
-        // When "All Constituencies" is selected, combine IND into SLP for a two-party view
-        const finalSlp = (selectedConstituencyId === 'national' || selectedConstituencyId === 'all') ? slpAvg + indAvg : slpAvg;
-
-        return {
-            date: proj.date ? format(proj.date.toDate(), 'MMM d') : '',
-            SLP: parseFloat(finalSlp.toFixed(1)),
-            UWP: parseFloat(uwpAvg.toFixed(1)),
-            IND: parseFloat(indAvg.toFixed(1)),
-        };
-    });
     }, [projections, selectedConstituencyId, constituencies]);
 
     const chartConfig = useMemo(() => {
@@ -117,24 +116,21 @@ export function OddsOfWinningTrendChart() {
             constituencies?.find(c => c.id === selectedConstituencyId)?.name || ''
         );
 
-        const slpLabel = isSpecialConstituencySelected ? 'IND' : 'SLP';
-        const slpColor = isSpecialConstituencySelected ? '#3b82f6' : (slp?.color || 'hsl(var(--chart-3))');
+        let slpLabel = 'SLP';
+        let slpColor = slp?.color || 'hsl(var(--chart-3))';
+
+        if (isSpecialConstituencySelected) {
+            slpLabel = 'IND';
+            slpColor = '#3b82f6';
+        }
 
         return {
             SLP: { label: slpLabel, color: slpColor },
             UWP: { label: 'UWP', color: uwp?.color || 'hsl(var(--chart-2))' },
-            IND: { label: 'IND', color: '#3b82f6' }, // Keep this for the tooltip logic if needed
+            IND: { label: 'IND', color: '#3b82f6' }, // This will be used by tooltip correctly now
         } as ChartConfig;
     }, [parties, selectedConstituencyId, constituencies]);
     
-    const displayTitle = useMemo(() => {
-        if (selectedConstituencyId !== 'national') {
-            return constituencies?.find(c => c.id === selectedConstituencyId)?.name || 'Constituency';
-        }
-        return 'Average';
-    }, [selectedConstituencyId, constituencies]);
-
-
     if (loadingProjections || loadingConstituencies || loadingParties) return <Skeleton className="h-[500px] w-full" />;
 
     const showIndLine = selectedConstituencyId !== 'national' && selectedConstituencyId !== 'all';
