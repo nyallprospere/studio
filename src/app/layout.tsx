@@ -33,10 +33,7 @@ export default function RootLayout({
         className={`${spaceGrotesk.variable} ${inter.variable} font-body antialiased`}
         suppressHydrationWarning={true}
       >
-        <FirebaseClientProvider>
-          <PageViewTracker />
-          <MainLayout>{children}</MainLayout>
-        </FirebaseClientProvider>
+        <MainLayout>{children}</MainLayout>
         <Toaster />
       </body>
     </html>
