@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -359,6 +358,27 @@ export default function Home() {
   const autoplay = React.useRef(
     Autoplay({ delay: 9000, stopOnInteraction: true, stopOnMouseEnter: true })
   );
+  
+  const getFacebookEmbedUrl = (url?: string): { type: 'post' | 'video' | null, url: string } => {
+    if (!url) return { type: null, url: '' };
+
+    try {
+        const urlObj = new URL(url);
+        // Video URLs: facebook.com/watch, facebook.com/reel, facebook.com/someuser/videos/...
+        if (urlObj.pathname.includes('/watch') || urlObj.pathname.includes('/reel') || urlObj.pathname.includes('/videos/')) {
+            return { type: 'video', url: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=560` };
+        }
+        // Post URLs: facebook.com/someuser/posts/..., facebook.com/someuser/photos/...
+        if (urlObj.pathname.includes('/posts/') || urlObj.pathname.includes('/photos/')) {
+             return { type: 'post', url: `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&show_text=true&width=500` };
+        }
+    } catch(e) {
+        console.error("Invalid URL for post", e);
+    }
+
+    // Fallback for simple URLs or other formats
+    return { type: 'post', url: `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&show_text=true&width=500` };
+  };
 
   return (
     <>
@@ -664,44 +684,41 @@ export default function Home() {
                                 className="w-full h-full"
                             >
                                 <CarouselContent className="h-full">
-                                {posts.map((post) => (
-                                    <CarouselItem key={post.id} className="h-full">
-                                    <div className="p-1 h-full">
-                                        <Card className="h-full flex flex-col">
-                                        <CardHeader className="p-4">
-                                            <CardTitle className="text-base">
-                                            <Link href={post.authorUrl} target="_blank" className="hover:underline">{post.authorName}</Link>
-                                            </CardTitle>
-                                        </CardHeader>
-                                        <CardContent className="p-0 flex-grow relative aspect-[9/16]">
-                                            {post.videoUrl ? (
-                                                <iframe data-src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(post.videoUrl)}&show_text=false&width=560`} className="absolute top-0 left-0 w-full h-full" style={{border:'none', overflow:'hidden'}} allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
-                                            ) : post.postUrl ? (
+                                {posts.map((post) => {
+                                    const embed = getFacebookEmbedUrl(post.videoUrl || post.postUrl);
+                                    if (!embed.url) return null;
+
+                                    return (
+                                        <CarouselItem key={post.id} className="p-1 h-full">
+                                            <Card className="h-full flex flex-col">
+                                            <CardHeader className="p-4">
+                                                <CardTitle className="text-base">
+                                                <Link href={post.authorUrl} target="_blank" className="hover:underline">{post.authorName}</Link>
+                                                </CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="p-0 flex-grow relative aspect-[9/16]">
                                                 <iframe 
-                                                data-src={`https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(post.postUrl)}&show_text=true&width=500`} 
-                                                className="absolute top-0 left-0 w-full h-full"
-                                                style={{border:'none', overflow:'hidden'}} 
-                                                scrolling="no" 
-                                                frameBorder="0" 
-                                                allowFullScreen={true} 
-                                                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share">
+                                                    data-src={embed.url} 
+                                                    className="absolute top-0 left-0 w-full h-full"
+                                                    style={{border:'none', overflow:'hidden'}}
+                                                    allowFullScreen={true} 
+                                                    allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share">
                                                 </iframe>
-                                            ) : null}
-                                        </CardContent>
-                                        <CardFooter className="p-2 justify-end gap-2">
-                                            <Button variant={likedPosts.includes(post.id) ? "default" : "outline"} size="sm" onClick={(e) => handleLikePost(e, post.id)} disabled={likedPosts.includes(post.id)}>
-                                                <ThumbsUp className="mr-2 h-4 w-4" />
-                                                {post.likeCount || 0}
-                                            </Button>
-                                            <Button variant={dislikedPosts.includes(post.id) ? "destructive" : "outline"} size="sm" onClick={(e) => handleDislikePost(e, post.id)} disabled={dislikedPosts.includes(post.id)}>
-                                                <ThumbsDown className="mr-2 h-4 w-4" />
-                                                {post.dislikeCount || 0}
-                                            </Button>
-                                        </CardFooter>
-                                        </Card>
-                                    </div>
-                                    </CarouselItem>
-                                ))}
+                                            </CardContent>
+                                            <CardFooter className="p-2 justify-end gap-2">
+                                                <Button variant={likedPosts.includes(post.id) ? "default" : "outline"} size="sm" onClick={(e) => handleLikePost(e, post.id)} disabled={likedPosts.includes(post.id)}>
+                                                    <ThumbsUp className="mr-2 h-4 w-4" />
+                                                    {post.likeCount || 0}
+                                                </Button>
+                                                <Button variant={dislikedPosts.includes(post.id) ? "destructive" : "outline"} size="sm" onClick={(e) => handleDislikePost(e, post.id)} disabled={dislikedPosts.includes(post.id)}>
+                                                    <ThumbsDown className="mr-2 h-4 w-4" />
+                                                    {post.dislikeCount || 0}
+                                                </Button>
+                                            </CardFooter>
+                                            </Card>
+                                        </CarouselItem>
+                                    )
+                                })}
                                 </CarouselContent>
                                 <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-background/80 text-foreground border-border hover:bg-muted h-10 w-10" />
                                 <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-background/80 text-foreground border-border hover:bg-muted h-10 w-10" />
