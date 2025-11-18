@@ -3,7 +3,6 @@ import { Space_Grotesk, Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
-import { PageViewTracker } from '@/components/page-view-tracker';
 import { MainLayout } from '@/components/layout/main-layout';
 
 const spaceGrotesk = Space_Grotesk({
@@ -33,7 +32,9 @@ export default function RootLayout({
         className={`${spaceGrotesk.variable} ${inter.variable} font-body antialiased`}
         suppressHydrationWarning={true}
       >
-        <MainLayout>{children}</MainLayout>
+        <FirebaseClientProvider>
+          <MainLayout>{children}</MainLayout>
+        </FirebaseClientProvider>
         <Toaster />
       </body>
     </html>
