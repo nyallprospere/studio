@@ -21,6 +21,7 @@ const AnalyzeConstituencyOutcomeInputSchema = z.object({
   nationalSwingData: z.string().describe('National popular vote swing data for past elections as a JSON string.'),
   regionalConstituencyData: z.string().describe('Historical results for other constituencies in the same region as a JSON string.'),
   newsArticles: z.string().describe('A JSON string of recent news articles (title, summary, source).'),
+  previousAnalysis: z.string().optional().describe('The previous analysis output for this constituency as a JSON string. Use this as a baseline.'),
 });
 
 export type AnalyzeConstituencyOutcomeInput = z.infer<typeof AnalyzeConstituencyOutcomeInputSchema>;
@@ -54,7 +55,10 @@ const prompt = ai.definePrompt({
   output: {schema: AnalyzeConstituencyOutcomeOutputSchema},
   prompt: `You are an expert St. Lucian political analyst. Your task is to predict the outcome for the {{constituencyName}} constituency in the {{electionYear}} election.
 
+  **Crucially, you must be conservative in your predictions.** Use the previous analysis provided as your baseline. Do not make large swings in your prediction unless there is very strong new evidence from the data provided. Your goal is to provide a stable, evolving forecast, not volatile jumps.
+
   Analyze the provided data to make your prediction:
+  - Previous Analysis (Your Baseline): {{previousAnalysis}}
   - Historical Results for {{constituencyName}}: {{historicalData}}
   - Candidate Information: {{candidateInfo}}
   - National Swing Data: {{nationalSwingData}}
@@ -74,7 +78,7 @@ const prompt = ai.definePrompt({
       - **Candidate Specific Factors**: Acknowledge anomalies. For example, in Micoud North for the 2021 election, the specific UWP candidate was highly unpopular. The current candidate, Jeremiah, is viewed more favorably, so you should moderate the expected swing *against* the UWP accordingly, as the new candidate isn't burdened by the same negative perception. Jeremiah has done a really good job as an incumbent and has done well to retain his support.
       - **Castries Central Dynamics**: For Castries Central, Richard Frederick is the incumbent and is running as an IND/SLP candidate. His opponent is Rosh Clarke for the UWP.
 
-  Synthesize these factors to formulate your prediction. Your analysis should be concise and explain the key reasons for your conclusion.
+  Synthesize these factors to formulate your prediction. Your analysis should be concise and explain the key reasons for your conclusion, especially highlighting what new information caused a change from the previous analysis, if any.
 
   Provide the following output:
   1.  **predictedWinner**: The acronym of the party you predict will win (SLP, UWP, or IND).

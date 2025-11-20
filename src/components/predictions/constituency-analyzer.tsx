@@ -47,7 +47,6 @@ export function ConstituencyAnalyzer() {
     if (!selectedConstituencyId || !selectedElectionId || !selectedConstituency || !allResults || !elections) return;
 
     setIsLoading(true);
-    setResult(null);
     setError(null);
     
     const historicalData = allResults
@@ -100,6 +99,7 @@ export function ConstituencyAnalyzer() {
         nationalSwingData: JSON.stringify(nationalSwingData),
         regionalConstituencyData: JSON.stringify(regionalConstituencyData),
         newsArticles: JSON.stringify(newsData),
+        previousAnalysis: result ? JSON.stringify(result) : undefined,
     });
 
     if (response.error) {
