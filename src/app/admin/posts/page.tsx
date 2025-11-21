@@ -43,7 +43,7 @@ function SortablePostItem({ post, onEdit, onDelete }: { post: Post, onEdit: (pos
         </div>
         <div>
           <p className="font-semibold">{post.authorName}</p>
-          <Link href={post.postUrl || post.videoUrl || ''} target="_blank" className="text-sm text-blue-500 hover:underline truncate max-w-xs block">{post.postUrl || post.videoUrl}</Link>
+          <Link href={post.videoUrl || post.postUrl || ''} target="_blank" className="text-sm text-blue-500 hover:underline truncate max-w-xs block">{post.videoUrl || post.postUrl}</Link>
         </div>
       </div>
       <div className="flex items-center gap-2">

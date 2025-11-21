@@ -125,7 +125,7 @@ export default function Home() {
   const newsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'news'), orderBy('articleDate', 'desc')) : null, [firestore]);
   const voterInfoQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'voter_information'), orderBy('title')) : null, [firestore]);
   const siteSettingsRef = useMemoFirebase(() => (firestore ? doc(firestore, 'settings', 'site') : null), [firestore]);
-  const postsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'posts'), orderBy('order')) : null, [firestore]);
+  const postsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'posts'), orderBy('order', 'desc')) : null, [firestore]);
   const candidatesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'candidates') : null, [firestore]);
 
   
@@ -360,26 +360,25 @@ export default function Home() {
     Autoplay({ delay: 9000, stopOnInteraction: true, stopOnMouseEnter: true })
   );
   
- const getFacebookEmbedUrl = (url?: string): { type: 'post' | 'video' | null, url: string } => {
+  const getFacebookEmbedUrl = (postUrl?: string, videoUrl?: string): { type: 'post' | 'video' | null; url: string } => {
+    const url = videoUrl || postUrl;
     if (!url) return { type: null, url: '' };
 
     try {
         const urlObj = new URL(url);
         // Video URLs: facebook.com/watch, facebook.com/reel, facebook.com/someuser/videos/...
-        if (urlObj.pathname.includes('/watch') || urlObj.pathname.includes('/reel') || urlObj.pathname.includes('/videos/')) {
+        if (videoUrl || urlObj.pathname.includes('/watch') || urlObj.pathname.includes('/reel') || urlObj.pathname.includes('/videos/')) {
             return { type: 'video', url: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=560` };
         }
-        // Post URLs: facebook.com/someuser/posts/..., facebook.com/someuser/photos/...
-        if (urlObj.pathname.includes('/posts/') || urlObj.pathname.includes('/photos/') || urlObj.pathname.includes('/share/p/')) {
-             return { type: 'post', url: `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&show_text=true&width=500` };
-        }
+        // Post URLs: facebook.com/someuser/posts/..., facebook.com/someuser/photos/..., facebook.com/share/p/...
+        return { type: 'post', url: `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&show_text=true&width=500` };
     } catch(e) {
         console.error("Invalid URL for post", e);
+        // Fallback for simple URLs or other formats, assuming it's a post.
+        return { type: 'post', url: `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&show_text=true&width=500` };
     }
-
-    // Fallback for simple URLs or other formats, assuming it's a post.
-    return { type: 'post', url: `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&show_text=true&width=500` };
   };
+
 
   return (
     <>
@@ -686,7 +685,7 @@ export default function Home() {
                             >
                                 <CarouselContent className="h-full">
                                 {posts.map((post) => {
-                                    const embed = getFacebookEmbedUrl(post.videoUrl || post.postUrl);
+                                    const embed = getFacebookEmbedUrl(post.postUrl, post.videoUrl);
                                     if (!embed.url) return null;
 
                                     return (
@@ -697,7 +696,7 @@ export default function Home() {
                                                 <Link href={post.authorUrl} target="_blank" className="hover:underline">{post.authorName}</Link>
                                                 </CardTitle>
                                             </CardHeader>
-                                            <CardContent className="p-0 flex-grow relative aspect-[9/16]">
+                                            <CardContent className="p-0 flex-grow relative aspect-video">
                                                 <iframe 
                                                     data-src={embed.url} 
                                                     className="absolute top-0 left-0 w-full h-full"
