@@ -78,7 +78,7 @@ export default function AdminPostsPage() {
   const { firestore } = useFirebase();
   const { toast } = useToast();
 
-  const postsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'posts'), orderBy('order')) : null, [firestore]);
+  const postsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'posts'), orderBy('order', 'desc')) : null, [firestore]);
   const partiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'parties') : null, [firestore]);
   const candidatesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'candidates') : null, [firestore]);
   
@@ -104,7 +104,7 @@ export default function AdminPostsPage() {
       const batch = writeBatch(firestore);
       newOrder.forEach((post, index) => {
         const docRef = doc(firestore, 'posts', post.id);
-        batch.update(docRef, { order: index });
+        batch.update(docRef, { order: posts.length - 1 - index });
       });
       
       try {
