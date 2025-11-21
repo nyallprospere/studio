@@ -367,7 +367,7 @@ export default function Home() {
     try {
         const urlObj = new URL(url);
         // Video URLs: facebook.com/watch, facebook.com/reel, facebook.com/someuser/videos/...
-        if (videoUrl || urlObj.pathname.includes('/watch') || urlObj.pathname.includes('/reel') || urlObj.pathname.includes('/videos/')) {
+        if (videoUrl || urlObj.pathname.includes('/watch') || urlObj.pathname.includes('/reel') || urlObj.pathname.includes('/videos/') || urlObj.pathname.includes('/share/v/')) {
             return { type: 'video', url: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=560` };
         }
         // Post URLs: facebook.com/someuser/posts/..., facebook.com/someuser/photos/..., facebook.com/share/p/...
@@ -688,6 +688,8 @@ export default function Home() {
                                     const embed = getFacebookEmbedUrl(post.postUrl, post.videoUrl);
                                     if (!embed.url) return null;
 
+                                    const contentClass = embed.type === 'video' ? 'aspect-[9/16]' : 'aspect-video';
+
                                     return (
                                         <CarouselItem key={post.id} className="p-1 h-full">
                                             <Card className="h-full flex flex-col">
@@ -696,7 +698,7 @@ export default function Home() {
                                                 <Link href={post.authorUrl} target="_blank" className="hover:underline">{post.authorName}</Link>
                                                 </CardTitle>
                                             </CardHeader>
-                                            <CardContent className="p-0 flex-grow relative aspect-video">
+                                            <CardContent className={cn("p-0 flex-grow relative", contentClass)}>
                                                 <iframe 
                                                     data-src={embed.url} 
                                                     className="absolute top-0 left-0 w-full h-full"
