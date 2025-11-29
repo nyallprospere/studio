@@ -38,7 +38,7 @@ export function EventProfileDialog({ event, isOpen, onClose }: EventProfileDialo
   const party = parties?.find(p => p.id === event.partyId);
   const eventDate = (event.date as unknown as Timestamp)?.toDate ? (event.date as unknown as Timestamp).toDate() : new Date(event.date);
   
-  const eventUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const eventUrl = `https://app.lucianvotes.com/events/${event.id}`;
   const shareText = `Check out this event: ${event.title} on ${format(eventDate, "PPP")}`;
   const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(eventUrl)}`;
   const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(eventUrl)}`;

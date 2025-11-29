@@ -339,7 +339,7 @@ export default function MakeYourOwnClientPage() {
         ...locationData
       });
 
-      const url = `${window.location.origin}/maps/${docRef.id}`;
+      const url = `https://app.lucianvotes.com/maps/${docRef.id}`;
       setShareUrl(url);
       setSharedMapImageUrl(imageUrl);
 

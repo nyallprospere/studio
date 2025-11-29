@@ -302,7 +302,7 @@ export function NewsArticleDialog({ article, isOpen, onClose }: NewsArticleDialo
 
     const articleDate = article.articleDate?.toDate ? article.articleDate.toDate() : new Date();
     
-    const articleUrl = article.url || (typeof window !== 'undefined' ? window.location.href : '');
+    const articleUrl = `https://app.lucianvotes.com/news/${article.id}`;
     const shareText = `Check out this article: ${article.title}`;
     const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(articleUrl)}`;
     const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`;
