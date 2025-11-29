@@ -125,7 +125,7 @@ export default function Home() {
   const newsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'news'), orderBy('articleDate', 'desc')) : null, [firestore]);
   const voterInfoQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'voter_information'), orderBy('title')) : null, [firestore]);
   const siteSettingsRef = useMemoFirebase(() => (firestore ? doc(firestore, 'settings', 'site') : null), [firestore]);
-  const postsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'posts'), orderBy('order', 'desc')) : null, [firestore]);
+  const postsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'posts'), orderBy('order')) : null, [firestore]);
   const candidatesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'candidates') : null, [firestore]);
 
   
@@ -564,9 +564,6 @@ export default function Home() {
                       />
                   </CardContent>
               </Card>
-              <div className="grid grid-cols-1 gap-8">
-                <OddsOfWinningTrendChart />
-              </div>
             </div>
               <div className="space-y-8">
                   <Card>
@@ -671,6 +668,9 @@ export default function Home() {
                           )}
                       </CardContent>
                   </Card>
+                   <div className="grid grid-cols-1 gap-8">
+                    <OddsOfWinningTrendChart />
+                  </div>
               </div>
           </div>
         </div>
