@@ -255,7 +255,19 @@ export function HeaderNav() {
             
             <NavSeparator />
 
-            <NavLink href="/election-news">News</NavLink>
+            <MenubarMenu>
+                <MenubarTrigger className="font-medium text-primary-foreground/80 hover:text-white data-[state=open]:text-white data-[state=open]:bg-primary/80">
+                News &amp; Social Media <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
+                </MenubarTrigger>
+                <MenubarContent>
+                <MenubarItem asChild>
+                    <Link href="/election-news">News</Link>
+                </MenubarItem>
+                <MenubarItem asChild>
+                    <Link href="/social-media">Social Media</Link>
+                </MenubarItem>
+                </MenubarContent>
+            </MenubarMenu>
             
             <NavSeparator />
 
