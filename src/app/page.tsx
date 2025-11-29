@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -68,45 +67,45 @@ const politicalLeaningOptions = [
 ];
 
 const VictoryStatusBar = ({ slpSeats, uwpSeats, indSeats }: { slpSeats: number, uwpSeats: number, indSeats: number }) => {
-  const getStatus = (seats: number) => {
-      if (seats >= 16) return 'SLP Wins a Landslide!';
-      if (seats >= 14) return 'SLP Wins a Decisive Victory';
-      if (seats >= 11) return 'SLP Wins The Election.';
-      if (seats >= 9) return 'SLP Wins Close Victory';
-      return null;
-  };
-
-  const getUWPStatus = (seats: number) => {
-      if (seats >= 16) return 'UWP Wins a Landslide!';
-      if (seats >= 14) return 'UWP Wins a Decisive Victory';
-      if (seats >= 11) return 'UWP Wins The Election.';
-      if (seats >= 9) return 'UWP Wins Close Victory';
-      return null;
-  }
-
-  const combinedSlpSeats = slpSeats + indSeats;
-  const slpStatus = getStatus(combinedSlpSeats);
-  const uwpStatus = getUWPStatus(uwpSeats);
-
-  let status = 'Too Early To Tell';
-  let color = 'bg-purple-500';
-
-  if (slpStatus) {
-      status = slpStatus;
-      color = 'bg-red-500';
-  } else if (uwpStatus) {
-      status = uwpStatus;
-      color = 'bg-yellow-400 text-black';
-  } else if (combinedSlpSeats >= 9) {
-      status = 'SLP Wins Very Close Victory';
-      color = 'bg-red-500';
-  }
+    const getStatus = (seats: number) => {
+        if (seats >= 16) return 'SLP Wins a Landslide!';
+        if (seats >= 14) return 'SLP Wins a Decisive Victory';
+        if (seats >= 11) return 'SLP Projected to Win The Election';
+        if (seats >= 9) return 'SLP Projected to Win The Election';
+        return null;
+    };
   
-  return (
-    <div className={`p-2 rounded-md text-center text-white font-bold mb-4 ${color}`}>
-        {status}
-    </div>
-  );
+    const getUWPStatus = (seats: number) => {
+        if (seats >= 16) return 'UWP Wins a Landslide!';
+        if (seats >= 14) return 'UWP Wins a Decisive Victory';
+        if (seats >= 11) return 'UWP Projected to Win The Election';
+        if (seats >= 9) return 'UWP Projected to Win The Election';
+        return null;
+    }
+  
+    const combinedSlpSeats = slpSeats + indSeats;
+    const slpStatus = getStatus(combinedSlpSeats);
+    const uwpStatus = getUWPStatus(uwpSeats);
+  
+    let status = 'Too Early To Tell';
+    let color = 'bg-purple-500';
+  
+    if (slpStatus) {
+        status = slpStatus;
+        color = 'bg-red-500';
+    } else if (uwpStatus) {
+        status = uwpStatus;
+        color = 'bg-yellow-400 text-black';
+    } else if (combinedSlpSeats >= 9) {
+        status = 'SLP Wins Very Close Victory';
+        color = 'bg-red-500';
+    }
+    
+    return (
+      <div className={`p-2 rounded-md text-center text-white font-bold mb-4 ${color}`}>
+          {status}
+      </div>
+    );
 };
 
 
@@ -125,7 +124,7 @@ export default function Home() {
   const newsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'news'), orderBy('articleDate', 'desc')) : null, [firestore]);
   const voterInfoQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'voter_information'), orderBy('title')) : null, [firestore]);
   const siteSettingsRef = useMemoFirebase(() => (firestore ? doc(firestore, 'settings', 'site') : null), [firestore]);
-  const postsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'posts'), orderBy('order')) : null, [firestore]);
+  const postsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'posts'), orderBy('order', 'desc')) : null, [firestore]);
   const candidatesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'candidates') : null, [firestore]);
 
   
@@ -257,7 +256,7 @@ export default function Home() {
           const dateB = (b.date as unknown as Timestamp)?.toDate ? (b.date as unknown as Timestamp).toDate() : new Date(b.date);
           return mode === 'upcoming' 
             ? dateA.getTime() - dateB.getTime() 
-            : dateB.getTime() - a.getTime();
+            : dateB.getTime() - dateA.getTime();
       });
       
       return sorted;
