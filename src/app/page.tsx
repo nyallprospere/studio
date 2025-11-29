@@ -366,16 +366,16 @@ export default function Home() {
 
     try {
         const urlObj = new URL(url);
-        // Video URLs: facebook.com/watch, facebook.com/reel, facebook.com/someuser/videos/...
+        if (url.includes('facebook.com/share')) {
+          return { type: 'post', url: `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&show_text=true&width=500` };
+        }
         if (videoUrl || urlObj.pathname.includes('/watch') || urlObj.pathname.includes('/reel') || urlObj.pathname.includes('/videos/') || urlObj.pathname.includes('/share/v/')) {
             return { type: 'video', url: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=560` };
         }
-        // Post URLs: facebook.com/someuser/posts/..., facebook.com/someuser/photos/..., facebook.com/share/p/...
         return { type: 'post', url: `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&show_text=true&width=500` };
     } catch(e) {
         console.error("Invalid URL for post", e);
-        // Fallback for simple URLs or other formats, assuming it's a post.
-        return { type: 'post', url: `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&show_text=true&width=500` };
+        return { type: 'post', url: `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url || '')}&show_text=true&width=500` };
     }
   };
 
@@ -671,64 +671,6 @@ export default function Home() {
                           )}
                       </CardContent>
                   </Card>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-8">
-                     {posts && posts.length > 0 && (
-                      <Card>
-                        <CardContent className="h-[600px] p-0">
-                           <Carousel
-                                setApi={setCarouselApi}
-                                opts={{ align: "start", loop: true }}
-                                plugins={[autoplay.current]}
-                                onMouseEnter={autoplay.current.stop}
-                                onMouseLeave={autoplay.current.play}
-                                className="w-full h-full"
-                            >
-                                <CarouselContent className="h-full">
-                                {posts.map((post) => {
-                                    const embed = getFacebookEmbedUrl(post.postUrl, post.videoUrl);
-                                    if (!embed.url) return null;
-
-                                    const contentClass = embed.type === 'video' ? 'aspect-[9/16]' : 'aspect-video';
-
-                                    return (
-                                        <CarouselItem key={post.id} className="p-1 h-full">
-                                            <Card className="h-full flex flex-col">
-                                            <CardHeader className="p-4">
-                                                <CardTitle className="text-base">
-                                                <Link href={post.authorUrl} target="_blank" className="hover:underline">{post.authorName}</Link>
-                                                </CardTitle>
-                                            </CardHeader>
-                                            <CardContent className={cn("p-0 flex-grow relative", contentClass)}>
-                                                <iframe 
-                                                    data-src={embed.url} 
-                                                    className="absolute top-0 left-0 w-full h-full"
-                                                    style={{border:'none', overflow:'hidden'}}
-                                                    allowFullScreen={true} 
-                                                    allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share">
-                                                </iframe>
-                                            </CardContent>
-                                            <CardFooter className="p-2 justify-end gap-2">
-                                                <Button variant={likedPosts.includes(post.id) ? "default" : "outline"} size="sm" onClick={(e) => handleLikePost(e, post.id)} disabled={likedPosts.includes(post.id)}>
-                                                    <ThumbsUp className="mr-2 h-4 w-4" />
-                                                    {post.likeCount || 0}
-                                                </Button>
-                                                <Button variant={dislikedPosts.includes(post.id) ? "destructive" : "outline"} size="sm" onClick={(e) => handleDislikePost(e, post.id)} disabled={dislikedPosts.includes(post.id)}>
-                                                    <ThumbsDown className="mr-2 h-4 w-4" />
-                                                    {post.dislikeCount || 0}
-                                                </Button>
-                                            </CardFooter>
-                                            </Card>
-                                        </CarouselItem>
-                                    )
-                                })}
-                                </CarouselContent>
-                                <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-background/80 text-foreground border-border hover:bg-muted h-10 w-10" />
-                                <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-background/80 text-foreground border-border hover:bg-muted h-10 w-10" />
-                            </Carousel>
-                        </CardContent>
-                      </Card>
-                    )}
-                  </div>
               </div>
           </div>
         </div>
